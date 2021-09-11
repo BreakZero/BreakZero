@@ -1,103 +1,206 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  
-  
-  <title>Android Kotlin Coroutines + Retrofit + MVVM 简单实现 | Hexo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="前言 这是一篇随记，想尝试下写文章。 这里基本不会深入讨论各个知识点，如需了解更多可以参考 Benny’s Blog 和 Kotlin官方文档为什么使用协程 协程比线程小 我： 为什么已经有Rx了还要在这里用协程？某同事： 因为协程比线程小，可以开很多个。我：…… 为什么比线程小？    &amp;emsp; 我维基了一下，确实有说比线程更小。&amp;emsp; 但是看了一些源码，也是线程池 + 线程实现的，这">
-<meta property="og:type" content="article">
-<meta property="og:title" content="Android Kotlin Coroutines + Retrofit + MVVM 简单实现">
-<meta property="og:url" content="http://example.com/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/index.html">
-<meta property="og:site_name" content="Hexo">
-<meta property="og:description" content="前言 这是一篇随记，想尝试下写文章。 这里基本不会深入讨论各个知识点，如需了解更多可以参考 Benny’s Blog 和 Kotlin官方文档为什么使用协程 协程比线程小 我： 为什么已经有Rx了还要在这里用协程？某同事： 因为协程比线程小，可以开很多个。我：…… 为什么比线程小？    &amp;emsp; 我维基了一下，确实有说比线程更小。&amp;emsp; 但是看了一些源码，也是线程池 + 线程实现的，这">
-<meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/30/16f561eaea6d630b~tplv-t2oaga2asx-image.image">
-<meta property="og:image" content="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/30/16f561eae8114f24~tplv-t2oaga2asx-image.image">
-<meta property="article:published_time" content="2021-09-11T06:47:06.000Z">
-<meta property="article:modified_time" content="2021-09-11T06:47:37.526Z">
-<meta property="article:author" content="John Doe">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/30/16f561eaea6d630b~tplv-t2oaga2asx-image.image">
-  
-    <link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
-  
-  
-    <link rel="shortcut icon" href="/favicon.png">
-  
-  
-    
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
 
+
+<!DOCTYPE html>
+<html lang="en" color-mode=light>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Android Kotlin Coroutines + Retrofit + MVVM 简单实现 - Hexo</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="google" content="notranslate" />
   
+  <meta name="description" content="前言
+这是一篇随记，想尝试下写文章。
+这里基本不会深入...">
+  <meta name="author" content="John Doe">
+  <link rel="icon" href="/images/icons/favicon-16x16.png" type="image/png" sizes="16x16">
+  <link rel="icon" href="/images/icons/favicon-32x32.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/images/icons/apple-touch-icon.png" sizes="180x180">
+  <meta rel="mask-icon" href="/images/icons/stun-logo.svg" color="#333333">
+  
+    <meta rel="msapplication-TileImage" content="/images/icons/favicon-144x144.png">
+    <meta rel="msapplication-TileColor" content="#000000">
+  
+
   
 <link rel="stylesheet" href="/css/style.css">
 
-  
-    
-<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
 
   
+    
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1445822_r673sha78lq.css">
+
+  
+
+  
+    
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css">
+
+  
+
+  
+    
+      
+        
+        
+<link rel="stylesheet" href="https://cdn.bootcss.com/highlight.js/9.18.1/styles/xcode.min.css" name="highlight-style" mode="light">
+
+      
+        
+        
+<link rel="stylesheet" href="https://cdn.bootcss.com/highlight.js/9.18.1/styles/solarized-dark.min.css" name="highlight-style" mode="dark">
+
+      
+  
+
+  <script>
+    var CONFIG = window.CONFIG || {};
+    var ZHAOO = window.ZHAOO || {};
+    CONFIG = {
+      isHome: false,
+      fancybox: true,
+      pjax: false,
+      lazyload: {
+        enable: true,
+        only_post: 'false',
+        loading: '[object Object]'
+      },
+      donate: {
+        enable: true,
+        alipay: 'https://pic.izhaoo.com/alipay.jpg',
+        wechat: 'https://pic.izhaoo.com/wechat.jpg'
+      },
+      galleries: {
+        enable: true
+      },
+      fab: {
+        enable: true,
+        always_show: false
+      },
+      carrier: {
+        enable: true
+      },
+      daovoice: {
+        enable: false
+      },
+      preview: {
+        background: {
+          default: '',
+          api: ''
+        },
+        motto: {
+          default: '我在开了灯的床头下，想问问自己的心啊。',
+          typing: true,
+          api: 'https://v2.jinrishici.com/one.json',
+          data_contents: '["data","content"]'
+        },
+      },
+      qrcode: {
+        enable: true,
+        type: 'url',
+        image: 'https://pic.izhaoo.com/weapp-code.jpg',
+      },
+      toc: {
+        enable: true
+      },
+      scrollbar: {
+        type: 'default'
+      },
+      notification: {
+        enable: false,
+        delay: 4500,
+        list: '',
+        page_white_list: '',
+        page_black_list: ''
+      },
+      search: {
+        enable: false,
+        path: ''
+      }
+    }
+  </script>
+
+  
+
+  
+
 <meta name="generator" content="Hexo 5.4.0"></head>
 
-<body>
-  <div id="container">
-    <div id="wrap">
-      <header id="header">
-  <div id="banner"></div>
-  <div id="header-outer" class="outer">
-    <div id="header-title" class="inner">
-      <h1 id="logo-wrap">
-        <a href="/" id="logo">Hexo</a>
-      </h1>
+<body class="lock-screen">
+  <div class="loading"></div>
+  
+    
+
+
+  <nav class="navbar">
+    <div class="left">
+      
+        <i class="iconfont iconhome j-navbar-back-home"></i>
+      
+      
+        <i class="iconfont iconqrcode j-navbar-qrcode"></i>
+      
+      
+        <i class="iconfont iconmoono" id="color-toggle" color-toggle="light"></i>
+      
       
     </div>
-    <div id="header-inner" class="inner">
-      <nav id="main-nav">
-        <a id="main-nav-toggle" class="nav-icon"></a>
-        
-          <a class="main-nav-link" href="/">Home</a>
-        
-          <a class="main-nav-link" href="/archives">Archives</a>
-        
-      </nav>
-      <nav id="sub-nav">
-        
-          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
-        
-        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
-      </nav>
-      <div id="search-form-wrap">
-        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
-      </div>
+    <div class="center">Android Kotlin Coroutines + Retrofit + MVVM 简单实现</div>
+    <div class="right">
+      <i class="iconfont iconmenu j-navbar-menu"></i>
+    </div>
+    
+      <div id="qrcode-navbar"></div>
+    
+  </nav>
+
+  
+  
+
+<nav class="menu">
+  <div class="menu-container">
+    <div class="menu-close">
+      <i class="iconfont iconbaseline-close-px"></i>
+    </div>
+    <ul class="menu-content"><li class="menu-item">
+        <a href="/ " class="underline "> 首页</a>
+      </li><li class="menu-item">
+        <a href="/galleries/ " class="underline "> 摄影</a>
+      </li><li class="menu-item">
+        <a href="/archives/ " class="underline "> 归档</a>
+      </li><li class="menu-item">
+        <a href="/tags/ " class="underline "> 标签</a>
+      </li><li class="menu-item">
+        <a href="/categories/ " class="underline "> 分类</a>
+      </li><li class="menu-item">
+        <a href="/about/ " class="underline "> 关于</a>
+      </li></ul>
+    
+      <div class="menu-copyright"><p>Powered by <a target="_blank" href="https://hexo.io">Hexo</a>  |  Theme - <a target="_blank" href="https://github.com/izhaoo/hexo-theme-zhaoo">zhaoo</a></p></div>
+    
+  </div>
+</nav>
+  <main id="main">
+  <div class="article-wrap">
+    <div class="row container">
+      <div class="col-xl-3"></div>
+      <div class="col-xl-6"><article class="article">
+  <div class="wrap">
+    <section class="head">
+  <img   class="lazyload" data-original="/images/theme/post-image.jpg" src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQImWNgYGBgAAAABQABh6FO1AAAAABJRU5ErkJggg=="  draggable="false">
+  <div class="head-mask">
+    <h1 class="head-title">Android Kotlin Coroutines + Retrofit + MVVM 简单实现</h1>
+    <div class="head-info">
+      <span class="post-info-item"><i class="iconfont iconcalendar"></i>September 11, 2021</span>
+      
+      <span class="post-info-item"><i class="iconfont iconfont-size"></i>4678</span>
     </div>
   </div>
-</header>
-
-      <div class="outer">
-        <section id="main"><article id="post-Android-Kotlin-Coroutines-Retrofit-MVVM-简单实现" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/" class="article-date">
-  <time class="dt-published" datetime="2021-09-11T06:47:06.000Z" itemprop="datePublished">2021-09-11</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 class="p-name article-title" itemprop="headline name">
-      Android Kotlin Coroutines + Retrofit + MVVM 简单实现
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
+</section>
+    <section class="main">
+      <section class="content">
         <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><ul>
 <li>这是一篇随记，想尝试下写文章。</li>
 <li>这里基本不会深入讨论各个知识点，如需了解更多可以参考 <a target="_blank" rel="noopener" href="https://www.bennyhuo.com/">Benny’s Blog</a> 和 <a target="_blank" rel="noopener" href="https://kotlinlang.org/docs/reference/coroutines/coroutines-guide.html">Kotlin官方文档</a><h2 id="为什么使用协程"><a href="#为什么使用协程" class="headerlink" title="为什么使用协程"></a>为什么使用协程</h2></li>
@@ -115,119 +218,178 @@
 <h2 id="二、准备网络请求接口"><a href="#二、准备网络请求接口" class="headerlink" title="二、准备网络请求接口"></a>二、准备网络请求接口</h2><ul>
 <li>创建接口<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">GitApi</span> </span>&#123;</span><br><span class="line">    <span class="meta">@GET(<span class="meta-string">&quot;/users/&#123;username&#125;/&#123;module&#125;&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">repos</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Path(<span class="meta-string">&quot;username&quot;</span>)</span> username: <span class="type">String</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Path(<span class="meta-string">&quot;module&quot;</span>)</span> module: <span class="type">String</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Query(<span class="meta-string">&quot;page&quot;</span>)</span> currPage: <span class="type">Int</span></span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span>: List&lt;RepoInfo&gt;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@GET(<span class="meta-string">&quot;/search/repositories&quot;</span>)</span></span><br><span class="line">    <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">searchRepos</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Query(<span class="meta-string">&quot;q&quot;</span>)</span> key: <span class="type">String</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Query(<span class="meta-string">&quot;sort&quot;</span>)</span> sort: <span class="type">String</span>? = <span class="string">&quot;updated&quot;</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Query(<span class="meta-string">&quot;order&quot;</span>)</span> order: <span class="type">String</span>? = <span class="string">&quot;desc&quot;</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="meta">@Query(<span class="meta-string">&quot;page&quot;</span>)</span> currPage: <span class="type">Int</span></span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span>: SearchResponse</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
 <li>创建Retrofit实例<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">buildRetrofit</span><span class="params">()</span></span>: Retrofit &#123;</span><br><span class="line">     builder.addInterceptor(HttpLoggingInterceptor(<span class="keyword">object</span> : HttpLoggingInterceptor.Logger &#123;</span><br><span class="line">         <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">log</span><span class="params">(message: <span class="type">String</span>)</span></span> &#123;</span><br><span class="line">             Timber.d(message)</span><br><span class="line">         &#125;</span><br><span class="line">     &#125;).apply &#123;</span><br><span class="line">         level = HttpLoggingInterceptor.Level.BODY</span><br><span class="line">     &#125;).addInterceptor(<span class="keyword">object</span> : Interceptor &#123;</span><br><span class="line">         <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">intercept</span><span class="params">(chain: <span class="type">Interceptor</span>.<span class="type">Chain</span>)</span></span>: Response &#123;</span><br><span class="line">             <span class="keyword">val</span> userCredentials = <span class="string">&quot;<span class="variable">$username</span>:<span class="variable">$password</span>&quot;</span></span><br><span class="line">             <span class="keyword">val</span> basicAuth =</span><br><span class="line">                 <span class="string">&quot;Basic <span class="subst">$&#123;String(Base64.encode(userCredentials.toByteArray(), Base64.DEFAULT))&#125;</span>&quot;</span></span><br><span class="line">             <span class="keyword">val</span> original = chain.request()</span><br><span class="line">             <span class="keyword">val</span> requestBuilder = original.newBuilder()</span><br><span class="line">                 .header(<span class="string">&quot;Authorization&quot;</span>, basicAuth.trim &#123; it &lt;= <span class="string">&#x27; &#x27;</span> &#125;)</span><br><span class="line">             <span class="keyword">val</span> request = requestBuilder.build()</span><br><span class="line">             <span class="keyword">return</span> chain.proceed(request)</span><br><span class="line">         &#125;</span><br><span class="line">     &#125;)</span><br><span class="line">     <span class="keyword">return</span> Retrofit.Builder()</span><br><span class="line">         .client(builder.build())</span><br><span class="line">         .baseUrl(BASE_URL)</span><br><span class="line">         .addConverterFactory(GsonConverterFactory.create())</span><br><span class="line">         .build()</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
-<h2 id="三、-在ViewModel中使用"><a href="#三、-在ViewModel中使用" class="headerlink" title="三、 在ViewModel中使用"></a>三、 在ViewModel中使用</h2><code>kotlinx.coroutines.CoroutineScope</code> 接口中的注释有这么一句话<br><br><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/30/16f561eaea6d630b~tplv-t2oaga2asx-image.image" alt="image.png"><br>所以启动一个协程一定需要一个<code>Scope</code>，也就是说每个suspend函数都有一个<code>CoroutineScope</code>，如果没有一定会报错。而Android的ViewModel中有扩展了一个<code>viewModelScope</code>，并且跟<code>lifecycle</code>绑定了，所以在ViewModel的onCleared方法上会自动帮我们cancel掉这个viewModelScope的所有Jobs。<br><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/30/16f561eae8114f24~tplv-t2oaga2asx-image.image" alt="图1"><br>为了方便使用，封装了一个BaseViewModel<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> <span class="class"><span class="keyword">class</span> <span class="title">BaseViewModel</span> : <span class="type">ViewModel</span></span>() &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> <span class="title">request</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        onError: (<span class="type">error</span>: <span class="type">Throwable</span>) -&gt; <span class="type">Unit</span> = &#123;&#125;, <span class="comment">// 不需要处理Error可以不传</span></span></span></span><br><span class="line"><span class="params"><span class="function">        execute: <span class="type">suspend</span> <span class="type">CoroutineScope</span>.() -&gt; <span class="type">T</span></span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span> &#123;</span><br><span class="line">        viewModelScope.launch(errorHandler &#123; onError.invoke(it) &#125;) &#123;</span><br><span class="line">            launch(Dispatchers.IO) &#123;</span><br><span class="line">                execute()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">errorHandler</span><span class="params">(onError: (<span class="type">error</span>: <span class="type">Throwable</span>) -&gt; <span class="type">Unit</span>)</span></span>: CoroutineExceptionHandler &#123;</span><br><span class="line">        <span class="keyword">return</span> CoroutineExceptionHandler &#123; _, throwable -&gt;</span><br><span class="line">            Timber.d(throwable)</span><br><span class="line">            onError.invoke(throwable)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="三、-在ViewModel中使用"><a href="#三、-在ViewModel中使用" class="headerlink" title="三、 在ViewModel中使用"></a>三、 在ViewModel中使用</h2><code>kotlinx.coroutines.CoroutineScope</code> 接口中的注释有这么一句话<br><br><img    class="lazyload" data-original="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/30/16f561eaea6d630b~tplv-t2oaga2asx-image.image" src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQImWNgYGBgAAAABQABh6FO1AAAAABJRU5ErkJggg=="   ><span class="image-caption">image.png</span><br>所以启动一个协程一定需要一个<code>Scope</code>，也就是说每个suspend函数都有一个<code>CoroutineScope</code>，如果没有一定会报错。而Android的ViewModel中有扩展了一个<code>viewModelScope</code>，并且跟<code>lifecycle</code>绑定了，所以在ViewModel的onCleared方法上会自动帮我们cancel掉这个viewModelScope的所有Jobs。<br><img    class="lazyload" data-original="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/30/16f561eae8114f24~tplv-t2oaga2asx-image.image" src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQImWNgYGBgAAAABQABh6FO1AAAAABJRU5ErkJggg=="   ><span class="image-caption">图1</span><br>为了方便使用，封装了一个BaseViewModel<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> <span class="class"><span class="keyword">class</span> <span class="title">BaseViewModel</span> : <span class="type">ViewModel</span></span>() &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> <span class="title">request</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        onError: (<span class="type">error</span>: <span class="type">Throwable</span>) -&gt; <span class="type">Unit</span> = &#123;&#125;, <span class="comment">// 不需要处理Error可以不传</span></span></span></span><br><span class="line"><span class="params"><span class="function">        execute: <span class="type">suspend</span> <span class="type">CoroutineScope</span>.() -&gt; <span class="type">T</span></span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span> &#123;</span><br><span class="line">        viewModelScope.launch(errorHandler &#123; onError.invoke(it) &#125;) &#123;</span><br><span class="line">            launch(Dispatchers.IO) &#123;</span><br><span class="line">                execute()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">errorHandler</span><span class="params">(onError: (<span class="type">error</span>: <span class="type">Throwable</span>) -&gt; <span class="type">Unit</span>)</span></span>: CoroutineExceptionHandler &#123;</span><br><span class="line">        <span class="keyword">return</span> CoroutineExceptionHandler &#123; _, throwable -&gt;</span><br><span class="line">            Timber.d(throwable)</span><br><span class="line">            onError.invoke(throwable)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 使用继承 <code>BaseViewModel</code> 调用 <code>request</code> 方法即可。<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">RepoViewModel</span></span>(</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> userRepo: UserDataSource,</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> gitApi: GitApi</span><br><span class="line">) : BaseViewModel() &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> _reposResult = BaseLiveData&lt;List&lt;RepoInfo&gt;&gt;()</span><br><span class="line">    <span class="keyword">val</span> repoResult: BaseLiveData&lt;List&lt;RepoInfo&gt;&gt;</span><br><span class="line">        <span class="keyword">get</span>() = _reposResult</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">fetchRepos</span><span class="params">(module: <span class="type">String</span>)</span></span> &#123;</span><br><span class="line">        request &#123;</span><br><span class="line">            userRepo.currUser()?.let &#123;</span><br><span class="line">                <span class="keyword">val</span> result = gitApi.repos(it.nickname, module, <span class="number">1</span>)</span><br><span class="line">                _reposResult.update(result)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 OR<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">fetchRepos</span><span class="params">(module: <span class="type">String</span>)</span></span> &#123;</span><br><span class="line">        request(</span><br><span class="line">            onError = &#123;</span><br><span class="line">                <span class="comment">// handle error</span></span><br><span class="line">            &#125;,</span><br><span class="line">            execute = &#123;</span><br><span class="line">                userRepo.currUser()?.let &#123;</span><br><span class="line">                    <span class="keyword">val</span> result = gitApi.repos(it.nickname, module, <span class="number">1</span>)</span><br><span class="line">                    _reposResult.update(result)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        )</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
 剩下的基本是LiveData和Fragment之间的订阅上的逻辑实现了。<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2>最近在学习，了解也不是很深，欢迎评论补充和提建议。 学习项目地址 <a target="_blank" rel="noopener" href="https://github.com/BreakZero/Dithub">Dithub</a>。</li>
 </ul>
 
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/" data-id="cktffg9nk00003znb76gahn5r" data-title="Android Kotlin Coroutines + Retrofit + MVVM 简单实现" class="article-share-link">Share</a>
-      
-      
-      
-    </footer>
+      </section>
+      <section class="extra">
+        
+          <ul class="copyright">
+  
+    <li><strong>本文作者：</strong>John Doe</li>
+    <li><strong>本文链接：</strong><a href="http://example.com/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/index.html" title="http:&#x2F;&#x2F;example.com&#x2F;2021&#x2F;09&#x2F;11&#x2F;Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0&#x2F;index.html">http:&#x2F;&#x2F;example.com&#x2F;2021&#x2F;09&#x2F;11&#x2F;Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0&#x2F;index.html</a></li>
+    <li><strong>版权声明：</strong>本博客所有文章均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" title="BY-NC-SA" target="_blank" rel="noopener">BY-NC-SA</a> 许可协议，转载请注明出处！</li>
+  
+</ul>
+        
+        
+          <section class="donate">
+  <div id="qrcode-donate">
+    <img   class="lazyload" data-original="https://pic.izhaoo.com/alipay.jpg" src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQImWNgYGBgAAAABQABh6FO1AAAAABJRU5ErkJggg==" >
   </div>
-  
-    
-<nav id="article-nav">
-  
-  
-    <a href="/2021/09/11/hello-world/" id="article-nav-older" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">Hello World</div>
-    </a>
-  
-</nav>
-
-  
-</article>
-
-
+  <div class="icon">
+    <a href="javascript:;" id="alipay"><i class="iconfont iconalipay"></i></a>
+    <a href="javascript:;" id="wechat"><i class="iconfont iconwechat-fill"></i></a>
+  </div>
 </section>
         
-          <aside id="sidebar">
-  
-    
+        
+        
+  <nav class="nav">
+    <a></a>
+    <a href="/2021/09/11/hello-world/">Hello World<i class="iconfont iconright"></i></a>
+  </nav>
 
-  
-    
-
-  
-    
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Archives</h3>
-    <div class="widget">
-      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/09/">September 2021</a></li></ul>
-    </div>
+      </section>
+      
+    </section>
   </div>
-
-
-  
-    
-  <div class="widget-wrap">
-    <h3 class="widget-title">Recent Posts</h3>
-    <div class="widget">
-      <ul>
+</article></div>
+      <div class="col-xl-3">
         
-          <li>
-            <a href="/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/">Android Kotlin Coroutines + Retrofit + MVVM 简单实现</a>
-          </li>
-        
-          <li>
-            <a href="/2021/09/11/hello-world/">Hello World</a>
-          </li>
-        
-      </ul>
-    </div>
-  </div>
+          
+  <aside class="toc-wrap">
+    <h3 class="toc-title">文章目录：</h3>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8%E5%8D%8F%E7%A8%8B"><span class="toc-text">为什么使用协程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%B7%BB%E5%8A%A0%E4%BE%9D%E8%B5%96"><span class="toc-text">一、添加依赖</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%87%86%E5%A4%87%E7%BD%91%E7%BB%9C%E8%AF%B7%E6%B1%82%E6%8E%A5%E5%8F%A3"><span class="toc-text">二、准备网络请求接口</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81-%E5%9C%A8ViewModel%E4%B8%AD%E4%BD%BF%E7%94%A8"><span class="toc-text">三、 在ViewModel中使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-text">结语</span></a></li></ol>
+  </aside>
 
-  
-</aside>
         
       </div>
-      <footer id="footer">
-  
-  <div class="outer">
-    <div id="footer-info" class="inner">
-      
-      &copy; 2021 John Doe<br>
-      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
     </div>
   </div>
+</main>
+  
+
+<footer class="footer">
+  <div class="footer-social"><a 
+        href="tencent://message/?Menu=yes&uin=894519210 "
+        target="_blank"
+        class="footer-social-item"
+        onMouseOver="this.style.color= '#12B7F5'" 
+        onMouseOut="this.style.color='#33333D'">
+          <i class="iconfont  iconQQ "></i>
+      </a><a 
+        href="javascript:; "
+        target="_blank"
+        class="footer-social-item"
+        onMouseOver="this.style.color= '#09BB07'" 
+        onMouseOut="this.style.color='#33333D'">
+          <i class="iconfont  iconwechat-fill "></i>
+      </a><a 
+        href="https://www.instagram.com/izhaoo/ "
+        target="_blank"
+        class="footer-social-item"
+        onMouseOver="this.style.color= '#DA2E76'" 
+        onMouseOut="this.style.color='#33333D'">
+          <i class="iconfont  iconinstagram "></i>
+      </a><a 
+        href="https://github.com/zhaoo "
+        target="_blank"
+        class="footer-social-item"
+        onMouseOver="this.style.color= '#9f7be1'" 
+        onMouseOut="this.style.color='#33333D'">
+          <i class="iconfont  icongithub-fill "></i>
+      </a><a 
+        href="mailto:izhaoo@163.com "
+        target="_blank"
+        class="footer-social-item"
+        onMouseOver="this.style.color=#FF3B00" 
+        onMouseOut="this.style.color='#33333D'">
+          <i class="iconfont  iconmail"></i>
+      </a></div>
+  
+    <div class="footer-copyright"><p>Powered by <a target="_blank" href="https://hexo.io">Hexo</a>  |  Theme - <a target="_blank" href="https://github.com/izhaoo/hexo-theme-zhaoo">zhaoo</a></p></div>
+  
 </footer>
-
-    </div>
-    <nav id="mobile-nav">
   
-    <a href="/" class="mobile-nav-link">Home</a>
+      <div class="fab fab-plus">
+    <i class="iconfont iconplus"></i>
+  </div>
   
-    <a href="/archives" class="mobile-nav-link">Archives</a>
   
-</nav>
+  <div class="fab fab-up">
+    <i class="iconfont iconcaret-up"></i>
+  </div>
+  
+  
+  
     
+<script src="/js/color-mode.js"></script>
 
+  
+  
+</body>
 
-<script src="/js/jquery-3.4.1.min.js"></script>
+<script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
 
 
 
   
-<script src="/fancybox/jquery.fancybox.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.min.js"></script>
 
 
 
 
+  
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js"></script>
+
+
+
+
+
+
+  
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
+
+
+
+
+<script src="/js/utils.js"></script>
 <script src="/js/script.js"></script>
 
 
 
 
 
-  </div>
-</body>
+
+
+  <script>
+    (function () {
+      var bp = document.createElement('script');
+      var curProtocol = window.location.protocol.split(':')[0];
+      if (curProtocol === 'https') {
+        bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+      } else {
+        bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+      }
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(bp, s);
+    })();
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
 </html>
