@@ -44,5 +44,9 @@ OR<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class=
 剩下的基本是LiveData和Fragment之间的订阅上的逻辑实现了。<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2>最近在学习，了解也不是很深，欢迎评论补充和提建议。 学习项目地址 <a href="https://github.com/BreakZero/Dithub">Dithub</a>。</li>
 </ul>
 ]]></content>
+      <tags>
+        <tag>Android</tag>
+        <tag>Kotlin</tag>
+      </tags>
   </entry>
 </search>
