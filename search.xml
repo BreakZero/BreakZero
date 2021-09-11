@@ -2,7 +2,7 @@
 <search>
   <entry>
     <title>Android Kotlin Coroutines + Retrofit + MVVM 简单实现</title>
-    <url>/BreakZero/BreakZero.github.io/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/</url>
+    <url>/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/</url>
     <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><ul>
 <li>这是一篇随记，想尝试下写文章。</li>
 <li>这里基本不会深入讨论各个知识点，如需了解更多可以参考 <a href="https://www.bennyhuo.com/">Benny’s Blog</a> 和 <a href="https://kotlinlang.org/docs/reference/coroutines/coroutines-guide.html">Kotlin官方文档</a><h2 id="为什么使用协程"><a href="#为什么使用协程" class="headerlink" title="为什么使用协程"></a>为什么使用协程</h2></li>
@@ -29,7 +29,7 @@ OR<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class=
   </entry>
   <entry>
     <title>Hello World</title>
-    <url>/BreakZero/BreakZero.github.io/2021/09/11/hello-world/</url>
+    <url>/2021/09/11/hello-world/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
 <h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
 
