@@ -6,7 +6,7 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>Android Kotlin Coroutines + Retrofit + MVVM 简单实现 - Hexo</title>
+  <title>Android Kotlin Coroutines + Retrofit + MVVM 简单实现 - D&amp;J BLOG</title>
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="google" content="notranslate" />
@@ -14,7 +14,7 @@
   <meta name="description" content="前言
 这是一篇随记，想尝试下写文章。
 这里基本不会深入...">
-  <meta name="author" content="John Doe">
+  <meta name="author" content="D&J">
   <link rel="icon" href="/images/icons/favicon-16x16.png" type="image/png" sizes="16x16">
   <link rel="icon" href="/images/icons/favicon-32x32.png" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="/images/icons/apple-touch-icon.png" sizes="180x180">
@@ -25,7 +25,7 @@
   
 
   
-<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/BreakZero/BreakZero.github.io/css/style.css">
 
 
   
@@ -189,7 +189,7 @@
       <div class="col-xl-6"><article class="article">
   <div class="wrap">
     <section class="head">
-  <img   class="lazyload" data-original="/images/theme/post-image.jpg" src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQImWNgYGBgAAAABQABh6FO1AAAAABJRU5ErkJggg=="  draggable="false">
+  <img   class="lazyload" data-original="/BreakZero/BreakZero.github.io/images/theme/post-image.jpg" src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQImWNgYGBgAAAABQABh6FO1AAAAABJRU5ErkJggg=="  draggable="false">
   <div class="head-mask">
     <h1 class="head-title">Android Kotlin Coroutines + Retrofit + MVVM 简单实现</h1>
     <div class="head-info">
@@ -221,7 +221,7 @@
 <h2 id="三、-在ViewModel中使用"><a href="#三、-在ViewModel中使用" class="headerlink" title="三、 在ViewModel中使用"></a>三、 在ViewModel中使用</h2><code>kotlinx.coroutines.CoroutineScope</code> 接口中的注释有这么一句话<br><br><img    class="lazyload" data-original="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/30/16f561eaea6d630b~tplv-t2oaga2asx-image.image" src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQImWNgYGBgAAAABQABh6FO1AAAAABJRU5ErkJggg=="   ><span class="image-caption">image.png</span><br>所以启动一个协程一定需要一个<code>Scope</code>，也就是说每个suspend函数都有一个<code>CoroutineScope</code>，如果没有一定会报错。而Android的ViewModel中有扩展了一个<code>viewModelScope</code>，并且跟<code>lifecycle</code>绑定了，所以在ViewModel的onCleared方法上会自动帮我们cancel掉这个viewModelScope的所有Jobs。<br><img    class="lazyload" data-original="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/30/16f561eae8114f24~tplv-t2oaga2asx-image.image" src="data:image/gif;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQImWNgYGBgAAAABQABh6FO1AAAAABJRU5ErkJggg=="   ><span class="image-caption">图1</span><br>为了方便使用，封装了一个BaseViewModel<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">open</span> <span class="class"><span class="keyword">class</span> <span class="title">BaseViewModel</span> : <span class="type">ViewModel</span></span>() &#123;</span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="type">&lt;T&gt;</span> <span class="title">request</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">        onError: (<span class="type">error</span>: <span class="type">Throwable</span>) -&gt; <span class="type">Unit</span> = &#123;&#125;, <span class="comment">// 不需要处理Error可以不传</span></span></span></span><br><span class="line"><span class="params"><span class="function">        execute: <span class="type">suspend</span> <span class="type">CoroutineScope</span>.() -&gt; <span class="type">T</span></span></span></span><br><span class="line"><span class="params"><span class="function">    )</span></span> &#123;</span><br><span class="line">        viewModelScope.launch(errorHandler &#123; onError.invoke(it) &#125;) &#123;</span><br><span class="line">            launch(Dispatchers.IO) &#123;</span><br><span class="line">                execute()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">errorHandler</span><span class="params">(onError: (<span class="type">error</span>: <span class="type">Throwable</span>) -&gt; <span class="type">Unit</span>)</span></span>: CoroutineExceptionHandler &#123;</span><br><span class="line">        <span class="keyword">return</span> CoroutineExceptionHandler &#123; _, throwable -&gt;</span><br><span class="line">            Timber.d(throwable)</span><br><span class="line">            onError.invoke(throwable)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 使用继承 <code>BaseViewModel</code> 调用 <code>request</code> 方法即可。<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">RepoViewModel</span></span>(</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> userRepo: UserDataSource,</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> gitApi: GitApi</span><br><span class="line">) : BaseViewModel() &#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> _reposResult = BaseLiveData&lt;List&lt;RepoInfo&gt;&gt;()</span><br><span class="line">    <span class="keyword">val</span> repoResult: BaseLiveData&lt;List&lt;RepoInfo&gt;&gt;</span><br><span class="line">        <span class="keyword">get</span>() = _reposResult</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">fetchRepos</span><span class="params">(module: <span class="type">String</span>)</span></span> &#123;</span><br><span class="line">        request &#123;</span><br><span class="line">            userRepo.currUser()?.let &#123;</span><br><span class="line">                <span class="keyword">val</span> result = gitApi.repos(it.nickname, module, <span class="number">1</span>)</span><br><span class="line">                _reposResult.update(result)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 OR<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">fetchRepos</span><span class="params">(module: <span class="type">String</span>)</span></span> &#123;</span><br><span class="line">        request(</span><br><span class="line">            onError = &#123;</span><br><span class="line">                <span class="comment">// handle error</span></span><br><span class="line">            &#125;,</span><br><span class="line">            execute = &#123;</span><br><span class="line">                userRepo.currUser()?.let &#123;</span><br><span class="line">                    <span class="keyword">val</span> result = gitApi.repos(it.nickname, module, <span class="number">1</span>)</span><br><span class="line">                    _reposResult.update(result)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        )</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-剩下的基本是LiveData和Fragment之间的订阅上的逻辑实现了。<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2>最近在学习，了解也不是很深，欢迎评论补充和提建议。 学习项目地址 <a target="_blank" rel="noopener" href="https://github.com/BreakZero/Dithub">Dithub</a>。</li>
+剩下的基本是LiveData和Fragment之间的订阅上的逻辑实现了。<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2>最近在学习，了解也不是很深，欢迎评论补充和提建议。 学习项目地址 <a href="https://github.com/BreakZero/Dithub">Dithub</a>。</li>
 </ul>
 
       </section>
@@ -229,8 +229,8 @@ OR<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span clas
         
           <ul class="copyright">
   
-    <li><strong>本文作者：</strong>John Doe</li>
-    <li><strong>本文链接：</strong><a href="http://example.com/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/index.html" title="http:&#x2F;&#x2F;example.com&#x2F;2021&#x2F;09&#x2F;11&#x2F;Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0&#x2F;index.html">http:&#x2F;&#x2F;example.com&#x2F;2021&#x2F;09&#x2F;11&#x2F;Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0&#x2F;index.html</a></li>
+    <li><strong>本文作者：</strong>D&amp;J</li>
+    <li><strong>本文链接：</strong><a href="https://github.com/BreakZero/BreakZero.github.io/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/index.html" title="https:&#x2F;&#x2F;github.com&#x2F;BreakZero&#x2F;BreakZero.github.io&#x2F;2021&#x2F;09&#x2F;11&#x2F;Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0&#x2F;index.html">https:&#x2F;&#x2F;github.com&#x2F;BreakZero&#x2F;BreakZero.github.io&#x2F;2021&#x2F;09&#x2F;11&#x2F;Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0&#x2F;index.html</a></li>
     <li><strong>版权声明：</strong>本博客所有文章均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh" title="BY-NC-SA" target="_blank" rel="noopener">BY-NC-SA</a> 许可协议，转载请注明出处！</li>
   
 </ul>
@@ -250,7 +250,7 @@ OR<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span clas
         
   <nav class="nav">
     <a></a>
-    <a href="/2021/09/11/hello-world/">Hello World<i class="iconfont iconright"></i></a>
+    <a href="/BreakZero/BreakZero.github.io/2021/09/11/hello-world/">Hello World<i class="iconfont iconright"></i></a>
   </nav>
 
       </section>
@@ -327,7 +327,7 @@ OR<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span clas
   
   
     
-<script src="/js/color-mode.js"></script>
+<script src="/BreakZero/BreakZero.github.io/js/color-mode.js"></script>
 
   
   
@@ -357,8 +357,8 @@ OR<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span clas
 
 
 
-<script src="/js/utils.js"></script>
-<script src="/js/script.js"></script>
+<script src="/BreakZero/BreakZero.github.io/js/utils.js"></script>
+<script src="/BreakZero/BreakZero.github.io/js/script.js"></script>
 
 
 
