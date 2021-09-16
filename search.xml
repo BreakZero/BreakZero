@@ -36,6 +36,19 @@ OR<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class=
     <url>/2021/09/11/EasyWallet-Part-1/</url>
     <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><ul>
 <li>记录并整理EasyWallet 小钱包开发过程</li>
+<li>在项目中使用到：</li>
+</ul>
+<ol>
+<li>Jetpack Compose</li>
+<li>Hilt</li>
+<li>自定义plugin + includeBuild 实现依赖库统一管理</li>
+<li>Kotlin/Kotlin flow </li>
+<li>Coroutine + Retrofit + Moshi 实现网络请求</li>
+<li>Sqldelight 实现本地存储</li>
+</ol>
+<h2 id="APP"><a href="#APP" class="headerlink" title="APP"></a>APP</h2><ul>
+<li>非Compose 版本项目地址：<a href="https://github.com/BreakZero/EasyWallet">EasyWallet</a></li>
+<li>Compose 版本项目地址：<a href="https://github.com/BreakZero/EasyWallet-Compose">EasyWallet-Compose</a></li>
 </ul>
 ]]></content>
   </entry>
