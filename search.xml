@@ -39,16 +39,24 @@ OR<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class=
 <li>在项目中使用到：</li>
 </ul>
 <ol>
+<li>Composing build + plugin 实现依赖库统一管理</li>
 <li>Jetpack Compose</li>
-<li>Hilt</li>
-<li>自定义plugin + includeBuild 实现依赖库统一管理</li>
-<li>Kotlin/Kotlin flow </li>
-<li>Coroutine + Retrofit + Moshi 实现网络请求</li>
-<li>Sqldelight 实现本地存储</li>
+<li>Hilt 依赖注入</li>
+<li>Kotlin/Kotlin flow/Coroutine</li>
+<li>Ktor 实现网络请求</li>
+<li>Room 实现本地存储</li>
 </ol>
-<h2 id="APP"><a href="#APP" class="headerlink" title="APP"></a>APP</h2><ul>
-<li>非Compose 版本项目地址：<a href="https://github.com/BreakZero/EasyWallet">EasyWallet</a></li>
-<li>Compose 版本项目地址：<a href="https://github.com/BreakZero/EasyWallet-Compose">EasyWallet-Compose</a></li>
+<ul>
+<li>本项目地址：<a href="https://github.com/BreakZero/EasyMask">EasyMask</a></li>
+</ul>
+<h2 id="gradle-脚本管理"><a href="#gradle-脚本管理" class="headerlink" title="gradle 脚本管理"></a>gradle 脚本管理</h2><ul>
+<li>创建新的模块作为Composing build，并在 <code>build.gradle.kts</code> 中加入如下代码实现plugin配置<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">gradlePlugin &#123;</span><br><span class="line">    plugins &#123;</span><br><span class="line">        create(&quot;VersionPlugin&quot;) &#123;</span><br><span class="line">            id = &quot;version-plugin&quot; // change the name you like</span><br><span class="line">            implementationClass = &quot;com.easy.version.DependencyVersionPlugin&quot; // change package to what you done</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>在 <code>src.main.kotlin</code> 目录下Plugin实现类实现接口 <code>Plugin&lt;Project&gt;</code>，这个plugin 的apply 方法会在任何你使用这个plugin的module 执行</li>
+<li>统一管理Configs。 （这里我为了区分feature模块和app模块，所以加了ignore list）<ol>
+<li>首先我们在每个模块都需要的plugin，写一个Project的扩展函数<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private fun Project.applyPlugin() &#123;</span><br><span class="line">    apply(plugin = &quot;com.android.library&quot;)</span><br><span class="line">    apply(plugin = &quot;kotlin-android&quot;)</span><br><span class="line">    apply(plugin = &quot;kotlin-kapt&quot;)</span><br><span class="line">    apply(plugin = &quot;kotlin-parcelize&quot;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+然后在apply方法中使用<br><code>target.beforeEvaluate &#123; applyPlugin() &#125;</code><br>这里注意要加上beforeEvaluate，在执行前apply plugin</li>
+</ol>
+</li>
 </ul>
 ]]></content>
   </entry>
@@ -69,5 +77,10 @@ OR<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class=
 
 <p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
 ]]></content>
+  </entry>
+  <entry>
+    <title>EasyWallet Part-2</title>
+    <url>/2021/09/16/EasyWallet-Part-2/</url>
+    <content><![CDATA[]]></content>
   </entry>
 </search>

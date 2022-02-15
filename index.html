@@ -188,6 +188,63 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2021/09/16/EasyWallet-Part-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="D&J">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="D&J BLOG">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/09/16/EasyWallet-Part-2/" class="post-title-link" itemprop="url">EasyWallet Part-2</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-09-16 21:39:17" itemprop="dateCreated datePublished" datetime="2021-09-16T21:39:17+08:00">2021-09-16</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2021/09/11/EasyWallet-Part-1/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -219,7 +276,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-09-16 21:27:56" itemprop="dateModified" datetime="2021-09-16T21:27:56+08:00">2021-09-16</time>
+                <time title="Modified: 2022-02-15 12:24:40" itemprop="dateModified" datetime="2022-02-15T12:24:40+08:00">2022-02-15</time>
               </span>
 
           
@@ -238,16 +295,24 @@
 <li>在项目中使用到：</li>
 </ul>
 <ol>
+<li>Composing build + plugin 实现依赖库统一管理</li>
 <li>Jetpack Compose</li>
-<li>Hilt</li>
-<li>自定义plugin + includeBuild 实现依赖库统一管理</li>
-<li>Kotlin/Kotlin flow </li>
-<li>Coroutine + Retrofit + Moshi 实现网络请求</li>
-<li>Sqldelight 实现本地存储</li>
+<li>Hilt 依赖注入</li>
+<li>Kotlin/Kotlin flow/Coroutine</li>
+<li>Ktor 实现网络请求</li>
+<li>Room 实现本地存储</li>
 </ol>
-<h2 id="APP"><a href="#APP" class="headerlink" title="APP"></a>APP</h2><ul>
-<li>非Compose 版本项目地址：<a target="_blank" rel="noopener" href="https://github.com/BreakZero/EasyWallet">EasyWallet</a></li>
-<li>Compose 版本项目地址：<a target="_blank" rel="noopener" href="https://github.com/BreakZero/EasyWallet-Compose">EasyWallet-Compose</a></li>
+<ul>
+<li>本项目地址：<a target="_blank" rel="noopener" href="https://github.com/BreakZero/EasyMask">EasyMask</a></li>
+</ul>
+<h2 id="gradle-脚本管理"><a href="#gradle-脚本管理" class="headerlink" title="gradle 脚本管理"></a>gradle 脚本管理</h2><ul>
+<li>创建新的模块作为Composing build，并在 <code>build.gradle.kts</code> 中加入如下代码实现plugin配置<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">gradlePlugin &#123;</span><br><span class="line">    plugins &#123;</span><br><span class="line">        create(&quot;VersionPlugin&quot;) &#123;</span><br><span class="line">            id = &quot;version-plugin&quot; // change the name you like</span><br><span class="line">            implementationClass = &quot;com.easy.version.DependencyVersionPlugin&quot; // change package to what you done</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>在 <code>src.main.kotlin</code> 目录下Plugin实现类实现接口 <code>Plugin&lt;Project&gt;</code>，这个plugin 的apply 方法会在任何你使用这个plugin的module 执行</li>
+<li>统一管理Configs。 （这里我为了区分feature模块和app模块，所以加了ignore list）<ol>
+<li>首先我们在每个模块都需要的plugin，写一个Project的扩展函数<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">private fun Project.applyPlugin() &#123;</span><br><span class="line">    apply(plugin = &quot;com.android.library&quot;)</span><br><span class="line">    apply(plugin = &quot;kotlin-android&quot;)</span><br><span class="line">    apply(plugin = &quot;kotlin-kapt&quot;)</span><br><span class="line">    apply(plugin = &quot;kotlin-parcelize&quot;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+然后在apply方法中使用<br><code>target.beforeEvaluate &#123; applyPlugin() &#125;</code><br>这里注意要加上beforeEvaluate，在执行前apply plugin</li>
+</ol>
+</li>
 </ul>
 
       
@@ -482,7 +547,7 @@ OR<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span clas
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-count">4</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -521,7 +586,7 @@ OR<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span clas
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2021</span>
+  <span itemprop="copyrightYear">2022</span>
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
