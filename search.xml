@@ -32,7 +32,7 @@ OR<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class=
       </tags>
   </entry>
   <entry>
-    <title>EasyWallet Part-1</title>
+    <title>EasyWallet Gradle Clean Up</title>
     <url>/2021/09/11/EasyWallet-Part-1/</url>
     <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><ul>
 <li>记录并整理EasyWallet 小钱包开发过程</li>
@@ -47,7 +47,7 @@ OR<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class=
 <li>Room 实现本地存储</li>
 </ol>
 <ul>
-<li>本项目地址：<a href="https://github.com/BreakZero/EasyMask">EasyMask</a></li>
+<li>本项目地址：<a href="https://github.com/BreakZero/EasyWallet-Mobile-Compose">EasyWallet-Compose</a></li>
 </ul>
 <h2 id="gradle-脚本管理"><a href="#gradle-脚本管理" class="headerlink" title="gradle 脚本管理"></a>gradle 脚本管理</h2><ul>
 <li>创建新的模块作为Composing build，并在 <code>build.gradle.kts</code> 中加入如下代码实现plugin配置<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">gradlePlugin &#123;</span><br><span class="line">    plugins &#123;</span><br><span class="line">        create(&quot;VersionPlugin&quot;) &#123;</span><br><span class="line">            id = &quot;version-plugin&quot; // change the name you like</span><br><span class="line">            implementationClass = &quot;com.easy.version.DependencyVersionPlugin&quot; // change package to what you done</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
@@ -61,8 +61,9 @@ OR<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class=
 <li>最后在root project中增加  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">subprojects &#123;</span><br><span class="line">    apply(plugin = &quot;version-plugin&quot;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
   给每个模块都应用上plugin，当然也可以单独在module上直接应用</li>
 <li>以上配置完成后，你会看到模块的 gradle 脚本基本就很少了， 如下  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import com.easy.version.*</span><br><span class="line"></span><br><span class="line">dependencies &#123;</span><br><span class="line">    implementation(project(&quot;:core&quot;))</span><br><span class="line">    implementation(project(&quot;:core-ui&quot;))</span><br><span class="line"></span><br><span class="line">    implementation(com.easy.version.dependencies.Other.sqlcipher)</span><br><span class="line"></span><br><span class="line">    roomDependencies()</span><br><span class="line">    composeUI()</span><br><span class="line">    hiltDependencies()</span><br><span class="line">    unitTestDependencies()</span><br><span class="line">    androidTestDependencies()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>如此配置之后， 每新增一个子模块，都能统一快速的配置gradle</li>
 </ul>
-<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>业务功能分析</p>
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>模块分离、Navigation管理…</p>
 ]]></content>
   </entry>
   <entry>
@@ -84,8 +85,26 @@ OR<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class=
 ]]></content>
   </entry>
   <entry>
-    <title>EasyWallet Part-2</title>
-    <url>/2021/09/16/EasyWallet-Part-2/</url>
-    <content><![CDATA[]]></content>
+    <title>EasyWallet Module Split</title>
+    <url>/2022/03/17/EasyWallet-Part-2/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><ul>
+<li>本文本着学习和整理的心态完成的</li>
+<li>在上一篇文章<a href="https://breakzero.github.io/2021/09/11/EasyWallet-Part-1/">EasyWallet Gradle Clean Up</a>中已经简要说明了gradle和项目配置</li>
+</ul>
+<h2 id="模块分离"><a href="#模块分离" class="headerlink" title="模块分离"></a>模块分离</h2><ul>
+<li>本项目是本着学习的心态整理和实现的，所以功能相对来说比较少<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">gradlePlugin &#123;</span><br><span class="line">    plugins &#123;</span><br><span class="line">        create(&quot;VersionPlugin&quot;) &#123;</span><br><span class="line">            id = &quot;version-plugin&quot; // change the name you like</span><br><span class="line">            implementationClass = &quot;com.easy.version.DependencyVersionPlugin&quot; // change package to what you done</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>在 <code>src.main.kotlin</code> 目录下Plugin实现类实现接口 <code>Plugin&lt;Project&gt;</code>，这个plugin 的apply 方法会在任何你使用这个plugin的module 执行</li>
+<li>统一管理Configs。 （这里我为了区分feature模块和app模块，所以加了ignore list）<ol>
+<li>首先我们在每个模块都需要的plugin，写一个Project的扩展函数<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">private fun Project.applyPlugin() &#123;</span><br><span class="line">    apply(plugin = &quot;com.android.library&quot;)</span><br><span class="line">    apply(plugin = &quot;kotlin-android&quot;)</span><br><span class="line">    apply(plugin = &quot;kotlin-kapt&quot;)</span><br><span class="line">    apply(plugin = &quot;kotlin-parcelize&quot;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+然后在apply方法中使用<br><code>target.beforeEvaluate &#123; applyPlugin() &#125;</code><br>这里注意要加上beforeEvaluate，在执行前apply plugin</li>
+<li>配置 android 块<br>增加扩展方法 <code>LibraryExtension.moduleConfig(isCore: Boolean)</code> (isCore这里算是我项目的特殊支持，为了实现buildConfigField的)<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@Suppress(&quot;UnstableApiUsage&quot;)</span><br><span class="line">private fun LibraryExtension.moduleConfig(isCore: Boolean) &#123;</span><br><span class="line">    compileSdk = BuildConfig.compileSdkVersion</span><br><span class="line">    defaultConfig &#123;</span><br><span class="line">        minSdk = BuildConfig.minSdkVersion</span><br><span class="line">        targetSdk = BuildConfig.targetSdkVersion</span><br><span class="line">    &#125;</span><br><span class="line">    buildTypes &#123;</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    compileOptions &#123;</span><br><span class="line">        sourceCompatibility = JavaVersion.VERSION_11</span><br><span class="line">        targetCompatibility = JavaVersion.VERSION_11</span><br><span class="line">    &#125;</span><br><span class="line">    buildFeatures.also &#123;</span><br><span class="line">        it.compose = true</span><br><span class="line">    &#125;</span><br><span class="line">    composeOptions &#123;</span><br><span class="line">        kotlinCompilerExtensionVersion = Compose.version</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+</li>
+<li>最后在root project中增加  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">subprojects &#123;</span><br><span class="line">    apply(plugin = &quot;version-plugin&quot;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+  给每个模块都应用上plugin，当然也可以单独在module上直接应用</li>
+<li>以上配置完成后，你会看到模块的 gradle 脚本基本就很少了， 如下  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">import com.easy.version.*</span><br><span class="line"></span><br><span class="line">dependencies &#123;</span><br><span class="line">    implementation(project(&quot;:core&quot;))</span><br><span class="line">    implementation(project(&quot;:core-ui&quot;))</span><br><span class="line"></span><br><span class="line">    implementation(com.easy.version.dependencies.Other.sqlcipher)</span><br><span class="line"></span><br><span class="line">    roomDependencies()</span><br><span class="line">    composeUI()</span><br><span class="line">    hiltDependencies()</span><br><span class="line">    unitTestDependencies()</span><br><span class="line">    androidTestDependencies()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>业务功能分析</p>
+]]></content>
   </entry>
 </search>
