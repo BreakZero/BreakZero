@@ -85,15 +85,6 @@ OR<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class=
 ]]></content>
   </entry>
   <entry>
-    <title>EasyWallet Module Split</title>
-    <url>/2022/03/17/EasyWallet-Part-2/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><ul>
-<li>本文本着学习和整理的心态完成的</li>
-<li>在上一篇文章<a href="https://breakzero.github.io/2021/09/11/EasyWallet-Part-1/">EasyWallet Gradle Clean Up</a>中已经简要说明了gradle和项目配置</li>
-</ul>
-<h2 id="模块分离"><a href="#模块分离" class="headerlink" title="模块分离"></a>模块分离</h2>]]></content>
-  </entry>
-  <entry>
     <title>RPC with Kotlinx Serialization</title>
     <url>/2022/06/08/RPC-with-Kotlinx-Serialization/</url>
     <content><![CDATA[<blockquote>
