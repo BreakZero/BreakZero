@@ -176,6 +176,7 @@ body {
 }
 body {
   background: url("/images/source-code.jpg") fixed;
+  background-attachment: fixed;
   background-size: 100% 100%;
   color: var(--text-color);
   font-family: 'Lato', "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -1247,7 +1248,7 @@ pre .javascript .function {
 }
 .links-of-author a::before,
 .links-of-author span.exturl::before {
-  background: #bd4a0d;
+  background: #ff90ff;
   border-radius: 50%;
   content: ' ';
   display: inline-block;
