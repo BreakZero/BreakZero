@@ -28,7 +28,7 @@
 <meta property="og:description" content="前言 记录并整理EasyWallet 小钱包开发过程 在项目中使用到：   Composing build + plugin 实现依赖库统一管理 Jetpack Compose Hilt 依赖注入 Kotlin&#x2F;Kotlin flow&#x2F;Coroutine Ktor 实现网络请求 Room 实现本地存储   本项目地址：EasyWallet-Compose  gradle 脚本管理 创建新的模块作为">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2021-09-11T10:09:49.000Z">
-<meta property="article:modified_time" content="2023-02-13T18:14:50.557Z">
+<meta property="article:modified_time" content="2023-02-14T01:16:09.253Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="Gradle">
 <meta name="twitter:card" content="summary">
@@ -226,8 +226,17 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-02-14 02:14:50" itemprop="dateModified" datetime="2023-02-14T02:14:50+08:00">2023-02-14</time>
+                <time title="Modified: 2023-02-14 09:16:09" itemprop="dateModified" datetime="2023-02-14T09:16:09+08:00">2023-02-14</time>
               </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Gradle/" itemprop="url" rel="index"><span itemprop="name">Gradle</span></a>
+                </span>
+            </span>
 
           
 
@@ -257,7 +266,7 @@
 </ul>
 <h2 id="gradle-脚本管理"><a href="#gradle-脚本管理" class="headerlink" title="gradle 脚本管理"></a>gradle 脚本管理</h2><ul>
 <li>创建新的模块作为Composing build，并在 <code>build.gradle.kts</code> 中加入如下代码实现plugin配置<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">gradlePlugin &#123;</span><br><span class="line">    plugins &#123;</span><br><span class="line">        create(&quot;VersionPlugin&quot;) &#123;</span><br><span class="line">            id = &quot;version-plugin&quot; // change the name you like</span><br><span class="line">            implementationClass = &quot;com.easy.version.DependencyVersionPlugin&quot; // change package to what you done</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li>在 <code>src.main.kotlin</code> 目录下Plugin实现类实现接口 <code>Plugin&lt;Project&gt;</code>，这个plugin 的apply 方法会在任何你使用这个plugin的module 执行</li>
+<li>在 <code>src.main.kotlin</code> 目录下Plugin实现类实现接口 <code>Plugin&lt;Project&gt;</code>，这个plugin 的apply 方法会在任何你使用这个plugin的module 执行  <span id="more"></span></li>
 <li>统一管理Configs。 （这里我为了区分feature模块和app模块，所以加了ignore list）<ol>
 <li>首先我们在每个模块都需要的plugin，写一个Project的扩展函数<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">private fun Project.applyPlugin() &#123;</span><br><span class="line">    apply(plugin = &quot;com.android.library&quot;)</span><br><span class="line">    apply(plugin = &quot;kotlin-android&quot;)</span><br><span class="line">    apply(plugin = &quot;kotlin-kapt&quot;)</span><br><span class="line">    apply(plugin = &quot;kotlin-parcelize&quot;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 然后在apply方法中使用<br><code>target.beforeEvaluate &#123; applyPlugin() &#125;</code><br>这里注意要加上beforeEvaluate，在执行前apply plugin</li>
@@ -373,10 +382,16 @@
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-count">4</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
