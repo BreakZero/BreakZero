@@ -190,6 +190,82 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2023/03/20/DATA-BETWEEN-AIDL-IN-ANDROID/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="D&J">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="D&J">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/03/20/DATA-BETWEEN-AIDL-IN-ANDROID/" class="post-title-link" itemprop="url">DATA BETWEEN AIDL IN ANDROID</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-03-20 16:37:41 / Modified: 17:53:53" itemprop="dateCreated datePublished" datetime="2023-03-20T16:37:41+08:00">2023-03-20</time>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <blockquote>
+<p>Android 夸进程通讯的方式一般有：</p>
+<ol>
+<li>Binder</li>
+<li>内存共享</li>
+<li>Socket</li>
+</ol>
+</blockquote>
+<p>其中Binder在Android中使用比较多，比如AMS<br>在Android上，一个进程通常是不能获取到其他进程的内存访问权限的，但是有时我们需要在多个进程之间进行数据处理，因此Android提供了Android Interface Definition Language（AIDL）来做处理<br>其实AIDL是文件会通过编译生成一个Sub类并实现IBinder接口的，这种方式可以说是基于Binder实现的。</p>
+<h3 id="配置新项目"><a href="#配置新项目" class="headerlink" title="配置新项目"></a>配置新项目</h3><p>首先创建一个项目，有两个Phone Module，分别为Client和Server端。对于新的项目打开aidl feature支持</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">buildFeatures &#123;</span><br><span class="line">    compose <span class="literal">true</span></span><br><span class="line">    aidl <span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/03/20/DATA-BETWEEN-AIDL-IN-ANDROID/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2022/06/08/RPC-with-Kotlinx-Serialization/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -529,7 +605,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">3</span>
+          <span class="site-state-item-count">4</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
