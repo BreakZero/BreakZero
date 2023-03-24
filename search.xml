@@ -28,8 +28,8 @@ OR<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class=
         <category>Android</category>
       </categories>
       <tags>
-        <tag>MVVM</tag>
         <tag>Android</tag>
+        <tag>MVVM</tag>
       </tags>
   </entry>
   <entry>
@@ -66,8 +66,17 @@ OR<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class=
 <figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">queries</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">package</span> <span class="attr">android:name</span>=<span class="string">&quot;com.easy.aidlserver&quot;</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">queries</span>&gt;</span></span><br></pre></td></tr></table></figure></li>
 <li><p>已经操作了unbindService，但是仍然能进行数据操作，而且日志走了onUnbind却不走onServiceDisconnected<br>其实onServiceDisconnected在正常unbind的时候是不会触发执行的，而是在服务丢失的时候执行。<br><img src="/images/codes/aidl_1.jpg" alt="When to excute onServiceDisconnected" title="AIDL"></p>
 </li>
+<li><p>传输大数据的时候<br>因为AIDL 是通过IBinder进行数据传输的，而IBinder对数据的拷贝是经过mmap（内存映射），在我们app启动的时候，会去申请一个 1M - 8K大小的内存给mmap，所以如果<br>传输1M或以上的数据就会报错。<br>将User修改一下，加一个ByteArray</p>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Parcelize</span></span><br><span class="line"><span class="keyword">data</span> <span class="class"><span class="keyword">class</span> <span class="title">User</span></span>(</span><br><span class="line">    <span class="keyword">var</span> name: String? = <span class="string">&quot;&quot;</span>,</span><br><span class="line">    <span class="keyword">var</span> age: <span class="built_in">Int</span> = <span class="number">0</span>,</span><br><span class="line">    <span class="keyword">var</span> byteArray: ByteArray = ByteArray(<span class="number">1</span>)</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>使用的时候</p>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="comment">// _1M = 1024 * 1024</span></span><br><span class="line">iRemoteService?.addUser(</span><br><span class="line">    User(</span><br><span class="line">        <span class="string">&quot;Dougie <span class="subst">$&#123;Random.nextInt(<span class="number">1</span>, <span class="number">100</span>)&#125;</span>&quot;</span>,</span><br><span class="line">        Random.nextInt(<span class="number">18</span>, <span class="number">24</span>),</span><br><span class="line">        byteArray = ByteArray(_1M)</span><br><span class="line">    )</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>你会收到报错信息：<br><img src="/images/codes/aidl_error.jpg" alt="android.os.TransactionTooLargeException: data parcel size 1048712 bytes" title="AIDL Error"></p>
+</li>
 </ol>
 <h3 id="代码地址-AidlSample"><a href="#代码地址-AidlSample" class="headerlink" title="代码地址 AidlSample"></a>代码地址 <a href="https://github.com/BreakZero/AidlSample">AidlSample</a></h3>]]></content>
+      <tags>
+        <tag>Android</tag>
+      </tags>
   </entry>
   <entry>
     <title>EasyWallet Gradle Clean Up</title>
