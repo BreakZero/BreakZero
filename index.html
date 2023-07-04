@@ -190,6 +190,87 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2023/07/04/A-brief-of-Jetpack-Compose-LaunchedEffect/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="D&J">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="D&J">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/07/04/A-brief-of-Jetpack-Compose-LaunchedEffect/" class="post-title-link" itemprop="url">浅谈Jetpack Compose LaunchedEffect</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-07-04 17:24:21 / Modified: 17:25:41" itemprop="dateCreated datePublished" datetime="2023-07-04T17:24:21+08:00">2023-07-04</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>在Jetpack Compose 代码中，我们经常看到<code>LaunchedEffect</code>这个常见的。今天就简单了解下这个方法吧。在说<code>LaunchedEffect</code>前，让我们先说一下<code>Side Effect</code>.</p>
+<h3 id="什么是Side-Effect"><a href="#什么是Side-Effect" class="headerlink" title="什么是Side Effect"></a>什么是Side Effect</h3><p>在编程语言中，<code>Side-Effect</code>指的是调用函数时，除了返回可能的函数值外，该函数还对函数范围外的变量，参数等进行了修改。<br>举个🌰，看下面的函数，它有2个参数，返回它们的和，但是没有对任何其他变量有修改，所以它是没有副作用(No Side-Effect)的</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">sum</span><span class="params">(number1: <span class="type">Int</span>, number2: <span class="type">Int</span>)</span></span> = number1 + number2</span><br></pre></td></tr></table></figure>
+<p>但如果我们将函数修改成下面的实现，每次调用该函数都会对sum重新赋值，而sum又是在函数范围外，所以认为这个函数有一个副作用</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> sum = <span class="number">0</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">sum</span><span class="params">(number1: <span class="type">Int</span>, number2: <span class="type">Int</span>)</span></span> &#123;</span><br><span class="line">    sum = number1 + number2</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="在Jetpack-Compose-中，什么是LaunchedEffect"><a href="#在Jetpack-Compose-中，什么是LaunchedEffect" class="headerlink" title="在Jetpack Compose 中，什么是LaunchedEffect"></a>在Jetpack Compose 中，什么是LaunchedEffect</h3><p>根据源码我们看到，<code>LaunchedEffect</code>是一个带有<code>@Composable</code>的函数，注释如下</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/07/04/A-brief-of-Jetpack-Compose-LaunchedEffect/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2023/03/20/DATA-BETWEEN-AIDL-IN-ANDROID/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -611,7 +692,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">4</span>
+          <span class="site-state-item-count">5</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -624,7 +705,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-count">5</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>

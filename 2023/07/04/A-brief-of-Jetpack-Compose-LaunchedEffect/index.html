@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"breakzero.github.io","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="在Jetpack Compose 代码中，我们经常看到LaunchedEffect这个常见的。今天就简单了解下这个方法吧。在说LaunchedEffect前，让我们先说一下Side Effect. 什么是Side Effect在编程语言中，Side-Effect指的是调用函数时，除了返回可能的函数值外，该函数还对函数范围外的变量，参数等进行了修改。举个🌰，看下面的函数，它有2个参数，返回它们的和">
+<meta property="og:type" content="article">
+<meta property="og:title" content="浅谈Jetpack Compose LaunchedEffect">
+<meta property="og:url" content="https://breakzero.github.io/2023/07/04/A-brief-of-Jetpack-Compose-LaunchedEffect/index.html">
+<meta property="og:site_name" content="D&amp;J">
+<meta property="og:description" content="在Jetpack Compose 代码中，我们经常看到LaunchedEffect这个常见的。今天就简单了解下这个方法吧。在说LaunchedEffect前，让我们先说一下Side Effect. 什么是Side Effect在编程语言中，Side-Effect指的是调用函数时，除了返回可能的函数值外，该函数还对函数范围外的变量，参数等进行了修改。举个🌰，看下面的函数，它有2个参数，返回它们的和">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://breakzero.github.io/images/codes/launched_effect_1.jpg">
+<meta property="article:published_time" content="2023-07-04T09:24:21.000Z">
+<meta property="article:modified_time" content="2023-07-04T09:25:41.512Z">
+<meta property="article:author" content="D&amp;J">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Jetpack Compose">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://breakzero.github.io/images/codes/launched_effect_1.jpg">
+
+<link rel="canonical" href="https://breakzero.github.io/2023/07/04/A-brief-of-Jetpack-Compose-LaunchedEffect/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>浅谈Jetpack Compose LaunchedEffect | D&J</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">D&J</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/BreakZero" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2023/07/04/A-brief-of-Jetpack-Compose-LaunchedEffect/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="D&J">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="D&J">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          浅谈Jetpack Compose LaunchedEffect
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-07-04 17:24:21 / Modified: 17:25:41" itemprop="dateCreated datePublished" datetime="2023-07-04T17:24:21+08:00">2023-07-04</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>在Jetpack Compose 代码中，我们经常看到<code>LaunchedEffect</code>这个常见的。今天就简单了解下这个方法吧。在说<code>LaunchedEffect</code>前，让我们先说一下<code>Side Effect</code>.</p>
+<h3 id="什么是Side-Effect"><a href="#什么是Side-Effect" class="headerlink" title="什么是Side Effect"></a>什么是Side Effect</h3><p>在编程语言中，<code>Side-Effect</code>指的是调用函数时，除了返回可能的函数值外，该函数还对函数范围外的变量，参数等进行了修改。<br>举个🌰，看下面的函数，它有2个参数，返回它们的和，但是没有对任何其他变量有修改，所以它是没有副作用(No Side-Effect)的</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">sum</span><span class="params">(number1: <span class="type">Int</span>, number2: <span class="type">Int</span>)</span></span> = number1 + number2</span><br></pre></td></tr></table></figure>
+<p>但如果我们将函数修改成下面的实现，每次调用该函数都会对sum重新赋值，而sum又是在函数范围外，所以认为这个函数有一个副作用</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> sum = <span class="number">0</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">sum</span><span class="params">(number1: <span class="type">Int</span>, number2: <span class="type">Int</span>)</span></span> &#123;</span><br><span class="line">    sum = number1 + number2</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="在Jetpack-Compose-中，什么是LaunchedEffect"><a href="#在Jetpack-Compose-中，什么是LaunchedEffect" class="headerlink" title="在Jetpack Compose 中，什么是LaunchedEffect"></a>在Jetpack Compose 中，什么是LaunchedEffect</h3><p>根据源码我们看到，<code>LaunchedEffect</code>是一个带有<code>@Composable</code>的函数，注释如下</p>
+<span id="more"></span>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">When LaunchedEffect enters the composition it will launch block into the composition<span class="string">&#x27;s CoroutineContext. The coroutine will be cancelled and re-launched when LaunchedEffect is recomposed with a different key1 or key2. The coroutine will be cancelled when the LaunchedEffect leaves the composition.</span></span><br><span class="line"><span class="string">This function should not be used to (re-)launch ongoing tasks in response to callback events by way of storing callback data in MutableState passed to key. Instead, see rememberCoroutineScope to obtain a CoroutineScope that may be used to launch ongoing jobs scoped to the composition in response to event callbacks.</span></span><br></pre></td></tr></table></figure>
+<p>简单来说，<code>LaunchedEffect</code>是一个可在当前可组合项的作用域内运行挂起函数(block是suspend的)的可组合函数。<br>在<a target="_blank" rel="noopener" href="https://developer.android.com/jetpack/compose/mental-model">Thinking in Compose</a>中，我们了解到一个可组合项应该是没有副作用的，如果我们想要在可组合项中修改应用状态，需要通过Effect API启动协程操作，所以可以说<code>LaunchedEffect</code>在Jetpack Compose中提供了在可组合项中调用挂起函数的能力。</p>
+<p>下面我们通过一个例子简单了解下， 这个例子是一个TodoTask下的一个小功能，根据选择的类别展示当前类别的所有Task。<br>简单的准备mock tasks，代码如下：</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">data</span> <span class="class"><span class="keyword">class</span> <span class="title">TodoTask</span></span>(</span><br><span class="line">    <span class="keyword">val</span> id: <span class="built_in">Long</span>,</span><br><span class="line">    <span class="keyword">val</span> name: String,</span><br><span class="line">    <span class="keyword">val</span> description: String</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// mock tasks respose</span></span><br><span class="line"><span class="keyword">val</span> mockTasks = (<span class="number">1.</span><span class="number">.10</span>).map &#123;</span><br><span class="line">    TodoTask(</span><br><span class="line">        id = it.toLong(),</span><br><span class="line">        name = <span class="string">&quot;task name <span class="variable">$it</span>&quot;</span>,</span><br><span class="line">        description = <span class="string">&quot;task description <span class="variable">$it</span>&quot;</span></span><br><span class="line">    )</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// mock get tasks from api, delay 2 seconds</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> <span class="title">getTasks</span><span class="params">()</span></span>: List&lt;TodoTask&gt; &#123;</span><br><span class="line">    delay(<span class="number">2000</span>)</span><br><span class="line">    <span class="keyword">return</span> mockTasks</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在TodoListOfCategoryScreen主要是一个Lazy Column用来展示任务名称的，其中参数是Category</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">TodoListOfCategoryScreen</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    category: <span class="type">String</span></span></span></span><br><span class="line"><span class="params"><span class="function">)</span></span> &#123;</span><br><span class="line">    println(<span class="string">&quot;TASK TAG: out of column scope&quot;</span>)</span><br><span class="line">    <span class="keyword">var</span> tasks <span class="keyword">by</span> remember &#123;</span><br><span class="line">        mutableStateOf(emptyList&lt;TodoTask&gt;())</span><br><span class="line">    &#125;</span><br><span class="line">    Column(</span><br><span class="line">        modifier = Modifier.fillMaxSize()</span><br><span class="line">    ) &#123;</span><br><span class="line">        println(<span class="string">&quot;TASK TAG: TodoListScreen: <span class="subst">$&#123;tasks.size&#125;</span>, category: <span class="variable">$category</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line">        LaunchedEffect(key1 = category) &#123;</span><br><span class="line">            tasks = getTasks()</span><br><span class="line">            println(<span class="string">&quot;TASK TAG: get tasks from api, category: <span class="variable">$category</span>&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line">        LazyColumn(</span><br><span class="line">            modifier = Modifier.fillMaxSize()</span><br><span class="line">        ) &#123;</span><br><span class="line">            items(tasks, key = &#123;</span><br><span class="line">                it.id</span><br><span class="line">            &#125;) &#123;</span><br><span class="line">                Text(modifier = Modifier.fillMaxWidth(), text = it.name)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>首先我们的category是固定的，在getTasks之后，修改了tasks导致Column发生重组，所以scope相关的日志打印了2次。而模拟网络请求的<code>LaunchedEffect</code>内只调用了一次，是因为<code>LaunchedEffect</code>的调用时期只有进入重组项或者Key变化重组，如果是普通的启动协程，在重组时，会导致多次调用api请求。<br><img src="/images/codes/launched_effect_1.jpg" alt="Logcat" title="launched_effect"></p>
+<blockquote>
+<p>PS: 这里为什么out of column scope也会打印2次呢，其实是因为Column是inline的， 它只能共享调用方的重组范围。</p>
+</blockquote>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li><code>LaunchedEffect</code>是在Jetpack Compose中提供了在可组合项中调用挂起函数的能力的一种方式。</li>
+<li>在进入组合项时，<code>LaunchedEffect</code>会启动一个协程并执行挂起代码块(block)，在退出组合项时，协程将取消</li>
+<li>使用不同的key(参数key1, key2)重组时，会取消当前协程并启动新的协程执行挂起函数</li>
+<li>写<code>LaunchedEffect</code>函数时，最少要一个key(IDE 会有提示)</li>
+<li><code>LaunchedEffect</code>的函数调度器是主线程</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Android/" rel="tag"># Android</a>
+              <a href="/tags/Jetpack-Compose/" rel="tag"># Jetpack Compose</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/03/20/DATA-BETWEEN-AIDL-IN-ANDROID/" rel="prev" title="DATA BETWEEN AIDL IN ANDROID">
+      <i class="fa fa-chevron-left"></i> DATA BETWEEN AIDL IN ANDROID
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFSide-Effect"><span class="nav-number">1.</span> <span class="nav-text">什么是Side Effect</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%A8Jetpack-Compose-%E4%B8%AD%EF%BC%8C%E4%BB%80%E4%B9%88%E6%98%AFLaunchedEffect"><span class="nav-number">2.</span> <span class="nav-text">在Jetpack Compose 中，什么是LaunchedEffect</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="D&J"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">D&J</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/BreakZero" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;BreakZero" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:dejin.po@gmail.com" title="E-Mail → mailto:dejin.po@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">D&J</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  <script defer src="/lib/three/three.min.js"></script>
+    <script defer src="/lib/three/three-waves.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
