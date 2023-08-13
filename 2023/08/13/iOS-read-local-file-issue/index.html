@@ -28,10 +28,10 @@
 <meta property="og:description" content="问题描述在使用KMM实现iOS平台文件存储时，通过到处container文件可以查看到文件确实存在目录下，但是在调用NSData.dataWithContentsOfFile时总是返回空，根据错误信息得知找不到该文件或目录No such File or Directory。其中代码如下： 12345678val errorPtr: ObjCObjectVar&lt;NSError?&gt; &#x3D; a">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2023-08-13T04:24:44.000Z">
-<meta property="article:modified_time" content="2023-08-13T04:39:41.291Z">
+<meta property="article:modified_time" content="2023-08-13T04:58:47.015Z">
 <meta property="article:author" content="D&amp;J">
-<meta property="article:tag" content="Kotlin">
 <meta property="article:tag" content="SwiftUI">
+<meta property="article:tag" content="Kotlin">
 <meta name="twitter:card" content="summary">
 
 <link rel="canonical" href="https://breakzero.github.io/2023/08/13/iOS-read-local-file-issue/">
@@ -221,7 +221,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2023-08-13 12:24:44 / Modified: 12:39:41" itemprop="dateCreated datePublished" datetime="2023-08-13T12:24:44+08:00">2023-08-13</time>
+              <time title="Created: 2023-08-13 12:24:44 / Modified: 12:58:47" itemprop="dateCreated datePublished" datetime="2023-08-13T12:24:44+08:00">2023-08-13</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -271,7 +271,7 @@
 再次运行，成功拿到bytes（✌️）<br>但是这样存在一个问题，随着时间，这个目录的文件肯定会越来越多，到时候遍历肯定是一个耗时任务。那有没有可以直接通过filename拿到对应文件的url呢？<br>看了下代码，既然能拿到document目录的url，那是不是也有API可以直接拿到文件的url？一开始想通过url + filename组装一下<br>他们类型不一致，相对麻烦，还好找到了，代码：<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> documentDirectory = NSSearchPathForDirectoriesInDomains(</span><br><span class="line">    directory = NSDocumentDirectory,</span><br><span class="line">    domainMask = NSUserDomainMask,</span><br><span class="line">    expandTilde = <span class="literal">true</span></span><br><span class="line">).first() <span class="keyword">as</span> NSString</span><br><span class="line"><span class="keyword">val</span> fullPath = documentDirectory.stringByAppendingPathComponent(fileName)</span><br><span class="line">println(fullPath)</span><br></pre></td></tr></table></figure>
 路径正确，直接调用<code>NSData.dataWithContentsOfFile</code>传入文件路径即可</li>
 </ol>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>在 iOS8.0 之后，由于Application（Bundle identifier）的UUID会随机改变，所以不能直接存全路径，可以直接存名字<br>而可以通过<code>NSSearchPathForDirectoriesInDomains</code>拿到对应的路径，再加上文件名得到当前文件准确的全路径，这时候读取即可。<br>对Swift的API都不太熟悉，很多时候还是需要通过查看文档和资料，Kotlin Native对应的基本都是Object-C上的API</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>在 iOS8.0 之后，由于Application（Bundle identifier）的UUID会随机改变，所以不能直接存全路径，可以直接存名字<br>而可以通过<code>NSSearchPathForDirectoriesInDomains</code>拿到对应的路径，再加上文件名得到当前文件准确的全路径，这时候读取即可。</p>
 
     </div>
 
@@ -281,8 +281,8 @@
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/Kotlin/" rel="tag"># Kotlin</a>
               <a href="/tags/SwiftUI/" rel="tag"># SwiftUI</a>
+              <a href="/tags/Kotlin/" rel="tag"># Kotlin</a>
           </div>
 
         
