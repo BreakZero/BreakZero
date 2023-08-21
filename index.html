@@ -190,6 +190,94 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2023/08/21/TODO-List-KMM-Project-Introduce/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="D&J">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="D&J">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/08/21/TODO-List-KMM-Project-Introduce/" class="post-title-link" itemprop="url">TODO List KMM 介绍</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2023-08-21 11:30:17 / Modified: 11:36:37" itemprop="dateCreated datePublished" datetime="2023-08-21T11:30:17+08:00">2023-08-21</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kotlin-Multiplatform/" itemprop="url" rel="index"><span itemprop="name">Kotlin Multiplatform</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>&emsp;TODO List KMM是一个基于Kotlin Multiplatform Mobile实现的一个小项目，主要提供查看Todo task列表，增加/删除/编辑task功能，目前有加上sign in/sign up页面，但是没有整合后端，有时间可能会加上。当然，这并不重要，本篇文章主要为了介绍KMM项目结构和公共模块抽取的个人想法和学习实践过程的一个回顾。<br>项目地址在文末。</p>
+<blockquote>
+<p>至今，虽然Kotlin Multiplatform可以直接使用Compose实现两端UI了，但是它还处于非稳定版本，<br>而且实际上在iOS上存在卡顿现象，所以TODO List还是使用SwiftUI/Jetpack Compose分别实现Android/iOS 界面</p>
+</blockquote>
+<h3 id="基本结构"><a href="#基本结构" class="headerlink" title="基本结构"></a>基本结构</h3><p>&emsp;作为一个KMM项目，Android/iOS 这两个模块是必不可少的，它们分别是用来实现Android/iOS页面和使用或构建数据逻辑相关的代码，而shared当然也很重要，shared是两平台的共用代码。在大多数项目中，我们的数据来源双端都是一致的，所以shared模块完全可以作为一个数据<br>提供者，不管是来源是后端api还是本地，都是没有任何异议的。当然，除此之外，还可以提供一些工具扩展类。</p>
+<h3 id="项目创建和配置"><a href="#项目创建和配置" class="headerlink" title="项目创建和配置"></a>项目创建和配置</h3><ol>
+<li>首先我们创建一个KMM项目，catalogs管理依赖库的方式很早就被推荐使用了，所以我们将准备好的<code>libs.versions.toml</code>文件copy到<code>gradle</code>目录下<br><code>composite build</code>同样也是比较推荐的一种做法，从nowinandroid项目中copy过来，并加以修改放到我们项目中，命名为<code>build-logic</code>，里面有插件，<br>这些插件是为了减少的module下的gradle配置模板代码从而更易于管理。</li>
+<li>配置好项目之后，确定shared模块主要需要实现哪些数据相关的功能，并将其分模块来实现，在该项目中有4个模块分别是core, data, database, model.</li>
+</ol>
+<ul>
+<li>2.1 core 提供核心工具类或扩展方法</li>
+<li>2.2 model 封装上层需要的数据结构，用于UI或者逻辑需要的过度Model类</li>
+<li>2.3 database 提供本地存储和读取功能作用</li>
+<li>2.4 data 数据源层，主要是combine本地或者远程api数据来源的组装和mapping等逻辑
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/08/21/TODO-List-KMM-Project-Introduce/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2023/08/13/iOS-read-local-file-issue/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1006,7 +1094,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-count">10</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

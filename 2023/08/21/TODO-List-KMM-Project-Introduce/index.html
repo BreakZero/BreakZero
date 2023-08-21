@@ -20,20 +20,21 @@
     var CONFIG = {"hostname":"breakzero.github.io","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="为什么会有这种疑问呢？我们知道Compose是通过重组来刷新UI的，当一个State发生改变时，其对应的可重组函数的Lambda会重新执行，而我们通常在设计State时都是将当前界面相关属combine成一个整体的State，所以我们在修改State时，其实就是让整个State都发生了变化，基本会让整个界面都发生重组不会跳过。下面通过一个简单的例子： 1234567&#x2F;&#x2F; 一个整合的Statedat">
+  <meta name="description" content="前言&amp;emsp;TODO List KMM是一个基于Kotlin Multiplatform Mobile实现的一个小项目，主要提供查看Todo task列表，增加&#x2F;删除&#x2F;编辑task功能，目前有加上sign in&#x2F;sign up页面，但是没有整合后端，有时间可能会加上。当然，这并不重要，本篇文章主要为了介绍KMM项目结构和公共模块抽取的个人想法和学习实践过程的一个回顾。项目地址在文末。  至今，">
 <meta property="og:type" content="article">
-<meta property="og:title" content="是否应该将Compose中的状态切分">
-<meta property="og:url" content="https://breakzero.github.io/2023/07/10/Do-we-need-to-split-state-of-Compose/index.html">
+<meta property="og:title" content="TODO List KMM 介绍">
+<meta property="og:url" content="https://breakzero.github.io/2023/08/21/TODO-List-KMM-Project-Introduce/index.html">
 <meta property="og:site_name" content="D&amp;J">
-<meta property="og:description" content="为什么会有这种疑问呢？我们知道Compose是通过重组来刷新UI的，当一个State发生改变时，其对应的可重组函数的Lambda会重新执行，而我们通常在设计State时都是将当前界面相关属combine成一个整体的State，所以我们在修改State时，其实就是让整个State都发生了变化，基本会让整个界面都发生重组不会跳过。下面通过一个简单的例子： 1234567&#x2F;&#x2F; 一个整合的Statedat">
+<meta property="og:description" content="前言&amp;emsp;TODO List KMM是一个基于Kotlin Multiplatform Mobile实现的一个小项目，主要提供查看Todo task列表，增加&#x2F;删除&#x2F;编辑task功能，目前有加上sign in&#x2F;sign up页面，但是没有整合后端，有时间可能会加上。当然，这并不重要，本篇文章主要为了介绍KMM项目结构和公共模块抽取的个人想法和学习实践过程的一个回顾。项目地址在文末。  至今，">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2023-07-10T07:06:10.000Z">
-<meta property="article:modified_time" content="2023-07-10T07:07:08.068Z">
+<meta property="article:published_time" content="2023-08-21T03:30:17.000Z">
+<meta property="article:modified_time" content="2023-08-21T03:36:37.438Z">
 <meta property="article:author" content="D&amp;J">
-<meta property="article:tag" content="Jetpack Compose">
+<meta property="article:tag" content="Kotlin">
+<meta property="article:tag" content="SwiftUI">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://breakzero.github.io/2023/07/10/Do-we-need-to-split-state-of-Compose/">
+<link rel="canonical" href="https://breakzero.github.io/2023/08/21/TODO-List-KMM-Project-Introduce/">
 
 
 <script id="page-configurations">
@@ -46,7 +47,7 @@
   };
 </script>
 
-  <title>是否应该将Compose中的状态切分 | D&J</title>
+  <title>TODO List KMM 介绍 | D&J</title>
   
 
 
@@ -196,7 +197,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2023/07/10/Do-we-need-to-split-state-of-Compose/">
+    <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2023/08/21/TODO-List-KMM-Project-Introduce/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.png">
@@ -209,7 +210,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          是否应该将Compose中的状态切分
+          TODO List KMM 介绍
         </h1>
 
         <div class="post-meta">
@@ -220,7 +221,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2023-07-10 15:06:10 / Modified: 15:07:08" itemprop="dateCreated datePublished" datetime="2023-07-10T15:06:10+08:00">2023-07-10</time>
+              <time title="Created: 2023-08-21 11:30:17 / Modified: 11:36:37" itemprop="dateCreated datePublished" datetime="2023-08-21T11:30:17+08:00">2023-08-21</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -228,7 +229,7 @@
               </span>
               <span class="post-meta-item-text">In</span>
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+                  <a href="/categories/Kotlin-Multiplatform/" itemprop="url" rel="index"><span itemprop="name">Kotlin Multiplatform</span></a>
                 </span>
             </span>
 
@@ -243,22 +244,36 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>为什么会有这种疑问呢？<br>我们知道Compose是通过重组来刷新UI的，当一个State发生改变时，其对应的可重组函数的Lambda会重新执行，而我们通常在设计State时都是将当前界面相关属<br>combine成一个整体的State，所以我们在修改State时，其实就是让整个State都发生了变化，基本会让整个界面都发生重组不会跳过。下面通过一个简单的例子：</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 一个整合的State</span></span><br><span class="line"><span class="keyword">data</span> <span class="class"><span class="keyword">class</span> <span class="title">XModelState</span></span>(</span><br><span class="line">    <span class="keyword">val</span> name: String,</span><br><span class="line">    <span class="keyword">val</span> age: <span class="built_in">Int</span>,</span><br><span class="line">    <span class="keyword">val</span> intro: String</span><br><span class="line">    ...</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
-<span id="more"></span>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">Column(</span><br><span class="line">    modifier = Modifier</span><br><span class="line">    .fillMaxSize()</span><br><span class="line">    .padding(<span class="number">16.</span>dp)</span><br><span class="line">) &#123;</span><br><span class="line">    </span><br><span class="line">    println(<span class="string">&quot;Column&quot;</span>)</span><br><span class="line"></span><br><span class="line">    Wrapper &#123;</span><br><span class="line">        Text(text = <span class="string">&quot;Name is <span class="subst">$&#123;modelState.name&#125;</span>&quot;</span>).also &#123;</span><br><span class="line">            println(<span class="string">&quot;Name changed&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    Wrapper &#123;</span><br><span class="line">        Text(text = <span class="string">&quot;Age is <span class="subst">$&#123;modelState.age&#125;</span>&quot;</span>).also &#123;</span><br><span class="line">            println(<span class="string">&quot;Age changed&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    Wrapper &#123;</span><br><span class="line">        Text(text = <span class="string">&quot;Intro is <span class="subst">$&#123;modelState.intro&#125;</span>&quot;</span>).also &#123;</span><br><span class="line">            println(<span class="string">&quot;Intro changed&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Button(</span><br><span class="line">        modifier = Modifier.fillMaxWidth(),</span><br><span class="line">        onClick = &#123;</span><br><span class="line">            modelState = modelState.copy(</span><br><span class="line">                name = <span class="string">&quot;Dougie <span class="subst">$&#123;Random.nextInt(<span class="number">0</span>, <span class="number">10</span>)&#125;</span>&quot;</span>,</span><br><span class="line">                age = age + <span class="number">1</span></span><br><span class="line">            )</span><br><span class="line">        &#125;</span><br><span class="line">    ) &#123;</span><br><span class="line">        Text(text = <span class="string">&quot;Update Model&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>以上代码中，当点击Update Model按钮来修改modelState时，3个Wrapper全部都发生重组，假设这个State其实还可能更大，有20多个属性，而当我们只修改<br>一部分相关的，很多相关的Composable应该skip re-compose。</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">*       ----------------     -----------------      ---------------------</span><br><span class="line">*       | Click Button |  -&gt; | State changed |  -&gt;  | trigger recompose |</span><br><span class="line">*       ----------------     -----------------      ---------------------</span><br></pre></td></tr></table></figure>
-
-<p>为了避免这个情况，目前Compose也没提供相关的api，好像也只能通过分割状态了，对应文章的标题。</p>
-<h3 id="1-ViewModel层保留多个公开的State"><a href="#1-ViewModel层保留多个公开的State" class="headerlink" title="1. ViewModel层保留多个公开的State"></a>1. ViewModel层保留多个公开的State</h3><p>在ViewModel combine的时候就将State分割并提供多个State叫个UI层使用，而在操作的时候，我们也只会改变其对应的小State，其他State不会变化，<br>所以Compose上也只会重组其对应的可重组Lambda，而其他的则会跳过重组。</p>
-<h3 id="2-使用-derivedStateOf"><a href="#2-使用-derivedStateOf" class="headerlink" title="2. 使用 derivedStateOf"></a>2. 使用 derivedStateOf</h3><p>在View层，依然是拿到整个大的State，我们通过增加内部属性并使derivedStateOf这个方法将State分割。</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> age <span class="keyword">by</span> remember &#123;</span><br><span class="line">    derivedStateOf &#123;</span><br><span class="line">        modelState.age</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">val</span> intro <span class="keyword">by</span> remember &#123;</span><br><span class="line">    derivedStateOf &#123;</span><br><span class="line">        modelState.intro</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>如上，将age和intro分割出来，在点击按钮是，age+1，而intro不变，通过日志，发现只有Age Changed，所以intro的被跳过重组了。</p>
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>&emsp;TODO List KMM是一个基于Kotlin Multiplatform Mobile实现的一个小项目，主要提供查看Todo task列表，增加/删除/编辑task功能，目前有加上sign in/sign up页面，但是没有整合后端，有时间可能会加上。当然，这并不重要，本篇文章主要为了介绍KMM项目结构和公共模块抽取的个人想法和学习实践过程的一个回顾。<br>项目地址在文末。</p>
 <blockquote>
-<p>在日常开发中，需求feature会越来越多，State也会随之而增加，以上两种方式虽然一定程度上能减少重组，但是也很大程度上增加了维护工作<br>和带来新的问题。</p>
+<p>至今，虽然Kotlin Multiplatform可以直接使用Compose实现两端UI了，但是它还处于非稳定版本，<br>而且实际上在iOS上存在卡顿现象，所以TODO List还是使用SwiftUI/Jetpack Compose分别实现Android/iOS 界面</p>
 </blockquote>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>在Compose上，UI的更新必然脱离不了重组，所以重组本身并不是大问题，我们需要注意的是尽量在可重组项中尽量少操作多余的工作。所以通常我们不必在意这些，<br>因为Compose帮我做了很多优化的工作了。<br>当然如果在某个UI上，有其中一部份UI变化相对比较频繁，而其他则很少，此时我建议分割出来</p>
+<h3 id="基本结构"><a href="#基本结构" class="headerlink" title="基本结构"></a>基本结构</h3><p>&emsp;作为一个KMM项目，Android/iOS 这两个模块是必不可少的，它们分别是用来实现Android/iOS页面和使用或构建数据逻辑相关的代码，而shared当然也很重要，shared是两平台的共用代码。在大多数项目中，我们的数据来源双端都是一致的，所以shared模块完全可以作为一个数据<br>提供者，不管是来源是后端api还是本地，都是没有任何异议的。当然，除此之外，还可以提供一些工具扩展类。</p>
+<h3 id="项目创建和配置"><a href="#项目创建和配置" class="headerlink" title="项目创建和配置"></a>项目创建和配置</h3><ol>
+<li>首先我们创建一个KMM项目，catalogs管理依赖库的方式很早就被推荐使用了，所以我们将准备好的<code>libs.versions.toml</code>文件copy到<code>gradle</code>目录下<br><code>composite build</code>同样也是比较推荐的一种做法，从nowinandroid项目中copy过来，并加以修改放到我们项目中，命名为<code>build-logic</code>，里面有插件，<br>这些插件是为了减少的module下的gradle配置模板代码从而更易于管理。</li>
+<li>配置好项目之后，确定shared模块主要需要实现哪些数据相关的功能，并将其分模块来实现，在该项目中有4个模块分别是core, data, database, model.</li>
+</ol>
+<ul>
+<li>2.1 core 提供核心工具类或扩展方法</li>
+<li>2.2 model 封装上层需要的数据结构，用于UI或者逻辑需要的过度Model类</li>
+<li>2.3 database 提供本地存储和读取功能作用</li>
+<li>2.4 data 数据源层，主要是combine本地或者远程api数据来源的组装和mapping等逻辑<span id="more"></span>
+除了以上，同样可以添加一个domain层用来处理复杂的用例（domain层是可有可无的）</li>
+</ul>
+<ol start="3">
+<li>根据配置精简各个模块的gradle 配置之后便可以专注于代码的编写了。在编写代码的时候，要考虑好哪些模块实现哪些功能，<br>解耦之类的问题。<blockquote>
+<p>Noted: 很多时候，我们在UI层需要实现一些数据的转换（KMM Compiler生成的类和Swift的类型之间），在Swift上实现起来比较麻烦。<br>但是我们知道Kotlin中有Native和Object-C已经帮我们实现了很多数据的对应和方法，所以可以将这些转换放到iOSMain中实现。比如ByteArray和UIImage</p>
+</blockquote>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> <span class="keyword">data</span> = bytes.usePinned &#123;</span><br><span class="line">    NSData.create(</span><br><span class="line">    bytes = it.addressOf(<span class="number">0</span>),</span><br><span class="line">    length = bytes.size.toULong()</span><br><span class="line">    )</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">return</span> UIImage(<span class="keyword">data</span>)</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h3><h4 id="sqldelight-上的坑"><a href="#sqldelight-上的坑" class="headerlink" title="sqldelight 上的坑"></a>sqldelight 上的坑</h4><p>&emsp;虽然依赖库中的gradle 已经在lineropts中加上了<code>-lsqlite3</code>，但是有时候在运行iOS平台项目还是会出现找不到的问题。<br>使用XCode打开iOS项目，在Build Settings中的Other linker flags上加上就好了</p>
+<h4 id="Koin"><a href="#Koin" class="headerlink" title="Koin"></a>Koin</h4><p>&emsp;对于KMM项目，我个人觉得Koin是目前最舒服的一个依赖注入方式，其也只是作用于shared中的Kotlin代码，Swift还是需要通过调用init实例化操作。所以为了防止依赖注入的helper类随着项目扩大而mapping方法也增加到可怕的数量，建议一开始就管理分类。</p>
+<h4 id="Flow和协程"><a href="#Flow和协程" class="headerlink" title="Flow和协程"></a>Flow和协程</h4><p>&emsp;Swift的闭包很好用，对于suspend方法都有一个<code>completionHandler</code>的闭包回调，对于Flow当然也可以使用闭包在相关的时候进行回调。<br>比如:</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// onEach(it) onThrow(it) onComplete()是闭包参数</span></span><br><span class="line">flow.onEach &#123; onEach(it) &#125;</span><br><span class="line">    .<span class="keyword">catch</span> &#123; onThrow(it) &#125;</span><br><span class="line">    .onCompletion &#123; onComplete() &#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>Note：需要注意的是，要清楚这个回调在哪个线程中，如果你需要在回调方法后实现dismiss当前界面或者其他UI操作，而协程又是在IO线程中执行，并没有切换会主线程再调用回调，这时候回调同样是在IO线程，而IO线程中的UI操作是无效果的（dismiss不会有效果）需要使用DispatchQueue.main切到主线程中<br><span style="color:red">那么我们是应该注意在kotlin代码上主动切回主线程再进行回调还是让其在Swift上来考虑呢？</span></p>
+</blockquote>
+<p><a target="_blank" rel="noopener" href="https://github.com/BreakZero/TODO-LIST-KMM">TODO-LIST-KMM</a></p>
 
     </div>
 
@@ -268,7 +283,8 @@
 
       <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/Jetpack-Compose/" rel="tag"># Jetpack Compose</a>
+              <a href="/tags/Kotlin/" rel="tag"># Kotlin</a>
+              <a href="/tags/SwiftUI/" rel="tag"># SwiftUI</a>
           </div>
 
         
@@ -277,13 +293,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2023/07/08/Half-year-summary-of-2023/" rel="prev" title="我的一半2023">
-      <i class="fa fa-chevron-left"></i> 我的一半2023
+    <a href="/2023/08/13/iOS-read-local-file-issue/" rel="prev" title="iOS 读取存储在Container的文件问题">
+      <i class="fa fa-chevron-left"></i> iOS 读取存储在Container的文件问题
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2023/08/13/iOS-read-local-file-issue/" rel="next" title="iOS 读取存储在Container的文件问题">
-      iOS 读取存储在Container的文件问题 <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -342,7 +355,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-ViewModel%E5%B1%82%E4%BF%9D%E7%95%99%E5%A4%9A%E4%B8%AA%E5%85%AC%E5%BC%80%E7%9A%84State"><span class="nav-number">1.</span> <span class="nav-text">1. ViewModel层保留多个公开的State</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E4%BD%BF%E7%94%A8-derivedStateOf"><span class="nav-number">2.</span> <span class="nav-text">2. 使用 derivedStateOf</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">基本结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A1%B9%E7%9B%AE%E5%88%9B%E5%BB%BA%E5%92%8C%E9%85%8D%E7%BD%AE"><span class="nav-number">3.</span> <span class="nav-text">项目创建和配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96"><span class="nav-number">4.</span> <span class="nav-text">其他</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#sqldelight-%E4%B8%8A%E7%9A%84%E5%9D%91"><span class="nav-number">4.1.</span> <span class="nav-text">sqldelight 上的坑</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Koin"><span class="nav-number">4.2.</span> <span class="nav-text">Koin</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Flow%E5%92%8C%E5%8D%8F%E7%A8%8B"><span class="nav-number">4.3.</span> <span class="nav-text">Flow和协程</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 
