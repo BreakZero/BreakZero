@@ -190,6 +190,85 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2023/08/28/TCP-vs-UDP/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="D&J">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="D&J">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2023/08/28/TCP-vs-UDP/" class="post-title-link" itemprop="url">TCP协议的3次握手和4次挥手</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2023-08-28 23:13:51" itemprop="dateCreated datePublished" datetime="2023-08-28T23:13:51+08:00">2023-08-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-08-29 00:42:23" itemprop="dateModified" datetime="2023-08-29T00:42:23+08:00">2023-08-29</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h3 id="TCP"><a href="#TCP" class="headerlink" title="TCP"></a>TCP</h3><p>TCP（全称：Transmission Control Protocol）是计算机网络中用于设备间通信的传输层协议的一种，它是面向连接的传输协议，<br>还提供了各种机制保证传输过程的可靠性，包括错误检查，流量控制等机制。</p>
+<h3 id="3次握手"><a href="#3次握手" class="headerlink" title="3次握手"></a>3次握手</h3><p>要清晰理解3次握手的过程，先来想2个问题：</p>
+<ol>
+<li>3次握手的目的是什么？</li>
+<li>通过什么保证握手过程客户端和服务端相互理解？</li>
+</ol>
+<h4 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h4><p>目的？TCP是面向连接的，所以很明显，3次握手的目的是建立连接。</p>
+<h4 id="通过什么数据-或信息-使得客户端和服务端相互理解并成功建立连接？"><a href="#通过什么数据-或信息-使得客户端和服务端相互理解并成功建立连接？" class="headerlink" title="通过什么数据(或信息)使得客户端和服务端相互理解并成功建立连接？"></a>通过什么数据(或信息)使得客户端和服务端相互理解并成功建立连接？</h4><p>既然是建立连接，那自然需要沟通，3次握手就是3次沟通的过程，在这个沟通的过程中建立起连接。既然有沟通就需要消息承载沟通信息。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/08/28/TCP-vs-UDP/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2023/08/21/TODO-List-KMM-Project-Introduce/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -935,99 +1014,11 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="D&J">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="D&J">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/" class="post-title-link" itemprop="url">Android Kotlin Coroutines + Retrofit + MVVM 简单实现</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2021-09-11 14:47:06" itemprop="dateCreated datePublished" datetime="2021-09-11T14:47:06+08:00">2021-09-11</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-02-14 09:17:36" itemprop="dateModified" datetime="2023-02-14T09:17:36+08:00">2023-02-14</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><ul>
-<li>这是一篇随记，想尝试下写文章。</li>
-<li>这里基本不会深入讨论各个知识点，如需了解更多可以参考 <a target="_blank" rel="noopener" href="https://www.bennyhuo.com/">Benny’s Blog</a> 和 <a target="_blank" rel="noopener" href="https://kotlinlang.org/docs/reference/coroutines/coroutines-guide.html">Kotlin官方文档</a><h2 id="为什么使用协程"><a href="#为什么使用协程" class="headerlink" title="为什么使用协程"></a>为什么使用协程</h2></li>
-<li>协程比线程小<blockquote>
-<p>我： 为什么已经有Rx了还要在这里用协程？<br><br>某同事： 因为协程比线程小，可以开很多个。<br><br>我：…… 为什么比线程小？</p>
-</blockquote>
-</li>
-</ul>
-<p>&emsp; 我维基了一下，确实有说比线程更小。<br><br>&emsp; 但是看了一些源码，也是线程池 + 线程实现的，这时就开始有了疑惑，为什么同样是线程，怎么就说是比线程小的东西呢？<br><br>&emsp; 直到看到了Benny大佬的文章 <a target="_blank" rel="noopener" href="https://www.bennyhuo.com/2019/10/19/coroutine-why-so-called-lightweight-thread/">协程为什么被称为『轻量级线程』</a>解释，我清晰了。通过测验，确实启动成千上万个协程也不会出现OOM或者其他问题。</p>
-<ul>
-<li>当然最主要的还是代码上的体验<br>现在Kotlin越来越普遍，各种inline函数，操作符也都基本可以替换Rx的常用操作符了。所以在写代码上体验还是相对比较好的。<br><br><font color=#f00 size=3><em>（备注：个人觉得协程小不小对于Android开发真的没多大区别，最主要还是写代码和代码美观性）</em></font>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
+  <nav class="pagination">
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="Next page"></i></a>
+  </nav>
 
 
 
@@ -1094,7 +1085,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-count">11</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

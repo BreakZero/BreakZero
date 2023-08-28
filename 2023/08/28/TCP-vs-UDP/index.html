@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"breakzero.github.io","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="TCPTCP（全称：Transmission Control Protocol）是计算机网络中用于设备间通信的传输层协议的一种，它是面向连接的传输协议，还提供了各种机制保证传输过程的可靠性，包括错误检查，流量控制等机制。 3次握手要清晰理解3次握手的过程，先来想2个问题：  3次握手的目的是什么？ 通过什么保证握手过程客户端和服务端相互理解？  目的目的？TCP是面向连接的，所以很明显，3次握手的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TCP协议的3次握手和4次挥手">
+<meta property="og:url" content="https://breakzero.github.io/2023/08/28/TCP-vs-UDP/index.html">
+<meta property="og:site_name" content="D&amp;J">
+<meta property="og:description" content="TCPTCP（全称：Transmission Control Protocol）是计算机网络中用于设备间通信的传输层协议的一种，它是面向连接的传输协议，还提供了各种机制保证传输过程的可靠性，包括错误检查，流量控制等机制。 3次握手要清晰理解3次握手的过程，先来想2个问题：  3次握手的目的是什么？ 通过什么保证握手过程客户端和服务端相互理解？  目的目的？TCP是面向连接的，所以很明显，3次握手的">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://breakzero.github.io/images/tcp_3ways_handshake.png">
+<meta property="article:published_time" content="2023-08-28T15:13:51.000Z">
+<meta property="article:modified_time" content="2023-08-28T16:42:23.744Z">
+<meta property="article:author" content="D&amp;J">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://breakzero.github.io/images/tcp_3ways_handshake.png">
+
+<link rel="canonical" href="https://breakzero.github.io/2023/08/28/TCP-vs-UDP/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>TCP协议的3次握手和4次挥手 | D&J</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">D&J</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>Search
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="Searching..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+  <a href="https://github.com/BreakZero" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2023/08/28/TCP-vs-UDP/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="D&J">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="D&J">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          TCP协议的3次握手和4次挥手
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2023-08-28 23:13:51" itemprop="dateCreated datePublished" datetime="2023-08-28T23:13:51+08:00">2023-08-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-08-29 00:42:23" itemprop="dateModified" datetime="2023-08-29T00:42:23+08:00">2023-08-29</time>
+              </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="TCP"><a href="#TCP" class="headerlink" title="TCP"></a>TCP</h3><p>TCP（全称：Transmission Control Protocol）是计算机网络中用于设备间通信的传输层协议的一种，它是面向连接的传输协议，<br>还提供了各种机制保证传输过程的可靠性，包括错误检查，流量控制等机制。</p>
+<h3 id="3次握手"><a href="#3次握手" class="headerlink" title="3次握手"></a>3次握手</h3><p>要清晰理解3次握手的过程，先来想2个问题：</p>
+<ol>
+<li>3次握手的目的是什么？</li>
+<li>通过什么保证握手过程客户端和服务端相互理解？</li>
+</ol>
+<h4 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h4><p>目的？TCP是面向连接的，所以很明显，3次握手的目的是建立连接。</p>
+<h4 id="通过什么数据-或信息-使得客户端和服务端相互理解并成功建立连接？"><a href="#通过什么数据-或信息-使得客户端和服务端相互理解并成功建立连接？" class="headerlink" title="通过什么数据(或信息)使得客户端和服务端相互理解并成功建立连接？"></a>通过什么数据(或信息)使得客户端和服务端相互理解并成功建立连接？</h4><p>既然是建立连接，那自然需要沟通，3次握手就是3次沟通的过程，在这个沟通的过程中建立起连接。既然有沟通就需要消息承载沟通信息。</p>
+<span id="more"></span>
+<p>首先了解下TCP报文首部字段 (<a href="%22https://developer.aliyun.com/article/975295%22">拷贝来源</a>)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">- 16位端口号：源端口号，主机该报文段是来自哪里；目标端口号，要传给哪个上层协议或应用程序</span><br><span class="line">- 32位序号：一次TCP通信（从TCP连接建立到断开）过程中某一个传输方向上的字节流的每个字节的编号。</span><br><span class="line">- 32位确认号：用作对另一方发送的tcp报文段的响应。其值是收到的TCP报文段的序号值加1。</span><br><span class="line">- 4位头部长度：表示tcp头部有多少个32bit字（4字节）。因为4位最大能标识15，所以TCP头部最长是60字节。</span><br><span class="line">- 6位标志位：URG(紧急指针是否有效)，ACK（表示确认号是否有效），PSH（缓冲区尚未填满），RST（表示要求对方重新建立连接），SYN（建立连接消息标志接），FIN（表示告知对方本端要关闭连接了）</span><br><span class="line">- 16位窗口大小：是TCP流量控制的一个手段。这里说的窗口，指的是接收通告窗口。它告诉对方本端的TCP接收缓冲区还能容纳多少字节的数据，这样对方就可以控制发送数据的速度。</span><br><span class="line">- 16位校验和：由发送端填充，接收端对TCP报文段执行CRC算法以检验TCP报文段在传输过程中是否损坏。注意，这个校验不仅包括TCP头部，也包括数据部分。这也是TCP可靠传输的一个重要保障。</span><br><span class="line">- 16位紧急指针：一个正的偏移量。它和序号字段的值相加表示最后一个紧急数据的下一字节的序号。因此，确切地说，这个字段是紧急指针相对当前序号的偏移，不妨称之为紧急偏移。TCP的紧急指针是发送端向接收端发送紧急数据的方法。</span><br></pre></td></tr></table></figure>
+
+
+<p>看到标志位了没？对于3次握手和4次挥手，我们只关注以下3个：</p>
+<ul>
+<li>SYN -&gt; Synchronize的缩写，表示请求初始化或建立连接</li>
+<li>ACK -&gt; Acknowledgement的缩写，表示确认收到请求消息数据</li>
+<li>FIN -&gt; Final的缩写，请求终止一个连接</li>
+</ul>
+<p>数据包头部字段：</p>
+<ul>
+<li>seq -&gt; Sequence number, 序列号，用于沟通并确保消息顺序的</li>
+<li>ack -&gt; Acknowledge number，是对上一个包的序号进行确认的号，ack = seq + 1</li>
+</ul>
+<p>过程示意图：<br><img src="/images/tcp_3ways_handshake.png" alt="3Ways Handshake" title="3Ways Handshake"><br>经过3次握手建立连接：</p>
+<ul>
+<li><h5 id="第一次握手"><a href="#第一次握手" class="headerlink" title="第一次握手"></a>第一次握手</h5>Client将SYN设置为1，并随意生成一个序列号值为x(seq = x)，包装好数据包发送至Server，进入等待Server确认状态。</li>
+<li><h5 id="第二次握手"><a href="#第二次握手" class="headerlink" title="第二次握手"></a>第二次握手</h5>Server收到SYN消息，知道Client想建立连接，并作出回应。SYN和ACK设置为1，ack number = x + 1，随机产生一个序列号y<br>给seq，包装数据包发送给Client，Server进入已接受并回应状态。</li>
+<li><h5 id="第三次握手"><a href="#第三次握手" class="headerlink" title="第三次握手"></a>第三次握手</h5>Client收到Server的确认回应后，拿到确认回应的数据，检查对应的数据是否正确：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1. ack 是否为 x+1</span><br><span class="line">2. ACK 是否和Client请求时一致</span><br></pre></td></tr></table></figure>
+经过上面数据检查通过后，同样需要给Server发送确认回应消息，Server再收到回应消息同样做以上2步检查。<br>如果检查通过，则连接建立成功。Client和Server进入<code>ESTABLISHED</code>状态。完成3次握手。接下来可以相互开始传输数据了。</li>
+</ul>
+<!-- ### TCP和UDP两协议的区别？ -->
+<!-- 作为一个Android开发，在面试的时候也经常会被问到这个问题。笔者一直好奇问这个的意义的点在哪？ -->
+<!-- 毕竟貌似在移动端开发的时候几乎说很少甚至没有需要考虑这方面的情况（也许经验和项目上的原因吧）。哈哈哈，这些都是题外话啦！ -->
+<!-- 回归正题。 -->
+
+<!-- ### 区别 -->
+<!-- TCP（Transmission Control Protocol）和UDP（User Datagram Protocol）都是网络中用于设备间通信的传输层协议。 -->
+<!-- 它们最主要的区别是TCP是面向连接的协议，而UDP是无连接的协议。 -->
+
+<!-- #### 1. 可靠性 -->
+<!-- - TCP 是一种面向连接的协议，这意味着它在发送者和接收者之间建立了可靠有序的连接。它保证数据包会以正确的顺序、没有错误地传递。 -->
+<!-- - UDP 是一种无连接协议，不像 TCP 那样提供同样级别的可靠性。它不能保证所有数据包都会被传递，数据包可能无序地到达或丢失，而且没有通知。 -->
+
+<!-- #### 2. 传递顺序 -->
+<!-- - 通过 TCP 发送的数据按照发送顺序进行传递。这对于需要顺序传递数据的应用程序（如网页或文件传输）非常重要。 -->
+<!-- - UDP 不保证传递顺序。它适用于实时通信比严格顺序更重要的情况，比如流媒体或在线游戏等。 -->
+
+<!-- #### 3. 错误检查 -->
+<!-- - TCP 提供错误检查机制以确保数据完整性。如果数据包丢失或损坏，TCP 将请求重新传输缺失或损坏的数据。 -->
+<!-- - UDP 不执行错误检查或纠正。如果需要，应用程序需要处理任何错误。 -->
+
+<!-- #### 4. 流量控制 -->
+<!-- - TCP 使用流量控制机制来管理发送者和接收者之间的数据传输速率。这有助于防止拥塞，并确保接收者能够处理传入的数据。 -->
+<!-- - UDP 不包括内置的流量控制机制。如果数据发送过快，它可能会超负荷地影响接收者。 -->
+
+<!-- #### 5. 资源开销 -->
+<!-- - TCP 的开销较高，因为需要额外的连接建立、错误检查和流量控制机制。 -->
+<!-- - UDP 的开销较低。 -->
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2023/08/21/TODO-List-KMM-Project-Introduce/" rel="prev" title="TODO List KMM 介绍">
+      <i class="fa fa-chevron-left"></i> TODO List KMM 介绍
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#TCP"><span class="nav-number">1.</span> <span class="nav-text">TCP</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E6%AC%A1%E6%8F%A1%E6%89%8B"><span class="nav-number">2.</span> <span class="nav-text">3次握手</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9B%AE%E7%9A%84"><span class="nav-number">2.1.</span> <span class="nav-text">目的</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%80%9A%E8%BF%87%E4%BB%80%E4%B9%88%E6%95%B0%E6%8D%AE-%E6%88%96%E4%BF%A1%E6%81%AF-%E4%BD%BF%E5%BE%97%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%92%8C%E6%9C%8D%E5%8A%A1%E7%AB%AF%E7%9B%B8%E4%BA%92%E7%90%86%E8%A7%A3%E5%B9%B6%E6%88%90%E5%8A%9F%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5%EF%BC%9F"><span class="nav-number">2.2.</span> <span class="nav-text">通过什么数据(或信息)使得客户端和服务端相互理解并成功建立连接？</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%8F%A1%E6%89%8B"><span class="nav-number">2.2.1.</span> <span class="nav-text">第一次握手</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E6%AC%A1%E6%8F%A1%E6%89%8B"><span class="nav-number">2.2.2.</span> <span class="nav-text">第二次握手</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B"><span class="nav-number">2.2.3.</span> <span class="nav-text">第三次握手</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="D&J"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">D&J</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">11</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/BreakZero" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;BreakZero" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:dejin.po@gmail.com" title="E-Mail → mailto:dejin.po@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">D&J</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+  <script defer src="/lib/three/three.min.js"></script>
+    <script defer src="/lib/three/three-waves.min.js"></script>
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

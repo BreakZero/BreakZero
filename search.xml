@@ -278,6 +278,109 @@ OR<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class=
       </tags>
   </entry>
   <entry>
+    <title>iOS 读取存储在Container的文件问题</title>
+    <url>/2023/08/13/iOS-read-local-file-issue/</url>
+    <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>在使用KMM实现iOS平台文件存储时，通过到处container文件可以查看到文件确实存在目录下，但是在调用<code>NSData.dataWithContentsOfFile</code>时总是返回空，根据错误信息得知找不到该文件或目录<code>No such File or Directory</code>。其中代码如下：</p>
+<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> errorPtr: ObjCObjectVar&lt;NSError?&gt; = alloc()</span><br><span class="line">NSData.dataWithContentsOfFile(fullPath, options = <span class="number">0</span>, error = errorPtr.ptr)?.let &#123; bytes -&gt;</span><br><span class="line">    <span class="keyword">val</span> array = ByteArray(bytes.length.toInt())</span><br><span class="line">    bytes.getBytes(array.refTo(<span class="number">0</span>).getPointer(<span class="keyword">this</span>), bytes.length)</span><br><span class="line">    <span class="keyword">return</span><span class="symbol">@withContext</span> array</span><br><span class="line">&#125;</span><br><span class="line">println(errorPtr.value?.description.orEmpty())</span><br><span class="line"><span class="keyword">return</span><span class="symbol">@withContext</span> <span class="literal">null</span></span><br></pre></td></tr></table></figure>
+<p>errorPtr是为了查看具体错误，所以加上这个为了更好定位问题</p>
+<span id="more"></span>
+
+<h3 id="问题定位"><a href="#问题定位" class="headerlink" title="问题定位"></a>问题定位</h3><ol>
+<li>通过上面的error日志中得知，大概率是因为fullPath这个目录是一个错误的目录了，而我又从device中导出了<code>xxx.xcappdata</code>，<br>在这个目录下确实能找到对应名字的文件，而且文件是没有问题的，这个可以确定问题是文件是存在的，但是目录又不一致</li>
+<li>既然文件存在，但是目录上却找不到该文件，问题出在哪呢？于是想通过代码打印出fullPath和目录下所有文件的路径对比是否一致，上代码：<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> fileManager <span class="operator">=</span> <span class="type">FileManager</span>.default</span><br><span class="line"><span class="keyword">let</span> documentsURL <span class="operator">=</span> fileManager.urls(for: .documentDirectory, in: .userDomainMask)[<span class="number">0</span>]</span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> fileURLs <span class="operator">=</span> <span class="keyword">try</span> fileManager.contentsOfDirectory(at: documentsURL, includingPropertiesForKeys: <span class="literal">nil</span>)</span><br><span class="line">    <span class="built_in">print</span>(fileURLs)</span><br><span class="line">    <span class="comment">// process files</span></span><br><span class="line">&#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Error while enumerating files <span class="subst">\(documentsURL.path)</span>: <span class="subst">\(error.localizedDescription)</span>&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+这一块是Swift的代码，然后获取document Directory的url（因为我存储文件的目录就是这个），然后通过遍历将所有文件url打印并对比</li>
+</ol>
+<ul>
+<li>fullPath路径是这样的<blockquote>
+<p>/var/mobile/Containers/Data/Application/3FC1CCE9-A788-47AB-902A-FA133FAA3D30/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg</p>
+</blockquote>
+</li>
+<li>而文件url则是<blockquote>
+<p>file:///private/var/mobile/Containers/Data/Application/C5AC5178-6887-40F4-9EE5-8D56CB830CB3/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg</p>
+</blockquote>
+</li>
+</ul>
+<p>果然，Application后面的UUID并不一致，那全路径肯定也是不对的咯<br>通过查阅资料，得知在<code>iOS8.0</code>之后每次debug运行或者更新，这个UUID都会改变，而我又为了方便，一开始就存储了全路径，所以每次重新运行代码就会出现找不到这个文件，因为UUID的改变导致了整个目录都变了，自然找不到。</p>
+<h3 id="解决问题"><a href="#解决问题" class="headerlink" title="解决问题"></a>解决问题</h3><p>既然知道了问题所在，解决问题就简单了</p>
+<ol>
+<li>遍历目录，通过fileName过滤拿到对应的文件<br>刚开始，由于对iOS这边的api之类的还不是很了解，解决思路也很直接，既然Swift上能拿到目录下所有文件的url了，在kotlin native层肯定有对应的API，于是开搞，上代码：<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 拿到目录的url</span></span><br><span class="line"><span class="keyword">val</span> url = fileManager.URLForDirectory(</span><br><span class="line">    directory = NSDocumentDirectory,</span><br><span class="line">    inDomain = NSUserDomainMask,</span><br><span class="line">    appropriateForURL = <span class="literal">null</span>,</span><br><span class="line">    create = <span class="literal">false</span>,</span><br><span class="line">    error = <span class="literal">null</span></span><br><span class="line">)!!</span><br><span class="line"><span class="comment">// 拿到目录下所有文件的url</span></span><br><span class="line"><span class="keyword">val</span> fileUrls = fileManager.contentsOfDirectoryAtURL(url = url, includingPropertiesForKeys = <span class="literal">null</span>, options = <span class="number">0</span>, error = errorPtr.ptr)</span><br><span class="line"><span class="comment">// 通过全路径拿到文件名，然后通过文件名过滤得到唯一的文件url</span></span><br><span class="line"><span class="keyword">val</span> currentFileUrl = fileUrls?.first &#123; it.toString().contains(fileName) &#125; <span class="keyword">as</span>? NSURL</span><br><span class="line"><span class="comment">// 读取到NSData中</span></span><br><span class="line">currentFileUrl?.let &#123;</span><br><span class="line">    NSData.dataWithContentsOfURL(currentFileUrl)</span><br><span class="line">    ?.let &#123; bytes -&gt;</span><br><span class="line">        <span class="keyword">val</span> array = ByteArray(bytes.length.toInt())</span><br><span class="line">        bytes.getBytes(array.refTo(<span class="number">0</span>).getPointer(<span class="keyword">this</span>), bytes.length)</span><br><span class="line">        <span class="keyword">return</span><span class="symbol">@withContext</span> array</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+再次运行，成功拿到bytes（✌️）<br>但是这样存在一个问题，随着时间，这个目录的文件肯定会越来越多，到时候遍历肯定是一个耗时任务。那有没有可以直接通过filename拿到对应文件的url呢？<br>看了下代码，既然能拿到document目录的url，那是不是也有API可以直接拿到文件的url？一开始想通过url + filename组装一下<br>他们类型不一致，相对麻烦，还好找到了，代码：<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> documentDirectory = NSSearchPathForDirectoriesInDomains(</span><br><span class="line">    directory = NSDocumentDirectory,</span><br><span class="line">    domainMask = NSUserDomainMask,</span><br><span class="line">    expandTilde = <span class="literal">true</span></span><br><span class="line">).first() <span class="keyword">as</span> NSString</span><br><span class="line"><span class="keyword">val</span> fullPath = documentDirectory.stringByAppendingPathComponent(fileName)</span><br><span class="line">println(fullPath)</span><br></pre></td></tr></table></figure>
+路径正确，直接调用<code>NSData.dataWithContentsOfFile</code>传入文件路径即可</li>
+</ol>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>在 iOS8.0 之后，由于Application（Bundle identifier）的UUID会随机改变，所以不能直接存全路径，可以直接存名字<br>而可以通过<code>NSSearchPathForDirectoriesInDomains</code>拿到对应的路径，再加上文件名得到当前文件准确的全路径，这时候读取即可。</p>
+]]></content>
+      <categories>
+        <category>Kotlin Multiplatform</category>
+      </categories>
+      <tags>
+        <tag>Kotlin</tag>
+        <tag>SwiftUI</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>TCP协议的3次握手和4次挥手</title>
+    <url>/2023/08/28/TCP-vs-UDP/</url>
+    <content><![CDATA[<h3 id="TCP"><a href="#TCP" class="headerlink" title="TCP"></a>TCP</h3><p>TCP（全称：Transmission Control Protocol）是计算机网络中用于设备间通信的传输层协议的一种，它是面向连接的传输协议，<br>还提供了各种机制保证传输过程的可靠性，包括错误检查，流量控制等机制。</p>
+<h3 id="3次握手"><a href="#3次握手" class="headerlink" title="3次握手"></a>3次握手</h3><p>要清晰理解3次握手的过程，先来想2个问题：</p>
+<ol>
+<li>3次握手的目的是什么？</li>
+<li>通过什么保证握手过程客户端和服务端相互理解？</li>
+</ol>
+<h4 id="目的"><a href="#目的" class="headerlink" title="目的"></a>目的</h4><p>目的？TCP是面向连接的，所以很明显，3次握手的目的是建立连接。</p>
+<h4 id="通过什么数据-或信息-使得客户端和服务端相互理解并成功建立连接？"><a href="#通过什么数据-或信息-使得客户端和服务端相互理解并成功建立连接？" class="headerlink" title="通过什么数据(或信息)使得客户端和服务端相互理解并成功建立连接？"></a>通过什么数据(或信息)使得客户端和服务端相互理解并成功建立连接？</h4><p>既然是建立连接，那自然需要沟通，3次握手就是3次沟通的过程，在这个沟通的过程中建立起连接。既然有沟通就需要消息承载沟通信息。</p>
+<span id="more"></span>
+<p>首先了解下TCP报文首部字段 (<a href="%22https://developer.aliyun.com/article/975295%22">拷贝来源</a>)</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">- 16位端口号：源端口号，主机该报文段是来自哪里；目标端口号，要传给哪个上层协议或应用程序</span><br><span class="line">- 32位序号：一次TCP通信（从TCP连接建立到断开）过程中某一个传输方向上的字节流的每个字节的编号。</span><br><span class="line">- 32位确认号：用作对另一方发送的tcp报文段的响应。其值是收到的TCP报文段的序号值加1。</span><br><span class="line">- 4位头部长度：表示tcp头部有多少个32bit字（4字节）。因为4位最大能标识15，所以TCP头部最长是60字节。</span><br><span class="line">- 6位标志位：URG(紧急指针是否有效)，ACK（表示确认号是否有效），PSH（缓冲区尚未填满），RST（表示要求对方重新建立连接），SYN（建立连接消息标志接），FIN（表示告知对方本端要关闭连接了）</span><br><span class="line">- 16位窗口大小：是TCP流量控制的一个手段。这里说的窗口，指的是接收通告窗口。它告诉对方本端的TCP接收缓冲区还能容纳多少字节的数据，这样对方就可以控制发送数据的速度。</span><br><span class="line">- 16位校验和：由发送端填充，接收端对TCP报文段执行CRC算法以检验TCP报文段在传输过程中是否损坏。注意，这个校验不仅包括TCP头部，也包括数据部分。这也是TCP可靠传输的一个重要保障。</span><br><span class="line">- 16位紧急指针：一个正的偏移量。它和序号字段的值相加表示最后一个紧急数据的下一字节的序号。因此，确切地说，这个字段是紧急指针相对当前序号的偏移，不妨称之为紧急偏移。TCP的紧急指针是发送端向接收端发送紧急数据的方法。</span><br></pre></td></tr></table></figure>
+
+
+<p>看到标志位了没？对于3次握手和4次挥手，我们只关注以下3个：</p>
+<ul>
+<li>SYN -&gt; Synchronize的缩写，表示请求初始化或建立连接</li>
+<li>ACK -&gt; Acknowledgement的缩写，表示确认收到请求消息数据</li>
+<li>FIN -&gt; Final的缩写，请求终止一个连接</li>
+</ul>
+<p>数据包头部字段：</p>
+<ul>
+<li>seq -&gt; Sequence number, 序列号，用于沟通并确保消息顺序的</li>
+<li>ack -&gt; Acknowledge number，是对上一个包的序号进行确认的号，ack = seq + 1</li>
+</ul>
+<p>过程示意图：<br><img src="/images/tcp_3ways_handshake.png" alt="3Ways Handshake" title="3Ways Handshake"><br>经过3次握手建立连接：</p>
+<ul>
+<li><h5 id="第一次握手"><a href="#第一次握手" class="headerlink" title="第一次握手"></a>第一次握手</h5>Client将SYN设置为1，并随意生成一个序列号值为x(seq = x)，包装好数据包发送至Server，进入等待Server确认状态。</li>
+<li><h5 id="第二次握手"><a href="#第二次握手" class="headerlink" title="第二次握手"></a>第二次握手</h5>Server收到SYN消息，知道Client想建立连接，并作出回应。SYN和ACK设置为1，ack number = x + 1，随机产生一个序列号y<br>给seq，包装数据包发送给Client，Server进入已接受并回应状态。</li>
+<li><h5 id="第三次握手"><a href="#第三次握手" class="headerlink" title="第三次握手"></a>第三次握手</h5>Client收到Server的确认回应后，拿到确认回应的数据，检查对应的数据是否正确：<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">1. ack 是否为 x+1</span><br><span class="line">2. ACK 是否和Client请求时一致</span><br></pre></td></tr></table></figure>
+经过上面数据检查通过后，同样需要给Server发送确认回应消息，Server再收到回应消息同样做以上2步检查。<br>如果检查通过，则连接建立成功。Client和Server进入<code>ESTABLISHED</code>状态。完成3次握手。接下来可以相互开始传输数据了。</li>
+</ul>
+<!-- ### TCP和UDP两协议的区别？ -->
+<!-- 作为一个Android开发，在面试的时候也经常会被问到这个问题。笔者一直好奇问这个的意义的点在哪？ -->
+<!-- 毕竟貌似在移动端开发的时候几乎说很少甚至没有需要考虑这方面的情况（也许经验和项目上的原因吧）。哈哈哈，这些都是题外话啦！ -->
+<!-- 回归正题。 -->
+
+<!-- ### 区别 -->
+<!-- TCP（Transmission Control Protocol）和UDP（User Datagram Protocol）都是网络中用于设备间通信的传输层协议。 -->
+<!-- 它们最主要的区别是TCP是面向连接的协议，而UDP是无连接的协议。 -->
+
+<!-- #### 1. 可靠性 -->
+<!-- - TCP 是一种面向连接的协议，这意味着它在发送者和接收者之间建立了可靠有序的连接。它保证数据包会以正确的顺序、没有错误地传递。 -->
+<!-- - UDP 是一种无连接协议，不像 TCP 那样提供同样级别的可靠性。它不能保证所有数据包都会被传递，数据包可能无序地到达或丢失，而且没有通知。 -->
+
+<!-- #### 2. 传递顺序 -->
+<!-- - 通过 TCP 发送的数据按照发送顺序进行传递。这对于需要顺序传递数据的应用程序（如网页或文件传输）非常重要。 -->
+<!-- - UDP 不保证传递顺序。它适用于实时通信比严格顺序更重要的情况，比如流媒体或在线游戏等。 -->
+
+<!-- #### 3. 错误检查 -->
+<!-- - TCP 提供错误检查机制以确保数据完整性。如果数据包丢失或损坏，TCP 将请求重新传输缺失或损坏的数据。 -->
+<!-- - UDP 不执行错误检查或纠正。如果需要，应用程序需要处理任何错误。 -->
+
+<!-- #### 4. 流量控制 -->
+<!-- - TCP 使用流量控制机制来管理发送者和接收者之间的数据传输速率。这有助于防止拥塞，并确保接收者能够处理传入的数据。 -->
+<!-- - UDP 不包括内置的流量控制机制。如果数据发送过快，它可能会超负荷地影响接收者。 -->
+
+<!-- #### 5. 资源开销 -->
+<!-- - TCP 的开销较高，因为需要额外的连接建立、错误检查和流量控制机制。 -->
+<!-- - UDP 的开销较低。 -->]]></content>
+  </entry>
+  <entry>
     <title>TODO List KMM 介绍</title>
     <url>/2023/08/21/TODO-List-KMM-Project-Introduce/</url>
     <content><![CDATA[<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>&emsp;TODO List KMM是一个基于Kotlin Multiplatform Mobile实现的一个小项目，主要提供查看Todo task列表，增加/删除/编辑task功能，目前有加上sign in/sign up页面，但是没有整合后端，有时间可能会加上。当然，这并不重要，本篇文章主要为了介绍KMM项目结构和公共模块抽取的个人想法和学习实践过程的一个回顾。<br>项目地址在文末。</p>
@@ -310,46 +413,6 @@ OR<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class=
 <p>Note：需要注意的是，要清楚这个回调在哪个线程中，如果你需要在回调方法后实现dismiss当前界面或者其他UI操作，而协程又是在IO线程中执行，并没有切换会主线程再调用回调，这时候回调同样是在IO线程，而IO线程中的UI操作是无效果的（dismiss不会有效果）需要使用DispatchQueue.main切到主线程中<br><span style="color:red">那么我们是应该注意在kotlin代码上主动切回主线程再进行回调还是让其在Swift上来考虑呢？</span></p>
 </blockquote>
 <p><a href="https://github.com/BreakZero/TODO-LIST-KMM">TODO-LIST-KMM</a></p>
-]]></content>
-      <categories>
-        <category>Kotlin Multiplatform</category>
-      </categories>
-      <tags>
-        <tag>Kotlin</tag>
-        <tag>SwiftUI</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>iOS 读取存储在Container的文件问题</title>
-    <url>/2023/08/13/iOS-read-local-file-issue/</url>
-    <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>在使用KMM实现iOS平台文件存储时，通过到处container文件可以查看到文件确实存在目录下，但是在调用<code>NSData.dataWithContentsOfFile</code>时总是返回空，根据错误信息得知找不到该文件或目录<code>No such File or Directory</code>。其中代码如下：</p>
-<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> errorPtr: ObjCObjectVar&lt;NSError?&gt; = alloc()</span><br><span class="line">NSData.dataWithContentsOfFile(fullPath, options = <span class="number">0</span>, error = errorPtr.ptr)?.let &#123; bytes -&gt;</span><br><span class="line">    <span class="keyword">val</span> array = ByteArray(bytes.length.toInt())</span><br><span class="line">    bytes.getBytes(array.refTo(<span class="number">0</span>).getPointer(<span class="keyword">this</span>), bytes.length)</span><br><span class="line">    <span class="keyword">return</span><span class="symbol">@withContext</span> array</span><br><span class="line">&#125;</span><br><span class="line">println(errorPtr.value?.description.orEmpty())</span><br><span class="line"><span class="keyword">return</span><span class="symbol">@withContext</span> <span class="literal">null</span></span><br></pre></td></tr></table></figure>
-<p>errorPtr是为了查看具体错误，所以加上这个为了更好定位问题</p>
-<span id="more"></span>
-
-<h3 id="问题定位"><a href="#问题定位" class="headerlink" title="问题定位"></a>问题定位</h3><ol>
-<li>通过上面的error日志中得知，大概率是因为fullPath这个目录是一个错误的目录了，而我又从device中导出了<code>xxx.xcappdata</code>，<br>在这个目录下确实能找到对应名字的文件，而且文件是没有问题的，这个可以确定问题是文件是存在的，但是目录又不一致</li>
-<li>既然文件存在，但是目录上却找不到该文件，问题出在哪呢？于是想通过代码打印出fullPath和目录下所有文件的路径对比是否一致，上代码：<figure class="highlight swift"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> fileManager <span class="operator">=</span> <span class="type">FileManager</span>.default</span><br><span class="line"><span class="keyword">let</span> documentsURL <span class="operator">=</span> fileManager.urls(for: .documentDirectory, in: .userDomainMask)[<span class="number">0</span>]</span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> fileURLs <span class="operator">=</span> <span class="keyword">try</span> fileManager.contentsOfDirectory(at: documentsURL, includingPropertiesForKeys: <span class="literal">nil</span>)</span><br><span class="line">    <span class="built_in">print</span>(fileURLs)</span><br><span class="line">    <span class="comment">// process files</span></span><br><span class="line">&#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Error while enumerating files <span class="subst">\(documentsURL.path)</span>: <span class="subst">\(error.localizedDescription)</span>&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-这一块是Swift的代码，然后获取document Directory的url（因为我存储文件的目录就是这个），然后通过遍历将所有文件url打印并对比</li>
-</ol>
-<ul>
-<li>fullPath路径是这样的<blockquote>
-<p>/var/mobile/Containers/Data/Application/3FC1CCE9-A788-47AB-902A-FA133FAA3D30/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg</p>
-</blockquote>
-</li>
-<li>而文件url则是<blockquote>
-<p>file:///private/var/mobile/Containers/Data/Application/C5AC5178-6887-40F4-9EE5-8D56CB830CB3/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg</p>
-</blockquote>
-</li>
-</ul>
-<p>果然，Application后面的UUID并不一致，那全路径肯定也是不对的咯<br>通过查阅资料，得知在<code>iOS8.0</code>之后每次debug运行或者更新，这个UUID都会改变，而我又为了方便，一开始就存储了全路径，所以每次重新运行代码就会出现找不到这个文件，因为UUID的改变导致了整个目录都变了，自然找不到。</p>
-<h3 id="解决问题"><a href="#解决问题" class="headerlink" title="解决问题"></a>解决问题</h3><p>既然知道了问题所在，解决问题就简单了</p>
-<ol>
-<li>遍历目录，通过fileName过滤拿到对应的文件<br>刚开始，由于对iOS这边的api之类的还不是很了解，解决思路也很直接，既然Swift上能拿到目录下所有文件的url了，在kotlin native层肯定有对应的API，于是开搞，上代码：<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 拿到目录的url</span></span><br><span class="line"><span class="keyword">val</span> url = fileManager.URLForDirectory(</span><br><span class="line">    directory = NSDocumentDirectory,</span><br><span class="line">    inDomain = NSUserDomainMask,</span><br><span class="line">    appropriateForURL = <span class="literal">null</span>,</span><br><span class="line">    create = <span class="literal">false</span>,</span><br><span class="line">    error = <span class="literal">null</span></span><br><span class="line">)!!</span><br><span class="line"><span class="comment">// 拿到目录下所有文件的url</span></span><br><span class="line"><span class="keyword">val</span> fileUrls = fileManager.contentsOfDirectoryAtURL(url = url, includingPropertiesForKeys = <span class="literal">null</span>, options = <span class="number">0</span>, error = errorPtr.ptr)</span><br><span class="line"><span class="comment">// 通过全路径拿到文件名，然后通过文件名过滤得到唯一的文件url</span></span><br><span class="line"><span class="keyword">val</span> currentFileUrl = fileUrls?.first &#123; it.toString().contains(fileName) &#125; <span class="keyword">as</span>? NSURL</span><br><span class="line"><span class="comment">// 读取到NSData中</span></span><br><span class="line">currentFileUrl?.let &#123;</span><br><span class="line">    NSData.dataWithContentsOfURL(currentFileUrl)</span><br><span class="line">    ?.let &#123; bytes -&gt;</span><br><span class="line">        <span class="keyword">val</span> array = ByteArray(bytes.length.toInt())</span><br><span class="line">        bytes.getBytes(array.refTo(<span class="number">0</span>).getPointer(<span class="keyword">this</span>), bytes.length)</span><br><span class="line">        <span class="keyword">return</span><span class="symbol">@withContext</span> array</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-再次运行，成功拿到bytes（✌️）<br>但是这样存在一个问题，随着时间，这个目录的文件肯定会越来越多，到时候遍历肯定是一个耗时任务。那有没有可以直接通过filename拿到对应文件的url呢？<br>看了下代码，既然能拿到document目录的url，那是不是也有API可以直接拿到文件的url？一开始想通过url + filename组装一下<br>他们类型不一致，相对麻烦，还好找到了，代码：<figure class="highlight kotlin"><table><tr><td class="code"><pre><span class="line"><span class="keyword">val</span> documentDirectory = NSSearchPathForDirectoriesInDomains(</span><br><span class="line">    directory = NSDocumentDirectory,</span><br><span class="line">    domainMask = NSUserDomainMask,</span><br><span class="line">    expandTilde = <span class="literal">true</span></span><br><span class="line">).first() <span class="keyword">as</span> NSString</span><br><span class="line"><span class="keyword">val</span> fullPath = documentDirectory.stringByAppendingPathComponent(fileName)</span><br><span class="line">println(fullPath)</span><br></pre></td></tr></table></figure>
-路径正确，直接调用<code>NSData.dataWithContentsOfFile</code>传入文件路径即可</li>
-</ol>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>在 iOS8.0 之后，由于Application（Bundle identifier）的UUID会随机改变，所以不能直接存全路径，可以直接存名字<br>而可以通过<code>NSSearchPathForDirectoriesInDomains</code>拿到对应的路径，再加上文件名得到当前文件准确的全路径，这时候读取即可。</p>
 ]]></content>
       <categories>
         <category>Kotlin Multiplatform</category>
