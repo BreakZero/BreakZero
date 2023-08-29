@@ -22,26 +22,26 @@
 
   <meta property="og:type" content="website">
 <meta property="og:title" content="D&amp;J">
-<meta property="og:url" content="https://breakzero.github.io/archives/2022/index.html">
+<meta property="og:url" content="https://breakzero.github.io/page/2/index.html">
 <meta property="og:site_name" content="D&amp;J">
 <meta property="og:locale" content="en_US">
 <meta property="article:author" content="D&amp;J">
 <meta name="twitter:card" content="summary">
 
-<link rel="canonical" href="https://breakzero.github.io/archives/2022/">
+<link rel="canonical" href="https://breakzero.github.io/page/2/">
 
 
 <script id="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : false,
+    isHome : true,
     isPost : false,
     lang   : 'en'
   };
 </script>
 
-  <title>Archive | D&J</title>
+  <title>D&J</title>
   
 
 
@@ -184,51 +184,104 @@
         <div class="content-wrap">
           
 
-          <div class="content archive">
+          <div class="content index posts-expand">
             
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://breakzero.github.io/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/">
 
-  
-  
-  
-  <div class="post-block">
-    <div class="posts-collapse">
-      <div class="collection-title">
-        <span class="collection-header">Um..! 11 posts in total. Keep on posting.</span>
-      </div>
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="D&J">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="D&J">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/" class="post-title-link" itemprop="url">Android Kotlin Coroutines + Retrofit + MVVM 简单实现</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-09-11 14:47:06" itemprop="dateCreated datePublished" datetime="2021-09-11T14:47:06+08:00">2021-09-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-02-14 09:17:36" itemprop="dateModified" datetime="2023-02-14T09:17:36+08:00">2023-02-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-    <div class="collection-year">
-      <span class="collection-header">2022</span>
+          <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><ul>
+<li>这是一篇随记，想尝试下写文章。</li>
+<li>这里基本不会深入讨论各个知识点，如需了解更多可以参考 <a target="_blank" rel="noopener" href="https://www.bennyhuo.com/">Benny’s Blog</a> 和 <a target="_blank" rel="noopener" href="https://kotlinlang.org/docs/reference/coroutines/coroutines-guide.html">Kotlin官方文档</a><h2 id="为什么使用协程"><a href="#为什么使用协程" class="headerlink" title="为什么使用协程"></a>为什么使用协程</h2></li>
+<li>协程比线程小<blockquote>
+<p>我： 为什么已经有Rx了还要在这里用协程？<br><br>某同事： 因为协程比线程小，可以开很多个。<br><br>我：…… 为什么比线程小？</p>
+</blockquote>
+</li>
+</ul>
+<p>&emsp; 我维基了一下，确实有说比线程更小。<br><br>&emsp; 但是看了一些源码，也是线程池 + 线程实现的，这时就开始有了疑惑，为什么同样是线程，怎么就说是比线程小的东西呢？<br><br>&emsp; 直到看到了Benny大佬的文章 <a target="_blank" rel="noopener" href="https://www.bennyhuo.com/2019/10/19/coroutine-why-so-called-lightweight-thread/">协程为什么被称为『轻量级线程』</a>解释，我清晰了。通过测验，确实启动成千上万个协程也不会出现OOM或者其他问题。</p>
+<ul>
+<li>当然最主要的还是代码上的体验<br>现在Kotlin越来越普遍，各种inline函数，操作符也都基本可以替换Rx的常用操作符了。所以在写代码上体验还是相对比较好的。<br><br><font color=#f00 size=3><em>（备注：个人觉得协程小不小对于Android开发真的没多大区别，最主要还是写代码和代码美观性）</em></font>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
     </div>
 
-  <article itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <div class="post-meta">
-        <time itemprop="dateCreated"
-              datetime="2022-06-08T17:49:04+08:00"
-              content="2022-06-08">
-          06-08
-        </time>
-      </div>
-
-      <div class="post-title">
-          <a class="post-title-link" href="/2022/06/08/RPC-with-Kotlinx-Serialization/" itemprop="url">
-            <span itemprop="name">RPC with Kotlinx Serialization</span>
-          </a>
-      </div>
-
-    </header>
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
   </article>
-
-
-    </div>
-  </div>
   
   
   
 
+
   
+  <nav class="pagination">
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="Previous page"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span>
+  </nav>
 
 
 
