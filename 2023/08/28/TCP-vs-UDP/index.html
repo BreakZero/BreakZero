@@ -29,7 +29,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://breakzero.github.io/images/tcp_3ways_handshake.png">
 <meta property="article:published_time" content="2023-08-28T15:13:51.000Z">
-<meta property="article:modified_time" content="2023-08-28T16:42:23.744Z">
+<meta property="article:modified_time" content="2023-08-29T02:37:27.558Z">
 <meta property="article:author" content="D&amp;J">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://breakzero.github.io/images/tcp_3ways_handshake.png">
@@ -227,7 +227,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2023-08-29 00:42:23" itemprop="dateModified" datetime="2023-08-29T00:42:23+08:00">2023-08-29</time>
+                <time title="Modified: 2023-08-29 10:37:27" itemprop="dateModified" datetime="2023-08-29T10:37:27+08:00">2023-08-29</time>
               </span>
 
           
@@ -272,6 +272,7 @@
 <li><h5 id="第三次握手"><a href="#第三次握手" class="headerlink" title="第三次握手"></a>第三次握手</h5>Client收到Server的确认回应后，拿到确认回应的数据，检查对应的数据是否正确：<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">1. ack 是否为 x+1</span><br><span class="line">2. ACK 是否和Client请求时一致</span><br></pre></td></tr></table></figure>
 经过上面数据检查通过后，同样需要给Server发送确认回应消息，Server再收到回应消息同样做以上2步检查。<br>如果检查通过，则连接建立成功。Client和Server进入<code>ESTABLISHED</code>状态。完成3次握手。接下来可以相互开始传输数据了。</li>
 </ul>
+<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><p><a target="_blank" rel="noopener" href="https://www.geeksforgeeks.org/tcp-3-way-handshake-process/">TCP 3-Way Handshake Process</a><br><a target="_blank" rel="noopener" href="https://packetlife.net/blog/2010/jun/7/understanding-tcp-sequence-acknowledgment-numbers/">Understanding TCP Sequence and Acknowledgment Numbers</a></p>
 <!-- ### TCP和UDP两协议的区别？ -->
 <!-- 作为一个Android开发，在面试的时候也经常会被问到这个问题。笔者一直好奇问这个的意义的点在哪？ -->
 <!-- 毕竟貌似在移动端开发的时候几乎说很少甚至没有需要考虑这方面的情况（也许经验和项目上的原因吧）。哈哈哈，这些都是题外话啦！ -->
@@ -376,7 +377,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#TCP"><span class="nav-number">1.</span> <span class="nav-text">TCP</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E6%AC%A1%E6%8F%A1%E6%89%8B"><span class="nav-number">2.</span> <span class="nav-text">3次握手</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9B%AE%E7%9A%84"><span class="nav-number">2.1.</span> <span class="nav-text">目的</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%80%9A%E8%BF%87%E4%BB%80%E4%B9%88%E6%95%B0%E6%8D%AE-%E6%88%96%E4%BF%A1%E6%81%AF-%E4%BD%BF%E5%BE%97%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%92%8C%E6%9C%8D%E5%8A%A1%E7%AB%AF%E7%9B%B8%E4%BA%92%E7%90%86%E8%A7%A3%E5%B9%B6%E6%88%90%E5%8A%9F%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5%EF%BC%9F"><span class="nav-number">2.2.</span> <span class="nav-text">通过什么数据(或信息)使得客户端和服务端相互理解并成功建立连接？</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%8F%A1%E6%89%8B"><span class="nav-number">2.2.1.</span> <span class="nav-text">第一次握手</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E6%AC%A1%E6%8F%A1%E6%89%8B"><span class="nav-number">2.2.2.</span> <span class="nav-text">第二次握手</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B"><span class="nav-number">2.2.3.</span> <span class="nav-text">第三次握手</span></a></li></ol></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#TCP"><span class="nav-number">1.</span> <span class="nav-text">TCP</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3%E6%AC%A1%E6%8F%A1%E6%89%8B"><span class="nav-number">2.</span> <span class="nav-text">3次握手</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9B%AE%E7%9A%84"><span class="nav-number">2.1.</span> <span class="nav-text">目的</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%80%9A%E8%BF%87%E4%BB%80%E4%B9%88%E6%95%B0%E6%8D%AE-%E6%88%96%E4%BF%A1%E6%81%AF-%E4%BD%BF%E5%BE%97%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%92%8C%E6%9C%8D%E5%8A%A1%E7%AB%AF%E7%9B%B8%E4%BA%92%E7%90%86%E8%A7%A3%E5%B9%B6%E6%88%90%E5%8A%9F%E5%BB%BA%E7%AB%8B%E8%BF%9E%E6%8E%A5%EF%BC%9F"><span class="nav-number">2.2.</span> <span class="nav-text">通过什么数据(或信息)使得客户端和服务端相互理解并成功建立连接？</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%8F%A1%E6%89%8B"><span class="nav-number">2.2.1.</span> <span class="nav-text">第一次握手</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E6%AC%A1%E6%8F%A1%E6%89%8B"><span class="nav-number">2.2.2.</span> <span class="nav-text">第二次握手</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B"><span class="nav-number">2.2.3.</span> <span class="nav-text">第三次握手</span></a></li></ol></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="nav-number">3.</span> <span class="nav-text">参考链接</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
