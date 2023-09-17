@@ -1,10 +1,8 @@
 # Skills
-<a href="https://github.com/anuraghazra/github-readme-stats">
-    <picture>
-        <source media="(prefers-color-scheme: dark)" srcset="https://github-readme-stats.vercel.app/api/top-langs?username=BreakZero&theme=algolia">
-        <img alt="Shows MrL's Top Langs." src="https://github-readme-stats.vercel.app/api/top-langs?username=BreakZero&theme=flag-india">
-    </picture>
-</a>
+<picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github-readme-stats.vercel.app/api/top-langs?username=BreakZero&theme=algolia">
+    <img alt="Shows MrL's Top Langs." src="https://github-readme-stats.vercel.app/api/top-langs?username=BreakZero&theme=flag-india">
+</picture>
 <br/>
 <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://github-readme-stats.vercel.app/api?username=BreakZero&theme=algolia">
