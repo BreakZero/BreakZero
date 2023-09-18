@@ -22,8 +22,8 @@
 
 # Contribution
 <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github-readme-activity-graph.vercel.app/graph?username=BreakZero&bg_color=070f2a&color=4eacf8&line=ffffff&point=4eacf8&area=true&hide_border=true">
-    <img alt="Shows MrL's GitHub Contributions" src="https://github-readme-activity-graph.vercel.app/graph?username=BreakZero&bg_color=fffff0&color=f09431&line=649b40&point=f09431&area=true&hide_border=true">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github-readme-activity-graph.vercel.app/graph?username=BreakZero&bg_color=070f2a&color=4eacf8&line=ffffff&point=4eacf8&area=true">
+    <img alt="Shows MrL's GitHub Contributions" src="https://github-readme-activity-graph.vercel.app/graph?username=BreakZero&bg_color=ffffff&color=f09431&line=649b40&point=f09431&area=true">
 </picture>
 
 
