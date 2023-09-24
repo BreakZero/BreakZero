@@ -1,92 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>浅谈Jetpack Compose LaunchedEffect</title>
-    <url>/2023/07/04/A-brief-of-Jetpack-Compose-LaunchedEffect/</url>
-    <content><![CDATA[<p>在Jetpack Compose 代码中，我们经常看到<code>LaunchedEffect</code>这个常见的。今天就简单了解下这个方法吧。在说<code>LaunchedEffect</code>前，让我们先说一下<code>Side Effect</code>.</p>
-<h3 id="什么是Side-Effect"><a href="#什么是Side-Effect" class="headerlink" title="什么是Side Effect"></a>什么是Side Effect</h3><p>在编程语言中，<code>Side-Effect</code>指的是调用函数时，除了返回可能的函数值外，该函数还对函数范围外的变量，参数等进行了修改。<br>举个🌰，看下面的函数，它有2个参数，返回它们的和，但是没有对任何其他变量有修改，所以它是没有副作用(No Side-Effect)的</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">fun</span> <span class="token function">sum</span><span class="token punctuation">(</span>number1<span class="token operator">:</span> Int<span class="token punctuation">,</span> number2<span class="token operator">:</span> Int<span class="token punctuation">)</span> <span class="token operator">=</span> number1 <span class="token operator">+</span> number2<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-<p>但如果我们将函数修改成下面的实现，每次调用该函数都会对sum重新赋值，而sum又是在函数范围外，所以认为这个函数有一个副作用</p>
-<pre class="line-numbers language-Kotlin" data-language="Kotlin"><code class="language-Kotlin">var sum &#x3D; 0
-fun sum(number1: Int, number2: Int) &#123;
-    sum &#x3D; number1 + number2
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="在Jetpack-Compose-中，什么是LaunchedEffect"><a href="#在Jetpack-Compose-中，什么是LaunchedEffect" class="headerlink" title="在Jetpack Compose 中，什么是LaunchedEffect"></a>在Jetpack Compose 中，什么是LaunchedEffect</h3><p>根据源码我们看到，<code>LaunchedEffect</code>是一个带有<code>@Composable</code>的函数，注释如下</p>
-<span id="more"></span>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">When LaunchedEffect enters the composition it will launch block into the composition's CoroutineContext<span class="token punctuation">.</span> The coroutine will be cancelled <span class="token operator">and</span> re<span class="token operator">-</span>launched <span class="token keyword">when</span> LaunchedEffect <span class="token keyword">is</span> recomposed with a different key1 <span class="token operator">or</span> key2<span class="token punctuation">.</span> The coroutine will be cancelled <span class="token keyword">when</span> the LaunchedEffect leaves the composition<span class="token punctuation">.</span>
-This function should not be used <span class="token keyword">to</span> <span class="token punctuation">(</span>re<span class="token operator">-</span><span class="token punctuation">)</span>launch ongoing tasks <span class="token keyword">in</span> response <span class="token keyword">to</span> callback events <span class="token keyword">by</span> way of storing callback <span class="token keyword">data</span> <span class="token keyword">in</span> MutableState passed <span class="token keyword">to</span> key<span class="token punctuation">.</span> Instead<span class="token punctuation">,</span> see rememberCoroutineScope <span class="token keyword">to</span> obtain a CoroutineScope that may be used <span class="token keyword">to</span> launch ongoing jobs scoped <span class="token keyword">to</span> the composition <span class="token keyword">in</span> response <span class="token keyword">to</span> event callbacks<span class="token punctuation">.</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-<p>简单来说，<code>LaunchedEffect</code>是一个可在当前可组合项的作用域内运行挂起函数(block是suspend的)的可组合函数。<br>在<a href="https://developer.android.com/jetpack/compose/mental-model">Thinking in Compose</a>中，我们了解到一个可组合项应该是没有副作用的，如果我们想要在可组合项中修改应用状态，需要通过Effect API启动协程操作，所以可以说<code>LaunchedEffect</code>在Jetpack Compose中提供了在可组合项中调用挂起函数的能力。</p>
-<p>下面我们通过一个例子简单了解下， 这个例子是一个TodoTask下的一个小功能，根据选择的类别展示当前类别的所有Task。<br>简单的准备mock tasks，代码如下：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">TodoTask</span><span class="token punctuation">(</span>
-    <span class="token keyword">val</span> id<span class="token operator">:</span> Long<span class="token punctuation">,</span>
-    <span class="token keyword">val</span> name<span class="token operator">:</span> String<span class="token punctuation">,</span>
-    <span class="token keyword">val</span> description<span class="token operator">:</span> String
-<span class="token punctuation">)</span>
-
-<span class="token comment">// mock tasks respose</span>
-<span class="token keyword">val</span> mockTasks <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token operator">..</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">map</span> <span class="token punctuation">&#123;</span>
-    <span class="token function">TodoTask</span><span class="token punctuation">(</span>
-        id <span class="token operator">=</span> it<span class="token punctuation">.</span><span class="token function">toLong</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-        name <span class="token operator">=</span> <span class="token string">"task name <span class="token interpolation variable">$it</span>"</span><span class="token punctuation">,</span>
-        description <span class="token operator">=</span> <span class="token string">"task description <span class="token interpolation variable">$it</span>"</span>
-    <span class="token punctuation">)</span>
-<span class="token punctuation">&#125;</span>
-<span class="token comment">// mock get tasks from api, delay 2 seconds</span>
-<span class="token keyword">private</span> <span class="token keyword">suspend</span> <span class="token keyword">fun</span> <span class="token function">getTasks</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> List<span class="token operator">&lt;</span>TodoTask<span class="token operator">></span> <span class="token punctuation">&#123;</span>
-    <span class="token function">delay</span><span class="token punctuation">(</span><span class="token number">2000</span><span class="token punctuation">)</span>
-    <span class="token keyword">return</span> mockTasks
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>在TodoListOfCategoryScreen主要是一个Lazy Column用来展示任务名称的，其中参数是Category</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Composable</span>
-<span class="token keyword">fun</span> <span class="token function">TodoListOfCategoryScreen</span><span class="token punctuation">(</span>
-    category<span class="token operator">:</span> String
-<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TASK TAG: out of column scope"</span><span class="token punctuation">)</span>
-    <span class="token keyword">var</span> tasks <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span>
-        <span class="token function">mutableStateOf</span><span class="token punctuation">(</span>emptyList<span class="token operator">&lt;</span>TodoTask<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-    <span class="token punctuation">&#125;</span>
-    <span class="token function">Column</span><span class="token punctuation">(</span>
-        modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-    <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-        <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TASK TAG: TodoListScreen: <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>tasks<span class="token punctuation">.</span>size<span class="token delimiter variable">&#125;</span></span>, category: <span class="token interpolation variable">$category</span>"</span><span class="token punctuation">)</span>
-
-        <span class="token function">LaunchedEffect</span><span class="token punctuation">(</span>key1 <span class="token operator">=</span> category<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-            tasks <span class="token operator">=</span> <span class="token function">getTasks</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TASK TAG: get tasks from api, category: <span class="token interpolation variable">$category</span>"</span><span class="token punctuation">)</span>
-        <span class="token punctuation">&#125;</span>
-        <span class="token function">LazyColumn</span><span class="token punctuation">(</span>
-            modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-        <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-            <span class="token function">items</span><span class="token punctuation">(</span>tasks<span class="token punctuation">,</span> key <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
-                it<span class="token punctuation">.</span>id
-            <span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-                <span class="token function">Text</span><span class="token punctuation">(</span>modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> text <span class="token operator">=</span> it<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
-            <span class="token punctuation">&#125;</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>首先我们的category是固定的，在getTasks之后，修改了tasks导致Column发生重组，所以scope相关的日志打印了2次。而模拟网络请求的<code>LaunchedEffect</code>内只调用了一次，是因为<code>LaunchedEffect</code>的调用时期只有进入重组项或者Key变化重组，如果是普通的启动协程，在重组时，会导致多次调用api请求。<br><img src="/images/codes/launched_effect_1.jpg" alt="Logcat" title="launched_effect"></p>
-<blockquote>
-<p>PS: 这里为什么out of column scope也会打印2次呢，其实是因为Column是inline的， 它只能共享调用方的重组范围。</p>
-</blockquote>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
-<li><code>LaunchedEffect</code>是在Jetpack Compose中提供了在可组合项中调用挂起函数的能力的一种方式。</li>
-<li>在进入组合项时，<code>LaunchedEffect</code>会启动一个协程并执行挂起代码块(block)，在退出组合项时，协程将取消</li>
-<li>使用不同的key(参数key1, key2)重组时，会取消当前协程并启动新的协程执行挂起函数</li>
-<li>写<code>LaunchedEffect</code>函数时，最少要一个key(IDE 会有提示)</li>
-<li><code>LaunchedEffect</code>的函数调度器是主线程</li>
-</ul>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Jetpack Compose</tag>
-        <tag>Android</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Android Kotlin Coroutines + Retrofit + MVVM 简单实现</title>
     <url>/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/</url>
     <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><ul>
@@ -336,85 +250,6 @@ iRemoteService<span class="token operator">?</span><span class="token punctuatio
       </tags>
   </entry>
   <entry>
-    <title>是否应该将Compose中的状态切分</title>
-    <url>/2023/07/10/Do-we-need-to-split-state-of-Compose/</url>
-    <content><![CDATA[<p>为什么会有这种疑问呢？<br>我们知道Compose是通过重组来刷新UI的，当一个State发生改变时，其对应的可重组函数的Lambda会重新执行，而我们通常在设计State时都是将当前界面相关属<br>combine成一个整体的State，所以我们在修改State时，其实就是让整个State都发生了变化，基本会让整个界面都发生重组不会跳过。下面通过一个简单的例子：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 一个整合的State</span>
-<span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">XModelState</span><span class="token punctuation">(</span>
-    <span class="token keyword">val</span> name<span class="token operator">:</span> String<span class="token punctuation">,</span>
-    <span class="token keyword">val</span> age<span class="token operator">:</span> Int<span class="token punctuation">,</span>
-    <span class="token keyword">val</span> intro<span class="token operator">:</span> String
-    <span class="token operator">..</span><span class="token punctuation">.</span>
-<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<span id="more"></span>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token function">Column</span><span class="token punctuation">(</span>
-    modifier <span class="token operator">=</span> Modifier
-    <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-    <span class="token punctuation">.</span><span class="token function">padding</span><span class="token punctuation">(</span><span class="token number">16</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
-<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-    
-    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Column"</span><span class="token punctuation">)</span>
-
-    Wrapper <span class="token punctuation">&#123;</span>
-        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Name is <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>modelState<span class="token punctuation">.</span>name<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
-            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Name changed"</span><span class="token punctuation">)</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-    Wrapper <span class="token punctuation">&#123;</span>
-        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Age is <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>modelState<span class="token punctuation">.</span>age<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
-            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Age changed"</span><span class="token punctuation">)</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-    Wrapper <span class="token punctuation">&#123;</span>
-        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Intro is <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>modelState<span class="token punctuation">.</span>intro<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
-            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Intro changed"</span><span class="token punctuation">)</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-
-    <span class="token function">Button</span><span class="token punctuation">(</span>
-        modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-        onClick <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
-            modelState <span class="token operator">=</span> modelState<span class="token punctuation">.</span><span class="token function">copy</span><span class="token punctuation">(</span>
-                name <span class="token operator">=</span> <span class="token string">"Dougie <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>Random<span class="token punctuation">.</span><span class="token function">nextInt</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">,</span>
-                age <span class="token operator">=</span> age <span class="token operator">+</span> <span class="token number">1</span>
-            <span class="token punctuation">)</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Update Model"</span><span class="token punctuation">)</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>以上代码中，当点击Update Model按钮来修改modelState时，3个Wrapper全部都发生重组，假设这个State其实还可能更大，有20多个属性，而当我们只修改<br>一部分相关的，很多相关的Composable应该skip re-compose。</p>
-<pre class="line-numbers language-markdown" data-language="markdown"><code class="language-markdown"><span class="token list punctuation">*</span>       ----------------     -----------------      ---------------------
-<span class="token list punctuation">*</span>       | Click Button |  -> | State changed |  ->  | trigger recompose |
-<span class="token list punctuation">*</span>       ----------------     -----------------      ---------------------<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<p>为了避免这个情况，目前Compose也没提供相关的api，好像也只能通过分割状态了，对应文章的标题。</p>
-<h3 id="1-ViewModel层保留多个公开的State"><a href="#1-ViewModel层保留多个公开的State" class="headerlink" title="1. ViewModel层保留多个公开的State"></a>1. ViewModel层保留多个公开的State</h3><p>在ViewModel combine的时候就将State分割并提供多个State叫个UI层使用，而在操作的时候，我们也只会改变其对应的小State，其他State不会变化，<br>所以Compose上也只会重组其对应的可重组Lambda，而其他的则会跳过重组。</p>
-<h3 id="2-使用-derivedStateOf"><a href="#2-使用-derivedStateOf" class="headerlink" title="2. 使用 derivedStateOf"></a>2. 使用 derivedStateOf</h3><p>在View层，依然是拿到整个大的State，我们通过增加内部属性并使derivedStateOf这个方法将State分割。</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> age <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span>
-    derivedStateOf <span class="token punctuation">&#123;</span>
-        modelState<span class="token punctuation">.</span>age
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span>
-<span class="token keyword">val</span> intro <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span>
-    derivedStateOf <span class="token punctuation">&#123;</span>
-        modelState<span class="token punctuation">.</span>intro
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>如上，将age和intro分割出来，在点击按钮是，age+1，而intro不变，通过日志，发现只有Age Changed，所以intro的被跳过重组了。</p>
-<blockquote>
-<p>在日常开发中，需求feature会越来越多，State也会随之而增加，以上两种方式虽然一定程度上能减少重组，但是也很大程度上增加了维护工作<br>和带来新的问题。</p>
-</blockquote>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>在Compose上，UI的更新必然脱离不了重组，所以重组本身并不是大问题，我们需要注意的是尽量在可重组项中尽量少操作多余的工作。所以通常我们不必在意这些，<br>因为Compose帮我做了很多优化的工作了。<br>当然如果在某个UI上，有其中一部份UI变化相对比较频繁，而其他则很少，此时我建议分割出来</p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Jetpack Compose</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>EasyWallet Gradle Clean Up</title>
     <url>/2021/09/11/EasyWallet-Part-1/</url>
     <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><ul>
@@ -502,6 +337,171 @@ dependencies &#123;
       </categories>
       <tags>
         <tag>Gradle</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>浅谈Jetpack Compose LaunchedEffect</title>
+    <url>/2023/07/04/A-brief-of-Jetpack-Compose-LaunchedEffect/</url>
+    <content><![CDATA[<p>在Jetpack Compose 代码中，我们经常看到<code>LaunchedEffect</code>这个常见的。今天就简单了解下这个方法吧。在说<code>LaunchedEffect</code>前，让我们先说一下<code>Side Effect</code>.</p>
+<h3 id="什么是Side-Effect"><a href="#什么是Side-Effect" class="headerlink" title="什么是Side Effect"></a>什么是Side Effect</h3><p>在编程语言中，<code>Side-Effect</code>指的是调用函数时，除了返回可能的函数值外，该函数还对函数范围外的变量，参数等进行了修改。<br>举个🌰，看下面的函数，它有2个参数，返回它们的和，但是没有对任何其他变量有修改，所以它是没有副作用(No Side-Effect)的</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">fun</span> <span class="token function">sum</span><span class="token punctuation">(</span>number1<span class="token operator">:</span> Int<span class="token punctuation">,</span> number2<span class="token operator">:</span> Int<span class="token punctuation">)</span> <span class="token operator">=</span> number1 <span class="token operator">+</span> number2<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>但如果我们将函数修改成下面的实现，每次调用该函数都会对sum重新赋值，而sum又是在函数范围外，所以认为这个函数有一个副作用</p>
+<pre class="line-numbers language-Kotlin" data-language="Kotlin"><code class="language-Kotlin">var sum &#x3D; 0
+fun sum(number1: Int, number2: Int) &#123;
+    sum &#x3D; number1 + number2
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="在Jetpack-Compose-中，什么是LaunchedEffect"><a href="#在Jetpack-Compose-中，什么是LaunchedEffect" class="headerlink" title="在Jetpack Compose 中，什么是LaunchedEffect"></a>在Jetpack Compose 中，什么是LaunchedEffect</h3><p>根据源码我们看到，<code>LaunchedEffect</code>是一个带有<code>@Composable</code>的函数，注释如下</p>
+<span id="more"></span>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">When LaunchedEffect enters the composition it will launch block into the composition's CoroutineContext<span class="token punctuation">.</span> The coroutine will be cancelled <span class="token operator">and</span> re<span class="token operator">-</span>launched <span class="token keyword">when</span> LaunchedEffect <span class="token keyword">is</span> recomposed with a different key1 <span class="token operator">or</span> key2<span class="token punctuation">.</span> The coroutine will be cancelled <span class="token keyword">when</span> the LaunchedEffect leaves the composition<span class="token punctuation">.</span>
+This function should not be used <span class="token keyword">to</span> <span class="token punctuation">(</span>re<span class="token operator">-</span><span class="token punctuation">)</span>launch ongoing tasks <span class="token keyword">in</span> response <span class="token keyword">to</span> callback events <span class="token keyword">by</span> way of storing callback <span class="token keyword">data</span> <span class="token keyword">in</span> MutableState passed <span class="token keyword">to</span> key<span class="token punctuation">.</span> Instead<span class="token punctuation">,</span> see rememberCoroutineScope <span class="token keyword">to</span> obtain a CoroutineScope that may be used <span class="token keyword">to</span> launch ongoing jobs scoped <span class="token keyword">to</span> the composition <span class="token keyword">in</span> response <span class="token keyword">to</span> event callbacks<span class="token punctuation">.</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>简单来说，<code>LaunchedEffect</code>是一个可在当前可组合项的作用域内运行挂起函数(block是suspend的)的可组合函数。<br>在<a href="https://developer.android.com/jetpack/compose/mental-model">Thinking in Compose</a>中，我们了解到一个可组合项应该是没有副作用的，如果我们想要在可组合项中修改应用状态，需要通过Effect API启动协程操作，所以可以说<code>LaunchedEffect</code>在Jetpack Compose中提供了在可组合项中调用挂起函数的能力。</p>
+<p>下面我们通过一个例子简单了解下， 这个例子是一个TodoTask下的一个小功能，根据选择的类别展示当前类别的所有Task。<br>简单的准备mock tasks，代码如下：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">TodoTask</span><span class="token punctuation">(</span>
+    <span class="token keyword">val</span> id<span class="token operator">:</span> Long<span class="token punctuation">,</span>
+    <span class="token keyword">val</span> name<span class="token operator">:</span> String<span class="token punctuation">,</span>
+    <span class="token keyword">val</span> description<span class="token operator">:</span> String
+<span class="token punctuation">)</span>
+
+<span class="token comment">// mock tasks respose</span>
+<span class="token keyword">val</span> mockTasks <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token operator">..</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">map</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">TodoTask</span><span class="token punctuation">(</span>
+        id <span class="token operator">=</span> it<span class="token punctuation">.</span><span class="token function">toLong</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        name <span class="token operator">=</span> <span class="token string">"task name <span class="token interpolation variable">$it</span>"</span><span class="token punctuation">,</span>
+        description <span class="token operator">=</span> <span class="token string">"task description <span class="token interpolation variable">$it</span>"</span>
+    <span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+<span class="token comment">// mock get tasks from api, delay 2 seconds</span>
+<span class="token keyword">private</span> <span class="token keyword">suspend</span> <span class="token keyword">fun</span> <span class="token function">getTasks</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> List<span class="token operator">&lt;</span>TodoTask<span class="token operator">></span> <span class="token punctuation">&#123;</span>
+    <span class="token function">delay</span><span class="token punctuation">(</span><span class="token number">2000</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> mockTasks
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在TodoListOfCategoryScreen主要是一个Lazy Column用来展示任务名称的，其中参数是Category</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Composable</span>
+<span class="token keyword">fun</span> <span class="token function">TodoListOfCategoryScreen</span><span class="token punctuation">(</span>
+    category<span class="token operator">:</span> String
+<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TASK TAG: out of column scope"</span><span class="token punctuation">)</span>
+    <span class="token keyword">var</span> tasks <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span>
+        <span class="token function">mutableStateOf</span><span class="token punctuation">(</span>emptyList<span class="token operator">&lt;</span>TodoTask<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+    <span class="token function">Column</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TASK TAG: TodoListScreen: <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>tasks<span class="token punctuation">.</span>size<span class="token delimiter variable">&#125;</span></span>, category: <span class="token interpolation variable">$category</span>"</span><span class="token punctuation">)</span>
+
+        <span class="token function">LaunchedEffect</span><span class="token punctuation">(</span>key1 <span class="token operator">=</span> category<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            tasks <span class="token operator">=</span> <span class="token function">getTasks</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TASK TAG: get tasks from api, category: <span class="token interpolation variable">$category</span>"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token function">LazyColumn</span><span class="token punctuation">(</span>
+            modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">items</span><span class="token punctuation">(</span>tasks<span class="token punctuation">,</span> key <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
+                it<span class="token punctuation">.</span>id
+            <span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token function">Text</span><span class="token punctuation">(</span>modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> text <span class="token operator">=</span> it<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>首先我们的category是固定的，在getTasks之后，修改了tasks导致Column发生重组，所以scope相关的日志打印了2次。而模拟网络请求的<code>LaunchedEffect</code>内只调用了一次，是因为<code>LaunchedEffect</code>的调用时期只有进入重组项或者Key变化重组，如果是普通的启动协程，在重组时，会导致多次调用api请求。<br><img src="/images/codes/launched_effect_1.jpg" alt="Logcat" title="launched_effect"></p>
+<blockquote>
+<p>PS: 这里为什么out of column scope也会打印2次呢，其实是因为Column是inline的， 它只能共享调用方的重组范围。</p>
+</blockquote>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li><code>LaunchedEffect</code>是在Jetpack Compose中提供了在可组合项中调用挂起函数的能力的一种方式。</li>
+<li>在进入组合项时，<code>LaunchedEffect</code>会启动一个协程并执行挂起代码块(block)，在退出组合项时，协程将取消</li>
+<li>使用不同的key(参数key1, key2)重组时，会取消当前协程并启动新的协程执行挂起函数</li>
+<li>写<code>LaunchedEffect</code>函数时，最少要一个key(IDE 会有提示)</li>
+<li><code>LaunchedEffect</code>的函数调度器是主线程</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Jetpack Compose</tag>
+        <tag>Android</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>是否应该将Compose中的状态切分</title>
+    <url>/2023/07/10/Do-we-need-to-split-state-of-Compose/</url>
+    <content><![CDATA[<p>为什么会有这种疑问呢？<br>我们知道Compose是通过重组来刷新UI的，当一个State发生改变时，其对应的可重组函数的Lambda会重新执行，而我们通常在设计State时都是将当前界面相关属<br>combine成一个整体的State，所以我们在修改State时，其实就是让整个State都发生了变化，基本会让整个界面都发生重组不会跳过。下面通过一个简单的例子：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 一个整合的State</span>
+<span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">XModelState</span><span class="token punctuation">(</span>
+    <span class="token keyword">val</span> name<span class="token operator">:</span> String<span class="token punctuation">,</span>
+    <span class="token keyword">val</span> age<span class="token operator">:</span> Int<span class="token punctuation">,</span>
+    <span class="token keyword">val</span> intro<span class="token operator">:</span> String
+    <span class="token operator">..</span><span class="token punctuation">.</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span id="more"></span>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token function">Column</span><span class="token punctuation">(</span>
+    modifier <span class="token operator">=</span> Modifier
+    <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">padding</span><span class="token punctuation">(</span><span class="token number">16</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
+<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    
+    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Column"</span><span class="token punctuation">)</span>
+
+    Wrapper <span class="token punctuation">&#123;</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Name is <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>modelState<span class="token punctuation">.</span>name<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Name changed"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    Wrapper <span class="token punctuation">&#123;</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Age is <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>modelState<span class="token punctuation">.</span>age<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Age changed"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    Wrapper <span class="token punctuation">&#123;</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Intro is <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>modelState<span class="token punctuation">.</span>intro<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Intro changed"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token function">Button</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        onClick <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
+            modelState <span class="token operator">=</span> modelState<span class="token punctuation">.</span><span class="token function">copy</span><span class="token punctuation">(</span>
+                name <span class="token operator">=</span> <span class="token string">"Dougie <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>Random<span class="token punctuation">.</span><span class="token function">nextInt</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">,</span>
+                age <span class="token operator">=</span> age <span class="token operator">+</span> <span class="token number">1</span>
+            <span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Update Model"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>以上代码中，当点击Update Model按钮来修改modelState时，3个Wrapper全部都发生重组，假设这个State其实还可能更大，有20多个属性，而当我们只修改<br>一部分相关的，很多相关的Composable应该skip re-compose。</p>
+<pre class="line-numbers language-markdown" data-language="markdown"><code class="language-markdown"><span class="token list punctuation">*</span>       ----------------     -----------------      ---------------------
+<span class="token list punctuation">*</span>       | Click Button |  -> | State changed |  ->  | trigger recompose |
+<span class="token list punctuation">*</span>       ----------------     -----------------      ---------------------<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>为了避免这个情况，目前Compose也没提供相关的api，好像也只能通过分割状态了，对应文章的标题。</p>
+<h3 id="1-ViewModel层保留多个公开的State"><a href="#1-ViewModel层保留多个公开的State" class="headerlink" title="1. ViewModel层保留多个公开的State"></a>1. ViewModel层保留多个公开的State</h3><p>在ViewModel combine的时候就将State分割并提供多个State叫个UI层使用，而在操作的时候，我们也只会改变其对应的小State，其他State不会变化，<br>所以Compose上也只会重组其对应的可重组Lambda，而其他的则会跳过重组。</p>
+<h3 id="2-使用-derivedStateOf"><a href="#2-使用-derivedStateOf" class="headerlink" title="2. 使用 derivedStateOf"></a>2. 使用 derivedStateOf</h3><p>在View层，依然是拿到整个大的State，我们通过增加内部属性并使derivedStateOf这个方法将State分割。</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> age <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span>
+    derivedStateOf <span class="token punctuation">&#123;</span>
+        modelState<span class="token punctuation">.</span>age
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">val</span> intro <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span>
+    derivedStateOf <span class="token punctuation">&#123;</span>
+        modelState<span class="token punctuation">.</span>intro
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如上，将age和intro分割出来，在点击按钮是，age+1，而intro不变，通过日志，发现只有Age Changed，所以intro的被跳过重组了。</p>
+<blockquote>
+<p>在日常开发中，需求feature会越来越多，State也会随之而增加，以上两种方式虽然一定程度上能减少重组，但是也很大程度上增加了维护工作<br>和带来新的问题。</p>
+</blockquote>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>在Compose上，UI的更新必然脱离不了重组，所以重组本身并不是大问题，我们需要注意的是尽量在可重组项中尽量少操作多余的工作。所以通常我们不必在意这些，<br>因为Compose帮我做了很多优化的工作了。<br>当然如果在某个UI上，有其中一部份UI变化相对比较频繁，而其他则很少，此时我建议分割出来</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Jetpack Compose</tag>
       </tags>
   </entry>
   <entry>
@@ -698,61 +698,6 @@ dependencies &#123;
       </tags>
   </entry>
   <entry>
-    <title>Compose的重组作用域</title>
-    <url>/2023/07/06/Scoped-recomposition-in-Jetpack-Compose/</url>
-    <content><![CDATA[<p>在了解Compose的重组作用域之前，我们先来了解下重组是什么</p>
-<h3 id="什么是重组"><a href="#什么是重组" class="headerlink" title="什么是重组"></a>什么是重组</h3><p>对于Jetpack Compose，即使是初学者也都知道它被称为声明式UI开发，相对于之前通过xml方式的命令式UI。而在命令式UI模式下，如果我们想要更新一个widget，我们需要拿到这个widget通过调用其setter函数来改变其内部状态。但是Jetpack Compose中的widget相对无状态并不提供setter/getter函数，而是重新调用可组合函数来实现更新，这个过程就叫重组。目前Jetpack Compose重组是在UI线程执行的，所以重组过程是有性能消耗的。为此，Compose编译器内部做了大量工作保证重组的范围尽可能小来提升重组效率。</p>
-<h3 id="重组范围"><a href="#重组范围" class="headerlink" title="重组范围"></a>重组范围</h3><p>重组范围在Compose中是一个很重要的组成部份，通过尽量缩小重组范围来减少Compose在准备每一帧时的工作量。</p>
-<ul>
-<li>它们是通过重组更新Compose节点的最小单位</li>
-<li>它们通过跟踪观察基于快照的状态对象，并在这些状态变化时会无效<span id="more"></span>
-对于每个<code>non-inline</code>并且返回<code>Unit</code>的可组合函数， Compose编译器会生成代码将这个函数包装到一个可重组块中，当这个代码块被标记为Invalidated时，Compose Runtime将确保在渲染下一帧之前该代码块被重新执行（重组）。<br>PS: <p style="color:red">是怎样被标记为Invalidated，这块关系到State/Snapshot暂时不展开，反正先记住，不依赖State的代码是不参与重组的。</p></li>
-</ul>
-<h3 id="为什么要non-inline且没有返回值的函数才可作为可重组块"><a href="#为什么要non-inline且没有返回值的函数才可作为可重组块" class="headerlink" title="为什么要non-inline且没有返回值的函数才可作为可重组块"></a>为什么要non-inline且没有返回值的函数才可作为可重组块</h3><p>inline函数，在编译过程中会直接将函数体拷贝到调用处，所以它只能共享调用者的重组范围<br>对于有返回值的函数，由于返回值的变化会影响调用者，因此无法单独重组，而必须连同调用方一同参与重组，因此它不能作为入口被标记为invalid</p>
-<h3 id="表达式和函数调用"><a href="#表达式和函数调用" class="headerlink" title="表达式和函数调用"></a>表达式和函数调用</h3><p>在深入了解最小重组范围前，我们先了解一个关于常规旧函数调用如何工作的基本概念。在Java/Kotlin中，当你将表达式传递给函数时，该表达式会在调用函数中计算。</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"hello"</span> <span class="token operator">+</span> <span class="token string">"world"</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-<p>它等价于</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> arg <span class="token operator">=</span> <span class="token string">"hello"</span> <span class="token operator">+</span> <span class="token string">"world"</span>
-<span class="token function">println</span><span class="token punctuation">(</span>arg<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-<p>简而言之，先执行表达式得到结果，在执行函数调用</p>
-<h3 id="确认重组作用域"><a href="#确认重组作用域" class="headerlink" title="确认重组作用域"></a>确认重组作用域</h3><p>大致了解了表达式和函数调用后，我们通过一个简单的例子过一下，先看下面的代码块</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Composable</span> <span class="token keyword">fun</span> <span class="token function">Foo</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-    <span class="token keyword">var</span> text <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span> <span class="token function">mutableStateOf</span><span class="token punctuation">(</span><span class="token string">""</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span>
-    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Foo Scope"</span><span class="token punctuation">)</span>
-    <span class="token function">Button</span><span class="token punctuation">(</span>onClick <span class="token operator">=</span> <span class="token punctuation">&#123;</span> text <span class="token operator">=</span> <span class="token string">"<span class="token interpolation variable">$text</span>\n<span class="token interpolation variable">$text</span>"</span> <span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-        <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Button lambda Scope"</span><span class="token punctuation">)</span>
-        <span class="token function">Text</span><span class="token punctuation">(</span>text<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
-            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Text Scope"</span><span class="token punctuation">)</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<h4 id="1-为什么text改变后，不是只有Text发生重组"><a href="#1-为什么text改变后，不是只有Text发生重组" class="headerlink" title="1. 为什么text改变后，不是只有Text发生重组"></a>1. 为什么text改变后，不是只有Text发生重组</h4><p>点击Button时，State <code>text</code> 被重新复制而改变，而State <code>text</code>只有Text访问到，为什么重组范围不是只有Text？<br>从上面代码块看，我们知道text其实是一个表达式，而Text则是一个函数，所以text计算结果是在调用Text之前，也就是Button的lambda</p>
-<h4 id="2-为什么不是整个Foo发生重组"><a href="#2-为什么不是整个Foo发生重组" class="headerlink" title="2. 为什么不是整个Foo发生重组"></a>2. 为什么不是整个Foo发生重组</h4><p>我们知道当State发生变化时才会发生重组，而Foo中没有访问任何State对象，所以它不会发生重组。让我们修改下代码看看，将<code>by</code>改成<code>=</code>，逻辑就清晰了</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Composable</span> <span class="token keyword">fun</span> <span class="token function">Foo</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-    <span class="token keyword">val</span> text<span class="token operator">:</span> MutableState<span class="token operator">&lt;</span>String<span class="token operator">></span> <span class="token operator">=</span> remember <span class="token punctuation">&#123;</span> <span class="token function">mutableStateOf</span><span class="token punctuation">(</span><span class="token string">""</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span>
-    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Foo Scope"</span><span class="token punctuation">)</span>
-    <span class="token function">Button</span><span class="token punctuation">(</span>onClick <span class="token operator">=</span> <span class="token punctuation">&#123;</span> text<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">"<span class="token interpolation"><span class="token delimiter variable">$&#123;</span>text<span class="token punctuation">.</span>value<span class="token delimiter variable">&#125;</span></span>\n<span class="token interpolation"><span class="token delimiter variable">$&#123;</span>text<span class="token punctuation">.</span>value<span class="token delimiter variable">&#125;</span></span>"</span> <span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-        <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Button lambada Scope"</span><span class="token punctuation">)</span>
-        <span class="token function">Text</span><span class="token punctuation">(</span>text<span class="token punctuation">.</span>value<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
-            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Text Scope"</span><span class="token punctuation">)</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>显而易见，text一直都是同一个MutableState对象，修改的只不过是它内部持有的value，而value在Text中访问</p>
-<h4 id="3-为什么不是Button发生重组"><a href="#3-为什么不是Button发生重组" class="headerlink" title="3. 为什么不是Button发生重组"></a>3. 为什么不是Button发生重组</h4><p>因为<code>Foo</code>没发生重组，所以重组时并不会调用Button函数</p>
-<h4 id="4-onClick-lambada表达式呢"><a href="#4-onClick-lambada表达式呢" class="headerlink" title="4. onClick lambada表达式呢"></a>4. onClick lambada表达式呢</h4><p>重组范围只能是在可重组函数中，即使handlers，<code>Button</code>的<code>onClick</code>都不是可重组函数。所以这种函数不在重组范围内。</p>
-<h3 id="重组中-Inline-的坑"><a href="#重组中-Inline-的坑" class="headerlink" title="重组中 Inline 的坑"></a>重组中 Inline 的坑</h3><p>前面也提到了，inline函数是将代码拷贝，所以共享调用者的重组范围。在Compose中很多常见的widget被修饰成inline函数的，比如<code>Column</code>,<code>Row</code>,<code>Box</code>等。</p>
-<p>原文地址：<a href="https://dev.to/zachklipp/scoped-recomposition-jetpack-compose-what-happens-when-state-changes-l78">Scoped recomposition in Jetpack Compose — what happens when state changes?</a></p>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Jetpack Compose</tag>
-        <tag>Android</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>TCP协议的3次握手</title>
     <url>/2023/08/28/TCP-3ways-handshake/</url>
     <content><![CDATA[<h3 id="TCP"><a href="#TCP" class="headerlink" title="TCP"></a>TCP</h3><p>TCP（全称：Transmission Control Protocol）是计算机网络中用于设备间通信的传输层协议的一种，它是面向连接的传输协议，<br>还提供了各种机制保证传输过程的可靠性，包括错误检查，流量控制等机制。</p>
@@ -825,6 +770,61 @@ dependencies &#123;
 <!-- - UDP 的开销较低。 -->]]></content>
       <tags>
         <tag>Interview</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Compose的重组作用域</title>
+    <url>/2023/07/06/Scoped-recomposition-in-Jetpack-Compose/</url>
+    <content><![CDATA[<p>在了解Compose的重组作用域之前，我们先来了解下重组是什么</p>
+<h3 id="什么是重组"><a href="#什么是重组" class="headerlink" title="什么是重组"></a>什么是重组</h3><p>对于Jetpack Compose，即使是初学者也都知道它被称为声明式UI开发，相对于之前通过xml方式的命令式UI。而在命令式UI模式下，如果我们想要更新一个widget，我们需要拿到这个widget通过调用其setter函数来改变其内部状态。但是Jetpack Compose中的widget相对无状态并不提供setter/getter函数，而是重新调用可组合函数来实现更新，这个过程就叫重组。目前Jetpack Compose重组是在UI线程执行的，所以重组过程是有性能消耗的。为此，Compose编译器内部做了大量工作保证重组的范围尽可能小来提升重组效率。</p>
+<h3 id="重组范围"><a href="#重组范围" class="headerlink" title="重组范围"></a>重组范围</h3><p>重组范围在Compose中是一个很重要的组成部份，通过尽量缩小重组范围来减少Compose在准备每一帧时的工作量。</p>
+<ul>
+<li>它们是通过重组更新Compose节点的最小单位</li>
+<li>它们通过跟踪观察基于快照的状态对象，并在这些状态变化时会无效<span id="more"></span>
+对于每个<code>non-inline</code>并且返回<code>Unit</code>的可组合函数， Compose编译器会生成代码将这个函数包装到一个可重组块中，当这个代码块被标记为Invalidated时，Compose Runtime将确保在渲染下一帧之前该代码块被重新执行（重组）。<br>PS: <p style="color:red">是怎样被标记为Invalidated，这块关系到State/Snapshot暂时不展开，反正先记住，不依赖State的代码是不参与重组的。</p></li>
+</ul>
+<h3 id="为什么要non-inline且没有返回值的函数才可作为可重组块"><a href="#为什么要non-inline且没有返回值的函数才可作为可重组块" class="headerlink" title="为什么要non-inline且没有返回值的函数才可作为可重组块"></a>为什么要non-inline且没有返回值的函数才可作为可重组块</h3><p>inline函数，在编译过程中会直接将函数体拷贝到调用处，所以它只能共享调用者的重组范围<br>对于有返回值的函数，由于返回值的变化会影响调用者，因此无法单独重组，而必须连同调用方一同参与重组，因此它不能作为入口被标记为invalid</p>
+<h3 id="表达式和函数调用"><a href="#表达式和函数调用" class="headerlink" title="表达式和函数调用"></a>表达式和函数调用</h3><p>在深入了解最小重组范围前，我们先了解一个关于常规旧函数调用如何工作的基本概念。在Java/Kotlin中，当你将表达式传递给函数时，该表达式会在调用函数中计算。</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"hello"</span> <span class="token operator">+</span> <span class="token string">"world"</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>它等价于</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> arg <span class="token operator">=</span> <span class="token string">"hello"</span> <span class="token operator">+</span> <span class="token string">"world"</span>
+<span class="token function">println</span><span class="token punctuation">(</span>arg<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>简而言之，先执行表达式得到结果，在执行函数调用</p>
+<h3 id="确认重组作用域"><a href="#确认重组作用域" class="headerlink" title="确认重组作用域"></a>确认重组作用域</h3><p>大致了解了表达式和函数调用后，我们通过一个简单的例子过一下，先看下面的代码块</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Composable</span> <span class="token keyword">fun</span> <span class="token function">Foo</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">var</span> text <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span> <span class="token function">mutableStateOf</span><span class="token punctuation">(</span><span class="token string">""</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span>
+    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Foo Scope"</span><span class="token punctuation">)</span>
+    <span class="token function">Button</span><span class="token punctuation">(</span>onClick <span class="token operator">=</span> <span class="token punctuation">&#123;</span> text <span class="token operator">=</span> <span class="token string">"<span class="token interpolation variable">$text</span>\n<span class="token interpolation variable">$text</span>"</span> <span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Button lambda Scope"</span><span class="token punctuation">)</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Text Scope"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h4 id="1-为什么text改变后，不是只有Text发生重组"><a href="#1-为什么text改变后，不是只有Text发生重组" class="headerlink" title="1. 为什么text改变后，不是只有Text发生重组"></a>1. 为什么text改变后，不是只有Text发生重组</h4><p>点击Button时，State <code>text</code> 被重新复制而改变，而State <code>text</code>只有Text访问到，为什么重组范围不是只有Text？<br>从上面代码块看，我们知道text其实是一个表达式，而Text则是一个函数，所以text计算结果是在调用Text之前，也就是Button的lambda</p>
+<h4 id="2-为什么不是整个Foo发生重组"><a href="#2-为什么不是整个Foo发生重组" class="headerlink" title="2. 为什么不是整个Foo发生重组"></a>2. 为什么不是整个Foo发生重组</h4><p>我们知道当State发生变化时才会发生重组，而Foo中没有访问任何State对象，所以它不会发生重组。让我们修改下代码看看，将<code>by</code>改成<code>=</code>，逻辑就清晰了</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Composable</span> <span class="token keyword">fun</span> <span class="token function">Foo</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">val</span> text<span class="token operator">:</span> MutableState<span class="token operator">&lt;</span>String<span class="token operator">></span> <span class="token operator">=</span> remember <span class="token punctuation">&#123;</span> <span class="token function">mutableStateOf</span><span class="token punctuation">(</span><span class="token string">""</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span>
+    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Foo Scope"</span><span class="token punctuation">)</span>
+    <span class="token function">Button</span><span class="token punctuation">(</span>onClick <span class="token operator">=</span> <span class="token punctuation">&#123;</span> text<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">"<span class="token interpolation"><span class="token delimiter variable">$&#123;</span>text<span class="token punctuation">.</span>value<span class="token delimiter variable">&#125;</span></span>\n<span class="token interpolation"><span class="token delimiter variable">$&#123;</span>text<span class="token punctuation">.</span>value<span class="token delimiter variable">&#125;</span></span>"</span> <span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Button lambada Scope"</span><span class="token punctuation">)</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text<span class="token punctuation">.</span>value<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Text Scope"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>显而易见，text一直都是同一个MutableState对象，修改的只不过是它内部持有的value，而value在Text中访问</p>
+<h4 id="3-为什么不是Button发生重组"><a href="#3-为什么不是Button发生重组" class="headerlink" title="3. 为什么不是Button发生重组"></a>3. 为什么不是Button发生重组</h4><p>因为<code>Foo</code>没发生重组，所以重组时并不会调用Button函数</p>
+<h4 id="4-onClick-lambada表达式呢"><a href="#4-onClick-lambada表达式呢" class="headerlink" title="4. onClick lambada表达式呢"></a>4. onClick lambada表达式呢</h4><p>重组范围只能是在可重组函数中，即使handlers，<code>Button</code>的<code>onClick</code>都不是可重组函数。所以这种函数不在重组范围内。</p>
+<h3 id="重组中-Inline-的坑"><a href="#重组中-Inline-的坑" class="headerlink" title="重组中 Inline 的坑"></a>重组中 Inline 的坑</h3><p>前面也提到了，inline函数是将代码拷贝，所以共享调用者的重组范围。在Compose中很多常见的widget被修饰成inline函数的，比如<code>Column</code>,<code>Row</code>,<code>Box</code>等。</p>
+<p>原文地址：<a href="https://dev.to/zachklipp/scoped-recomposition-jetpack-compose-what-happens-when-state-changes-l78">Scoped recomposition in Jetpack Compose — what happens when state changes?</a></p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Jetpack Compose</tag>
+        <tag>Android</tag>
       </tags>
   </entry>
   <entry>
