@@ -209,6 +209,133 @@ OR<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="
       </tags>
   </entry>
   <entry>
+    <title>DATA BETWEEN AIDL IN ANDROID</title>
+    <url>/2023/03/20/DATA-BETWEEN-AIDL-IN-ANDROID/</url>
+    <content><![CDATA[<blockquote>
+<p>Android 夸进程通讯的方式一般有：</p>
+<ol>
+<li>Binder</li>
+<li>内存共享</li>
+<li>Socket</li>
+</ol>
+</blockquote>
+<p>其中Binder在Android中使用比较多，比如AMS<br>在Android上，一个进程通常是不能获取到其他进程的内存访问权限的，但是有时我们需要在多个进程之间进行数据处理，因此Android提供了Android Interface Definition Language（AIDL）来做处理<br>其实AIDL是文件会通过编译生成一个Sub类并实现IBinder接口的，这种方式可以说是基于Binder实现的。</p>
+<h3 id="配置新项目"><a href="#配置新项目" class="headerlink" title="配置新项目"></a>配置新项目</h3><p>首先创建一个项目，有两个Phone Module，分别为Client和Server端。对于新的项目打开aidl feature支持</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">buildFeatures <span class="token punctuation">&#123;</span>
+    compose <span class="token boolean">true</span>
+    aidl <span class="token boolean">true</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<span id="more"></span>
+<h3 id="Server端："><a href="#Server端：" class="headerlink" title="Server端："></a>Server端：</h3><p>然后创建aidl文件</p>
+<pre class="line-numbers language-aidl" data-language="aidl"><code class="language-aidl">interface IRemoteAidlInterface &#123;
+    &#x2F;**
+    * Demonstrates some basic types that you can use as parameters
+    * and return values in AIDL.
+    *&#x2F;
+    int currPid();
+    void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat,
+    double aDouble, String aString);
+    void addUser(inout User user);
+    User theFirstUser();
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>以上加了User不是基本类型，所以需要做一些特殊处理，<br>首先添加一个aidl文件声明下这个类</p>
+<pre class="line-numbers language-aidl" data-language="aidl"><code class="language-aidl">package com.easy.aidlserver;
+
+&#x2F;&#x2F; Declare any non-default types here with import statements
+
+parcelable User;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>然后创建一个data class, 并添加<code>readFromParcel</code>方法</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Parcelize</span>
+<span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">User</span><span class="token punctuation">(</span>
+<span class="token keyword">var</span> name<span class="token operator">:</span> String<span class="token operator">?</span> <span class="token operator">=</span> <span class="token string">""</span><span class="token punctuation">,</span>
+<span class="token keyword">var</span> age<span class="token operator">:</span> Int <span class="token operator">=</span> <span class="token number">0</span>
+<span class="token punctuation">)</span><span class="token operator">:</span> Parcelable <span class="token punctuation">&#123;</span>
+    <span class="token keyword">fun</span> <span class="token function">readFromParcel</span><span class="token punctuation">(</span>reply<span class="token operator">:</span> Parcel<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>name <span class="token operator">=</span> reply<span class="token punctuation">.</span><span class="token function">readString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token keyword">this</span><span class="token punctuation">.</span>age <span class="token operator">=</span> reply<span class="token punctuation">.</span><span class="token function">readInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>Build下项目生成对应的java类，<br>声明并注册一个Service，提供数据处理能力</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">class</span> RemoteService <span class="token operator">:</span> <span class="token function">Service</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">onBind</span><span class="token punctuation">(</span>intent<span class="token operator">:</span> Intent<span class="token operator">?</span><span class="token punctuation">)</span><span class="token operator">:</span> IBinder <span class="token punctuation">&#123;</span>
+        Log<span class="token punctuation">.</span><span class="token function">d</span><span class="token punctuation">(</span><span class="token string">"Service Side"</span><span class="token punctuation">,</span> <span class="token string">"onBind"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+        <span class="token keyword">return</span> binder<span class="token punctuation">;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">onUnbind</span><span class="token punctuation">(</span>intent<span class="token operator">:</span> Intent<span class="token operator">?</span><span class="token punctuation">)</span><span class="token operator">:</span> Boolean <span class="token punctuation">&#123;</span>
+        Log<span class="token punctuation">.</span><span class="token function">d</span><span class="token punctuation">(</span><span class="token string">"Service Side"</span><span class="token punctuation">,</span> <span class="token string">"onUnBind"</span><span class="token punctuation">)</span>
+        <span class="token keyword">return</span> <span class="token keyword">super</span><span class="token punctuation">.</span><span class="token function">onUnbind</span><span class="token punctuation">(</span>intent<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">val</span> users <span class="token operator">=</span> mutableListOf<span class="token operator">&lt;</span>User<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token operator">..</span><span class="token operator">..</span><span class="token punctuation">.</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>并在manifest种注册</p>
+<pre class="line-numbers language-xml" data-language="xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>service</span>
+    <span class="token attr-name"><span class="token namespace">android:</span>name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>.RemoteService<span class="token punctuation">"</span></span>
+    <span class="token attr-name"><span class="token namespace">android:</span>exported</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>true<span class="token punctuation">"</span></span>
+    <span class="token attr-name"><span class="token namespace">tools:</span>ignore</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>ExportedService<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>intent-filter</span><span class="token punctuation">></span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>action</span> <span class="token attr-name"><span class="token namespace">android:</span>name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>com.aidl.server<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>category</span> <span class="token attr-name"><span class="token namespace">android:</span>name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>android.intent.category.DEFAULT<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>intent-filter</span><span class="token punctuation">></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>service</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>这里Server端代码完成了</p>
+<h3 id="Client端"><a href="#Client端" class="headerlink" title="Client端"></a>Client端</h3><p>copy aidl文件到client端，注意要相同的包名和内容，还有对应的data class <code>User</code><br>定义connection并通过Binder拿到AIDL Interface，拿到interface就可以通过调用aidl提供的方法，并通过Proxy和服务端的service进行数据传输和处理</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">private</span> <span class="token keyword">val</span> sConnection <span class="token operator">=</span> <span class="token keyword">object</span> <span class="token operator">:</span> ServiceConnection <span class="token punctuation">&#123;</span>
+    <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">onServiceConnected</span><span class="token punctuation">(</span>name<span class="token operator">:</span> ComponentName<span class="token operator">?</span><span class="token punctuation">,</span> service<span class="token operator">:</span> IBinder<span class="token operator">?</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        iRemoteService <span class="token operator">=</span> IRemoteAidlInterface<span class="token punctuation">.</span>Stub<span class="token punctuation">.</span><span class="token function">asInterface</span><span class="token punctuation">(</span>service<span class="token punctuation">)</span>
+        iRemoteService<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">try</span> <span class="token punctuation">&#123;</span>
+                <span class="token keyword">val</span> pid <span class="token operator">=</span> it<span class="token punctuation">.</span><span class="token function">currPid</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                <span class="token keyword">val</span> myPid <span class="token operator">=</span> Process<span class="token punctuation">.</span><span class="token function">myPid</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                Log<span class="token punctuation">.</span><span class="token function">i</span><span class="token punctuation">(</span><span class="token string">"Client"</span><span class="token punctuation">,</span> <span class="token string">"Service Pid: <span class="token interpolation variable">$pid</span>, Client Pid: <span class="token interpolation variable">$myPid</span>"</span><span class="token punctuation">)</span>
+                it<span class="token punctuation">.</span><span class="token function">basicTypes</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token number">3.0f</span><span class="token punctuation">,</span> <span class="token number">5.0</span><span class="token punctuation">,</span> <span class="token string">"Hello AIDL Server"</span><span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span>e<span class="token operator">:</span> Exception<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                e<span class="token punctuation">.</span><span class="token function">printStackTrace</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">onServiceDisconnected</span><span class="token punctuation">(</span>name<span class="token operator">:</span> ComponentName<span class="token operator">?</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        Log<span class="token punctuation">.</span><span class="token function">d</span><span class="token punctuation">(</span><span class="token string">"Client"</span><span class="token punctuation">,</span> <span class="token string">"onDisconnect"</span><span class="token punctuation">)</span>
+        iRemoteService <span class="token operator">=</span> <span class="token keyword">null</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>遇到的问题或疑惑：</p>
+<ol>
+<li><p>通过API30 的x86 虚拟机可以正常唤醒service并数据正常传输，但是在API33的真机上无法bind service<br>通过查阅资料，发现在30或以上的API level后存在<a href="https://developer.android.google.cn/training/package-visibility?hl=en">Package visibility filtering on Android</a> 这么一个说法。<br>大概就是为了更高的安全性而加入了过滤行为，从而导致应用无法检测到当前设备上所有安装的应用程序。解决方法加入 <code>queries</code></p>
+<pre class="line-numbers language-xml" data-language="xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>queries</span><span class="token punctuation">></span></span>
+    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>package</span> <span class="token attr-name"><span class="token namespace">android:</span>name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>com.easy.aidlserver<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
+<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>queries</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre></li>
+<li><p>已经操作了unbindService，但是仍然能进行数据操作，而且日志走了onUnbind却不走onServiceDisconnected<br>其实onServiceDisconnected在正常unbind的时候是不会触发执行的，而是在服务丢失的时候执行。<br><img src="/images/codes/aidl_1.jpg" alt="When to excute onServiceDisconnected" title="AIDL"></p>
+</li>
+<li><p>传输大数据的时候<br>因为AIDL 是通过IBinder进行数据传输的，而IBinder对数据的拷贝是经过mmap（内存映射），在我们app启动的时候，会去申请一个 1M - 8K大小的内存给mmap，所以如果<br>传输1M或以上的数据就会报错。<br>将User修改一下，加一个ByteArray</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Parcelize</span>
+<span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">User</span><span class="token punctuation">(</span>
+    <span class="token keyword">var</span> name<span class="token operator">:</span> String<span class="token operator">?</span> <span class="token operator">=</span> <span class="token string">""</span><span class="token punctuation">,</span>
+    <span class="token keyword">var</span> age<span class="token operator">:</span> Int <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span>
+    <span class="token keyword">var</span> byteArray<span class="token operator">:</span> ByteArray <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>使用的时候</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// _1M = 1024 * 1024</span>
+iRemoteService<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">addUser</span><span class="token punctuation">(</span>
+    <span class="token function">User</span><span class="token punctuation">(</span>
+        <span class="token string">"Dougie <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>Random<span class="token punctuation">.</span><span class="token function">nextInt</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">)</span><span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">,</span>
+        Random<span class="token punctuation">.</span><span class="token function">nextInt</span><span class="token punctuation">(</span><span class="token number">18</span><span class="token punctuation">,</span> <span class="token number">24</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        byteArray <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>_1M<span class="token punctuation">)</span>
+    <span class="token punctuation">)</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>你会收到报错信息：<br><img src="/images/codes/aidl_error.jpg" alt="android.os.TransactionTooLargeException: data parcel size 1048712 bytes" title="AIDL Error"></p>
+</li>
+</ol>
+<h3 id="代码地址-AidlSample"><a href="#代码地址-AidlSample" class="headerlink" title="代码地址 AidlSample"></a>代码地址 <a href="https://github.com/BreakZero/AidlSample">AidlSample</a></h3>]]></content>
+      <tags>
+        <tag>Android</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>是否应该将Compose中的状态切分</title>
     <url>/2023/07/10/Do-we-need-to-split-state-of-Compose/</url>
     <content><![CDATA[<p>为什么会有这种疑问呢？<br>我们知道Compose是通过重组来刷新UI的，当一个State发生改变时，其对应的可重组函数的Lambda会重新执行，而我们通常在设计State时都是将当前界面相关属<br>combine成一个整体的State，所以我们在修改State时，其实就是让整个State都发生了变化，基本会让整个界面都发生重组不会跳过。下面通过一个简单的例子：</p>
@@ -398,133 +525,6 @@ dependencies &#123;
       </categories>
       <tags>
         <tag>2023</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>DATA BETWEEN AIDL IN ANDROID</title>
-    <url>/2023/03/20/DATA-BETWEEN-AIDL-IN-ANDROID/</url>
-    <content><![CDATA[<blockquote>
-<p>Android 夸进程通讯的方式一般有：</p>
-<ol>
-<li>Binder</li>
-<li>内存共享</li>
-<li>Socket</li>
-</ol>
-</blockquote>
-<p>其中Binder在Android中使用比较多，比如AMS<br>在Android上，一个进程通常是不能获取到其他进程的内存访问权限的，但是有时我们需要在多个进程之间进行数据处理，因此Android提供了Android Interface Definition Language（AIDL）来做处理<br>其实AIDL是文件会通过编译生成一个Sub类并实现IBinder接口的，这种方式可以说是基于Binder实现的。</p>
-<h3 id="配置新项目"><a href="#配置新项目" class="headerlink" title="配置新项目"></a>配置新项目</h3><p>首先创建一个项目，有两个Phone Module，分别为Client和Server端。对于新的项目打开aidl feature支持</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">buildFeatures <span class="token punctuation">&#123;</span>
-    compose <span class="token boolean">true</span>
-    aidl <span class="token boolean">true</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-<span id="more"></span>
-<h3 id="Server端："><a href="#Server端：" class="headerlink" title="Server端："></a>Server端：</h3><p>然后创建aidl文件</p>
-<pre class="line-numbers language-aidl" data-language="aidl"><code class="language-aidl">interface IRemoteAidlInterface &#123;
-    &#x2F;**
-    * Demonstrates some basic types that you can use as parameters
-    * and return values in AIDL.
-    *&#x2F;
-    int currPid();
-    void basicTypes(int anInt, long aLong, boolean aBoolean, float aFloat,
-    double aDouble, String aString);
-    void addUser(inout User user);
-    User theFirstUser();
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>以上加了User不是基本类型，所以需要做一些特殊处理，<br>首先添加一个aidl文件声明下这个类</p>
-<pre class="line-numbers language-aidl" data-language="aidl"><code class="language-aidl">package com.easy.aidlserver;
-
-&#x2F;&#x2F; Declare any non-default types here with import statements
-
-parcelable User;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>然后创建一个data class, 并添加<code>readFromParcel</code>方法</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Parcelize</span>
-<span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">User</span><span class="token punctuation">(</span>
-<span class="token keyword">var</span> name<span class="token operator">:</span> String<span class="token operator">?</span> <span class="token operator">=</span> <span class="token string">""</span><span class="token punctuation">,</span>
-<span class="token keyword">var</span> age<span class="token operator">:</span> Int <span class="token operator">=</span> <span class="token number">0</span>
-<span class="token punctuation">)</span><span class="token operator">:</span> Parcelable <span class="token punctuation">&#123;</span>
-    <span class="token keyword">fun</span> <span class="token function">readFromParcel</span><span class="token punctuation">(</span>reply<span class="token operator">:</span> Parcel<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-        <span class="token keyword">this</span><span class="token punctuation">.</span>name <span class="token operator">=</span> reply<span class="token punctuation">.</span><span class="token function">readString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-        <span class="token keyword">this</span><span class="token punctuation">.</span>age <span class="token operator">=</span> reply<span class="token punctuation">.</span><span class="token function">readInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>Build下项目生成对应的java类，<br>声明并注册一个Service，提供数据处理能力</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">class</span> RemoteService <span class="token operator">:</span> <span class="token function">Service</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-    <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">onBind</span><span class="token punctuation">(</span>intent<span class="token operator">:</span> Intent<span class="token operator">?</span><span class="token punctuation">)</span><span class="token operator">:</span> IBinder <span class="token punctuation">&#123;</span>
-        Log<span class="token punctuation">.</span><span class="token function">d</span><span class="token punctuation">(</span><span class="token string">"Service Side"</span><span class="token punctuation">,</span> <span class="token string">"onBind"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-        <span class="token keyword">return</span> binder<span class="token punctuation">;</span>
-    <span class="token punctuation">&#125;</span>
-
-    <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">onUnbind</span><span class="token punctuation">(</span>intent<span class="token operator">:</span> Intent<span class="token operator">?</span><span class="token punctuation">)</span><span class="token operator">:</span> Boolean <span class="token punctuation">&#123;</span>
-        Log<span class="token punctuation">.</span><span class="token function">d</span><span class="token punctuation">(</span><span class="token string">"Service Side"</span><span class="token punctuation">,</span> <span class="token string">"onUnBind"</span><span class="token punctuation">)</span>
-        <span class="token keyword">return</span> <span class="token keyword">super</span><span class="token punctuation">.</span><span class="token function">onUnbind</span><span class="token punctuation">(</span>intent<span class="token punctuation">)</span>
-    <span class="token punctuation">&#125;</span>
-
-    <span class="token keyword">private</span> <span class="token keyword">val</span> users <span class="token operator">=</span> mutableListOf<span class="token operator">&lt;</span>User<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-
-    <span class="token operator">..</span><span class="token operator">..</span><span class="token punctuation">.</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>并在manifest种注册</p>
-<pre class="line-numbers language-xml" data-language="xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>service</span>
-    <span class="token attr-name"><span class="token namespace">android:</span>name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>.RemoteService<span class="token punctuation">"</span></span>
-    <span class="token attr-name"><span class="token namespace">android:</span>exported</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>true<span class="token punctuation">"</span></span>
-    <span class="token attr-name"><span class="token namespace">tools:</span>ignore</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>ExportedService<span class="token punctuation">"</span></span><span class="token punctuation">></span></span>
-    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>intent-filter</span><span class="token punctuation">></span></span>
-        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>action</span> <span class="token attr-name"><span class="token namespace">android:</span>name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>com.aidl.server<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
-        <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>category</span> <span class="token attr-name"><span class="token namespace">android:</span>name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>android.intent.category.DEFAULT<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
-    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>intent-filter</span><span class="token punctuation">></span></span>
-<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>service</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>这里Server端代码完成了</p>
-<h3 id="Client端"><a href="#Client端" class="headerlink" title="Client端"></a>Client端</h3><p>copy aidl文件到client端，注意要相同的包名和内容，还有对应的data class <code>User</code><br>定义connection并通过Binder拿到AIDL Interface，拿到interface就可以通过调用aidl提供的方法，并通过Proxy和服务端的service进行数据传输和处理</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">private</span> <span class="token keyword">val</span> sConnection <span class="token operator">=</span> <span class="token keyword">object</span> <span class="token operator">:</span> ServiceConnection <span class="token punctuation">&#123;</span>
-    <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">onServiceConnected</span><span class="token punctuation">(</span>name<span class="token operator">:</span> ComponentName<span class="token operator">?</span><span class="token punctuation">,</span> service<span class="token operator">:</span> IBinder<span class="token operator">?</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-        iRemoteService <span class="token operator">=</span> IRemoteAidlInterface<span class="token punctuation">.</span>Stub<span class="token punctuation">.</span><span class="token function">asInterface</span><span class="token punctuation">(</span>service<span class="token punctuation">)</span>
-        iRemoteService<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">&#123;</span>
-            <span class="token keyword">try</span> <span class="token punctuation">&#123;</span>
-                <span class="token keyword">val</span> pid <span class="token operator">=</span> it<span class="token punctuation">.</span><span class="token function">currPid</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-                <span class="token keyword">val</span> myPid <span class="token operator">=</span> Process<span class="token punctuation">.</span><span class="token function">myPid</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-                Log<span class="token punctuation">.</span><span class="token function">i</span><span class="token punctuation">(</span><span class="token string">"Client"</span><span class="token punctuation">,</span> <span class="token string">"Service Pid: <span class="token interpolation variable">$pid</span>, Client Pid: <span class="token interpolation variable">$myPid</span>"</span><span class="token punctuation">)</span>
-                it<span class="token punctuation">.</span><span class="token function">basicTypes</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token boolean">true</span><span class="token punctuation">,</span> <span class="token number">3.0f</span><span class="token punctuation">,</span> <span class="token number">5.0</span><span class="token punctuation">,</span> <span class="token string">"Hello AIDL Server"</span><span class="token punctuation">)</span>
-            <span class="token punctuation">&#125;</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span>e<span class="token operator">:</span> Exception<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-                e<span class="token punctuation">.</span><span class="token function">printStackTrace</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token punctuation">&#125;</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-
-    <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">onServiceDisconnected</span><span class="token punctuation">(</span>name<span class="token operator">:</span> ComponentName<span class="token operator">?</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-        Log<span class="token punctuation">.</span><span class="token function">d</span><span class="token punctuation">(</span><span class="token string">"Client"</span><span class="token punctuation">,</span> <span class="token string">"onDisconnect"</span><span class="token punctuation">)</span>
-        iRemoteService <span class="token operator">=</span> <span class="token keyword">null</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>遇到的问题或疑惑：</p>
-<ol>
-<li><p>通过API30 的x86 虚拟机可以正常唤醒service并数据正常传输，但是在API33的真机上无法bind service<br>通过查阅资料，发现在30或以上的API level后存在<a href="https://developer.android.google.cn/training/package-visibility?hl=en">Package visibility filtering on Android</a> 这么一个说法。<br>大概就是为了更高的安全性而加入了过滤行为，从而导致应用无法检测到当前设备上所有安装的应用程序。解决方法加入 <code>queries</code></p>
-<pre class="line-numbers language-xml" data-language="xml"><code class="language-xml"><span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>queries</span><span class="token punctuation">></span></span>
-    <span class="token tag"><span class="token tag"><span class="token punctuation">&lt;</span>package</span> <span class="token attr-name"><span class="token namespace">android:</span>name</span><span class="token attr-value"><span class="token punctuation attr-equals">=</span><span class="token punctuation">"</span>com.easy.aidlserver<span class="token punctuation">"</span></span> <span class="token punctuation">/></span></span>
-<span class="token tag"><span class="token tag"><span class="token punctuation">&lt;/</span>queries</span><span class="token punctuation">></span></span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre></li>
-<li><p>已经操作了unbindService，但是仍然能进行数据操作，而且日志走了onUnbind却不走onServiceDisconnected<br>其实onServiceDisconnected在正常unbind的时候是不会触发执行的，而是在服务丢失的时候执行。<br><img src="/images/codes/aidl_1.jpg" alt="When to excute onServiceDisconnected" title="AIDL"></p>
-</li>
-<li><p>传输大数据的时候<br>因为AIDL 是通过IBinder进行数据传输的，而IBinder对数据的拷贝是经过mmap（内存映射），在我们app启动的时候，会去申请一个 1M - 8K大小的内存给mmap，所以如果<br>传输1M或以上的数据就会报错。<br>将User修改一下，加一个ByteArray</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Parcelize</span>
-<span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">User</span><span class="token punctuation">(</span>
-    <span class="token keyword">var</span> name<span class="token operator">:</span> String<span class="token operator">?</span> <span class="token operator">=</span> <span class="token string">""</span><span class="token punctuation">,</span>
-    <span class="token keyword">var</span> age<span class="token operator">:</span> Int <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span>
-    <span class="token keyword">var</span> byteArray<span class="token operator">:</span> ByteArray <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span>
-<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>使用的时候</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// _1M = 1024 * 1024</span>
-iRemoteService<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">addUser</span><span class="token punctuation">(</span>
-    <span class="token function">User</span><span class="token punctuation">(</span>
-        <span class="token string">"Dougie <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>Random<span class="token punctuation">.</span><span class="token function">nextInt</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">)</span><span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">,</span>
-        Random<span class="token punctuation">.</span><span class="token function">nextInt</span><span class="token punctuation">(</span><span class="token number">18</span><span class="token punctuation">,</span> <span class="token number">24</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-        byteArray <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>_1M<span class="token punctuation">)</span>
-    <span class="token punctuation">)</span>
-<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>你会收到报错信息：<br><img src="/images/codes/aidl_error.jpg" alt="android.os.TransactionTooLargeException: data parcel size 1048712 bytes" title="AIDL Error"></p>
-</li>
-</ol>
-<h3 id="代码地址-AidlSample"><a href="#代码地址-AidlSample" class="headerlink" title="代码地址 AidlSample"></a>代码地址 <a href="https://github.com/BreakZero/AidlSample">AidlSample</a></h3>]]></content>
-      <tags>
-        <tag>Android</tag>
       </tags>
   </entry>
   <entry>
@@ -874,8 +874,8 @@ flow<span class="token punctuation">.</span><span class="token function">onEach<
         <category>Kotlin Multiplatform</category>
       </categories>
       <tags>
-        <tag>Kotlin</tag>
         <tag>SwiftUI</tag>
+        <tag>Kotlin</tag>
       </tags>
   </entry>
   <entry>
@@ -955,8 +955,8 @@ println(fullPath)<span aria-hidden="true" class="line-numbers-rows"><span></span
         <category>Kotlin Multiplatform</category>
       </categories>
       <tags>
-        <tag>Kotlin</tag>
         <tag>SwiftUI</tag>
+        <tag>Kotlin</tag>
       </tags>
   </entry>
 </search>
