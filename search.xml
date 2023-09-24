@@ -1,214 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>浅谈Jetpack Compose LaunchedEffect</title>
-    <url>/2023/07/04/A-brief-of-Jetpack-Compose-LaunchedEffect/</url>
-    <content><![CDATA[<p>在Jetpack Compose 代码中，我们经常看到<code>LaunchedEffect</code>这个常见的。今天就简单了解下这个方法吧。在说<code>LaunchedEffect</code>前，让我们先说一下<code>Side Effect</code>.</p>
-<h3 id="什么是Side-Effect"><a href="#什么是Side-Effect" class="headerlink" title="什么是Side Effect"></a>什么是Side Effect</h3><p>在编程语言中，<code>Side-Effect</code>指的是调用函数时，除了返回可能的函数值外，该函数还对函数范围外的变量，参数等进行了修改。<br>举个🌰，看下面的函数，它有2个参数，返回它们的和，但是没有对任何其他变量有修改，所以它是没有副作用(No Side-Effect)的</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">fun</span> <span class="token function">sum</span><span class="token punctuation">(</span>number1<span class="token operator">:</span> Int<span class="token punctuation">,</span> number2<span class="token operator">:</span> Int<span class="token punctuation">)</span> <span class="token operator">=</span> number1 <span class="token operator">+</span> number2<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-<p>但如果我们将函数修改成下面的实现，每次调用该函数都会对sum重新赋值，而sum又是在函数范围外，所以认为这个函数有一个副作用</p>
-<pre class="line-numbers language-Kotlin" data-language="Kotlin"><code class="language-Kotlin">var sum &#x3D; 0
-fun sum(number1: Int, number2: Int) &#123;
-    sum &#x3D; number1 + number2
-&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="在Jetpack-Compose-中，什么是LaunchedEffect"><a href="#在Jetpack-Compose-中，什么是LaunchedEffect" class="headerlink" title="在Jetpack Compose 中，什么是LaunchedEffect"></a>在Jetpack Compose 中，什么是LaunchedEffect</h3><p>根据源码我们看到，<code>LaunchedEffect</code>是一个带有<code>@Composable</code>的函数，注释如下</p>
-<span id="more"></span>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">When LaunchedEffect enters the composition it will launch block into the composition's CoroutineContext<span class="token punctuation">.</span> The coroutine will be cancelled <span class="token operator">and</span> re<span class="token operator">-</span>launched <span class="token keyword">when</span> LaunchedEffect <span class="token keyword">is</span> recomposed with a different key1 <span class="token operator">or</span> key2<span class="token punctuation">.</span> The coroutine will be cancelled <span class="token keyword">when</span> the LaunchedEffect leaves the composition<span class="token punctuation">.</span>
-This function should not be used <span class="token keyword">to</span> <span class="token punctuation">(</span>re<span class="token operator">-</span><span class="token punctuation">)</span>launch ongoing tasks <span class="token keyword">in</span> response <span class="token keyword">to</span> callback events <span class="token keyword">by</span> way of storing callback <span class="token keyword">data</span> <span class="token keyword">in</span> MutableState passed <span class="token keyword">to</span> key<span class="token punctuation">.</span> Instead<span class="token punctuation">,</span> see rememberCoroutineScope <span class="token keyword">to</span> obtain a CoroutineScope that may be used <span class="token keyword">to</span> launch ongoing jobs scoped <span class="token keyword">to</span> the composition <span class="token keyword">in</span> response <span class="token keyword">to</span> event callbacks<span class="token punctuation">.</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-<p>简单来说，<code>LaunchedEffect</code>是一个可在当前可组合项的作用域内运行挂起函数(block是suspend的)的可组合函数。<br>在<a href="https://developer.android.com/jetpack/compose/mental-model">Thinking in Compose</a>中，我们了解到一个可组合项应该是没有副作用的，如果我们想要在可组合项中修改应用状态，需要通过Effect API启动协程操作，所以可以说<code>LaunchedEffect</code>在Jetpack Compose中提供了在可组合项中调用挂起函数的能力。</p>
-<p>下面我们通过一个例子简单了解下， 这个例子是一个TodoTask下的一个小功能，根据选择的类别展示当前类别的所有Task。<br>简单的准备mock tasks，代码如下：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">TodoTask</span><span class="token punctuation">(</span>
-    <span class="token keyword">val</span> id<span class="token operator">:</span> Long<span class="token punctuation">,</span>
-    <span class="token keyword">val</span> name<span class="token operator">:</span> String<span class="token punctuation">,</span>
-    <span class="token keyword">val</span> description<span class="token operator">:</span> String
-<span class="token punctuation">)</span>
-
-<span class="token comment">// mock tasks respose</span>
-<span class="token keyword">val</span> mockTasks <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token operator">..</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">map</span> <span class="token punctuation">&#123;</span>
-    <span class="token function">TodoTask</span><span class="token punctuation">(</span>
-        id <span class="token operator">=</span> it<span class="token punctuation">.</span><span class="token function">toLong</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-        name <span class="token operator">=</span> <span class="token string">"task name <span class="token interpolation variable">$it</span>"</span><span class="token punctuation">,</span>
-        description <span class="token operator">=</span> <span class="token string">"task description <span class="token interpolation variable">$it</span>"</span>
-    <span class="token punctuation">)</span>
-<span class="token punctuation">&#125;</span>
-<span class="token comment">// mock get tasks from api, delay 2 seconds</span>
-<span class="token keyword">private</span> <span class="token keyword">suspend</span> <span class="token keyword">fun</span> <span class="token function">getTasks</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> List<span class="token operator">&lt;</span>TodoTask<span class="token operator">></span> <span class="token punctuation">&#123;</span>
-    <span class="token function">delay</span><span class="token punctuation">(</span><span class="token number">2000</span><span class="token punctuation">)</span>
-    <span class="token keyword">return</span> mockTasks
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>在TodoListOfCategoryScreen主要是一个Lazy Column用来展示任务名称的，其中参数是Category</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Composable</span>
-<span class="token keyword">fun</span> <span class="token function">TodoListOfCategoryScreen</span><span class="token punctuation">(</span>
-    category<span class="token operator">:</span> String
-<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TASK TAG: out of column scope"</span><span class="token punctuation">)</span>
-    <span class="token keyword">var</span> tasks <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span>
-        <span class="token function">mutableStateOf</span><span class="token punctuation">(</span>emptyList<span class="token operator">&lt;</span>TodoTask<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-    <span class="token punctuation">&#125;</span>
-    <span class="token function">Column</span><span class="token punctuation">(</span>
-        modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-    <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-        <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TASK TAG: TodoListScreen: <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>tasks<span class="token punctuation">.</span>size<span class="token delimiter variable">&#125;</span></span>, category: <span class="token interpolation variable">$category</span>"</span><span class="token punctuation">)</span>
-
-        <span class="token function">LaunchedEffect</span><span class="token punctuation">(</span>key1 <span class="token operator">=</span> category<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-            tasks <span class="token operator">=</span> <span class="token function">getTasks</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TASK TAG: get tasks from api, category: <span class="token interpolation variable">$category</span>"</span><span class="token punctuation">)</span>
-        <span class="token punctuation">&#125;</span>
-        <span class="token function">LazyColumn</span><span class="token punctuation">(</span>
-            modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-        <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-            <span class="token function">items</span><span class="token punctuation">(</span>tasks<span class="token punctuation">,</span> key <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
-                it<span class="token punctuation">.</span>id
-            <span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-                <span class="token function">Text</span><span class="token punctuation">(</span>modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> text <span class="token operator">=</span> it<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
-            <span class="token punctuation">&#125;</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>首先我们的category是固定的，在getTasks之后，修改了tasks导致Column发生重组，所以scope相关的日志打印了2次。而模拟网络请求的<code>LaunchedEffect</code>内只调用了一次，是因为<code>LaunchedEffect</code>的调用时期只有进入重组项或者Key变化重组，如果是普通的启动协程，在重组时，会导致多次调用api请求。<br><img src="/images/codes/launched_effect_1.jpg" alt="Logcat" title="launched_effect"></p>
-<blockquote>
-<p>PS: 这里为什么out of column scope也会打印2次呢，其实是因为Column是inline的， 它只能共享调用方的重组范围。</p>
-</blockquote>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
-<li><code>LaunchedEffect</code>是在Jetpack Compose中提供了在可组合项中调用挂起函数的能力的一种方式。</li>
-<li>在进入组合项时，<code>LaunchedEffect</code>会启动一个协程并执行挂起代码块(block)，在退出组合项时，协程将取消</li>
-<li>使用不同的key(参数key1, key2)重组时，会取消当前协程并启动新的协程执行挂起函数</li>
-<li>写<code>LaunchedEffect</code>函数时，最少要一个key(IDE 会有提示)</li>
-<li><code>LaunchedEffect</code>的函数调度器是主线程</li>
-</ul>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Jetpack Compose</tag>
-        <tag>Android</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Android Kotlin Coroutines + Retrofit + MVVM 简单实现</title>
-    <url>/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><ul>
-<li>这是一篇随记，想尝试下写文章。</li>
-<li>这里基本不会深入讨论各个知识点，如需了解更多可以参考 <a href="https://www.bennyhuo.com/">Benny’s Blog</a> 和 <a href="https://kotlinlang.org/docs/reference/coroutines/coroutines-guide.html">Kotlin官方文档</a><h2 id="为什么使用协程"><a href="#为什么使用协程" class="headerlink" title="为什么使用协程"></a>为什么使用协程</h2></li>
-<li>协程比线程小<blockquote>
-<p>我： 为什么已经有Rx了还要在这里用协程？<br><br>某同事： 因为协程比线程小，可以开很多个。<br><br>我：…… 为什么比线程小？</p>
-</blockquote>
-</li>
-</ul>
-<p>&emsp; 我维基了一下，确实有说比线程更小。<br><br>&emsp; 但是看了一些源码，也是线程池 + 线程实现的，这时就开始有了疑惑，为什么同样是线程，怎么就说是比线程小的东西呢？<br><br>&emsp; 直到看到了Benny大佬的文章 <a href="https://www.bennyhuo.com/2019/10/19/coroutine-why-so-called-lightweight-thread/">协程为什么被称为『轻量级线程』</a>解释，我清晰了。通过测验，确实启动成千上万个协程也不会出现OOM或者其他问题。</p>
-<ul>
-<li>当然最主要的还是代码上的体验<br>现在Kotlin越来越普遍，各种inline函数，操作符也都基本可以替换Rx的常用操作符了。所以在写代码上体验还是相对比较好的。<br><br><font color=#f00 size=3><em>（备注：个人觉得协程小不小对于Android开发真的没多大区别，最主要还是写代码和代码美观性）</em></font><span id="more"></span>
-<h2 id="一、添加依赖"><a href="#一、添加依赖" class="headerlink" title="一、添加依赖"></a>一、添加依赖</h2><pre class="line-numbers language-Gradle" data-language="Gradle"><code class="language-Gradle">implementation&quot;com.squareup.retrofit2:retrofit:2.6.2&quot;
-implementation&quot;com.squareup.retrofit2:converter-gson:2.6.2&quot;
-
-&#x2F;&#x2F; Coroutines 
-implementation &#39;org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2&#39;
-implementation &#39;org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.2&#39;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<font color=#f00 size=3><em>记得使用retrofit 2.6.0 或以上</em></font><h2 id="二、准备网络请求接口"><a href="#二、准备网络请求接口" class="headerlink" title="二、准备网络请求接口"></a>二、准备网络请求接口</h2></li>
-<li>创建接口<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">interface</span> GitApi <span class="token punctuation">&#123;</span>
-    <span class="token annotation builtin">@GET</span><span class="token punctuation">(</span><span class="token string">"/users/&#123;username&#125;/&#123;module&#125;"</span><span class="token punctuation">)</span>
-    <span class="token keyword">suspend</span> <span class="token keyword">fun</span> <span class="token function">repos</span><span class="token punctuation">(</span>
-        <span class="token annotation builtin">@Path</span><span class="token punctuation">(</span><span class="token string">"username"</span><span class="token punctuation">)</span> username<span class="token operator">:</span> String<span class="token punctuation">,</span>
-        <span class="token annotation builtin">@Path</span><span class="token punctuation">(</span><span class="token string">"module"</span><span class="token punctuation">)</span> module<span class="token operator">:</span> String<span class="token punctuation">,</span>
-        <span class="token annotation builtin">@Query</span><span class="token punctuation">(</span><span class="token string">"page"</span><span class="token punctuation">)</span> currPage<span class="token operator">:</span> Int
-    <span class="token punctuation">)</span><span class="token operator">:</span> List<span class="token operator">&lt;</span>RepoInfo<span class="token operator">></span>
-
-    <span class="token annotation builtin">@GET</span><span class="token punctuation">(</span><span class="token string">"/search/repositories"</span><span class="token punctuation">)</span>
-    <span class="token keyword">suspend</span> <span class="token keyword">fun</span> <span class="token function">searchRepos</span><span class="token punctuation">(</span>
-        <span class="token annotation builtin">@Query</span><span class="token punctuation">(</span><span class="token string">"q"</span><span class="token punctuation">)</span> key<span class="token operator">:</span> String<span class="token punctuation">,</span>
-        <span class="token annotation builtin">@Query</span><span class="token punctuation">(</span><span class="token string">"sort"</span><span class="token punctuation">)</span> sort<span class="token operator">:</span> String<span class="token operator">?</span> <span class="token operator">=</span> <span class="token string">"updated"</span><span class="token punctuation">,</span>
-        <span class="token annotation builtin">@Query</span><span class="token punctuation">(</span><span class="token string">"order"</span><span class="token punctuation">)</span> order<span class="token operator">:</span> String<span class="token operator">?</span> <span class="token operator">=</span> <span class="token string">"desc"</span><span class="token punctuation">,</span>
-        <span class="token annotation builtin">@Query</span><span class="token punctuation">(</span><span class="token string">"page"</span><span class="token punctuation">)</span> currPage<span class="token operator">:</span> Int
-    <span class="token punctuation">)</span><span class="token operator">:</span> SearchResponse
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
-<li>创建Retrofit实例<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">fun</span> <span class="token function">buildRetrofit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> Retrofit <span class="token punctuation">&#123;</span>
-     builder<span class="token punctuation">.</span><span class="token function">addInterceptor</span><span class="token punctuation">(</span><span class="token function">HttpLoggingInterceptor</span><span class="token punctuation">(</span><span class="token keyword">object</span> <span class="token operator">:</span> HttpLoggingInterceptor<span class="token punctuation">.</span><span class="token function">Logger</span> <span class="token punctuation">&#123;</span>
-         <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">log</span><span class="token punctuation">(</span>message<span class="token operator">:</span> String<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-             Timber<span class="token punctuation">.</span><span class="token function">d</span><span class="token punctuation">(</span>message<span class="token punctuation">)</span>
-         <span class="token punctuation">&#125;</span>
-     <span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">apply</span> <span class="token punctuation">&#123;</span>
-         level <span class="token operator">=</span> HttpLoggingInterceptor<span class="token punctuation">.</span>Level<span class="token punctuation">.</span>BODY
-     <span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">addInterceptor</span><span class="token punctuation">(</span><span class="token keyword">object</span> <span class="token operator">:</span> Interceptor <span class="token punctuation">&#123;</span>
-         <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">intercept</span><span class="token punctuation">(</span>chain<span class="token operator">:</span> Interceptor<span class="token punctuation">.</span>Chain<span class="token punctuation">)</span><span class="token operator">:</span> Response <span class="token punctuation">&#123;</span>
-             <span class="token keyword">val</span> userCredentials <span class="token operator">=</span> <span class="token string">"<span class="token interpolation variable">$username</span>:<span class="token interpolation variable">$password</span>"</span>
-             <span class="token keyword">val</span> basicAuth <span class="token operator">=</span>
-                 <span class="token string">"Basic <span class="token interpolation"><span class="token delimiter variable">$&#123;</span><span class="token function">String</span><span class="token punctuation">(</span>Base64<span class="token punctuation">.</span><span class="token function">encode</span><span class="token punctuation">(</span>userCredentials<span class="token punctuation">.</span><span class="token function">toByteArray</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> Base64<span class="token punctuation">.</span>DEFAULT<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token delimiter variable">&#125;</span></span>"</span>
-             <span class="token keyword">val</span> original <span class="token operator">=</span> chain<span class="token punctuation">.</span><span class="token function">request</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-             <span class="token keyword">val</span> requestBuilder <span class="token operator">=</span> original<span class="token punctuation">.</span><span class="token function">newBuilder</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-                 <span class="token punctuation">.</span><span class="token function">header</span><span class="token punctuation">(</span><span class="token string">"Authorization"</span><span class="token punctuation">,</span> basicAuth<span class="token punctuation">.</span><span class="token function">trim</span> <span class="token punctuation">&#123;</span> it <span class="token operator">&lt;=</span> <span class="token string">' '</span> <span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
-             <span class="token keyword">val</span> request <span class="token operator">=</span> requestBuilder<span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-             <span class="token keyword">return</span> chain<span class="token punctuation">.</span><span class="token function">proceed</span><span class="token punctuation">(</span>request<span class="token punctuation">)</span>
-         <span class="token punctuation">&#125;</span>
-     <span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
-     <span class="token keyword">return</span> Retrofit<span class="token punctuation">.</span><span class="token function">Builder</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-         <span class="token punctuation">.</span><span class="token function">client</span><span class="token punctuation">(</span>builder<span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-         <span class="token punctuation">.</span><span class="token function">baseUrl</span><span class="token punctuation">(</span>BASE_URL<span class="token punctuation">)</span>
-         <span class="token punctuation">.</span><span class="token function">addConverterFactory</span><span class="token punctuation">(</span>GsonConverterFactory<span class="token punctuation">.</span><span class="token function">create</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-         <span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
- <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<h2 id="三、-在ViewModel中使用"><a href="#三、-在ViewModel中使用" class="headerlink" title="三、 在ViewModel中使用"></a>三、 在ViewModel中使用</h2><code>kotlinx.coroutines.CoroutineScope</code> 接口中的注释有这么一句话<br><br><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/30/16f561eaea6d630b~tplv-t2oaga2asx-image.image" alt="image.png"><br>所以启动一个协程一定需要一个<code>Scope</code>，也就是说每个suspend函数都有一个<code>CoroutineScope</code>，如果没有一定会报错。而Android的ViewModel中有扩展了一个<code>viewModelScope</code>，并且跟<code>lifecycle</code>绑定了，所以在ViewModel的onCleared方法上会自动帮我们cancel掉这个viewModelScope的所有Jobs。<br><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/30/16f561eae8114f24~tplv-t2oaga2asx-image.image" alt="图1"><br>为了方便使用，封装了一个BaseViewModel<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">open</span> <span class="token keyword">class</span> BaseViewModel <span class="token operator">:</span> <span class="token function">ViewModel</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-    <span class="token keyword">fun</span> <span class="token operator">&lt;</span>T<span class="token operator">></span> <span class="token function">request</span><span class="token punctuation">(</span>
-        onError<span class="token operator">:</span> <span class="token punctuation">(</span>error<span class="token operator">:</span> Throwable<span class="token punctuation">)</span> <span class="token operator">-></span> Unit <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span> <span class="token comment">// 不需要处理Error可以不传</span>
-        execute<span class="token operator">:</span> <span class="token keyword">suspend</span> CoroutineScope<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-></span> T
-    <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-        viewModelScope<span class="token punctuation">.</span><span class="token function">launch</span><span class="token punctuation">(</span>errorHandler <span class="token punctuation">&#123;</span> onError<span class="token punctuation">.</span><span class="token function">invoke</span><span class="token punctuation">(</span>it<span class="token punctuation">)</span> <span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-            <span class="token function">launch</span><span class="token punctuation">(</span>Dispatchers<span class="token punctuation">.</span>IO<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-                <span class="token function">execute</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token punctuation">&#125;</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-
-    <span class="token keyword">private</span> <span class="token keyword">fun</span> <span class="token function">errorHandler</span><span class="token punctuation">(</span>onError<span class="token operator">:</span> <span class="token punctuation">(</span>error<span class="token operator">:</span> Throwable<span class="token punctuation">)</span> <span class="token operator">-></span> Unit<span class="token punctuation">)</span><span class="token operator">:</span> CoroutineExceptionHandler <span class="token punctuation">&#123;</span>
-        <span class="token keyword">return</span> CoroutineExceptionHandler <span class="token punctuation">&#123;</span> _<span class="token punctuation">,</span> throwable <span class="token operator">-></span>
-            Timber<span class="token punctuation">.</span><span class="token function">d</span><span class="token punctuation">(</span>throwable<span class="token punctuation">)</span>
-            onError<span class="token punctuation">.</span><span class="token function">invoke</span><span class="token punctuation">(</span>throwable<span class="token punctuation">)</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-使用继承 <code>BaseViewModel</code> 调用 <code>request</code> 方法即可。<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">class</span> <span class="token function">RepoViewModel</span><span class="token punctuation">(</span>
-    <span class="token keyword">private</span> <span class="token keyword">val</span> userRepo<span class="token operator">:</span> UserDataSource<span class="token punctuation">,</span>
-    <span class="token keyword">private</span> <span class="token keyword">val</span> gitApi<span class="token operator">:</span> GitApi
-<span class="token punctuation">)</span> <span class="token operator">:</span> <span class="token function">BaseViewModel</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-    <span class="token keyword">private</span> <span class="token keyword">val</span> _reposResult <span class="token operator">=</span> BaseLiveData<span class="token operator">&lt;</span>List<span class="token operator">&lt;</span>RepoInfo<span class="token operator">></span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-    <span class="token keyword">val</span> repoResult<span class="token operator">:</span> BaseLiveData<span class="token operator">&lt;</span>List<span class="token operator">&lt;</span>RepoInfo<span class="token operator">></span><span class="token operator">></span>
-        <span class="token keyword">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> _reposResult
-
-    <span class="token keyword">fun</span> <span class="token function">fetchRepos</span><span class="token punctuation">(</span>module<span class="token operator">:</span> String<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-        request <span class="token punctuation">&#123;</span>
-            userRepo<span class="token punctuation">.</span><span class="token function">currUser</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">&#123;</span>
-                <span class="token keyword">val</span> result <span class="token operator">=</span> gitApi<span class="token punctuation">.</span><span class="token function">repos</span><span class="token punctuation">(</span>it<span class="token punctuation">.</span>nickname<span class="token punctuation">,</span> module<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
-                _reposResult<span class="token punctuation">.</span><span class="token function">update</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span>
-            <span class="token punctuation">&#125;</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-OR<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">fun</span> <span class="token function">fetchRepos</span><span class="token punctuation">(</span>module<span class="token operator">:</span> String<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-        <span class="token function">request</span><span class="token punctuation">(</span>
-            onError <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
-                <span class="token comment">// handle error</span>
-            <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
-            execute <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
-                userRepo<span class="token punctuation">.</span><span class="token function">currUser</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">&#123;</span>
-                    <span class="token keyword">val</span> result <span class="token operator">=</span> gitApi<span class="token punctuation">.</span><span class="token function">repos</span><span class="token punctuation">(</span>it<span class="token punctuation">.</span>nickname<span class="token punctuation">,</span> module<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
-                    _reposResult<span class="token punctuation">.</span><span class="token function">update</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span>
-                <span class="token punctuation">&#125;</span>
-            <span class="token punctuation">&#125;</span>
-        <span class="token punctuation">)</span>
-    <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-剩下的基本是LiveData和Fragment之间的订阅上的逻辑实现了。<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2>最近在学习，了解也不是很深，欢迎评论补充和提建议。 学习项目地址 <a href="https://github.com/BreakZero/Dithub">Dithub</a>。</li>
-</ul>
-]]></content>
-      <categories>
-        <category>Android</category>
-      </categories>
-      <tags>
-        <tag>Android</tag>
-        <tag>MVVM</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>DATA BETWEEN AIDL IN ANDROID</title>
     <url>/2023/03/20/DATA-BETWEEN-AIDL-IN-ANDROID/</url>
     <content><![CDATA[<blockquote>
@@ -336,82 +128,89 @@ iRemoteService<span class="token operator">?</span><span class="token punctuatio
       </tags>
   </entry>
   <entry>
-    <title>是否应该将Compose中的状态切分</title>
-    <url>/2023/07/10/Do-we-need-to-split-state-of-Compose/</url>
-    <content><![CDATA[<p>为什么会有这种疑问呢？<br>我们知道Compose是通过重组来刷新UI的，当一个State发生改变时，其对应的可重组函数的Lambda会重新执行，而我们通常在设计State时都是将当前界面相关属<br>combine成一个整体的State，所以我们在修改State时，其实就是让整个State都发生了变化，基本会让整个界面都发生重组不会跳过。下面通过一个简单的例子：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 一个整合的State</span>
-<span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">XModelState</span><span class="token punctuation">(</span>
-    <span class="token keyword">val</span> name<span class="token operator">:</span> String<span class="token punctuation">,</span>
-    <span class="token keyword">val</span> age<span class="token operator">:</span> Int<span class="token punctuation">,</span>
-    <span class="token keyword">val</span> intro<span class="token operator">:</span> String
-    <span class="token operator">..</span><span class="token punctuation">.</span>
-<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+    <title>浅谈Jetpack Compose LaunchedEffect</title>
+    <url>/2023/07/04/A-brief-of-Jetpack-Compose-LaunchedEffect/</url>
+    <content><![CDATA[<p>在Jetpack Compose 代码中，我们经常看到<code>LaunchedEffect</code>这个常见的。今天就简单了解下这个方法吧。在说<code>LaunchedEffect</code>前，让我们先说一下<code>Side Effect</code>.</p>
+<h3 id="什么是Side-Effect"><a href="#什么是Side-Effect" class="headerlink" title="什么是Side Effect"></a>什么是Side Effect</h3><p>在编程语言中，<code>Side-Effect</code>指的是调用函数时，除了返回可能的函数值外，该函数还对函数范围外的变量，参数等进行了修改。<br>举个🌰，看下面的函数，它有2个参数，返回它们的和，但是没有对任何其他变量有修改，所以它是没有副作用(No Side-Effect)的</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">fun</span> <span class="token function">sum</span><span class="token punctuation">(</span>number1<span class="token operator">:</span> Int<span class="token punctuation">,</span> number2<span class="token operator">:</span> Int<span class="token punctuation">)</span> <span class="token operator">=</span> number1 <span class="token operator">+</span> number2<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>但如果我们将函数修改成下面的实现，每次调用该函数都会对sum重新赋值，而sum又是在函数范围外，所以认为这个函数有一个副作用</p>
+<pre class="line-numbers language-Kotlin" data-language="Kotlin"><code class="language-Kotlin">var sum &#x3D; 0
+fun sum(number1: Int, number2: Int) &#123;
+    sum &#x3D; number1 + number2
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="在Jetpack-Compose-中，什么是LaunchedEffect"><a href="#在Jetpack-Compose-中，什么是LaunchedEffect" class="headerlink" title="在Jetpack Compose 中，什么是LaunchedEffect"></a>在Jetpack Compose 中，什么是LaunchedEffect</h3><p>根据源码我们看到，<code>LaunchedEffect</code>是一个带有<code>@Composable</code>的函数，注释如下</p>
 <span id="more"></span>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token function">Column</span><span class="token punctuation">(</span>
-    modifier <span class="token operator">=</span> Modifier
-    <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-    <span class="token punctuation">.</span><span class="token function">padding</span><span class="token punctuation">(</span><span class="token number">16</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
-<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-    
-    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Column"</span><span class="token punctuation">)</span>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">When LaunchedEffect enters the composition it will launch block into the composition's CoroutineContext<span class="token punctuation">.</span> The coroutine will be cancelled <span class="token operator">and</span> re<span class="token operator">-</span>launched <span class="token keyword">when</span> LaunchedEffect <span class="token keyword">is</span> recomposed with a different key1 <span class="token operator">or</span> key2<span class="token punctuation">.</span> The coroutine will be cancelled <span class="token keyword">when</span> the LaunchedEffect leaves the composition<span class="token punctuation">.</span>
+This function should not be used <span class="token keyword">to</span> <span class="token punctuation">(</span>re<span class="token operator">-</span><span class="token punctuation">)</span>launch ongoing tasks <span class="token keyword">in</span> response <span class="token keyword">to</span> callback events <span class="token keyword">by</span> way of storing callback <span class="token keyword">data</span> <span class="token keyword">in</span> MutableState passed <span class="token keyword">to</span> key<span class="token punctuation">.</span> Instead<span class="token punctuation">,</span> see rememberCoroutineScope <span class="token keyword">to</span> obtain a CoroutineScope that may be used <span class="token keyword">to</span> launch ongoing jobs scoped <span class="token keyword">to</span> the composition <span class="token keyword">in</span> response <span class="token keyword">to</span> event callbacks<span class="token punctuation">.</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<p>简单来说，<code>LaunchedEffect</code>是一个可在当前可组合项的作用域内运行挂起函数(block是suspend的)的可组合函数。<br>在<a href="https://developer.android.com/jetpack/compose/mental-model">Thinking in Compose</a>中，我们了解到一个可组合项应该是没有副作用的，如果我们想要在可组合项中修改应用状态，需要通过Effect API启动协程操作，所以可以说<code>LaunchedEffect</code>在Jetpack Compose中提供了在可组合项中调用挂起函数的能力。</p>
+<p>下面我们通过一个例子简单了解下， 这个例子是一个TodoTask下的一个小功能，根据选择的类别展示当前类别的所有Task。<br>简单的准备mock tasks，代码如下：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">TodoTask</span><span class="token punctuation">(</span>
+    <span class="token keyword">val</span> id<span class="token operator">:</span> Long<span class="token punctuation">,</span>
+    <span class="token keyword">val</span> name<span class="token operator">:</span> String<span class="token punctuation">,</span>
+    <span class="token keyword">val</span> description<span class="token operator">:</span> String
+<span class="token punctuation">)</span>
 
-    Wrapper <span class="token punctuation">&#123;</span>
-        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Name is <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>modelState<span class="token punctuation">.</span>name<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
-            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Name changed"</span><span class="token punctuation">)</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-    Wrapper <span class="token punctuation">&#123;</span>
-        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Age is <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>modelState<span class="token punctuation">.</span>age<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
-            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Age changed"</span><span class="token punctuation">)</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-    Wrapper <span class="token punctuation">&#123;</span>
-        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Intro is <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>modelState<span class="token punctuation">.</span>intro<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
-            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Intro changed"</span><span class="token punctuation">)</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">&#125;</span>
-
-    <span class="token function">Button</span><span class="token punctuation">(</span>
-        modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-        onClick <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
-            modelState <span class="token operator">=</span> modelState<span class="token punctuation">.</span><span class="token function">copy</span><span class="token punctuation">(</span>
-                name <span class="token operator">=</span> <span class="token string">"Dougie <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>Random<span class="token punctuation">.</span><span class="token function">nextInt</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">,</span>
-                age <span class="token operator">=</span> age <span class="token operator">+</span> <span class="token number">1</span>
-            <span class="token punctuation">)</span>
-        <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
-        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Update Model"</span><span class="token punctuation">)</span>
-    <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>以上代码中，当点击Update Model按钮来修改modelState时，3个Wrapper全部都发生重组，假设这个State其实还可能更大，有20多个属性，而当我们只修改<br>一部分相关的，很多相关的Composable应该skip re-compose。</p>
-<pre class="line-numbers language-markdown" data-language="markdown"><code class="language-markdown"><span class="token list punctuation">*</span>       ----------------     -----------------      ---------------------
-<span class="token list punctuation">*</span>       | Click Button |  -> | State changed |  ->  | trigger recompose |
-<span class="token list punctuation">*</span>       ----------------     -----------------      ---------------------<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<p>为了避免这个情况，目前Compose也没提供相关的api，好像也只能通过分割状态了，对应文章的标题。</p>
-<h3 id="1-ViewModel层保留多个公开的State"><a href="#1-ViewModel层保留多个公开的State" class="headerlink" title="1. ViewModel层保留多个公开的State"></a>1. ViewModel层保留多个公开的State</h3><p>在ViewModel combine的时候就将State分割并提供多个State叫个UI层使用，而在操作的时候，我们也只会改变其对应的小State，其他State不会变化，<br>所以Compose上也只会重组其对应的可重组Lambda，而其他的则会跳过重组。</p>
-<h3 id="2-使用-derivedStateOf"><a href="#2-使用-derivedStateOf" class="headerlink" title="2. 使用 derivedStateOf"></a>2. 使用 derivedStateOf</h3><p>在View层，依然是拿到整个大的State，我们通过增加内部属性并使derivedStateOf这个方法将State分割。</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> age <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span>
-    derivedStateOf <span class="token punctuation">&#123;</span>
-        modelState<span class="token punctuation">.</span>age
-    <span class="token punctuation">&#125;</span>
+<span class="token comment">// mock tasks respose</span>
+<span class="token keyword">val</span> mockTasks <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token number">1</span><span class="token operator">..</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">map</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">TodoTask</span><span class="token punctuation">(</span>
+        id <span class="token operator">=</span> it<span class="token punctuation">.</span><span class="token function">toLong</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        name <span class="token operator">=</span> <span class="token string">"task name <span class="token interpolation variable">$it</span>"</span><span class="token punctuation">,</span>
+        description <span class="token operator">=</span> <span class="token string">"task description <span class="token interpolation variable">$it</span>"</span>
+    <span class="token punctuation">)</span>
 <span class="token punctuation">&#125;</span>
-<span class="token keyword">val</span> intro <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span>
-    derivedStateOf <span class="token punctuation">&#123;</span>
-        modelState<span class="token punctuation">.</span>intro
+<span class="token comment">// mock get tasks from api, delay 2 seconds</span>
+<span class="token keyword">private</span> <span class="token keyword">suspend</span> <span class="token keyword">fun</span> <span class="token function">getTasks</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> List<span class="token operator">&lt;</span>TodoTask<span class="token operator">></span> <span class="token punctuation">&#123;</span>
+    <span class="token function">delay</span><span class="token punctuation">(</span><span class="token number">2000</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> mockTasks
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>在TodoListOfCategoryScreen主要是一个Lazy Column用来展示任务名称的，其中参数是Category</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Composable</span>
+<span class="token keyword">fun</span> <span class="token function">TodoListOfCategoryScreen</span><span class="token punctuation">(</span>
+    category<span class="token operator">:</span> String
+<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TASK TAG: out of column scope"</span><span class="token punctuation">)</span>
+    <span class="token keyword">var</span> tasks <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span>
+        <span class="token function">mutableStateOf</span><span class="token punctuation">(</span>emptyList<span class="token operator">&lt;</span>TodoTask<span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
     <span class="token punctuation">&#125;</span>
-<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>如上，将age和intro分割出来，在点击按钮是，age+1，而intro不变，通过日志，发现只有Age Changed，所以intro的被跳过重组了。</p>
+    <span class="token function">Column</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TASK TAG: TodoListScreen: <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>tasks<span class="token punctuation">.</span>size<span class="token delimiter variable">&#125;</span></span>, category: <span class="token interpolation variable">$category</span>"</span><span class="token punctuation">)</span>
+
+        <span class="token function">LaunchedEffect</span><span class="token punctuation">(</span>key1 <span class="token operator">=</span> category<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            tasks <span class="token operator">=</span> <span class="token function">getTasks</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TASK TAG: get tasks from api, category: <span class="token interpolation variable">$category</span>"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token function">LazyColumn</span><span class="token punctuation">(</span>
+            modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">items</span><span class="token punctuation">(</span>tasks<span class="token punctuation">,</span> key <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
+                it<span class="token punctuation">.</span>id
+            <span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token function">Text</span><span class="token punctuation">(</span>modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> text <span class="token operator">=</span> it<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>首先我们的category是固定的，在getTasks之后，修改了tasks导致Column发生重组，所以scope相关的日志打印了2次。而模拟网络请求的<code>LaunchedEffect</code>内只调用了一次，是因为<code>LaunchedEffect</code>的调用时期只有进入重组项或者Key变化重组，如果是普通的启动协程，在重组时，会导致多次调用api请求。<br><img src="/images/codes/launched_effect_1.jpg" alt="Logcat" title="launched_effect"></p>
 <blockquote>
-<p>在日常开发中，需求feature会越来越多，State也会随之而增加，以上两种方式虽然一定程度上能减少重组，但是也很大程度上增加了维护工作<br>和带来新的问题。</p>
+<p>PS: 这里为什么out of column scope也会打印2次呢，其实是因为Column是inline的， 它只能共享调用方的重组范围。</p>
 </blockquote>
-<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>在Compose上，UI的更新必然脱离不了重组，所以重组本身并不是大问题，我们需要注意的是尽量在可重组项中尽量少操作多余的工作。所以通常我们不必在意这些，<br>因为Compose帮我做了很多优化的工作了。<br>当然如果在某个UI上，有其中一部份UI变化相对比较频繁，而其他则很少，此时我建议分割出来</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li><code>LaunchedEffect</code>是在Jetpack Compose中提供了在可组合项中调用挂起函数的能力的一种方式。</li>
+<li>在进入组合项时，<code>LaunchedEffect</code>会启动一个协程并执行挂起代码块(block)，在退出组合项时，协程将取消</li>
+<li>使用不同的key(参数key1, key2)重组时，会取消当前协程并启动新的协程执行挂起函数</li>
+<li>写<code>LaunchedEffect</code>函数时，最少要一个key(IDE 会有提示)</li>
+<li><code>LaunchedEffect</code>的函数调度器是主线程</li>
+</ul>
 ]]></content>
       <categories>
         <category>Android</category>
       </categories>
       <tags>
         <tag>Jetpack Compose</tag>
+        <tag>Android</tag>
       </tags>
   </entry>
   <entry>
@@ -505,6 +304,128 @@ dependencies &#123;
       </tags>
   </entry>
   <entry>
+    <title>Android Kotlin Coroutines + Retrofit + MVVM 简单实现</title>
+    <url>/2021/09/11/Android-Kotlin-Coroutines-Retrofit-MVVM-%E7%AE%80%E5%8D%95%E5%AE%9E%E7%8E%B0/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><ul>
+<li>这是一篇随记，想尝试下写文章。</li>
+<li>这里基本不会深入讨论各个知识点，如需了解更多可以参考 <a href="https://www.bennyhuo.com/">Benny’s Blog</a> 和 <a href="https://kotlinlang.org/docs/reference/coroutines/coroutines-guide.html">Kotlin官方文档</a><h2 id="为什么使用协程"><a href="#为什么使用协程" class="headerlink" title="为什么使用协程"></a>为什么使用协程</h2></li>
+<li>协程比线程小<blockquote>
+<p>我： 为什么已经有Rx了还要在这里用协程？<br><br>某同事： 因为协程比线程小，可以开很多个。<br><br>我：…… 为什么比线程小？</p>
+</blockquote>
+</li>
+</ul>
+<p>&emsp; 我维基了一下，确实有说比线程更小。<br><br>&emsp; 但是看了一些源码，也是线程池 + 线程实现的，这时就开始有了疑惑，为什么同样是线程，怎么就说是比线程小的东西呢？<br><br>&emsp; 直到看到了Benny大佬的文章 <a href="https://www.bennyhuo.com/2019/10/19/coroutine-why-so-called-lightweight-thread/">协程为什么被称为『轻量级线程』</a>解释，我清晰了。通过测验，确实启动成千上万个协程也不会出现OOM或者其他问题。</p>
+<ul>
+<li>当然最主要的还是代码上的体验<br>现在Kotlin越来越普遍，各种inline函数，操作符也都基本可以替换Rx的常用操作符了。所以在写代码上体验还是相对比较好的。<br><br><font color=#f00 size=3><em>（备注：个人觉得协程小不小对于Android开发真的没多大区别，最主要还是写代码和代码美观性）</em></font><span id="more"></span>
+<h2 id="一、添加依赖"><a href="#一、添加依赖" class="headerlink" title="一、添加依赖"></a>一、添加依赖</h2><pre class="line-numbers language-Gradle" data-language="Gradle"><code class="language-Gradle">implementation&quot;com.squareup.retrofit2:retrofit:2.6.2&quot;
+implementation&quot;com.squareup.retrofit2:converter-gson:2.6.2&quot;
+
+&#x2F;&#x2F; Coroutines 
+implementation &#39;org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.2&#39;
+implementation &#39;org.jetbrains.kotlinx:kotlinx-coroutines-android:1.3.2&#39;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<font color=#f00 size=3><em>记得使用retrofit 2.6.0 或以上</em></font><h2 id="二、准备网络请求接口"><a href="#二、准备网络请求接口" class="headerlink" title="二、准备网络请求接口"></a>二、准备网络请求接口</h2></li>
+<li>创建接口<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">interface</span> GitApi <span class="token punctuation">&#123;</span>
+    <span class="token annotation builtin">@GET</span><span class="token punctuation">(</span><span class="token string">"/users/&#123;username&#125;/&#123;module&#125;"</span><span class="token punctuation">)</span>
+    <span class="token keyword">suspend</span> <span class="token keyword">fun</span> <span class="token function">repos</span><span class="token punctuation">(</span>
+        <span class="token annotation builtin">@Path</span><span class="token punctuation">(</span><span class="token string">"username"</span><span class="token punctuation">)</span> username<span class="token operator">:</span> String<span class="token punctuation">,</span>
+        <span class="token annotation builtin">@Path</span><span class="token punctuation">(</span><span class="token string">"module"</span><span class="token punctuation">)</span> module<span class="token operator">:</span> String<span class="token punctuation">,</span>
+        <span class="token annotation builtin">@Query</span><span class="token punctuation">(</span><span class="token string">"page"</span><span class="token punctuation">)</span> currPage<span class="token operator">:</span> Int
+    <span class="token punctuation">)</span><span class="token operator">:</span> List<span class="token operator">&lt;</span>RepoInfo<span class="token operator">></span>
+
+    <span class="token annotation builtin">@GET</span><span class="token punctuation">(</span><span class="token string">"/search/repositories"</span><span class="token punctuation">)</span>
+    <span class="token keyword">suspend</span> <span class="token keyword">fun</span> <span class="token function">searchRepos</span><span class="token punctuation">(</span>
+        <span class="token annotation builtin">@Query</span><span class="token punctuation">(</span><span class="token string">"q"</span><span class="token punctuation">)</span> key<span class="token operator">:</span> String<span class="token punctuation">,</span>
+        <span class="token annotation builtin">@Query</span><span class="token punctuation">(</span><span class="token string">"sort"</span><span class="token punctuation">)</span> sort<span class="token operator">:</span> String<span class="token operator">?</span> <span class="token operator">=</span> <span class="token string">"updated"</span><span class="token punctuation">,</span>
+        <span class="token annotation builtin">@Query</span><span class="token punctuation">(</span><span class="token string">"order"</span><span class="token punctuation">)</span> order<span class="token operator">:</span> String<span class="token operator">?</span> <span class="token operator">=</span> <span class="token string">"desc"</span><span class="token punctuation">,</span>
+        <span class="token annotation builtin">@Query</span><span class="token punctuation">(</span><span class="token string">"page"</span><span class="token punctuation">)</span> currPage<span class="token operator">:</span> Int
+    <span class="token punctuation">)</span><span class="token operator">:</span> SearchResponse
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
+<li>创建Retrofit实例<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">fun</span> <span class="token function">buildRetrofit</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">:</span> Retrofit <span class="token punctuation">&#123;</span>
+     builder<span class="token punctuation">.</span><span class="token function">addInterceptor</span><span class="token punctuation">(</span><span class="token function">HttpLoggingInterceptor</span><span class="token punctuation">(</span><span class="token keyword">object</span> <span class="token operator">:</span> HttpLoggingInterceptor<span class="token punctuation">.</span><span class="token function">Logger</span> <span class="token punctuation">&#123;</span>
+         <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">log</span><span class="token punctuation">(</span>message<span class="token operator">:</span> String<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+             Timber<span class="token punctuation">.</span><span class="token function">d</span><span class="token punctuation">(</span>message<span class="token punctuation">)</span>
+         <span class="token punctuation">&#125;</span>
+     <span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">apply</span> <span class="token punctuation">&#123;</span>
+         level <span class="token operator">=</span> HttpLoggingInterceptor<span class="token punctuation">.</span>Level<span class="token punctuation">.</span>BODY
+     <span class="token punctuation">&#125;</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">addInterceptor</span><span class="token punctuation">(</span><span class="token keyword">object</span> <span class="token operator">:</span> Interceptor <span class="token punctuation">&#123;</span>
+         <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">intercept</span><span class="token punctuation">(</span>chain<span class="token operator">:</span> Interceptor<span class="token punctuation">.</span>Chain<span class="token punctuation">)</span><span class="token operator">:</span> Response <span class="token punctuation">&#123;</span>
+             <span class="token keyword">val</span> userCredentials <span class="token operator">=</span> <span class="token string">"<span class="token interpolation variable">$username</span>:<span class="token interpolation variable">$password</span>"</span>
+             <span class="token keyword">val</span> basicAuth <span class="token operator">=</span>
+                 <span class="token string">"Basic <span class="token interpolation"><span class="token delimiter variable">$&#123;</span><span class="token function">String</span><span class="token punctuation">(</span>Base64<span class="token punctuation">.</span><span class="token function">encode</span><span class="token punctuation">(</span>userCredentials<span class="token punctuation">.</span><span class="token function">toByteArray</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> Base64<span class="token punctuation">.</span>DEFAULT<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token delimiter variable">&#125;</span></span>"</span>
+             <span class="token keyword">val</span> original <span class="token operator">=</span> chain<span class="token punctuation">.</span><span class="token function">request</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+             <span class="token keyword">val</span> requestBuilder <span class="token operator">=</span> original<span class="token punctuation">.</span><span class="token function">newBuilder</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                 <span class="token punctuation">.</span><span class="token function">header</span><span class="token punctuation">(</span><span class="token string">"Authorization"</span><span class="token punctuation">,</span> basicAuth<span class="token punctuation">.</span><span class="token function">trim</span> <span class="token punctuation">&#123;</span> it <span class="token operator">&lt;=</span> <span class="token string">' '</span> <span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+             <span class="token keyword">val</span> request <span class="token operator">=</span> requestBuilder<span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+             <span class="token keyword">return</span> chain<span class="token punctuation">.</span><span class="token function">proceed</span><span class="token punctuation">(</span>request<span class="token punctuation">)</span>
+         <span class="token punctuation">&#125;</span>
+     <span class="token punctuation">&#125;</span><span class="token punctuation">)</span>
+     <span class="token keyword">return</span> Retrofit<span class="token punctuation">.</span><span class="token function">Builder</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+         <span class="token punctuation">.</span><span class="token function">client</span><span class="token punctuation">(</span>builder<span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+         <span class="token punctuation">.</span><span class="token function">baseUrl</span><span class="token punctuation">(</span>BASE_URL<span class="token punctuation">)</span>
+         <span class="token punctuation">.</span><span class="token function">addConverterFactory</span><span class="token punctuation">(</span>GsonConverterFactory<span class="token punctuation">.</span><span class="token function">create</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+         <span class="token punctuation">.</span><span class="token function">build</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+ <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h2 id="三、-在ViewModel中使用"><a href="#三、-在ViewModel中使用" class="headerlink" title="三、 在ViewModel中使用"></a>三、 在ViewModel中使用</h2><code>kotlinx.coroutines.CoroutineScope</code> 接口中的注释有这么一句话<br><br><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/30/16f561eaea6d630b~tplv-t2oaga2asx-image.image" alt="image.png"><br>所以启动一个协程一定需要一个<code>Scope</code>，也就是说每个suspend函数都有一个<code>CoroutineScope</code>，如果没有一定会报错。而Android的ViewModel中有扩展了一个<code>viewModelScope</code>，并且跟<code>lifecycle</code>绑定了，所以在ViewModel的onCleared方法上会自动帮我们cancel掉这个viewModelScope的所有Jobs。<br><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/30/16f561eae8114f24~tplv-t2oaga2asx-image.image" alt="图1"><br>为了方便使用，封装了一个BaseViewModel<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">open</span> <span class="token keyword">class</span> BaseViewModel <span class="token operator">:</span> <span class="token function">ViewModel</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">fun</span> <span class="token operator">&lt;</span>T<span class="token operator">></span> <span class="token function">request</span><span class="token punctuation">(</span>
+        onError<span class="token operator">:</span> <span class="token punctuation">(</span>error<span class="token operator">:</span> Throwable<span class="token punctuation">)</span> <span class="token operator">-></span> Unit <span class="token operator">=</span> <span class="token punctuation">&#123;</span><span class="token punctuation">&#125;</span><span class="token punctuation">,</span> <span class="token comment">// 不需要处理Error可以不传</span>
+        execute<span class="token operator">:</span> <span class="token keyword">suspend</span> CoroutineScope<span class="token punctuation">.</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">-></span> T
+    <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        viewModelScope<span class="token punctuation">.</span><span class="token function">launch</span><span class="token punctuation">(</span>errorHandler <span class="token punctuation">&#123;</span> onError<span class="token punctuation">.</span><span class="token function">invoke</span><span class="token punctuation">(</span>it<span class="token punctuation">)</span> <span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">launch</span><span class="token punctuation">(</span>Dispatchers<span class="token punctuation">.</span>IO<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token function">execute</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">private</span> <span class="token keyword">fun</span> <span class="token function">errorHandler</span><span class="token punctuation">(</span>onError<span class="token operator">:</span> <span class="token punctuation">(</span>error<span class="token operator">:</span> Throwable<span class="token punctuation">)</span> <span class="token operator">-></span> Unit<span class="token punctuation">)</span><span class="token operator">:</span> CoroutineExceptionHandler <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> CoroutineExceptionHandler <span class="token punctuation">&#123;</span> _<span class="token punctuation">,</span> throwable <span class="token operator">-></span>
+            Timber<span class="token punctuation">.</span><span class="token function">d</span><span class="token punctuation">(</span>throwable<span class="token punctuation">)</span>
+            onError<span class="token punctuation">.</span><span class="token function">invoke</span><span class="token punctuation">(</span>throwable<span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+使用继承 <code>BaseViewModel</code> 调用 <code>request</code> 方法即可。<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">class</span> <span class="token function">RepoViewModel</span><span class="token punctuation">(</span>
+    <span class="token keyword">private</span> <span class="token keyword">val</span> userRepo<span class="token operator">:</span> UserDataSource<span class="token punctuation">,</span>
+    <span class="token keyword">private</span> <span class="token keyword">val</span> gitApi<span class="token operator">:</span> GitApi
+<span class="token punctuation">)</span> <span class="token operator">:</span> <span class="token function">BaseViewModel</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">private</span> <span class="token keyword">val</span> _reposResult <span class="token operator">=</span> BaseLiveData<span class="token operator">&lt;</span>List<span class="token operator">&lt;</span>RepoInfo<span class="token operator">></span><span class="token operator">></span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">val</span> repoResult<span class="token operator">:</span> BaseLiveData<span class="token operator">&lt;</span>List<span class="token operator">&lt;</span>RepoInfo<span class="token operator">></span><span class="token operator">></span>
+        <span class="token keyword">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> _reposResult
+
+    <span class="token keyword">fun</span> <span class="token function">fetchRepos</span><span class="token punctuation">(</span>module<span class="token operator">:</span> String<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        request <span class="token punctuation">&#123;</span>
+            userRepo<span class="token punctuation">.</span><span class="token function">currUser</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">&#123;</span>
+                <span class="token keyword">val</span> result <span class="token operator">=</span> gitApi<span class="token punctuation">.</span><span class="token function">repos</span><span class="token punctuation">(</span>it<span class="token punctuation">.</span>nickname<span class="token punctuation">,</span> module<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+                _reposResult<span class="token punctuation">.</span><span class="token function">update</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+OR<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">fun</span> <span class="token function">fetchRepos</span><span class="token punctuation">(</span>module<span class="token operator">:</span> String<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">request</span><span class="token punctuation">(</span>
+            onError <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
+                <span class="token comment">// handle error</span>
+            <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+            execute <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
+                userRepo<span class="token punctuation">.</span><span class="token function">currUser</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">&#123;</span>
+                    <span class="token keyword">val</span> result <span class="token operator">=</span> gitApi<span class="token punctuation">.</span><span class="token function">repos</span><span class="token punctuation">(</span>it<span class="token punctuation">.</span>nickname<span class="token punctuation">,</span> module<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+                    _reposResult<span class="token punctuation">.</span><span class="token function">update</span><span class="token punctuation">(</span>result<span class="token punctuation">)</span>
+                <span class="token punctuation">&#125;</span>
+            <span class="token punctuation">&#125;</span>
+        <span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+剩下的基本是LiveData和Fragment之间的订阅上的逻辑实现了。<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2>最近在学习，了解也不是很深，欢迎评论补充和提建议。 学习项目地址 <a href="https://github.com/BreakZero/Dithub">Dithub</a>。</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>MVVM</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>我的一半2023</title>
     <url>/2023/07/08/Half-year-summary-of-2023/</url>
     <content><![CDATA[<p>如今已是2023年7月，回顾这半年，是失业的半年(已有5个多月)。一路过来，大致是前2个月跟几个朋友去了几个地方游玩，后几个月则是在投递简历并准备面试，<br>然而奇怪的是投了大大几十份简历，也就寥寥无几的面试机会，简历都改了好几遍了。反正后面这些时间是半学半玩加偶尔颓废吧。<br>千难万难，生活还要继续。</p>
@@ -525,6 +446,85 @@ dependencies &#123;
       </categories>
       <tags>
         <tag>2023</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>是否应该将Compose中的状态切分</title>
+    <url>/2023/07/10/Do-we-need-to-split-state-of-Compose/</url>
+    <content><![CDATA[<p>为什么会有这种疑问呢？<br>我们知道Compose是通过重组来刷新UI的，当一个State发生改变时，其对应的可重组函数的Lambda会重新执行，而我们通常在设计State时都是将当前界面相关属<br>combine成一个整体的State，所以我们在修改State时，其实就是让整个State都发生了变化，基本会让整个界面都发生重组不会跳过。下面通过一个简单的例子：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 一个整合的State</span>
+<span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">XModelState</span><span class="token punctuation">(</span>
+    <span class="token keyword">val</span> name<span class="token operator">:</span> String<span class="token punctuation">,</span>
+    <span class="token keyword">val</span> age<span class="token operator">:</span> Int<span class="token punctuation">,</span>
+    <span class="token keyword">val</span> intro<span class="token operator">:</span> String
+    <span class="token operator">..</span><span class="token punctuation">.</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span id="more"></span>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token function">Column</span><span class="token punctuation">(</span>
+    modifier <span class="token operator">=</span> Modifier
+    <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">padding</span><span class="token punctuation">(</span><span class="token number">16</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
+<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    
+    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Column"</span><span class="token punctuation">)</span>
+
+    Wrapper <span class="token punctuation">&#123;</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Name is <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>modelState<span class="token punctuation">.</span>name<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Name changed"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    Wrapper <span class="token punctuation">&#123;</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Age is <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>modelState<span class="token punctuation">.</span>age<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Age changed"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    Wrapper <span class="token punctuation">&#123;</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Intro is <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>modelState<span class="token punctuation">.</span>intro<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Intro changed"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token function">Button</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        onClick <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
+            modelState <span class="token operator">=</span> modelState<span class="token punctuation">.</span><span class="token function">copy</span><span class="token punctuation">(</span>
+                name <span class="token operator">=</span> <span class="token string">"Dougie <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>Random<span class="token punctuation">.</span><span class="token function">nextInt</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">,</span>
+                age <span class="token operator">=</span> age <span class="token operator">+</span> <span class="token number">1</span>
+            <span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Update Model"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>以上代码中，当点击Update Model按钮来修改modelState时，3个Wrapper全部都发生重组，假设这个State其实还可能更大，有20多个属性，而当我们只修改<br>一部分相关的，很多相关的Composable应该skip re-compose。</p>
+<pre class="line-numbers language-markdown" data-language="markdown"><code class="language-markdown"><span class="token list punctuation">*</span>       ----------------     -----------------      ---------------------
+<span class="token list punctuation">*</span>       | Click Button |  -> | State changed |  ->  | trigger recompose |
+<span class="token list punctuation">*</span>       ----------------     -----------------      ---------------------<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>为了避免这个情况，目前Compose也没提供相关的api，好像也只能通过分割状态了，对应文章的标题。</p>
+<h3 id="1-ViewModel层保留多个公开的State"><a href="#1-ViewModel层保留多个公开的State" class="headerlink" title="1. ViewModel层保留多个公开的State"></a>1. ViewModel层保留多个公开的State</h3><p>在ViewModel combine的时候就将State分割并提供多个State叫个UI层使用，而在操作的时候，我们也只会改变其对应的小State，其他State不会变化，<br>所以Compose上也只会重组其对应的可重组Lambda，而其他的则会跳过重组。</p>
+<h3 id="2-使用-derivedStateOf"><a href="#2-使用-derivedStateOf" class="headerlink" title="2. 使用 derivedStateOf"></a>2. 使用 derivedStateOf</h3><p>在View层，依然是拿到整个大的State，我们通过增加内部属性并使derivedStateOf这个方法将State分割。</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> age <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span>
+    derivedStateOf <span class="token punctuation">&#123;</span>
+        modelState<span class="token punctuation">.</span>age
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">val</span> intro <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span>
+    derivedStateOf <span class="token punctuation">&#123;</span>
+        modelState<span class="token punctuation">.</span>intro
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>如上，将age和intro分割出来，在点击按钮是，age+1，而intro不变，通过日志，发现只有Age Changed，所以intro的被跳过重组了。</p>
+<blockquote>
+<p>在日常开发中，需求feature会越来越多，State也会随之而增加，以上两种方式虽然一定程度上能减少重组，但是也很大程度上增加了维护工作<br>和带来新的问题。</p>
+</blockquote>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>在Compose上，UI的更新必然脱离不了重组，所以重组本身并不是大问题，我们需要注意的是尽量在可重组项中尽量少操作多余的工作。所以通常我们不必在意这些，<br>因为Compose帮我做了很多优化的工作了。<br>当然如果在某个UI上，有其中一部份UI变化相对比较频繁，而其他则很少，此时我建议分割出来</p>
+]]></content>
+      <categories>
+        <category>Android</category>
+      </categories>
+      <tags>
+        <tag>Jetpack Compose</tag>
       </tags>
   </entry>
   <entry>
@@ -828,57 +828,6 @@ dependencies &#123;
       </tags>
   </entry>
   <entry>
-    <title>TODO List KMM 介绍</title>
-    <url>/2023/08/21/TODO-List-KMM-Project-Introduce/</url>
-    <content><![CDATA[<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>&emsp;TODO List KMM是一个基于Kotlin Multiplatform Mobile实现的一个小项目，主要提供查看Todo task列表，增加/删除/编辑task功能，目前有加上sign in/sign up页面，但是没有整合后端，有时间可能会加上。当然，这并不重要，本篇文章主要为了介绍KMM项目结构和公共模块抽取的个人想法和学习实践过程的一个回顾。<br>项目地址在文末。</p>
-<blockquote>
-<p>至今，虽然Kotlin Multiplatform可以直接使用Compose实现两端UI了，但是它还处于非稳定版本，<br>而且实际上在iOS上存在卡顿现象，所以TODO List还是使用SwiftUI/Jetpack Compose分别实现Android/iOS 界面</p>
-</blockquote>
-<h3 id="基本结构"><a href="#基本结构" class="headerlink" title="基本结构"></a>基本结构</h3><p>&emsp;作为一个KMM项目，Android/iOS 这两个模块是必不可少的，它们分别是用来实现Android/iOS页面和使用或构建数据逻辑相关的代码，而shared当然也很重要，shared是两平台的共用代码。在大多数项目中，我们的数据来源双端都是一致的，所以shared模块完全可以作为一个数据<br>提供者，不管是来源是后端api还是本地，都是没有任何异议的。当然，除此之外，还可以提供一些工具扩展类。</p>
-<h3 id="项目创建和配置"><a href="#项目创建和配置" class="headerlink" title="项目创建和配置"></a>项目创建和配置</h3><ol>
-<li>首先我们创建一个KMM项目，catalogs管理依赖库的方式很早就被推荐使用了，所以我们将准备好的<code>libs.versions.toml</code>文件copy到<code>gradle</code>目录下<br><code>composite build</code>同样也是比较推荐的一种做法，从nowinandroid项目中copy过来，并加以修改放到我们项目中，命名为<code>build-logic</code>，里面有插件，<br>这些插件是为了减少的module下的gradle配置模板代码从而更易于管理。</li>
-<li>配置好项目之后，确定shared模块主要需要实现哪些数据相关的功能，并将其分模块来实现，在该项目中有4个模块分别是core, data, database, model.</li>
-</ol>
-<ul>
-<li>2.1 core 提供核心工具类或扩展方法</li>
-<li>2.2 model 封装上层需要的数据结构，用于UI或者逻辑需要的过度Model类</li>
-<li>2.3 database 提供本地存储和读取功能作用</li>
-<li>2.4 data 数据源层，主要是combine本地或者远程api数据来源的组装和mapping等逻辑<span id="more"></span>
-除了以上，同样可以添加一个domain层用来处理复杂的用例（domain层是可有可无的）</li>
-</ul>
-<ol start="3">
-<li>根据配置精简各个模块的gradle 配置之后便可以专注于代码的编写了。在编写代码的时候，要考虑好哪些模块实现哪些功能，<br>解耦之类的问题。<blockquote>
-<p>Noted: 很多时候，我们在UI层需要实现一些数据的转换（KMM Compiler生成的类和Swift的类型之间），在Swift上实现起来比较麻烦。<br>但是我们知道Kotlin中有Native和Object-C已经帮我们实现了很多数据的对应和方法，所以可以将这些转换放到iOSMain中实现。比如ByteArray和UIImage</p>
-</blockquote>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> <span class="token keyword">data</span> <span class="token operator">=</span> bytes<span class="token punctuation">.</span><span class="token function">usePinned</span> <span class="token punctuation">&#123;</span>
-    NSData<span class="token punctuation">.</span><span class="token function">create</span><span class="token punctuation">(</span>
-    bytes <span class="token operator">=</span> it<span class="token punctuation">.</span><span class="token function">addressOf</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-    length <span class="token operator">=</span> bytes<span class="token punctuation">.</span>size<span class="token punctuation">.</span><span class="token function">toULong</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-    <span class="token punctuation">)</span>
-<span class="token punctuation">&#125;</span>
-<span class="token keyword">return</span> <span class="token function">UIImage</span><span class="token punctuation">(</span><span class="token keyword">data</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
-</ol>
-<h3 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h3><h4 id="sqldelight-上的坑"><a href="#sqldelight-上的坑" class="headerlink" title="sqldelight 上的坑"></a>sqldelight 上的坑</h4><p>&emsp;虽然依赖库中的gradle 已经在lineropts中加上了<code>-lsqlite3</code>，但是有时候在运行iOS平台项目还是会出现找不到的问题。<br>使用XCode打开iOS项目，在Build Settings中的Other linker flags上加上就好了</p>
-<h4 id="Koin"><a href="#Koin" class="headerlink" title="Koin"></a>Koin</h4><p>&emsp;对于KMM项目，我个人觉得Koin是目前最舒服的一个依赖注入方式，其也只是作用于shared中的Kotlin代码，Swift还是需要通过调用init实例化操作。所以为了防止依赖注入的helper类随着项目扩大而mapping方法也增加到可怕的数量，建议一开始就管理分类。</p>
-<h4 id="Flow和协程"><a href="#Flow和协程" class="headerlink" title="Flow和协程"></a>Flow和协程</h4><p>&emsp;Swift的闭包很好用，对于suspend方法都有一个<code>completionHandler</code>的闭包回调，对于Flow当然也可以使用闭包在相关的时候进行回调。<br>比如:</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// onEach(it) onThrow(it) onComplete()是闭包参数</span>
-flow<span class="token punctuation">.</span><span class="token function">onEach</span> <span class="token punctuation">&#123;</span> <span class="token function">onEach</span><span class="token punctuation">(</span>it<span class="token punctuation">)</span> <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">.</span><span class="token function">catch</span> <span class="token punctuation">&#123;</span> <span class="token function">onThrow</span><span class="token punctuation">(</span>it<span class="token punctuation">)</span> <span class="token punctuation">&#125;</span>
-    <span class="token punctuation">.</span><span class="token function">onCompletion</span> <span class="token punctuation">&#123;</span> <span class="token function">onComplete</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-<blockquote>
-<p>Note：需要注意的是，要清楚这个回调在哪个线程中，如果你需要在回调方法后实现dismiss当前界面或者其他UI操作，而协程又是在IO线程中执行，并没有切换会主线程再调用回调，这时候回调同样是在IO线程，而IO线程中的UI操作是无效果的（dismiss不会有效果）需要使用DispatchQueue.main切到主线程中<br><span style="color:red">那么我们是应该注意在kotlin代码上主动切回主线程再进行回调还是让其在Swift上来考虑呢？</span></p>
-</blockquote>
-<p><a href="https://github.com/BreakZero/TODO-LIST-KMM">TODO-LIST-KMM</a></p>
-]]></content>
-      <categories>
-        <category>Kotlin Multiplatform</category>
-      </categories>
-      <tags>
-        <tag>Kotlin</tag>
-        <tag>SwiftUI</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>iOS 读取存储在Container的文件问题</title>
     <url>/2023/08/13/iOS-read-local-file-issue/</url>
     <content><![CDATA[<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>在使用KMM实现iOS平台文件存储时，通过到处container文件可以查看到文件确实存在目录下，但是在调用<code>NSData.dataWithContentsOfFile</code>时总是返回空，根据错误信息得知找不到该文件或目录<code>No such File or Directory</code>。其中代码如下：</p>
@@ -950,6 +899,57 @@ println(fullPath)<span aria-hidden="true" class="line-numbers-rows"><span></span
 路径正确，直接调用<code>NSData.dataWithContentsOfFile</code>传入文件路径即可</li>
 </ol>
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>在 iOS8.0 之后，由于Application（Bundle identifier）的UUID会随机改变，所以不能直接存全路径，可以直接存名字<br>而可以通过<code>NSSearchPathForDirectoriesInDomains</code>拿到对应的路径，再加上文件名得到当前文件准确的全路径，这时候读取即可。</p>
+]]></content>
+      <categories>
+        <category>Kotlin Multiplatform</category>
+      </categories>
+      <tags>
+        <tag>Kotlin</tag>
+        <tag>SwiftUI</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>TODO List KMM 介绍</title>
+    <url>/2023/08/21/TODO-List-KMM-Project-Introduce/</url>
+    <content><![CDATA[<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>&emsp;TODO List KMM是一个基于Kotlin Multiplatform Mobile实现的一个小项目，主要提供查看Todo task列表，增加/删除/编辑task功能，目前有加上sign in/sign up页面，但是没有整合后端，有时间可能会加上。当然，这并不重要，本篇文章主要为了介绍KMM项目结构和公共模块抽取的个人想法和学习实践过程的一个回顾。<br>项目地址在文末。</p>
+<blockquote>
+<p>至今，虽然Kotlin Multiplatform可以直接使用Compose实现两端UI了，但是它还处于非稳定版本，<br>而且实际上在iOS上存在卡顿现象，所以TODO List还是使用SwiftUI/Jetpack Compose分别实现Android/iOS 界面</p>
+</blockquote>
+<h3 id="基本结构"><a href="#基本结构" class="headerlink" title="基本结构"></a>基本结构</h3><p>&emsp;作为一个KMM项目，Android/iOS 这两个模块是必不可少的，它们分别是用来实现Android/iOS页面和使用或构建数据逻辑相关的代码，而shared当然也很重要，shared是两平台的共用代码。在大多数项目中，我们的数据来源双端都是一致的，所以shared模块完全可以作为一个数据<br>提供者，不管是来源是后端api还是本地，都是没有任何异议的。当然，除此之外，还可以提供一些工具扩展类。</p>
+<h3 id="项目创建和配置"><a href="#项目创建和配置" class="headerlink" title="项目创建和配置"></a>项目创建和配置</h3><ol>
+<li>首先我们创建一个KMM项目，catalogs管理依赖库的方式很早就被推荐使用了，所以我们将准备好的<code>libs.versions.toml</code>文件copy到<code>gradle</code>目录下<br><code>composite build</code>同样也是比较推荐的一种做法，从nowinandroid项目中copy过来，并加以修改放到我们项目中，命名为<code>build-logic</code>，里面有插件，<br>这些插件是为了减少的module下的gradle配置模板代码从而更易于管理。</li>
+<li>配置好项目之后，确定shared模块主要需要实现哪些数据相关的功能，并将其分模块来实现，在该项目中有4个模块分别是core, data, database, model.</li>
+</ol>
+<ul>
+<li>2.1 core 提供核心工具类或扩展方法</li>
+<li>2.2 model 封装上层需要的数据结构，用于UI或者逻辑需要的过度Model类</li>
+<li>2.3 database 提供本地存储和读取功能作用</li>
+<li>2.4 data 数据源层，主要是combine本地或者远程api数据来源的组装和mapping等逻辑<span id="more"></span>
+除了以上，同样可以添加一个domain层用来处理复杂的用例（domain层是可有可无的）</li>
+</ul>
+<ol start="3">
+<li>根据配置精简各个模块的gradle 配置之后便可以专注于代码的编写了。在编写代码的时候，要考虑好哪些模块实现哪些功能，<br>解耦之类的问题。<blockquote>
+<p>Noted: 很多时候，我们在UI层需要实现一些数据的转换（KMM Compiler生成的类和Swift的类型之间），在Swift上实现起来比较麻烦。<br>但是我们知道Kotlin中有Native和Object-C已经帮我们实现了很多数据的对应和方法，所以可以将这些转换放到iOSMain中实现。比如ByteArray和UIImage</p>
+</blockquote>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> <span class="token keyword">data</span> <span class="token operator">=</span> bytes<span class="token punctuation">.</span><span class="token function">usePinned</span> <span class="token punctuation">&#123;</span>
+    NSData<span class="token punctuation">.</span><span class="token function">create</span><span class="token punctuation">(</span>
+    bytes <span class="token operator">=</span> it<span class="token punctuation">.</span><span class="token function">addressOf</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    length <span class="token operator">=</span> bytes<span class="token punctuation">.</span>size<span class="token punctuation">.</span><span class="token function">toULong</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">return</span> <span class="token function">UIImage</span><span class="token punctuation">(</span><span class="token keyword">data</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
+</ol>
+<h3 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h3><h4 id="sqldelight-上的坑"><a href="#sqldelight-上的坑" class="headerlink" title="sqldelight 上的坑"></a>sqldelight 上的坑</h4><p>&emsp;虽然依赖库中的gradle 已经在lineropts中加上了<code>-lsqlite3</code>，但是有时候在运行iOS平台项目还是会出现找不到的问题。<br>使用XCode打开iOS项目，在Build Settings中的Other linker flags上加上就好了</p>
+<h4 id="Koin"><a href="#Koin" class="headerlink" title="Koin"></a>Koin</h4><p>&emsp;对于KMM项目，我个人觉得Koin是目前最舒服的一个依赖注入方式，其也只是作用于shared中的Kotlin代码，Swift还是需要通过调用init实例化操作。所以为了防止依赖注入的helper类随着项目扩大而mapping方法也增加到可怕的数量，建议一开始就管理分类。</p>
+<h4 id="Flow和协程"><a href="#Flow和协程" class="headerlink" title="Flow和协程"></a>Flow和协程</h4><p>&emsp;Swift的闭包很好用，对于suspend方法都有一个<code>completionHandler</code>的闭包回调，对于Flow当然也可以使用闭包在相关的时候进行回调。<br>比如:</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// onEach(it) onThrow(it) onComplete()是闭包参数</span>
+flow<span class="token punctuation">.</span><span class="token function">onEach</span> <span class="token punctuation">&#123;</span> <span class="token function">onEach</span><span class="token punctuation">(</span>it<span class="token punctuation">)</span> <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">.</span><span class="token function">catch</span> <span class="token punctuation">&#123;</span> <span class="token function">onThrow</span><span class="token punctuation">(</span>it<span class="token punctuation">)</span> <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">.</span><span class="token function">onCompletion</span> <span class="token punctuation">&#123;</span> <span class="token function">onComplete</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>Note：需要注意的是，要清楚这个回调在哪个线程中，如果你需要在回调方法后实现dismiss当前界面或者其他UI操作，而协程又是在IO线程中执行，并没有切换会主线程再调用回调，这时候回调同样是在IO线程，而IO线程中的UI操作是无效果的（dismiss不会有效果）需要使用DispatchQueue.main切到主线程中<br><span style="color:red">那么我们是应该注意在kotlin代码上主动切回主线程再进行回调还是让其在Swift上来考虑呢？</span></p>
+</blockquote>
+<p><a href="https://github.com/BreakZero/TODO-LIST-KMM">TODO-LIST-KMM</a></p>
 ]]></content>
       <categories>
         <category>Kotlin Multiplatform</category>
