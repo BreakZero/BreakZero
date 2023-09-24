@@ -299,19 +299,37 @@
         <hr class="clearfix">
 
         
+        <!-- 是否加载使用自带的 prismjs. -->
+        <link rel="stylesheet" href="/libs/prism/prism.min.css">
+        
 
         
 
         <div class="card-content article-card-content">
             <div id="articleContent">
                 <h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>在使用KMM实现iOS平台文件存储时，通过到处container文件可以查看到文件确实存在目录下，但是在调用<code>NSData.dataWithContentsOfFile</code>时总是返回空，根据错误信息得知找不到该文件或目录<code>No such File or Directory</code>。其中代码如下：</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> errorPtr: ObjCObjectVar&lt;NSError?&gt; = alloc()</span><br><span class="line">NSData.dataWithContentsOfFile(fullPath, options = <span class="number">0</span>, error = errorPtr.ptr)?.let &#123; bytes -&gt;</span><br><span class="line">    <span class="keyword">val</span> array = ByteArray(bytes.length.toInt())</span><br><span class="line">    bytes.getBytes(array.refTo(<span class="number">0</span>).getPointer(<span class="keyword">this</span>), bytes.length)</span><br><span class="line">    <span class="keyword">return</span><span class="symbol">@withContext</span> array</span><br><span class="line">&#125;</span><br><span class="line">println(errorPtr.value?.description.orEmpty())</span><br><span class="line"><span class="keyword">return</span><span class="symbol">@withContext</span> <span class="literal">null</span></span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> errorPtr<span class="token operator">:</span> ObjCObjectVar<span class="token operator">&lt;</span>NSError<span class="token operator">?</span><span class="token operator">></span> <span class="token operator">=</span> <span class="token function">alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">&#123;</span> bytes <span class="token operator">-></span>
+    <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+    <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
+<span class="token punctuation">&#125;</span>
+<span class="token function">println</span><span class="token punctuation">(</span>errorPtr<span class="token punctuation">.</span>value<span class="token operator">?</span><span class="token punctuation">.</span>description<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">return</span><span class="token label symbol">@withContext</span> <span class="token keyword">null</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>errorPtr是为了查看具体错误，所以加上这个为了更好定位问题</p>
 <span id="more"></span>
 
 <h3 id="问题定位"><a href="#问题定位" class="headerlink" title="问题定位"></a>问题定位</h3><ol>
 <li>通过上面的error日志中得知，大概率是因为fullPath这个目录是一个错误的目录了，而我又从device中导出了<code>xxx.xcappdata</code>，<br>在这个目录下确实能找到对应名字的文件，而且文件是没有问题的，这个可以确定问题是文件是存在的，但是目录又不一致</li>
-<li>既然文件存在，但是目录上却找不到该文件，问题出在哪呢？于是想通过代码打印出fullPath和目录下所有文件的路径对比是否一致，上代码：<figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> fileManager <span class="operator">=</span> <span class="type">FileManager</span>.default</span><br><span class="line"><span class="keyword">let</span> documentsURL <span class="operator">=</span> fileManager.urls(for: .documentDirectory, in: .userDomainMask)[<span class="number">0</span>]</span><br><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> fileURLs <span class="operator">=</span> <span class="keyword">try</span> fileManager.contentsOfDirectory(at: documentsURL, includingPropertiesForKeys: <span class="literal">nil</span>)</span><br><span class="line">    <span class="built_in">print</span>(fileURLs)</span><br><span class="line">    <span class="comment">// process files</span></span><br><span class="line">&#125; <span class="keyword">catch</span> &#123;</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Error while enumerating files <span class="subst">\(documentsURL.path)</span>: <span class="subst">\(error.localizedDescription)</span>&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<li>既然文件存在，但是目录上却找不到该文件，问题出在哪呢？于是想通过代码打印出fullPath和目录下所有文件的路径对比是否一致，上代码：<pre class="line-numbers language-swift" data-language="swift"><code class="language-swift"><span class="token keyword">let</span> fileManager <span class="token operator">=</span> <span class="token builtin">FileManager</span><span class="token punctuation">.</span><span class="token keyword">default</span>
+<span class="token keyword">let</span> documentsURL <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">urls</span><span class="token punctuation">(</span><span class="token keyword">for</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>documentDirectory<span class="token punctuation">,</span> <span class="token keyword">in</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>userDomainMask<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+<span class="token keyword">do</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">let</span> fileURLs <span class="token operator">=</span> <span class="token keyword">try</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectory</span><span class="token punctuation">(</span>at<span class="token punctuation">:</span> documentsURL<span class="token punctuation">,</span> includingPropertiesForKeys<span class="token punctuation">:</span> <span class="token constant">nil</span><span class="token punctuation">)</span>
+    <span class="token function">print</span><span class="token punctuation">(</span>fileURLs<span class="token punctuation">)</span>
+    <span class="token comment">// process files</span>
+<span class="token punctuation">&#125;</span> <span class="token keyword">catch</span> <span class="token punctuation">&#123;</span>
+    <span class="token function">print</span><span class="token punctuation">(</span><span class="token string">"Error while enumerating files <span class="token interpolation"><span class="token delimiter variable">\(</span>documentsURL<span class="token punctuation">.</span>path<span class="token delimiter variable">)</span></span>: <span class="token interpolation"><span class="token delimiter variable">\(</span>error<span class="token punctuation">.</span>localizedDescription<span class="token delimiter variable">)</span></span>"</span><span class="token punctuation">)</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 这一块是Swift的代码，然后获取document Directory的url（因为我存储文件的目录就是这个），然后通过遍历将所有文件url打印并对比</li>
 </ol>
 <ul>
@@ -327,8 +345,34 @@
 <p>果然，Application后面的UUID并不一致，那全路径肯定也是不对的咯<br>通过查阅资料，得知在<code>iOS8.0</code>之后每次debug运行或者更新，这个UUID都会改变，而我又为了方便，一开始就存储了全路径，所以每次重新运行代码就会出现找不到这个文件，因为UUID的改变导致了整个目录都变了，自然找不到。</p>
 <h3 id="解决问题"><a href="#解决问题" class="headerlink" title="解决问题"></a>解决问题</h3><p>既然知道了问题所在，解决问题就简单了</p>
 <ol>
-<li>遍历目录，通过fileName过滤拿到对应的文件<br>刚开始，由于对iOS这边的api之类的还不是很了解，解决思路也很直接，既然Swift上能拿到目录下所有文件的url了，在kotlin native层肯定有对应的API，于是开搞，上代码：<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 拿到目录的url</span></span><br><span class="line"><span class="keyword">val</span> url = fileManager.URLForDirectory(</span><br><span class="line">    directory = NSDocumentDirectory,</span><br><span class="line">    inDomain = NSUserDomainMask,</span><br><span class="line">    appropriateForURL = <span class="literal">null</span>,</span><br><span class="line">    create = <span class="literal">false</span>,</span><br><span class="line">    error = <span class="literal">null</span></span><br><span class="line">)!!</span><br><span class="line"><span class="comment">// 拿到目录下所有文件的url</span></span><br><span class="line"><span class="keyword">val</span> fileUrls = fileManager.contentsOfDirectoryAtURL(url = url, includingPropertiesForKeys = <span class="literal">null</span>, options = <span class="number">0</span>, error = errorPtr.ptr)</span><br><span class="line"><span class="comment">// 通过全路径拿到文件名，然后通过文件名过滤得到唯一的文件url</span></span><br><span class="line"><span class="keyword">val</span> currentFileUrl = fileUrls?.first &#123; it.toString().contains(fileName) &#125; <span class="keyword">as</span>? NSURL</span><br><span class="line"><span class="comment">// 读取到NSData中</span></span><br><span class="line">currentFileUrl?.let &#123;</span><br><span class="line">    NSData.dataWithContentsOfURL(currentFileUrl)</span><br><span class="line">    ?.let &#123; bytes -&gt;</span><br><span class="line">        <span class="keyword">val</span> array = ByteArray(bytes.length.toInt())</span><br><span class="line">        bytes.getBytes(array.refTo(<span class="number">0</span>).getPointer(<span class="keyword">this</span>), bytes.length)</span><br><span class="line">        <span class="keyword">return</span><span class="symbol">@withContext</span> array</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-再次运行，成功拿到bytes（✌️）<br>但是这样存在一个问题，随着时间，这个目录的文件肯定会越来越多，到时候遍历肯定是一个耗时任务。那有没有可以直接通过filename拿到对应文件的url呢？<br>看了下代码，既然能拿到document目录的url，那是不是也有API可以直接拿到文件的url？一开始想通过url + filename组装一下<br>他们类型不一致，相对麻烦，还好找到了，代码：<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> documentDirectory = NSSearchPathForDirectoriesInDomains(</span><br><span class="line">    directory = NSDocumentDirectory,</span><br><span class="line">    domainMask = NSUserDomainMask,</span><br><span class="line">    expandTilde = <span class="literal">true</span></span><br><span class="line">).first() <span class="keyword">as</span> NSString</span><br><span class="line"><span class="keyword">val</span> fullPath = documentDirectory.stringByAppendingPathComponent(fileName)</span><br><span class="line">println(fullPath)</span><br></pre></td></tr></table></figure>
+<li>遍历目录，通过fileName过滤拿到对应的文件<br>刚开始，由于对iOS这边的api之类的还不是很了解，解决思路也很直接，既然Swift上能拿到目录下所有文件的url了，在kotlin native层肯定有对应的API，于是开搞，上代码：<pre class="line-numbers language-Kotlin" data-language="Kotlin"><code class="language-Kotlin">&#x2F;&#x2F; 拿到目录的url
+val url &#x3D; fileManager.URLForDirectory(
+    directory &#x3D; NSDocumentDirectory,
+    inDomain &#x3D; NSUserDomainMask,
+    appropriateForURL &#x3D; null,
+    create &#x3D; false,
+    error &#x3D; null
+)!!
+&#x2F;&#x2F; 拿到目录下所有文件的url
+val fileUrls &#x3D; fileManager.contentsOfDirectoryAtURL(url &#x3D; url, includingPropertiesForKeys &#x3D; null, options &#x3D; 0, error &#x3D; errorPtr.ptr)
+&#x2F;&#x2F; 通过全路径拿到文件名，然后通过文件名过滤得到唯一的文件url
+val currentFileUrl &#x3D; fileUrls?.first &#123; it.toString().contains(fileName) &#125; as? NSURL
+&#x2F;&#x2F; 读取到NSData中
+currentFileUrl?.let &#123;
+    NSData.dataWithContentsOfURL(currentFileUrl)
+    ?.let &#123; bytes -&gt;
+        val array &#x3D; ByteArray(bytes.length.toInt())
+        bytes.getBytes(array.refTo(0).getPointer(this), bytes.length)
+        return@withContext array
+    &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+再次运行，成功拿到bytes（✌️）<br>但是这样存在一个问题，随着时间，这个目录的文件肯定会越来越多，到时候遍历肯定是一个耗时任务。那有没有可以直接通过filename拿到对应文件的url呢？<br>看了下代码，既然能拿到document目录的url，那是不是也有API可以直接拿到文件的url？一开始想通过url + filename组装一下<br>他们类型不一致，相对麻烦，还好找到了，代码：<pre class="line-numbers language-Kotlin" data-language="Kotlin"><code class="language-Kotlin">val documentDirectory &#x3D; NSSearchPathForDirectoriesInDomains(
+    directory &#x3D; NSDocumentDirectory,
+    domainMask &#x3D; NSUserDomainMask,
+    expandTilde &#x3D; true
+).first() as NSString
+val fullPath &#x3D; documentDirectory.stringByAppendingPathComponent(fileName)
+println(fullPath)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 路径正确，直接调用<code>NSData.dataWithContentsOfFile</code>传入文件路径即可</li>
 </ol>
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>在 iOS8.0 之后，由于Application（Bundle identifier）的UUID会随机改变，所以不能直接存全路径，可以直接存名字<br>而可以通过<code>NSSearchPathForDirectoriesInDomains</code>拿到对应的路径，再加上文件名得到当前文件准确的全路径，这时候读取即可。</p>
@@ -409,6 +453,273 @@
     
 
     
+
+    
+        <style>
+    .valine-card {
+        margin: 1.5rem auto;
+    }
+
+    .valine-card .card-content {
+        padding: 20px 20px 5px 20px;
+    }
+
+    #vcomments textarea {
+        box-sizing: border-box;
+        background: url("/medias/comment_bg.png") 100% 100% no-repeat;
+    }
+
+    #vcomments p {
+        margin: 2px 2px 10px;
+        font-size: 1.05rem;
+        line-height: 1.78rem;
+    }
+
+    #vcomments blockquote p {
+        text-indent: 0.2rem;
+    }
+
+    #vcomments a {
+        padding: 0 2px;
+        color: #4cbf30;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    #vcomments img {
+        max-width: 100%;
+        height: auto;
+        cursor: pointer;
+    }
+
+    #vcomments ol li {
+        list-style-type: decimal;
+    }
+
+    #vcomments ol,
+    ul {
+        display: block;
+        padding-left: 2em;
+        word-spacing: 0.05rem;
+    }
+
+    #vcomments ul li,
+    ol li {
+        display: list-item;
+        line-height: 1.8rem;
+        font-size: 1rem;
+    }
+
+    #vcomments ul li {
+        list-style-type: disc;
+    }
+
+    #vcomments ul ul li {
+        list-style-type: circle;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    #vcomments table, th, td {
+        border: 0;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments h1 {
+        font-size: 1.85rem;
+        font-weight: bold;
+        line-height: 2.2rem;
+    }
+
+    #vcomments h2 {
+        font-size: 1.65rem;
+        font-weight: bold;
+        line-height: 1.9rem;
+    }
+
+    #vcomments h3 {
+        font-size: 1.45rem;
+        font-weight: bold;
+        line-height: 1.7rem;
+    }
+
+    #vcomments h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    #vcomments h5 {
+        font-size: 1.1rem;
+        font-weight: bold;
+        line-height: 1.4rem;
+    }
+
+    #vcomments h6 {
+        font-size: 1rem;
+        line-height: 1.3rem;
+    }
+
+    #vcomments p {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+
+    #vcomments hr {
+        margin: 12px 0;
+        border: 0;
+        border-top: 1px solid #ccc;
+    }
+
+    #vcomments blockquote {
+        margin: 15px 0;
+        border-left: 5px solid #42b983;
+        padding: 1rem 0.8rem 0.3rem 0.8rem;
+        color: #666;
+        background-color: rgba(66, 185, 131, .1);
+    }
+
+    #vcomments pre {
+        font-family: monospace, monospace;
+        padding: 1.2em;
+        margin: .5em 0;
+        background: #272822;
+        overflow: auto;
+        border-radius: 0.3em;
+        tab-size: 4;
+    }
+
+    #vcomments code {
+        font-family: monospace, monospace;
+        padding: 1px 3px;
+        font-size: 0.92rem;
+        color: #e96900;
+        background-color: #f8f8f8;
+        border-radius: 2px;
+    }
+
+    #vcomments pre code {
+        font-family: monospace, monospace;
+        padding: 0;
+        color: #e8eaf6;
+        background-color: #272822;
+    }
+
+    #vcomments pre[class*="language-"] {
+        padding: 1.2em;
+        margin: .5em 0;
+    }
+
+    #vcomments code[class*="language-"],
+    pre[class*="language-"] {
+        color: #e8eaf6;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+
+    #vcomments b,
+    strong {
+        font-weight: bold;
+    }
+
+    #vcomments dfn {
+        font-style: italic;
+    }
+
+    #vcomments small {
+        font-size: 85%;
+    }
+
+    #vcomments cite {
+        font-style: normal;
+    }
+
+    #vcomments mark {
+        background-color: #fcf8e3;
+        padding: .2em;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+</style>
+
+<div class="card valine-card" data-aos="fade-up">
+    <div class="comment_headling" style="font-size: 20px; font-weight: 700; position: relative; padding-left: 20px; top: 15px; padding-bottom: 5px;">
+        <i class="fas fa-comments fa-fw" aria-hidden="true"></i>
+        <span>评论</span>
+    </div>
+    <div id="vcomments" class="card-content" style="display: grid">
+    </div>
+</div>
+
+<script src="/libs/valine/av-min.js"></script>
+<script src="/libs/valine/Valine.min.js"></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        appId: '5Yi4IcuoJ6BepJm6x1pCHdoU-gzGzoHsz',
+        appKey: 'YWKHQYES1n45iBEAbawcVCpJ',
+        serverURLs: 'https://5yi4icuo.lc-cn-n1-shared.com',
+        notify: 'false' === 'true',
+        verify: 'false' === 'true',
+        visitor: 'true' === 'true',
+        avatar: 'mm',
+        pageSize: '10',
+        lang: 'en',
+        placeholder: 'just go go'
+    });
+</script>
+
+<!--酷Q推送-->
+
 
     
 
@@ -533,6 +844,9 @@
 <!-- 代码块功能依赖 -->
 <script type="text/javascript" src="/libs/codeBlock/codeBlockFuction.js"></script>
 
+
+  <!-- 是否加载使用自带的 prismjs. -->
+  <script type="text/javascript" src="/libs/prism/prism.min.js"></script>
 
 
 <!-- 代码语言 -->
@@ -921,10 +1235,6 @@ $(function () {
     <!-- 鼠标星星特效 -->
     
 
-     
-        <script src="https://ssl.captcha.qq.com/TCaptcha.js"></script>
-        <script src="/libs/others/TencentCaptcha.js"></script>
-        <button id="TencentCaptcha" data-appid="xxxxxxxxxx" data-cbfn="callback" type="button" hidden></button>
     
 
     <!-- Baidu Analytics -->

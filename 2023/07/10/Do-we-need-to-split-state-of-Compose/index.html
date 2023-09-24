@@ -295,22 +295,77 @@
         <hr class="clearfix">
 
         
+        <!-- 是否加载使用自带的 prismjs. -->
+        <link rel="stylesheet" href="/libs/prism/prism.min.css">
+        
 
         
 
         <div class="card-content article-card-content">
             <div id="articleContent">
                 <p>为什么会有这种疑问呢？<br>我们知道Compose是通过重组来刷新UI的，当一个State发生改变时，其对应的可重组函数的Lambda会重新执行，而我们通常在设计State时都是将当前界面相关属<br>combine成一个整体的State，所以我们在修改State时，其实就是让整个State都发生了变化，基本会让整个界面都发生重组不会跳过。下面通过一个简单的例子：</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 一个整合的State</span></span><br><span class="line"><span class="keyword">data</span> <span class="class"><span class="keyword">class</span> <span class="title">XModelState</span></span>(</span><br><span class="line">    <span class="keyword">val</span> name: String,</span><br><span class="line">    <span class="keyword">val</span> age: <span class="built_in">Int</span>,</span><br><span class="line">    <span class="keyword">val</span> intro: String</span><br><span class="line">    ...</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 一个整合的State</span>
+<span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">XModelState</span><span class="token punctuation">(</span>
+    <span class="token keyword">val</span> name<span class="token operator">:</span> String<span class="token punctuation">,</span>
+    <span class="token keyword">val</span> age<span class="token operator">:</span> Int<span class="token punctuation">,</span>
+    <span class="token keyword">val</span> intro<span class="token operator">:</span> String
+    <span class="token operator">..</span><span class="token punctuation">.</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <span id="more"></span>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line">Column(</span><br><span class="line">    modifier = Modifier</span><br><span class="line">    .fillMaxSize()</span><br><span class="line">    .padding(<span class="number">16.</span>dp)</span><br><span class="line">) &#123;</span><br><span class="line">    </span><br><span class="line">    println(<span class="string">&quot;Column&quot;</span>)</span><br><span class="line"></span><br><span class="line">    Wrapper &#123;</span><br><span class="line">        Text(text = <span class="string">&quot;Name is <span class="subst">$&#123;modelState.name&#125;</span>&quot;</span>).also &#123;</span><br><span class="line">            println(<span class="string">&quot;Name changed&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    Wrapper &#123;</span><br><span class="line">        Text(text = <span class="string">&quot;Age is <span class="subst">$&#123;modelState.age&#125;</span>&quot;</span>).also &#123;</span><br><span class="line">            println(<span class="string">&quot;Age changed&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    Wrapper &#123;</span><br><span class="line">        Text(text = <span class="string">&quot;Intro is <span class="subst">$&#123;modelState.intro&#125;</span>&quot;</span>).also &#123;</span><br><span class="line">            println(<span class="string">&quot;Intro changed&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Button(</span><br><span class="line">        modifier = Modifier.fillMaxWidth(),</span><br><span class="line">        onClick = &#123;</span><br><span class="line">            modelState = modelState.copy(</span><br><span class="line">                name = <span class="string">&quot;Dougie <span class="subst">$&#123;Random.nextInt(<span class="number">0</span>, <span class="number">10</span>)&#125;</span>&quot;</span>,</span><br><span class="line">                age = age + <span class="number">1</span></span><br><span class="line">            )</span><br><span class="line">        &#125;</span><br><span class="line">    ) &#123;</span><br><span class="line">        Text(text = <span class="string">&quot;Update Model&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token function">Column</span><span class="token punctuation">(</span>
+    modifier <span class="token operator">=</span> Modifier
+    <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token punctuation">.</span><span class="token function">padding</span><span class="token punctuation">(</span><span class="token number">16</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
+<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    
+    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Column"</span><span class="token punctuation">)</span>
+
+    Wrapper <span class="token punctuation">&#123;</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Name is <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>modelState<span class="token punctuation">.</span>name<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Name changed"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    Wrapper <span class="token punctuation">&#123;</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Age is <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>modelState<span class="token punctuation">.</span>age<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Age changed"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+    Wrapper <span class="token punctuation">&#123;</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Intro is <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>modelState<span class="token punctuation">.</span>intro<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"Intro changed"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token function">Button</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> Modifier<span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+        onClick <span class="token operator">=</span> <span class="token punctuation">&#123;</span>
+            modelState <span class="token operator">=</span> modelState<span class="token punctuation">.</span><span class="token function">copy</span><span class="token punctuation">(</span>
+                name <span class="token operator">=</span> <span class="token string">"Dougie <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>Random<span class="token punctuation">.</span><span class="token function">nextInt</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">)</span><span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">,</span>
+                age <span class="token operator">=</span> age <span class="token operator">+</span> <span class="token number">1</span>
+            <span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text <span class="token operator">=</span> <span class="token string">"Update Model"</span><span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>以上代码中，当点击Update Model按钮来修改modelState时，3个Wrapper全部都发生重组，假设这个State其实还可能更大，有20多个属性，而当我们只修改<br>一部分相关的，很多相关的Composable应该skip re-compose。</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">*       ----------------     -----------------      ---------------------</span><br><span class="line">*       | Click Button |  -&gt; | State changed |  -&gt;  | trigger recompose |</span><br><span class="line">*       ----------------     -----------------      ---------------------</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-markdown" data-language="markdown"><code class="language-markdown"><span class="token list punctuation">*</span>       ----------------     -----------------      ---------------------
+<span class="token list punctuation">*</span>       | Click Button |  -> | State changed |  ->  | trigger recompose |
+<span class="token list punctuation">*</span>       ----------------     -----------------      ---------------------<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
 <p>为了避免这个情况，目前Compose也没提供相关的api，好像也只能通过分割状态了，对应文章的标题。</p>
 <h3 id="1-ViewModel层保留多个公开的State"><a href="#1-ViewModel层保留多个公开的State" class="headerlink" title="1. ViewModel层保留多个公开的State"></a>1. ViewModel层保留多个公开的State</h3><p>在ViewModel combine的时候就将State分割并提供多个State叫个UI层使用，而在操作的时候，我们也只会改变其对应的小State，其他State不会变化，<br>所以Compose上也只会重组其对应的可重组Lambda，而其他的则会跳过重组。</p>
 <h3 id="2-使用-derivedStateOf"><a href="#2-使用-derivedStateOf" class="headerlink" title="2. 使用 derivedStateOf"></a>2. 使用 derivedStateOf</h3><p>在View层，依然是拿到整个大的State，我们通过增加内部属性并使derivedStateOf这个方法将State分割。</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> age <span class="keyword">by</span> remember &#123;</span><br><span class="line">    derivedStateOf &#123;</span><br><span class="line">        modelState.age</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">val</span> intro <span class="keyword">by</span> remember &#123;</span><br><span class="line">    derivedStateOf &#123;</span><br><span class="line">        modelState.intro</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> age <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span>
+    derivedStateOf <span class="token punctuation">&#123;</span>
+        modelState<span class="token punctuation">.</span>age
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token keyword">val</span> intro <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span>
+    derivedStateOf <span class="token punctuation">&#123;</span>
+        modelState<span class="token punctuation">.</span>intro
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>如上，将age和intro分割出来，在点击按钮是，age+1，而intro不变，通过日志，发现只有Age Changed，所以intro的被跳过重组了。</p>
 <blockquote>
 <p>在日常开发中，需求feature会越来越多，State也会随之而增加，以上两种方式虽然一定程度上能减少重组，但是也很大程度上增加了维护工作<br>和带来新的问题。</p>
@@ -389,6 +444,273 @@
     
 
     
+
+    
+        <style>
+    .valine-card {
+        margin: 1.5rem auto;
+    }
+
+    .valine-card .card-content {
+        padding: 20px 20px 5px 20px;
+    }
+
+    #vcomments textarea {
+        box-sizing: border-box;
+        background: url("/medias/comment_bg.png") 100% 100% no-repeat;
+    }
+
+    #vcomments p {
+        margin: 2px 2px 10px;
+        font-size: 1.05rem;
+        line-height: 1.78rem;
+    }
+
+    #vcomments blockquote p {
+        text-indent: 0.2rem;
+    }
+
+    #vcomments a {
+        padding: 0 2px;
+        color: #4cbf30;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    #vcomments img {
+        max-width: 100%;
+        height: auto;
+        cursor: pointer;
+    }
+
+    #vcomments ol li {
+        list-style-type: decimal;
+    }
+
+    #vcomments ol,
+    ul {
+        display: block;
+        padding-left: 2em;
+        word-spacing: 0.05rem;
+    }
+
+    #vcomments ul li,
+    ol li {
+        display: list-item;
+        line-height: 1.8rem;
+        font-size: 1rem;
+    }
+
+    #vcomments ul li {
+        list-style-type: disc;
+    }
+
+    #vcomments ul ul li {
+        list-style-type: circle;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    #vcomments table, th, td {
+        border: 0;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments h1 {
+        font-size: 1.85rem;
+        font-weight: bold;
+        line-height: 2.2rem;
+    }
+
+    #vcomments h2 {
+        font-size: 1.65rem;
+        font-weight: bold;
+        line-height: 1.9rem;
+    }
+
+    #vcomments h3 {
+        font-size: 1.45rem;
+        font-weight: bold;
+        line-height: 1.7rem;
+    }
+
+    #vcomments h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    #vcomments h5 {
+        font-size: 1.1rem;
+        font-weight: bold;
+        line-height: 1.4rem;
+    }
+
+    #vcomments h6 {
+        font-size: 1rem;
+        line-height: 1.3rem;
+    }
+
+    #vcomments p {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+
+    #vcomments hr {
+        margin: 12px 0;
+        border: 0;
+        border-top: 1px solid #ccc;
+    }
+
+    #vcomments blockquote {
+        margin: 15px 0;
+        border-left: 5px solid #42b983;
+        padding: 1rem 0.8rem 0.3rem 0.8rem;
+        color: #666;
+        background-color: rgba(66, 185, 131, .1);
+    }
+
+    #vcomments pre {
+        font-family: monospace, monospace;
+        padding: 1.2em;
+        margin: .5em 0;
+        background: #272822;
+        overflow: auto;
+        border-radius: 0.3em;
+        tab-size: 4;
+    }
+
+    #vcomments code {
+        font-family: monospace, monospace;
+        padding: 1px 3px;
+        font-size: 0.92rem;
+        color: #e96900;
+        background-color: #f8f8f8;
+        border-radius: 2px;
+    }
+
+    #vcomments pre code {
+        font-family: monospace, monospace;
+        padding: 0;
+        color: #e8eaf6;
+        background-color: #272822;
+    }
+
+    #vcomments pre[class*="language-"] {
+        padding: 1.2em;
+        margin: .5em 0;
+    }
+
+    #vcomments code[class*="language-"],
+    pre[class*="language-"] {
+        color: #e8eaf6;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+
+    #vcomments b,
+    strong {
+        font-weight: bold;
+    }
+
+    #vcomments dfn {
+        font-style: italic;
+    }
+
+    #vcomments small {
+        font-size: 85%;
+    }
+
+    #vcomments cite {
+        font-style: normal;
+    }
+
+    #vcomments mark {
+        background-color: #fcf8e3;
+        padding: .2em;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+</style>
+
+<div class="card valine-card" data-aos="fade-up">
+    <div class="comment_headling" style="font-size: 20px; font-weight: 700; position: relative; padding-left: 20px; top: 15px; padding-bottom: 5px;">
+        <i class="fas fa-comments fa-fw" aria-hidden="true"></i>
+        <span>评论</span>
+    </div>
+    <div id="vcomments" class="card-content" style="display: grid">
+    </div>
+</div>
+
+<script src="/libs/valine/av-min.js"></script>
+<script src="/libs/valine/Valine.min.js"></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        appId: '5Yi4IcuoJ6BepJm6x1pCHdoU-gzGzoHsz',
+        appKey: 'YWKHQYES1n45iBEAbawcVCpJ',
+        serverURLs: 'https://5yi4icuo.lc-cn-n1-shared.com',
+        notify: 'false' === 'true',
+        verify: 'false' === 'true',
+        visitor: 'true' === 'true',
+        avatar: 'mm',
+        pageSize: '10',
+        lang: 'en',
+        placeholder: 'just go go'
+    });
+</script>
+
+<!--酷Q推送-->
+
 
     
 
@@ -513,6 +835,9 @@
 <!-- 代码块功能依赖 -->
 <script type="text/javascript" src="/libs/codeBlock/codeBlockFuction.js"></script>
 
+
+  <!-- 是否加载使用自带的 prismjs. -->
+  <script type="text/javascript" src="/libs/prism/prism.min.js"></script>
 
 
 <!-- 代码语言 -->
@@ -901,10 +1226,6 @@ $(function () {
     <!-- 鼠标星星特效 -->
     
 
-     
-        <script src="https://ssl.captcha.qq.com/TCaptcha.js"></script>
-        <script src="/libs/others/TencentCaptcha.js"></script>
-        <button id="TencentCaptcha" data-appid="xxxxxxxxxx" data-cbfn="callback" type="button" hidden></button>
     
 
     <!-- Baidu Analytics -->

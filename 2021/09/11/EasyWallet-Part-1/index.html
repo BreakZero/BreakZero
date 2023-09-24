@@ -303,6 +303,9 @@ Kotlin/Kotlin flow/Co">
         <hr class="clearfix">
 
         
+        <!-- 是否加载使用自带的 prismjs. -->
+        <link rel="stylesheet" href="/libs/prism/prism.min.css">
+        
 
         
 
@@ -324,17 +327,66 @@ Kotlin/Kotlin flow/Co">
 <li>本项目地址：<a target="_blank" rel="noopener" href="https://github.com/BreakZero/EasyWallet-Mobile-Compose">EasyWallet-Compose</a></li>
 </ul>
 <h2 id="gradle-脚本管理"><a href="#gradle-脚本管理" class="headerlink" title="gradle 脚本管理"></a>gradle 脚本管理</h2><ul>
-<li>创建新的模块作为Composing build，并在 <code>build.gradle.kts</code> 中加入如下代码实现plugin配置<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">gradlePlugin &#123;</span><br><span class="line">    plugins &#123;</span><br><span class="line">        create(&quot;VersionPlugin&quot;) &#123;</span><br><span class="line">            id = &quot;version-plugin&quot; // change the name you like</span><br><span class="line">            implementationClass = &quot;com.easy.version.DependencyVersionPlugin&quot; // change package to what you done</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>创建新的模块作为Composing build，并在 <code>build.gradle.kts</code> 中加入如下代码实现plugin配置<pre class="line-numbers language-gradle" data-language="gradle"><code class="language-gradle">gradlePlugin &#123;
+    plugins &#123;
+        create(&quot;VersionPlugin&quot;) &#123;
+            id &#x3D; &quot;version-plugin&quot; &#x2F;&#x2F; change the name you like
+            implementationClass &#x3D; &quot;com.easy.version.DependencyVersionPlugin&quot; &#x2F;&#x2F; change package to what you done
+        &#125;
+    &#125;
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
 <li>在 <code>src.main.kotlin</code> 目录下Plugin实现类实现接口 <code>Plugin&lt;Project&gt;</code>，这个plugin 的apply 方法会在任何你使用这个plugin的module 执行  <span id="more"></span></li>
 <li>统一管理Configs。 （这里我为了区分feature模块和app模块，所以加了ignore list）<ol>
-<li>首先我们在每个模块都需要的plugin，写一个Project的扩展函数<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">private fun Project.applyPlugin() &#123;</span><br><span class="line">    apply(plugin = &quot;com.android.library&quot;)</span><br><span class="line">    apply(plugin = &quot;kotlin-android&quot;)</span><br><span class="line">    apply(plugin = &quot;kotlin-kapt&quot;)</span><br><span class="line">    apply(plugin = &quot;kotlin-parcelize&quot;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<li>首先我们在每个模块都需要的plugin，写一个Project的扩展函数<pre class="line-numbers language-gradle" data-language="gradle"><code class="language-gradle">private fun Project.applyPlugin() &#123;
+    apply(plugin &#x3D; &quot;com.android.library&quot;)
+    apply(plugin &#x3D; &quot;kotlin-android&quot;)
+    apply(plugin &#x3D; &quot;kotlin-kapt&quot;)
+    apply(plugin &#x3D; &quot;kotlin-parcelize&quot;)
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 然后在apply方法中使用<br><code>target.beforeEvaluate &#123; applyPlugin() &#125;</code><br>这里注意要加上beforeEvaluate，在执行前apply plugin</li>
-<li>配置 android 块<br>增加扩展方法 <code>LibraryExtension.moduleConfig(isCore: Boolean)</code> (isCore这里算是我项目的特殊支持，为了实现buildConfigField的)<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">@Suppress(&quot;UnstableApiUsage&quot;)</span><br><span class="line">private fun LibraryExtension.moduleConfig(isCore: Boolean) &#123;</span><br><span class="line">    compileSdk = BuildConfig.compileSdkVersion</span><br><span class="line">    defaultConfig &#123;</span><br><span class="line">        minSdk = BuildConfig.minSdkVersion</span><br><span class="line">        targetSdk = BuildConfig.targetSdkVersion</span><br><span class="line">    &#125;</span><br><span class="line">    buildTypes &#123;</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    compileOptions &#123;</span><br><span class="line">        sourceCompatibility = JavaVersion.VERSION_11</span><br><span class="line">        targetCompatibility = JavaVersion.VERSION_11</span><br><span class="line">    &#125;</span><br><span class="line">    buildFeatures.also &#123;</span><br><span class="line">        it.compose = true</span><br><span class="line">    &#125;</span><br><span class="line">    composeOptions &#123;</span><br><span class="line">        kotlinCompilerExtensionVersion = Compose.version</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>配置 android 块<br>增加扩展方法 <code>LibraryExtension.moduleConfig(isCore: Boolean)</code> (isCore这里算是我项目的特殊支持，为了实现buildConfigField的)<pre class="line-numbers language-gradle" data-language="gradle"><code class="language-gradle">@Suppress(&quot;UnstableApiUsage&quot;)
+private fun LibraryExtension.moduleConfig(isCore: Boolean) &#123;
+    compileSdk &#x3D; BuildConfig.compileSdkVersion
+    defaultConfig &#123;
+        minSdk &#x3D; BuildConfig.minSdkVersion
+        targetSdk &#x3D; BuildConfig.targetSdkVersion
+    &#125;
+    buildTypes &#123;
+        ...
+    &#125;
+
+    compileOptions &#123;
+        sourceCompatibility &#x3D; JavaVersion.VERSION_11
+        targetCompatibility &#x3D; JavaVersion.VERSION_11
+    &#125;
+    buildFeatures.also &#123;
+        it.compose &#x3D; true
+    &#125;
+    composeOptions &#123;
+        kotlinCompilerExtensionVersion &#x3D; Compose.version
+    &#125;
+    ...
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
 </ol>
 </li>
-<li>最后在root project中增加  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">subprojects &#123;</span><br><span class="line">    apply(plugin = &quot;version-plugin&quot;)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<li>最后在root project中增加  <pre class="line-numbers language-none"><code class="language-none">subprojects &#123;
+    apply(plugin &#x3D; &quot;version-plugin&quot;)
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
   给每个模块都应用上plugin，当然也可以单独在module上直接应用</li>
-<li>以上配置完成后，你会看到模块的 gradle 脚本基本就很少了， 如下  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">import com.easy.version.*</span><br><span class="line"></span><br><span class="line">dependencies &#123;</span><br><span class="line">    implementation(project(&quot;:core&quot;))</span><br><span class="line">    implementation(project(&quot;:core-ui&quot;))</span><br><span class="line"></span><br><span class="line">    implementation(com.easy.version.dependencies.Other.sqlcipher)</span><br><span class="line"></span><br><span class="line">    roomDependencies()</span><br><span class="line">    composeUI()</span><br><span class="line">    hiltDependencies()</span><br><span class="line">    unitTestDependencies()</span><br><span class="line">    androidTestDependencies()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>以上配置完成后，你会看到模块的 gradle 脚本基本就很少了， 如下  <pre class="line-numbers language-gradle" data-language="gradle"><code class="language-gradle">import com.easy.version.*
+
+dependencies &#123;
+    implementation(project(&quot;:core&quot;))
+    implementation(project(&quot;:core-ui&quot;))
+
+    implementation(com.easy.version.dependencies.Other.sqlcipher)
+
+    roomDependencies()
+    composeUI()
+    hiltDependencies()
+    unitTestDependencies()
+    androidTestDependencies()
+&#125;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
 <li>如此配置之后， 每新增一个子模块，都能统一快速的配置gradle</li>
 </ul>
 <h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>模块分离、Navigation管理…</p>
@@ -411,6 +463,273 @@ Kotlin/Kotlin flow/Co">
     
 
     
+
+    
+        <style>
+    .valine-card {
+        margin: 1.5rem auto;
+    }
+
+    .valine-card .card-content {
+        padding: 20px 20px 5px 20px;
+    }
+
+    #vcomments textarea {
+        box-sizing: border-box;
+        background: url("/medias/comment_bg.png") 100% 100% no-repeat;
+    }
+
+    #vcomments p {
+        margin: 2px 2px 10px;
+        font-size: 1.05rem;
+        line-height: 1.78rem;
+    }
+
+    #vcomments blockquote p {
+        text-indent: 0.2rem;
+    }
+
+    #vcomments a {
+        padding: 0 2px;
+        color: #4cbf30;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    #vcomments img {
+        max-width: 100%;
+        height: auto;
+        cursor: pointer;
+    }
+
+    #vcomments ol li {
+        list-style-type: decimal;
+    }
+
+    #vcomments ol,
+    ul {
+        display: block;
+        padding-left: 2em;
+        word-spacing: 0.05rem;
+    }
+
+    #vcomments ul li,
+    ol li {
+        display: list-item;
+        line-height: 1.8rem;
+        font-size: 1rem;
+    }
+
+    #vcomments ul li {
+        list-style-type: disc;
+    }
+
+    #vcomments ul ul li {
+        list-style-type: circle;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    #vcomments table, th, td {
+        border: 0;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments h1 {
+        font-size: 1.85rem;
+        font-weight: bold;
+        line-height: 2.2rem;
+    }
+
+    #vcomments h2 {
+        font-size: 1.65rem;
+        font-weight: bold;
+        line-height: 1.9rem;
+    }
+
+    #vcomments h3 {
+        font-size: 1.45rem;
+        font-weight: bold;
+        line-height: 1.7rem;
+    }
+
+    #vcomments h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    #vcomments h5 {
+        font-size: 1.1rem;
+        font-weight: bold;
+        line-height: 1.4rem;
+    }
+
+    #vcomments h6 {
+        font-size: 1rem;
+        line-height: 1.3rem;
+    }
+
+    #vcomments p {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+
+    #vcomments hr {
+        margin: 12px 0;
+        border: 0;
+        border-top: 1px solid #ccc;
+    }
+
+    #vcomments blockquote {
+        margin: 15px 0;
+        border-left: 5px solid #42b983;
+        padding: 1rem 0.8rem 0.3rem 0.8rem;
+        color: #666;
+        background-color: rgba(66, 185, 131, .1);
+    }
+
+    #vcomments pre {
+        font-family: monospace, monospace;
+        padding: 1.2em;
+        margin: .5em 0;
+        background: #272822;
+        overflow: auto;
+        border-radius: 0.3em;
+        tab-size: 4;
+    }
+
+    #vcomments code {
+        font-family: monospace, monospace;
+        padding: 1px 3px;
+        font-size: 0.92rem;
+        color: #e96900;
+        background-color: #f8f8f8;
+        border-radius: 2px;
+    }
+
+    #vcomments pre code {
+        font-family: monospace, monospace;
+        padding: 0;
+        color: #e8eaf6;
+        background-color: #272822;
+    }
+
+    #vcomments pre[class*="language-"] {
+        padding: 1.2em;
+        margin: .5em 0;
+    }
+
+    #vcomments code[class*="language-"],
+    pre[class*="language-"] {
+        color: #e8eaf6;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+
+    #vcomments b,
+    strong {
+        font-weight: bold;
+    }
+
+    #vcomments dfn {
+        font-style: italic;
+    }
+
+    #vcomments small {
+        font-size: 85%;
+    }
+
+    #vcomments cite {
+        font-style: normal;
+    }
+
+    #vcomments mark {
+        background-color: #fcf8e3;
+        padding: .2em;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+</style>
+
+<div class="card valine-card" data-aos="fade-up">
+    <div class="comment_headling" style="font-size: 20px; font-weight: 700; position: relative; padding-left: 20px; top: 15px; padding-bottom: 5px;">
+        <i class="fas fa-comments fa-fw" aria-hidden="true"></i>
+        <span>评论</span>
+    </div>
+    <div id="vcomments" class="card-content" style="display: grid">
+    </div>
+</div>
+
+<script src="/libs/valine/av-min.js"></script>
+<script src="/libs/valine/Valine.min.js"></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        appId: '5Yi4IcuoJ6BepJm6x1pCHdoU-gzGzoHsz',
+        appKey: 'YWKHQYES1n45iBEAbawcVCpJ',
+        serverURLs: 'https://5yi4icuo.lc-cn-n1-shared.com',
+        notify: 'false' === 'true',
+        verify: 'false' === 'true',
+        visitor: 'true' === 'true',
+        avatar: 'mm',
+        pageSize: '10',
+        lang: 'en',
+        placeholder: 'just go go'
+    });
+</script>
+
+<!--酷Q推送-->
+
 
     
 
@@ -540,6 +859,9 @@ Kotlin/Kotlin flow/Co">
 <!-- 代码块功能依赖 -->
 <script type="text/javascript" src="/libs/codeBlock/codeBlockFuction.js"></script>
 
+
+  <!-- 是否加载使用自带的 prismjs. -->
+  <script type="text/javascript" src="/libs/prism/prism.min.js"></script>
 
 
 <!-- 代码语言 -->
@@ -928,10 +1250,6 @@ $(function () {
     <!-- 鼠标星星特效 -->
     
 
-     
-        <script src="https://ssl.captcha.qq.com/TCaptcha.js"></script>
-        <script src="/libs/others/TencentCaptcha.js"></script>
-        <button id="TencentCaptcha" data-appid="xxxxxxxxxx" data-cbfn="callback" type="button" hidden></button>
     
 
     <!-- Baidu Analytics -->

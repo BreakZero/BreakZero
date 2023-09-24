@@ -296,6 +296,9 @@
         <hr class="clearfix">
 
         
+        <!-- 是否加载使用自带的 prismjs. -->
+        <link rel="stylesheet" href="/libs/prism/prism.min.css">
+        
 
         
 
@@ -304,24 +307,159 @@
                 <blockquote>
 <p>因为将项目从Retrofit切换到Ktor和gson切换到kotlinx serialize。而kotlinx serialize和gson的实现差异导致在rpc接口中对于rpc 请求参数类型不一致的情况下，序列化出现了异常报错，比如类似一下的请求Body</p>
 </blockquote>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">&quot;id&quot;</span>: <span class="number">0</span>,</span><br><span class="line">    <span class="attr">&quot;jsonrpc&quot;</span>: <span class="string">&quot;2.0&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;method&quot;</span>: <span class="string">&quot;eth_call&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;params&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">&quot;data&quot;</span>: <span class="string">&quot;0x5ec88c7900000000000000000000000081080a7e991bcdddba8c2302a70f45d6bd369ab5&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;from&quot;</span>: <span class="string">&quot;0x81080a7e991bcDdDBA8C2302A70f45d6Bd369Ab5&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;to&quot;</span>: <span class="string">&quot;0xb3831584acb95ED9cCb0C11f677B5AD01DeaeEc0&quot;</span></span><br><span class="line">        &#125;,</span><br><span class="line">        <span class="string">&quot;latest&quot;</span></span><br><span class="line">    ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">&#123;</span>
+    <span class="token property">"id"</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+    <span class="token property">"jsonrpc"</span><span class="token operator">:</span> <span class="token string">"2.0"</span><span class="token punctuation">,</span>
+    <span class="token property">"method"</span><span class="token operator">:</span> <span class="token string">"eth_call"</span><span class="token punctuation">,</span>
+    <span class="token property">"params"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">&#123;</span>
+            <span class="token property">"data"</span><span class="token operator">:</span> <span class="token string">"0x5ec88c7900000000000000000000000081080a7e991bcdddba8c2302a70f45d6bd369ab5"</span><span class="token punctuation">,</span>
+            <span class="token property">"from"</span><span class="token operator">:</span> <span class="token string">"0x81080a7e991bcDdDBA8C2302A70f45d6Bd369Ab5"</span><span class="token punctuation">,</span>
+            <span class="token property">"to"</span><span class="token operator">:</span> <span class="token string">"0xb3831584acb95ED9cCb0C11f677B5AD01DeaeEc0"</span>
+        <span class="token punctuation">&#125;</span><span class="token punctuation">,</span>
+        <span class="token string">"latest"</span>
+    <span class="token punctuation">]</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="List-lt-Any-gt-Contextual"><a href="#List-lt-Any-gt-Contextual" class="headerlink" title="List&lt;Any&gt; + @Contextual"></a><code>List&lt;Any&gt;</code> + @Contextual</h3><p>本来以为在Kotlinx Serialize上会像Gson一样轻松解决，一开始便对于原来的数据结构定义成</p>
 <span id="more"></span>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Serializable</span></span><br><span class="line"><span class="keyword">data</span> <span class="class"><span class="keyword">class</span> <span class="title">TestBaseRpc</span></span>(</span><br><span class="line">    <span class="keyword">val</span> jsonrpc: String,</span><br><span class="line">    <span class="keyword">val</span> method: String,</span><br><span class="line">    <span class="keyword">val</span> params: List&lt;<span class="meta">@Contextual</span> Any&gt;,</span><br><span class="line">    <span class="keyword">val</span> id: <span class="built_in">Int</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Serializable</span>
+<span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">TestBaseRpc</span><span class="token punctuation">(</span>
+    <span class="token keyword">val</span> jsonrpc<span class="token operator">:</span> String<span class="token punctuation">,</span>
+    <span class="token keyword">val</span> method<span class="token operator">:</span> String<span class="token punctuation">,</span>
+    <span class="token keyword">val</span> params<span class="token operator">:</span> List<span class="token operator">&lt;</span><span class="token annotation builtin">@Contextual</span> Any<span class="token operator">></span><span class="token punctuation">,</span>
+    <span class="token keyword">val</span> id<span class="token operator">:</span> Int
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>并在Json 配置的时候将 Contextual配置上</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Json &#123;</span><br><span class="line">    useArrayPolymorphism = <span class="literal">true</span></span><br><span class="line">    prettyPrint = <span class="literal">true</span></span><br><span class="line">    allowStructuredMapKeys = <span class="literal">true</span></span><br><span class="line">    serializersModule = SerializersModule &#123;</span><br><span class="line">        contextual(Any::<span class="class"><span class="keyword">class</span>) </span>&#123;</span><br><span class="line">            TestCaller.serializer()</span><br><span class="line">            String.serializer()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Json <span class="token punctuation">&#123;</span>
+    useArrayPolymorphism <span class="token operator">=</span> <span class="token boolean">true</span>
+    prettyPrint <span class="token operator">=</span> <span class="token boolean">true</span>
+    allowStructuredMapKeys <span class="token operator">=</span> <span class="token boolean">true</span>
+    serializersModule <span class="token operator">=</span> SerializersModule <span class="token punctuation">&#123;</span>
+        <span class="token function">contextual</span><span class="token punctuation">(</span>Any<span class="token operator">::</span><span class="token keyword">class</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            TestCaller<span class="token punctuation">.</span><span class="token function">serializer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            String<span class="token punctuation">.</span><span class="token function">serializer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>将单元测试代码跑起来后发现，contextual 只使用了最后一个serializer来解析Any类型，所以这个方向无法实现想要的结果<br>报错如下：<p style="color:red">***.TestCaller cannot be cast to class java.lang.String</p></p>
 <blockquote>
 <p>Note: 如果将两个serializer调换顺序就会发现报错也会两个类型互换</p>
 </blockquote>
 <h3 id="通过-Interface-Polymorphic"><a href="#通过-Interface-Polymorphic" class="headerlink" title="通过 Interface + Polymorphic"></a>通过 Interface + Polymorphic</h3><p>polymorphic多态的意思，顾名思义，可以根据实际情况进行选择对应的Serializer，所以需要有一个基类(可以interface，sealed…)</p>
 <ol>
-<li>首先定义一个interface<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">internal</span> <span class="class"><span class="keyword">interface</span> <span class="title">Parameter</span></span></span><br></pre></td></tr></table></figure></li>
-<li>定义subclass<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Serializable</span></span><br><span class="line"><span class="keyword">internal</span> <span class="keyword">data</span> <span class="class"><span class="keyword">class</span> <span class="title">CallParameter</span></span>(</span><br><span class="line">    <span class="keyword">val</span> <span class="keyword">data</span>: String,</span><br><span class="line">    <span class="keyword">val</span> from: String,</span><br><span class="line">    <span class="keyword">val</span> to: String</span><br><span class="line">) : Parameter</span><br><span class="line"></span><br><span class="line"><span class="meta">@Serializable</span></span><br><span class="line"><span class="keyword">internal</span> <span class="keyword">data</span> <span class="class"><span class="keyword">class</span> <span class="title">IntListParameter</span></span>(</span><br><span class="line">    <span class="keyword">val</span> items: List&lt;<span class="built_in">Int</span>&gt;</span><br><span class="line">) : Parameter</span><br><span class="line"></span><br><span class="line"><span class="meta">@Serializable</span></span><br><span class="line"><span class="keyword">internal</span> <span class="keyword">data</span> <span class="class"><span class="keyword">class</span> <span class="title">StringParameter</span></span>(</span><br><span class="line">    <span class="keyword">val</span> content: String</span><br><span class="line">) : Parameter</span><br><span class="line">...</span><br></pre></td></tr></table></figure></li>
-<li>配置Json模块<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">Json &#123;</span><br><span class="line">    useArrayPolymorphism = <span class="literal">true</span></span><br><span class="line">    prettyPrint = <span class="literal">true</span></span><br><span class="line">    ignoreUnknownKeys = <span class="literal">true</span></span><br><span class="line">    allowStructuredMapKeys = <span class="literal">true</span></span><br><span class="line">    serializersModule = SerializersModule &#123;</span><br><span class="line">        polymorphic(List::<span class="class"><span class="keyword">class</span>) </span>&#123;</span><br><span class="line">            ListSerializer(ParameterSerialize)</span><br><span class="line">        &#125;</span><br><span class="line">        polymorphic(Parameter::<span class="class"><span class="keyword">class</span>) </span>&#123;</span><br><span class="line">            subclass(CallParameter::<span class="class"><span class="keyword">class</span>, <span class="type">CallParameter.serializer</span></span>())</span><br><span class="line">            subclass(StringParameter::<span class="class"><span class="keyword">class</span>, <span class="type">StringParameterSerializer)</span></span></span><br><span class="line">            subclass(IntListParameter::<span class="class"><span class="keyword">class</span>, <span class="type">IntListParameterSerializer)</span></span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li>针对不同结构定义不同的Serializer<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">internal</span> <span class="keyword">object</span> IntListParameterSerializer : KSerializer&lt;IntListParameter&gt; &#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">deserialize</span><span class="params">(decoder: <span class="type">Decoder</span>)</span></span>: IntListParameter &#123;</span><br><span class="line">        <span class="keyword">return</span> decoder.decodeStructure(descriptor) &#123;</span><br><span class="line">            <span class="keyword">val</span> items = decodeSerializableElement(descriptor, <span class="number">0</span>, ListSerializer(<span class="built_in">Int</span>.serializer()))</span><br><span class="line">            IntListParameter(</span><br><span class="line">                items = items</span><br><span class="line">            )</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="keyword">val</span> descriptor: SerialDescriptor</span><br><span class="line">        <span class="keyword">get</span>() = buildClassSerialDescriptor(<span class="string">&quot;IntListParameter&quot;</span>) &#123;</span><br><span class="line">            <span class="keyword">this</span>.element&lt;List&lt;<span class="built_in">Int</span>&gt;&gt;(<span class="string">&quot;items&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">serialize</span><span class="params">(encoder: <span class="type">Encoder</span>, value: <span class="type">IntListParameter</span>)</span></span> &#123;</span><br><span class="line">        encoder.encodeSerializableValue(ListSerializer(<span class="built_in">Int</span>.serializer()), value.items)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@OptIn(ExperimentalSerializationApi::class)</span></span><br><span class="line"><span class="meta">@Serializer(forClass = BaseRpcRequest::class)</span></span><br><span class="line"><span class="keyword">internal</span> <span class="keyword">object</span> RpcRequestBodySerializer : KSerializer&lt;BaseRpcRequest&gt; &#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">deserialize</span><span class="params">(decoder: <span class="type">Decoder</span>)</span></span>: BaseRpcRequest &#123;</span><br><span class="line">        <span class="keyword">return</span> decoder.decodeStructure(descriptor) &#123;</span><br><span class="line">            <span class="keyword">var</span> rpc: String? = <span class="literal">null</span></span><br><span class="line">            <span class="keyword">var</span> method: String? = <span class="literal">null</span></span><br><span class="line">            <span class="keyword">var</span> params: List&lt;Parameter&gt; = emptyList()</span><br><span class="line">            <span class="keyword">var</span> id: <span class="built_in">Int</span>? = <span class="literal">null</span></span><br><span class="line">            <span class="symbol">loop@</span> <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">                <span class="keyword">when</span> (decodeElementIndex(descriptor)) &#123;</span><br><span class="line">                    CompositeDecoder.DECODE_DONE -&gt; <span class="keyword">break</span><span class="symbol">@loop</span></span><br><span class="line"></span><br><span class="line">                    <span class="number">0</span> -&gt; rpc = decodeStringElement(descriptor, <span class="number">0</span>)</span><br><span class="line">                    <span class="number">1</span> -&gt; method = decodeStringElement(descriptor, <span class="number">1</span>)</span><br><span class="line">                    <span class="number">2</span> -&gt; params = decodeSerializableElement(descriptor, <span class="number">2</span>, ListSerializer(ParameterSerialize))</span><br><span class="line">                    <span class="number">3</span> -&gt; id = decodeIntElement(descriptor, <span class="number">3</span>)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            BaseRpcRequest(</span><br><span class="line">                jsonrpc = rpc.orEmpty(),</span><br><span class="line">                method = method.orEmpty(),</span><br><span class="line">                params = params,</span><br><span class="line">                id = id ?: <span class="number">1</span></span><br><span class="line">            )</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="keyword">val</span> descriptor: SerialDescriptor</span><br><span class="line">        <span class="keyword">get</span>() = buildClassSerialDescriptor(<span class="string">&quot;BaseRpcRequest&quot;</span>) &#123;</span><br><span class="line">            <span class="keyword">this</span>.element&lt;String&gt;(<span class="string">&quot;jsonrpc&quot;</span>)</span><br><span class="line">            <span class="keyword">this</span>.element&lt;String&gt;(<span class="string">&quot;method&quot;</span>)</span><br><span class="line">            <span class="keyword">this</span>.element&lt;List&lt;Parameter&gt;&gt;(<span class="string">&quot;params&quot;</span>)</span><br><span class="line">            <span class="keyword">this</span>.element&lt;<span class="built_in">Int</span>&gt;(<span class="string">&quot;id&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">serialize</span><span class="params">(encoder: <span class="type">Encoder</span>, value: <span class="type">BaseRpcRequest</span>)</span></span> &#123;</span><br><span class="line">        encoder.encodeStructure(descriptor) &#123;</span><br><span class="line">            encodeStringElement(descriptor, <span class="number">0</span>, value.jsonrpc)</span><br><span class="line">            encodeStringElement(descriptor, <span class="number">1</span>, value.method)</span><br><span class="line">            encodeSerializableElement(descriptor, <span class="number">2</span>, ListSerializer(ParameterSerialize), value.params)</span><br><span class="line">            encodeIntElement(descriptor, <span class="number">3</span>, value.id)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line">...</span><br></pre></td></tr></table></figure></li>
-<li>如果需要deserialize，便需要加上如下选择器<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">internal</span> <span class="keyword">object</span> ParameterSerialize : JsonContentPolymorphicSerializer&lt;Parameter&gt;(Parameter::<span class="class"><span class="keyword">class</span>) </span>&#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">selectDeserializer</span><span class="params">(element: <span class="type">JsonElement</span>)</span></span>: DeserializationStrategy&lt;<span class="keyword">out</span> Parameter&gt; &#123;</span><br><span class="line">        println(<span class="string">&quot;element: <span class="variable">$element</span>, obj: <span class="subst">$&#123;element.jsonObject&#125;</span>&quot;</span>)</span><br><span class="line"></span><br><span class="line">        <span class="comment">// override the condition for your point</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">when</span> &#123;</span><br><span class="line">            <span class="string">&quot;content&quot;</span> <span class="keyword">in</span> element.jsonObject -&gt; StringParameterSerializer</span><br><span class="line">            <span class="string">&quot;items&quot;</span> <span class="keyword">in</span> element.jsonObject -&gt; IntListParameterSerializer</span><br><span class="line">            <span class="keyword">else</span> -&gt; CallParameter.serializer()</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<li>首先定义一个interface<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">internal</span> <span class="token keyword">interface</span> Parameter<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
+<li>定义subclass<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Serializable</span>
+<span class="token keyword">internal</span> <span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">CallParameter</span><span class="token punctuation">(</span>
+    <span class="token keyword">val</span> <span class="token keyword">data</span><span class="token operator">:</span> String<span class="token punctuation">,</span>
+    <span class="token keyword">val</span> from<span class="token operator">:</span> String<span class="token punctuation">,</span>
+    <span class="token keyword">val</span> <span class="token keyword">to</span><span class="token operator">:</span> String
+<span class="token punctuation">)</span> <span class="token operator">:</span> Parameter
+
+<span class="token annotation builtin">@Serializable</span>
+<span class="token keyword">internal</span> <span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">IntListParameter</span><span class="token punctuation">(</span>
+    <span class="token keyword">val</span> items<span class="token operator">:</span> List<span class="token operator">&lt;</span>Int<span class="token operator">></span>
+<span class="token punctuation">)</span> <span class="token operator">:</span> Parameter
+
+<span class="token annotation builtin">@Serializable</span>
+<span class="token keyword">internal</span> <span class="token keyword">data</span> <span class="token keyword">class</span> <span class="token function">StringParameter</span><span class="token punctuation">(</span>
+    <span class="token keyword">val</span> content<span class="token operator">:</span> String
+<span class="token punctuation">)</span> <span class="token operator">:</span> Parameter
+<span class="token operator">..</span><span class="token punctuation">.</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
+<li>配置Json模块<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Json <span class="token punctuation">&#123;</span>
+    useArrayPolymorphism <span class="token operator">=</span> <span class="token boolean">true</span>
+    prettyPrint <span class="token operator">=</span> <span class="token boolean">true</span>
+    ignoreUnknownKeys <span class="token operator">=</span> <span class="token boolean">true</span>
+    allowStructuredMapKeys <span class="token operator">=</span> <span class="token boolean">true</span>
+    serializersModule <span class="token operator">=</span> SerializersModule <span class="token punctuation">&#123;</span>
+        <span class="token function">polymorphic</span><span class="token punctuation">(</span>List<span class="token operator">::</span><span class="token keyword">class</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">ListSerializer</span><span class="token punctuation">(</span>ParameterSerialize<span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+        <span class="token function">polymorphic</span><span class="token punctuation">(</span>Parameter<span class="token operator">::</span><span class="token keyword">class</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">subclass</span><span class="token punctuation">(</span>CallParameter<span class="token operator">::</span><span class="token keyword">class</span><span class="token punctuation">,</span> CallParameter<span class="token punctuation">.</span><span class="token function">serializer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token function">subclass</span><span class="token punctuation">(</span>StringParameter<span class="token operator">::</span><span class="token keyword">class</span><span class="token punctuation">,</span> StringParameterSerializer<span class="token punctuation">)</span>
+            <span class="token function">subclass</span><span class="token punctuation">(</span>IntListParameter<span class="token operator">::</span><span class="token keyword">class</span><span class="token punctuation">,</span> IntListParameterSerializer<span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
+<li>针对不同结构定义不同的Serializer<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">internal</span> <span class="token keyword">object</span> IntListParameterSerializer <span class="token operator">:</span> KSerializer<span class="token operator">&lt;</span>IntListParameter<span class="token operator">></span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">deserialize</span><span class="token punctuation">(</span>decoder<span class="token operator">:</span> Decoder<span class="token punctuation">)</span><span class="token operator">:</span> IntListParameter <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> decoder<span class="token punctuation">.</span><span class="token function">decodeStructure</span><span class="token punctuation">(</span>descriptor<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">val</span> items <span class="token operator">=</span> <span class="token function">decodeSerializableElement</span><span class="token punctuation">(</span>descriptor<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token function">ListSerializer</span><span class="token punctuation">(</span>Int<span class="token punctuation">.</span><span class="token function">serializer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token function">IntListParameter</span><span class="token punctuation">(</span>
+                items <span class="token operator">=</span> items
+            <span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">override</span> <span class="token keyword">val</span> descriptor<span class="token operator">:</span> SerialDescriptor
+        <span class="token keyword">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token function">buildClassSerialDescriptor</span><span class="token punctuation">(</span><span class="token string">"IntListParameter"</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>element<span class="token operator">&lt;</span>List<span class="token operator">&lt;</span>Int<span class="token operator">></span><span class="token operator">></span><span class="token punctuation">(</span><span class="token string">"items"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">serialize</span><span class="token punctuation">(</span>encoder<span class="token operator">:</span> Encoder<span class="token punctuation">,</span> value<span class="token operator">:</span> IntListParameter<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        encoder<span class="token punctuation">.</span><span class="token function">encodeSerializableValue</span><span class="token punctuation">(</span><span class="token function">ListSerializer</span><span class="token punctuation">(</span>Int<span class="token punctuation">.</span><span class="token function">serializer</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span> value<span class="token punctuation">.</span>items<span class="token punctuation">)</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+
+<span class="token annotation builtin">@OptIn</span><span class="token punctuation">(</span>ExperimentalSerializationApi<span class="token operator">::</span><span class="token keyword">class</span><span class="token punctuation">)</span>
+<span class="token annotation builtin">@Serializer</span><span class="token punctuation">(</span>forClass <span class="token operator">=</span> BaseRpcRequest<span class="token operator">::</span><span class="token keyword">class</span><span class="token punctuation">)</span>
+<span class="token keyword">internal</span> <span class="token keyword">object</span> RpcRequestBodySerializer <span class="token operator">:</span> KSerializer<span class="token operator">&lt;</span>BaseRpcRequest<span class="token operator">></span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">deserialize</span><span class="token punctuation">(</span>decoder<span class="token operator">:</span> Decoder<span class="token punctuation">)</span><span class="token operator">:</span> BaseRpcRequest <span class="token punctuation">&#123;</span>
+        <span class="token keyword">return</span> decoder<span class="token punctuation">.</span><span class="token function">decodeStructure</span><span class="token punctuation">(</span>descriptor<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">var</span> rpc<span class="token operator">:</span> String<span class="token operator">?</span> <span class="token operator">=</span> <span class="token keyword">null</span>
+            <span class="token keyword">var</span> method<span class="token operator">:</span> String<span class="token operator">?</span> <span class="token operator">=</span> <span class="token keyword">null</span>
+            <span class="token keyword">var</span> params<span class="token operator">:</span> List<span class="token operator">&lt;</span>Parameter<span class="token operator">></span> <span class="token operator">=</span> <span class="token function">emptyList</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token keyword">var</span> id<span class="token operator">:</span> Int<span class="token operator">?</span> <span class="token operator">=</span> <span class="token keyword">null</span>
+            <span class="token label symbol">loop@</span> <span class="token keyword">while</span> <span class="token punctuation">(</span><span class="token boolean">true</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                <span class="token keyword">when</span> <span class="token punctuation">(</span><span class="token function">decodeElementIndex</span><span class="token punctuation">(</span>descriptor<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+                    CompositeDecoder<span class="token punctuation">.</span>DECODE_DONE <span class="token operator">-></span> <span class="token keyword">break</span><span class="token label symbol">@loop</span>
+
+                    <span class="token number">0</span> <span class="token operator">-></span> rpc <span class="token operator">=</span> <span class="token function">decodeStringElement</span><span class="token punctuation">(</span>descriptor<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span>
+                    <span class="token number">1</span> <span class="token operator">-></span> method <span class="token operator">=</span> <span class="token function">decodeStringElement</span><span class="token punctuation">(</span>descriptor<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">)</span>
+                    <span class="token number">2</span> <span class="token operator">-></span> params <span class="token operator">=</span> <span class="token function">decodeSerializableElement</span><span class="token punctuation">(</span>descriptor<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token function">ListSerializer</span><span class="token punctuation">(</span>ParameterSerialize<span class="token punctuation">)</span><span class="token punctuation">)</span>
+                    <span class="token number">3</span> <span class="token operator">-></span> id <span class="token operator">=</span> <span class="token function">decodeIntElement</span><span class="token punctuation">(</span>descriptor<span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">)</span>
+                <span class="token punctuation">&#125;</span>
+            <span class="token punctuation">&#125;</span>
+            <span class="token function">BaseRpcRequest</span><span class="token punctuation">(</span>
+                jsonrpc <span class="token operator">=</span> rpc<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                method <span class="token operator">=</span> method<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+                params <span class="token operator">=</span> params<span class="token punctuation">,</span>
+                id <span class="token operator">=</span> id <span class="token operator">?:</span> <span class="token number">1</span>
+            <span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">override</span> <span class="token keyword">val</span> descriptor<span class="token operator">:</span> SerialDescriptor
+        <span class="token keyword">get</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token function">buildClassSerialDescriptor</span><span class="token punctuation">(</span><span class="token string">"BaseRpcRequest"</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>element<span class="token operator">&lt;</span>String<span class="token operator">></span><span class="token punctuation">(</span><span class="token string">"jsonrpc"</span><span class="token punctuation">)</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>element<span class="token operator">&lt;</span>String<span class="token operator">></span><span class="token punctuation">(</span><span class="token string">"method"</span><span class="token punctuation">)</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>element<span class="token operator">&lt;</span>List<span class="token operator">&lt;</span>Parameter<span class="token operator">></span><span class="token operator">></span><span class="token punctuation">(</span><span class="token string">"params"</span><span class="token punctuation">)</span>
+            <span class="token keyword">this</span><span class="token punctuation">.</span>element<span class="token operator">&lt;</span>Int<span class="token operator">></span><span class="token punctuation">(</span><span class="token string">"id"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+
+    <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">serialize</span><span class="token punctuation">(</span>encoder<span class="token operator">:</span> Encoder<span class="token punctuation">,</span> value<span class="token operator">:</span> BaseRpcRequest<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        encoder<span class="token punctuation">.</span><span class="token function">encodeStructure</span><span class="token punctuation">(</span>descriptor<span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">encodeStringElement</span><span class="token punctuation">(</span>descriptor<span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> value<span class="token punctuation">.</span>jsonrpc<span class="token punctuation">)</span>
+            <span class="token function">encodeStringElement</span><span class="token punctuation">(</span>descriptor<span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> value<span class="token punctuation">.</span>method<span class="token punctuation">)</span>
+            <span class="token function">encodeSerializableElement</span><span class="token punctuation">(</span>descriptor<span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token function">ListSerializer</span><span class="token punctuation">(</span>ParameterSerialize<span class="token punctuation">)</span><span class="token punctuation">,</span> value<span class="token punctuation">.</span>params<span class="token punctuation">)</span>
+            <span class="token function">encodeIntElement</span><span class="token punctuation">(</span>descriptor<span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> value<span class="token punctuation">.</span>id<span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span>
+<span class="token operator">..</span><span class="token punctuation">.</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre></li>
+<li>如果需要deserialize，便需要加上如下选择器<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">internal</span> <span class="token keyword">object</span> ParameterSerialize <span class="token operator">:</span> JsonContentPolymorphicSerializer<span class="token operator">&lt;</span>Parameter<span class="token operator">></span><span class="token punctuation">(</span>Parameter<span class="token operator">::</span><span class="token keyword">class</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">override</span> <span class="token keyword">fun</span> <span class="token function">selectDeserializer</span><span class="token punctuation">(</span>element<span class="token operator">:</span> JsonElement<span class="token punctuation">)</span><span class="token operator">:</span> DeserializationStrategy<span class="token operator">&lt;</span><span class="token keyword">out</span> Parameter<span class="token operator">></span> <span class="token punctuation">&#123;</span>
+        <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"element: <span class="token interpolation variable">$element</span>, obj: <span class="token interpolation"><span class="token delimiter variable">$&#123;</span>element<span class="token punctuation">.</span>jsonObject<span class="token delimiter variable">&#125;</span></span>"</span><span class="token punctuation">)</span>
+
+        <span class="token comment">// override the condition for your point</span>
+        <span class="token keyword">return</span> <span class="token keyword">when</span> <span class="token punctuation">&#123;</span>
+            <span class="token string">"content"</span> <span class="token keyword">in</span> element<span class="token punctuation">.</span>jsonObject <span class="token operator">-></span> StringParameterSerializer
+            <span class="token string">"items"</span> <span class="token keyword">in</span> element<span class="token punctuation">.</span>jsonObject <span class="token operator">-></span> IntListParameterSerializer
+            <span class="token keyword">else</span> <span class="token operator">-></span> CallParameter<span class="token punctuation">.</span><span class="token function">serializer</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 运行单元测试，验证通过：<br><img src="/images/pic1.png" alt="Unit Test Result!" title="Unit Test Result"></li>
 </ol>
 <h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>只是为了在项目中减少gson的使用，所以花了点时间验证下具体情况，但是：<br>虽然目前看起来是解决了问题，不过相对来说比较麻烦，并且如果类型越来越多也会增加不必要的工作量，所以这里更建议直接使用gson</p>
@@ -398,6 +536,273 @@
     
 
     
+
+    
+        <style>
+    .valine-card {
+        margin: 1.5rem auto;
+    }
+
+    .valine-card .card-content {
+        padding: 20px 20px 5px 20px;
+    }
+
+    #vcomments textarea {
+        box-sizing: border-box;
+        background: url("/medias/comment_bg.png") 100% 100% no-repeat;
+    }
+
+    #vcomments p {
+        margin: 2px 2px 10px;
+        font-size: 1.05rem;
+        line-height: 1.78rem;
+    }
+
+    #vcomments blockquote p {
+        text-indent: 0.2rem;
+    }
+
+    #vcomments a {
+        padding: 0 2px;
+        color: #4cbf30;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    #vcomments img {
+        max-width: 100%;
+        height: auto;
+        cursor: pointer;
+    }
+
+    #vcomments ol li {
+        list-style-type: decimal;
+    }
+
+    #vcomments ol,
+    ul {
+        display: block;
+        padding-left: 2em;
+        word-spacing: 0.05rem;
+    }
+
+    #vcomments ul li,
+    ol li {
+        display: list-item;
+        line-height: 1.8rem;
+        font-size: 1rem;
+    }
+
+    #vcomments ul li {
+        list-style-type: disc;
+    }
+
+    #vcomments ul ul li {
+        list-style-type: circle;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    #vcomments table, th, td {
+        border: 0;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments h1 {
+        font-size: 1.85rem;
+        font-weight: bold;
+        line-height: 2.2rem;
+    }
+
+    #vcomments h2 {
+        font-size: 1.65rem;
+        font-weight: bold;
+        line-height: 1.9rem;
+    }
+
+    #vcomments h3 {
+        font-size: 1.45rem;
+        font-weight: bold;
+        line-height: 1.7rem;
+    }
+
+    #vcomments h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    #vcomments h5 {
+        font-size: 1.1rem;
+        font-weight: bold;
+        line-height: 1.4rem;
+    }
+
+    #vcomments h6 {
+        font-size: 1rem;
+        line-height: 1.3rem;
+    }
+
+    #vcomments p {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+
+    #vcomments hr {
+        margin: 12px 0;
+        border: 0;
+        border-top: 1px solid #ccc;
+    }
+
+    #vcomments blockquote {
+        margin: 15px 0;
+        border-left: 5px solid #42b983;
+        padding: 1rem 0.8rem 0.3rem 0.8rem;
+        color: #666;
+        background-color: rgba(66, 185, 131, .1);
+    }
+
+    #vcomments pre {
+        font-family: monospace, monospace;
+        padding: 1.2em;
+        margin: .5em 0;
+        background: #272822;
+        overflow: auto;
+        border-radius: 0.3em;
+        tab-size: 4;
+    }
+
+    #vcomments code {
+        font-family: monospace, monospace;
+        padding: 1px 3px;
+        font-size: 0.92rem;
+        color: #e96900;
+        background-color: #f8f8f8;
+        border-radius: 2px;
+    }
+
+    #vcomments pre code {
+        font-family: monospace, monospace;
+        padding: 0;
+        color: #e8eaf6;
+        background-color: #272822;
+    }
+
+    #vcomments pre[class*="language-"] {
+        padding: 1.2em;
+        margin: .5em 0;
+    }
+
+    #vcomments code[class*="language-"],
+    pre[class*="language-"] {
+        color: #e8eaf6;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+
+    #vcomments b,
+    strong {
+        font-weight: bold;
+    }
+
+    #vcomments dfn {
+        font-style: italic;
+    }
+
+    #vcomments small {
+        font-size: 85%;
+    }
+
+    #vcomments cite {
+        font-style: normal;
+    }
+
+    #vcomments mark {
+        background-color: #fcf8e3;
+        padding: .2em;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+</style>
+
+<div class="card valine-card" data-aos="fade-up">
+    <div class="comment_headling" style="font-size: 20px; font-weight: 700; position: relative; padding-left: 20px; top: 15px; padding-bottom: 5px;">
+        <i class="fas fa-comments fa-fw" aria-hidden="true"></i>
+        <span>评论</span>
+    </div>
+    <div id="vcomments" class="card-content" style="display: grid">
+    </div>
+</div>
+
+<script src="/libs/valine/av-min.js"></script>
+<script src="/libs/valine/Valine.min.js"></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        appId: '5Yi4IcuoJ6BepJm6x1pCHdoU-gzGzoHsz',
+        appKey: 'YWKHQYES1n45iBEAbawcVCpJ',
+        serverURLs: 'https://5yi4icuo.lc-cn-n1-shared.com',
+        notify: 'false' === 'true',
+        verify: 'false' === 'true',
+        visitor: 'true' === 'true',
+        avatar: 'mm',
+        pageSize: '10',
+        lang: 'en',
+        placeholder: 'just go go'
+    });
+</script>
+
+<!--酷Q推送-->
+
 
     
 
@@ -530,6 +935,9 @@ Kotlin/Kotlin flow/Co
 <!-- 代码块功能依赖 -->
 <script type="text/javascript" src="/libs/codeBlock/codeBlockFuction.js"></script>
 
+
+  <!-- 是否加载使用自带的 prismjs. -->
+  <script type="text/javascript" src="/libs/prism/prism.min.js"></script>
 
 
 <!-- 代码语言 -->
@@ -918,10 +1326,6 @@ $(function () {
     <!-- 鼠标星星特效 -->
     
 
-     
-        <script src="https://ssl.captcha.qq.com/TCaptcha.js"></script>
-        <script src="/libs/others/TencentCaptcha.js"></script>
-        <button id="TencentCaptcha" data-appid="xxxxxxxxxx" data-cbfn="callback" type="button" hidden></button>
     
 
     <!-- Baidu Analytics -->

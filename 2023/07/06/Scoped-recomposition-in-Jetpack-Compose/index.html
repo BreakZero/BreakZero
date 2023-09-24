@@ -300,6 +300,9 @@
         <hr class="clearfix">
 
         
+        <!-- 是否加载使用自带的 prismjs. -->
+        <link rel="stylesheet" href="/libs/prism/prism.min.css">
+        
 
         
 
@@ -315,15 +318,34 @@
 </ul>
 <h3 id="为什么要non-inline且没有返回值的函数才可作为可重组块"><a href="#为什么要non-inline且没有返回值的函数才可作为可重组块" class="headerlink" title="为什么要non-inline且没有返回值的函数才可作为可重组块"></a>为什么要non-inline且没有返回值的函数才可作为可重组块</h3><p>inline函数，在编译过程中会直接将函数体拷贝到调用处，所以它只能共享调用者的重组范围<br>对于有返回值的函数，由于返回值的变化会影响调用者，因此无法单独重组，而必须连同调用方一同参与重组，因此它不能作为入口被标记为invalid</p>
 <h3 id="表达式和函数调用"><a href="#表达式和函数调用" class="headerlink" title="表达式和函数调用"></a>表达式和函数调用</h3><p>在深入了解最小重组范围前，我们先了解一个关于常规旧函数调用如何工作的基本概念。在Java/Kotlin中，当你将表达式传递给函数时，该表达式会在调用函数中计算。</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">println(<span class="string">&quot;hello&quot;</span> + <span class="string">&quot;world&quot;</span>)</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"hello"</span> <span class="token operator">+</span> <span class="token string">"world"</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 <p>它等价于</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> arg = <span class="string">&quot;hello&quot;</span> + <span class="string">&quot;world&quot;</span></span><br><span class="line">println(arg)</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> arg <span class="token operator">=</span> <span class="token string">"hello"</span> <span class="token operator">+</span> <span class="token string">"world"</span>
+<span class="token function">println</span><span class="token punctuation">(</span>arg<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 <p>简而言之，先执行表达式得到结果，在执行函数调用</p>
 <h3 id="确认重组作用域"><a href="#确认重组作用域" class="headerlink" title="确认重组作用域"></a>确认重组作用域</h3><p>大致了解了表达式和函数调用后，我们通过一个简单的例子过一下，先看下面的代码块</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span> <span class="function"><span class="keyword">fun</span> <span class="title">Foo</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">var</span> text <span class="keyword">by</span> remember &#123; mutableStateOf(<span class="string">&quot;&quot;</span>) &#125;</span><br><span class="line">    println(<span class="string">&quot;TAG: Foo Scope&quot;</span>)</span><br><span class="line">    Button(onClick = &#123; text = <span class="string">&quot;<span class="variable">$text</span>\n<span class="variable">$text</span>&quot;</span> &#125;) &#123;</span><br><span class="line">        println(<span class="string">&quot;TAG: Button lambda Scope&quot;</span>)</span><br><span class="line">        Text(text).also &#123;</span><br><span class="line">            println(<span class="string">&quot;TAG: Text Scope&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Composable</span> <span class="token keyword">fun</span> <span class="token function">Foo</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">var</span> text <span class="token keyword">by</span> remember <span class="token punctuation">&#123;</span> <span class="token function">mutableStateOf</span><span class="token punctuation">(</span><span class="token string">""</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span>
+    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Foo Scope"</span><span class="token punctuation">)</span>
+    <span class="token function">Button</span><span class="token punctuation">(</span>onClick <span class="token operator">=</span> <span class="token punctuation">&#123;</span> text <span class="token operator">=</span> <span class="token string">"<span class="token interpolation variable">$text</span>\n<span class="token interpolation variable">$text</span>"</span> <span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Button lambda Scope"</span><span class="token punctuation">)</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Text Scope"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <h4 id="1-为什么text改变后，不是只有Text发生重组"><a href="#1-为什么text改变后，不是只有Text发生重组" class="headerlink" title="1. 为什么text改变后，不是只有Text发生重组"></a>1. 为什么text改变后，不是只有Text发生重组</h4><p>点击Button时，State <code>text</code> 被重新复制而改变，而State <code>text</code>只有Text访问到，为什么重组范围不是只有Text？<br>从上面代码块看，我们知道text其实是一个表达式，而Text则是一个函数，所以text计算结果是在调用Text之前，也就是Button的lambda</p>
 <h4 id="2-为什么不是整个Foo发生重组"><a href="#2-为什么不是整个Foo发生重组" class="headerlink" title="2. 为什么不是整个Foo发生重组"></a>2. 为什么不是整个Foo发生重组</h4><p>我们知道当State发生变化时才会发生重组，而Foo中没有访问任何State对象，所以它不会发生重组。让我们修改下代码看看，将<code>by</code>改成<code>=</code>，逻辑就清晰了</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Composable</span> <span class="function"><span class="keyword">fun</span> <span class="title">Foo</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">val</span> text: MutableState&lt;String&gt; = remember &#123; mutableStateOf(<span class="string">&quot;&quot;</span>) &#125;</span><br><span class="line">    println(<span class="string">&quot;TAG: Foo Scope&quot;</span>)</span><br><span class="line">    Button(onClick = &#123; text.value = <span class="string">&quot;<span class="subst">$&#123;text.value&#125;</span>\n<span class="subst">$&#123;text.value&#125;</span>&quot;</span> &#125;) &#123;</span><br><span class="line">        println(<span class="string">&quot;TAG: Button lambada Scope&quot;</span>)</span><br><span class="line">        Text(text.value).also &#123;</span><br><span class="line">            println(<span class="string">&quot;TAG: Text Scope&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token annotation builtin">@Composable</span> <span class="token keyword">fun</span> <span class="token function">Foo</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+    <span class="token keyword">val</span> text<span class="token operator">:</span> MutableState<span class="token operator">&lt;</span>String<span class="token operator">></span> <span class="token operator">=</span> remember <span class="token punctuation">&#123;</span> <span class="token function">mutableStateOf</span><span class="token punctuation">(</span><span class="token string">""</span><span class="token punctuation">)</span> <span class="token punctuation">&#125;</span>
+    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Foo Scope"</span><span class="token punctuation">)</span>
+    <span class="token function">Button</span><span class="token punctuation">(</span>onClick <span class="token operator">=</span> <span class="token punctuation">&#123;</span> text<span class="token punctuation">.</span>value <span class="token operator">=</span> <span class="token string">"<span class="token interpolation"><span class="token delimiter variable">$&#123;</span>text<span class="token punctuation">.</span>value<span class="token delimiter variable">&#125;</span></span>\n<span class="token interpolation"><span class="token delimiter variable">$&#123;</span>text<span class="token punctuation">.</span>value<span class="token delimiter variable">&#125;</span></span>"</span> <span class="token punctuation">&#125;</span><span class="token punctuation">)</span> <span class="token punctuation">&#123;</span>
+        <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Button lambada Scope"</span><span class="token punctuation">)</span>
+        <span class="token function">Text</span><span class="token punctuation">(</span>text<span class="token punctuation">.</span>value<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">also</span> <span class="token punctuation">&#123;</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string">"TAG: Text Scope"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">&#125;</span>
+    <span class="token punctuation">&#125;</span>
+<span class="token punctuation">&#125;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 <p>显而易见，text一直都是同一个MutableState对象，修改的只不过是它内部持有的value，而value在Text中访问</p>
 <h4 id="3-为什么不是Button发生重组"><a href="#3-为什么不是Button发生重组" class="headerlink" title="3. 为什么不是Button发生重组"></a>3. 为什么不是Button发生重组</h4><p>因为<code>Foo</code>没发生重组，所以重组时并不会调用Button函数</p>
 <h4 id="4-onClick-lambada表达式呢"><a href="#4-onClick-lambada表达式呢" class="headerlink" title="4. onClick lambada表达式呢"></a>4. onClick lambada表达式呢</h4><p>重组范围只能是在可重组函数中，即使handlers，<code>Button</code>的<code>onClick</code>都不是可重组函数。所以这种函数不在重组范围内。</p>
@@ -406,6 +428,273 @@
     
 
     
+
+    
+        <style>
+    .valine-card {
+        margin: 1.5rem auto;
+    }
+
+    .valine-card .card-content {
+        padding: 20px 20px 5px 20px;
+    }
+
+    #vcomments textarea {
+        box-sizing: border-box;
+        background: url("/medias/comment_bg.png") 100% 100% no-repeat;
+    }
+
+    #vcomments p {
+        margin: 2px 2px 10px;
+        font-size: 1.05rem;
+        line-height: 1.78rem;
+    }
+
+    #vcomments blockquote p {
+        text-indent: 0.2rem;
+    }
+
+    #vcomments a {
+        padding: 0 2px;
+        color: #4cbf30;
+        font-weight: 500;
+        text-decoration: none;
+    }
+
+    #vcomments img {
+        max-width: 100%;
+        height: auto;
+        cursor: pointer;
+    }
+
+    #vcomments ol li {
+        list-style-type: decimal;
+    }
+
+    #vcomments ol,
+    ul {
+        display: block;
+        padding-left: 2em;
+        word-spacing: 0.05rem;
+    }
+
+    #vcomments ul li,
+    ol li {
+        display: list-item;
+        line-height: 1.8rem;
+        font-size: 1rem;
+    }
+
+    #vcomments ul li {
+        list-style-type: disc;
+    }
+
+    #vcomments ul ul li {
+        list-style-type: circle;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    #vcomments table, th, td {
+        border: 0;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments h1 {
+        font-size: 1.85rem;
+        font-weight: bold;
+        line-height: 2.2rem;
+    }
+
+    #vcomments h2 {
+        font-size: 1.65rem;
+        font-weight: bold;
+        line-height: 1.9rem;
+    }
+
+    #vcomments h3 {
+        font-size: 1.45rem;
+        font-weight: bold;
+        line-height: 1.7rem;
+    }
+
+    #vcomments h4 {
+        font-size: 1.25rem;
+        font-weight: bold;
+        line-height: 1.5rem;
+    }
+
+    #vcomments h5 {
+        font-size: 1.1rem;
+        font-weight: bold;
+        line-height: 1.4rem;
+    }
+
+    #vcomments h6 {
+        font-size: 1rem;
+        line-height: 1.3rem;
+    }
+
+    #vcomments p {
+        font-size: 1rem;
+        line-height: 1.5rem;
+    }
+
+    #vcomments hr {
+        margin: 12px 0;
+        border: 0;
+        border-top: 1px solid #ccc;
+    }
+
+    #vcomments blockquote {
+        margin: 15px 0;
+        border-left: 5px solid #42b983;
+        padding: 1rem 0.8rem 0.3rem 0.8rem;
+        color: #666;
+        background-color: rgba(66, 185, 131, .1);
+    }
+
+    #vcomments pre {
+        font-family: monospace, monospace;
+        padding: 1.2em;
+        margin: .5em 0;
+        background: #272822;
+        overflow: auto;
+        border-radius: 0.3em;
+        tab-size: 4;
+    }
+
+    #vcomments code {
+        font-family: monospace, monospace;
+        padding: 1px 3px;
+        font-size: 0.92rem;
+        color: #e96900;
+        background-color: #f8f8f8;
+        border-radius: 2px;
+    }
+
+    #vcomments pre code {
+        font-family: monospace, monospace;
+        padding: 0;
+        color: #e8eaf6;
+        background-color: #272822;
+    }
+
+    #vcomments pre[class*="language-"] {
+        padding: 1.2em;
+        margin: .5em 0;
+    }
+
+    #vcomments code[class*="language-"],
+    pre[class*="language-"] {
+        color: #e8eaf6;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+
+    #vcomments b,
+    strong {
+        font-weight: bold;
+    }
+
+    #vcomments dfn {
+        font-style: italic;
+    }
+
+    #vcomments small {
+        font-size: 85%;
+    }
+
+    #vcomments cite {
+        font-style: normal;
+    }
+
+    #vcomments mark {
+        background-color: #fcf8e3;
+        padding: .2em;
+    }
+
+    #vcomments table, th, td {
+        padding: 12px 13px;
+        border: 1px solid #dfe2e5;
+    }
+
+    table tr:nth-child(2n), thead {
+        background-color: #fafafa;
+    }
+
+    #vcomments table th {
+        background-color: #f2f2f2;
+        min-width: 80px;
+    }
+
+    #vcomments table td {
+        min-width: 80px;
+    }
+
+    #vcomments [type="checkbox"]:not(:checked), [type="checkbox"]:checked {
+        position: inherit;
+        margin-left: -1.3rem;
+        margin-right: 0.4rem;
+        margin-top: -1px;
+        vertical-align: middle;
+        left: unset;
+        visibility: visible;
+    }
+</style>
+
+<div class="card valine-card" data-aos="fade-up">
+    <div class="comment_headling" style="font-size: 20px; font-weight: 700; position: relative; padding-left: 20px; top: 15px; padding-bottom: 5px;">
+        <i class="fas fa-comments fa-fw" aria-hidden="true"></i>
+        <span>评论</span>
+    </div>
+    <div id="vcomments" class="card-content" style="display: grid">
+    </div>
+</div>
+
+<script src="/libs/valine/av-min.js"></script>
+<script src="/libs/valine/Valine.min.js"></script>
+<script>
+    new Valine({
+        el: '#vcomments',
+        appId: '5Yi4IcuoJ6BepJm6x1pCHdoU-gzGzoHsz',
+        appKey: 'YWKHQYES1n45iBEAbawcVCpJ',
+        serverURLs: 'https://5yi4icuo.lc-cn-n1-shared.com',
+        notify: 'false' === 'true',
+        verify: 'false' === 'true',
+        visitor: 'true' === 'true',
+        avatar: 'mm',
+        pageSize: '10',
+        lang: 'en',
+        placeholder: 'just go go'
+    });
+</script>
+
+<!--酷Q推送-->
+
 
     
 
@@ -531,6 +820,9 @@
 <!-- 代码块功能依赖 -->
 <script type="text/javascript" src="/libs/codeBlock/codeBlockFuction.js"></script>
 
+
+  <!-- 是否加载使用自带的 prismjs. -->
+  <script type="text/javascript" src="/libs/prism/prism.min.js"></script>
 
 
 <!-- 代码语言 -->
@@ -919,10 +1211,6 @@ $(function () {
     <!-- 鼠标星星特效 -->
     
 
-     
-        <script src="https://ssl.captcha.qq.com/TCaptcha.js"></script>
-        <script src="/libs/others/TencentCaptcha.js"></script>
-        <button id="TencentCaptcha" data-appid="xxxxxxxxxx" data-cbfn="callback" type="button" hidden></button>
     
 
     <!-- Baidu Analytics -->
