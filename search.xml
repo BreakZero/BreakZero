@@ -874,8 +874,8 @@ flow<span class="token punctuation">.</span><span class="token function">onEach<
         <category>Kotlin Multiplatform</category>
       </categories>
       <tags>
-        <tag>SwiftUI</tag>
         <tag>Kotlin</tag>
+        <tag>SwiftUI</tag>
       </tags>
   </entry>
   <entry>
@@ -955,8 +955,8 @@ println(fullPath)<span aria-hidden="true" class="line-numbers-rows"><span></span
         <category>Kotlin Multiplatform</category>
       </categories>
       <tags>
-        <tag>SwiftUI</tag>
         <tag>Kotlin</tag>
+        <tag>SwiftUI</tag>
       </tags>
   </entry>
 </search>
