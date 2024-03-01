@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 5.4.2">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/siteicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/siteicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/siteicon/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/siteicon/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha256-yIDrPSXHZdOZhAqiBP7CKzIwMQmRCJ8UeB8Jo17YC4o=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-center-simple.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"www.dejinlu.com","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.19.1","exturl":false,"sidebar":{"position":"right","display":"post","padding":18,"offset":12,"width":300},"copycode":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="在Android开发者中，面试被问到的问题频率最多莫过于Handler的原理了吧，本文【简单】通过源码阐述Handler的流程和几个主要类之间的关系">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android面试之Handler简述">
+<meta property="og:url" content="https://www.dejinlu.com/posts/2021/10/12/84a43c7b/index.html">
+<meta property="og:site_name" content="D&amp;JのZONE">
+<meta property="og:description" content="在Android开发者中，面试被问到的问题频率最多莫过于Handler的原理了吧，本文【简单】通过源码阐述Handler的流程和几个主要类之间的关系">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-10-12T02:45:03.000Z">
+<meta property="article:modified_time" content="2023-12-30T02:44:27.505Z">
+<meta property="article:author" content="D&amp;J">
+<meta property="article:tag" content="Handler">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://www.dejinlu.com/posts/2021/10/12/84a43c7b/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://www.dejinlu.com/posts/2021/10/12/84a43c7b/","path":"posts/2021/10/12/84a43c7b/","title":"Android面试之Handler简述"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Android面试之Handler简述 | D&JのZONE</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?456d489b36d14e73cf4e36ecf2114b5d"></script>
+
+
+
+
+
+
+<link rel="dns-prefetch" href="https://blog-waline-git-main-breakzeros-projects.vercel.app">
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">D&JのZONE</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">知之者不如好之者，好之者不如乐之者</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Looper%E5%92%8CMessageQueue"><span class="nav-number">1.</span> <span class="nav-text">Looper和MessageQueue</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%87%86%E5%A4%87"><span class="nav-number">1.1.</span> <span class="nav-text">准备</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Looper%E5%92%8CMessageQueue%E5%A6%82%E4%BD%95%E8%BF%90%E8%A1%8C%E7%9A%84"><span class="nav-number">1.2.</span> <span class="nav-text">Looper和MessageQueue如何运行的</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Handler%E7%9A%84%E5%8E%9F%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">Handler的原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Handler%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="nav-number">2.1.</span> <span class="nav-text">Handler的使用</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A9%E5%B1%95"><span class="nav-number">3.</span> <span class="nav-text">扩展</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="D&J"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">D&J</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">20</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">23</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/BreakZero" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;BreakZero" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:dejin.po@gmail.com" title="E-Mail → mailto:dejin.po@gmail.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/MrL51907231" title="Twitter → https:&#x2F;&#x2F;twitter.com&#x2F;MrL51907231" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i></a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://www.dejinlu.com/posts/2021/10/12/84a43c7b/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="D&J">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="D&JのZONE">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Android面试之Handler简述 | D&JのZONE">
+      <meta itemprop="description" content="在Android开发者中，面试被问到的问题频率最多莫过于Handler的原理了吧，本文【简单】通过源码阐述Handler的流程和几个主要类之间的关系">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Android面试之Handler简述
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-10-12 10:45:03" itemprop="dateCreated datePublished" datetime="2021-10-12T10:45:03+08:00">2021-10-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Technical/" itemprop="url" rel="index"><span itemprop="name">Technical</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Technical/Android/" itemprop="url" rel="index"><span itemprop="name">Android</span></a>
+        </span>
+    </span>
+
+  
+  
+  <span class="post-meta-item">
+    
+    <span class="post-meta-item-icon">
+      <i class="far fa-comment"></i>
+    </span>
+    <span class="post-meta-item-text">Waline：</span>
+  
+    <a title="waline" href="/posts/2021/10/12/84a43c7b/#waline" itemprop="discussionUrl">
+      <span class="post-comments-count waline-comment-count" data-path="/posts/2021/10/12/84a43c7b/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+            <div class="post-description">在Android开发者中，面试被问到的问题频率最多莫过于Handler的原理了吧，本文【简单】通过源码阐述Handler的流程和几个主要类之间的关系</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>作为Android开发者，在面试的过程中，handler这个知识点很大概率会被问到，今天通过源码来了解下这个handler。</p>
+<h2 id="Looper和MessageQueue"><a href="#Looper和MessageQueue" class="headerlink" title="Looper和MessageQueue"></a>Looper和MessageQueue</h2><h3 id="准备"><a href="#准备" class="headerlink" title="准备"></a>准备</h3><p>要了解Handler的原理，我们先来了解两个类，分别是Looper，MessageQueue。因为只有这两个类都准备好的前提下，handler才有作用。<br>在Android应用中，我们都知道，其入口是ActivityThread的main函数</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>{</span><br><span class="line">    ...</span><br><span class="line">    Looper.prepareMainLooper();</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">false</span>) {</span><br><span class="line">        Looper.myLooper().setMessageLogging(<span class="keyword">new</span></span><br><span class="line">                LogPrinter(Log.DEBUG, <span class="string">"ActivityThread"</span>));</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// End of event ActivityThreadMain.</span></span><br><span class="line">    Trace.traceEnd(Trace.TRACE_TAG_ACTIVITY_MANAGER);</span><br><span class="line">    Looper.loop();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"Main thread loop unexpectedly exited"</span>);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>首先我们跟进<code>prepareMainLooper</code>函数内部，代码并不多，主要是创建Looper。<br>相关代码如下：</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="title">Looper</span><span class="params">(<span class="keyword">boolean</span> quitAllowed)</span> </span>{</span><br><span class="line">    mQueue = <span class="keyword">new</span> MessageQueue(quitAllowed);</span><br><span class="line">    mThread = Thread.currentThread();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">prepare</span><span class="params">(<span class="keyword">boolean</span> quitAllowed)</span> </span>{</span><br><span class="line">    <span class="keyword">if</span> (sThreadLocal.get() != <span class="keyword">null</span>) {</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"Only one Looper may be created per thread"</span>);</span><br><span class="line">    }</span><br><span class="line">    sThreadLocal.set(<span class="keyword">new</span> Looper(quitAllowed));</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">prepareMainLooper</span><span class="params">()</span> </span>{</span><br><span class="line">    prepare(<span class="keyword">false</span>);</span><br><span class="line">    <span class="keyword">synchronized</span> (Looper.class) {</span><br><span class="line">        <span class="keyword">if</span> (sMainLooper != <span class="keyword">null</span>) {</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"The main Looper has already been prepared."</span>);</span><br><span class="line">        }</span><br><span class="line">        sMainLooper = myLooper();</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>在私有构造函数中看到，Looper其内部有个mQueue的变量是MessageQueue类型的，此时Looper，MessageQueue都已经准备好了。</p>
+<h3 id="Looper和MessageQueue如何运行的"><a href="#Looper和MessageQueue如何运行的" class="headerlink" title="Looper和MessageQueue如何运行的"></a>Looper和MessageQueue如何运行的</h3><p>回到main函数的<code>Looper.loop();</code>这个方法</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">loop</span><span class="params">()</span> </span>{</span><br><span class="line">    <span class="keyword">final</span> Looper me = myLooper();</span><br><span class="line">    <span class="keyword">if</span> (me == <span class="keyword">null</span>) {</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"No Looper; Looper.prepare() wasn't called on this thread."</span>);</span><br><span class="line">    }   </span><br><span class="line">    <span class="keyword">if</span> (me.mInLoop) {</span><br><span class="line">        Slog.w(TAG, <span class="string">"Loop again would have the queued messages be executed"</span></span><br><span class="line">                + <span class="string">" before this one completed."</span>);</span><br><span class="line">    }</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">for</span> (;;) {</span><br><span class="line">        <span class="keyword">if</span> (!loopOnce(me, ident, thresholdOverride)) {</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>首先第2～4行，异常message说的很明确，同时前面笔者所说的只有在Looper和MessageQueue都准备好，handler才有效，也是这个原因。而且MessageQueue是Looper中的一个成员变量，所以Looper.prepare()内部都已准备好。<br>最后是一个for循环，再跟进去看，我们暂时只关注handler相关的部份，主要代码如下：</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">loopOnce</span><span class="params">(<span class="keyword">final</span> Looper me,</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="keyword">final</span> <span class="keyword">long</span> ident, <span class="keyword">final</span> <span class="keyword">int</span> thresholdOverride)</span> </span>{</span><br><span class="line">    Message msg = me.mQueue.next(); <span class="comment">// might block</span></span><br><span class="line">    <span class="keyword">if</span> (msg == <span class="keyword">null</span>) {</span><br><span class="line">        <span class="comment">// No message indicates that the message queue is quitting.</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    }</span><br><span class="line">    ...</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">try</span> {</span><br><span class="line">        msg.target.dispatchMessage(msg);</span><br><span class="line">        <span class="keyword">if</span> (observer != <span class="keyword">null</span>) {</span><br><span class="line">            observer.messageDispatched(token, msg);</span><br><span class="line">        }</span><br><span class="line">        dispatchEnd = needEndTime ? SystemClock.uptimeMillis() : <span class="number">0</span>;</span><br><span class="line">    } <span class="keyword">catch</span> (Exception exception) {</span><br><span class="line">        <span class="keyword">if</span> (observer != <span class="keyword">null</span>) {</span><br><span class="line">            observer.dispatchingThrewException(token, msg, exception);</span><br><span class="line">        }</span><br><span class="line">        <span class="keyword">throw</span> exception;</span><br><span class="line">    } <span class="keyword">finally</span> {</span><br><span class="line">        ThreadLocalWorkSource.restore(origWorkSource);</span><br><span class="line">        <span class="keyword">if</span> (traceTag != <span class="number">0</span>) {</span><br><span class="line">            Trace.traceEnd(traceTag);</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    msg.recycleUnchecked();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>通过MessageQueue.next方法取出消息，对该消息进行处理，并在最后释放消息内容。<br>到这里，我们了解到了，在Android应用程序启动是，首先调用了Looper.prepareMainLooper进行主线程Looper的准备工作，然后在调用Looper的<code>loop</code>方法进入死循环，在循环内部通过MessageQueue的<code>next</code>方法获取消息并进行处理。在Looper中值得注意的是两个变量，分别是<code>sThreadLocal</code>和<code>mQueue</code>，<code>sThreadLocal</code>是保证了当前looper只属于当前线程，而<code>mQueue</code>是looper的消息队列。</p>
+<blockquote>
+<p>注： 留意这里的<code>msg.target.dispatchMessage(msg);</code>，后面会提到</p>
+</blockquote>
+<h2 id="Handler的原理"><a href="#Handler的原理" class="headerlink" title="Handler的原理"></a>Handler的原理</h2><h3 id="Handler的使用"><a href="#Handler的使用" class="headerlink" title="Handler的使用"></a>Handler的使用</h3><p>首先我们需要初始化一个Handler</p>
+<figure class="highlight kotlin"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">val</span> handler = Handler(Looper.getMainLooper()) {</span><br><span class="line">    println(<span class="string">"===== callback thread: <span class="subst">${Thread.currentThread().name}</span>"</span>)</span><br><span class="line">    println(<span class="string">"===== <span class="subst">${it.what}</span>"</span>)</span><br><span class="line">    println(<span class="string">"===== <span class="subst">${it.data.getString(<span class="string">"Content"</span>)}</span>"</span>)</span><br><span class="line">    <span class="literal">true</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>在子线程send messge</p>
+<figure class="highlight kotlin"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">GlobalScope.launch(Dispatchers.IO) {</span><br><span class="line">    println(<span class="string">"===== send thread: <span class="subst">${Thread.currentThread().name}</span>"</span>)</span><br><span class="line">    handler.sendMessage(Message.obtain().apply {</span><br><span class="line">        <span class="keyword">this</span>.<span class="keyword">data</span> = bundleOf(<span class="string">"Content"</span> to <span class="string">"Hello world!!!"</span>)</span><br><span class="line">        <span class="keyword">this</span>.what = <span class="number">1</span></span><br><span class="line">    });</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<blockquote>
+<p>注：这里的代码在Activity/Fragment中的，handler也是通过主线程创建的</p>
+</blockquote>
+<p>现在我们知道handler如何使用了，接下来跟踪代码来理解，首先来看看<code>sendMessage</code>方法，相关代码全部贴出来</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">sendMessage</span><span class="params">(<span class="meta">@NonNull</span> Message msg)</span> </span>{</span><br><span class="line">    <span class="keyword">return</span> sendMessageDelayed(msg, <span class="number">0</span>);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">boolean</span> <span class="title">sendMessageDelayed</span><span class="params">(<span class="meta">@NonNull</span> Message msg, <span class="keyword">long</span> delayMillis)</span> </span>{</span><br><span class="line">    <span class="keyword">if</span> (delayMillis &lt; <span class="number">0</span>) {</span><br><span class="line">        delayMillis = <span class="number">0</span>;</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">return</span> sendMessageAtTime(msg, SystemClock.uptimeMillis() + delayMillis);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">sendMessageAtTime</span><span class="params">(<span class="meta">@NonNull</span> Message msg, <span class="keyword">long</span> uptimeMillis)</span> </span>{</span><br><span class="line">    MessageQueue queue = mQueue;</span><br><span class="line">    <span class="keyword">if</span> (queue == <span class="keyword">null</span>) {</span><br><span class="line">        RuntimeException e = <span class="keyword">new</span> RuntimeException(</span><br><span class="line">                <span class="keyword">this</span> + <span class="string">" sendMessageAtTime() called with no mQueue"</span>);</span><br><span class="line">        Log.w(<span class="string">"Looper"</span>, e.getMessage(), e);</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">return</span> enqueueMessage(queue, msg, uptimeMillis);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">enqueueMessage</span><span class="params">(<span class="meta">@NonNull</span> MessageQueue queue, <span class="meta">@NonNull</span> Message msg,</span></span></span><br><span class="line"><span class="params"><span class="function">        <span class="keyword">long</span> uptimeMillis)</span> </span>{</span><br><span class="line">    msg.target = <span class="keyword">this</span>;</span><br><span class="line">    msg.workSourceUid = ThreadLocalWorkSource.getUid();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (mAsynchronous) {</span><br><span class="line">        msg.setAsynchronous(<span class="keyword">true</span>);</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">return</span> queue.enqueueMessage(msg, uptimeMillis);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>看到最终调用的是<code>enqueueMessage</code>方法，注意<code>msg.target = this;</code>和<code>queue.enqueueMessage(msg, uptimeMillis);</code><br>先来看<code>queue.enqueueMessage(msg, uptimeMillis);</code>，这个queue就是mQueue，而mQueue在初始化Handler的时候赋值的<code>mQueue = mLooper.mQueue;</code>，也就是说调用sendMessage方法最终会通过looper的messageQueue将这个消息入队列之中。再根据前面我们说的，loop函数会一直查看消息队列的消息，出队列时做处理。<br>现在看<code>msg.target = this;</code>，为什么要关注这个呢？ 首先这个方法是在Handler类之中的，这个this指的就是当前的handler。<br>前文提到looper会冲消息队列通过next出队并处理，其中就有一行代码<code>msg.target.dispatchMessage(msg);</code><br>现在来看Handler的<code>dispatchMessage(msg)</code>方法</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">dispatchMessage</span><span class="params">(<span class="meta">@NonNull</span> Message msg)</span> </span>{</span><br><span class="line">    <span class="keyword">if</span> (msg.callback != <span class="keyword">null</span>) {</span><br><span class="line">        handleCallback(msg);</span><br><span class="line">    } <span class="keyword">else</span> {</span><br><span class="line">        <span class="keyword">if</span> (mCallback != <span class="keyword">null</span>) {</span><br><span class="line">            <span class="keyword">if</span> (mCallback.handleMessage(msg)) {</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            }</span><br><span class="line">        }</span><br><span class="line">        handleMessage(msg);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">handleCallback</span><span class="params">(Message message)</span> </span>{</span><br><span class="line">    message.callback.run();</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>使用例子中的case，msg是没有传callback的，所以其实这里调用了mCallback.handleMessage(msg)。也就是我们创建Handler实例的回调。<br>到这里，Handler与Looper、MessageQueue、Message之间的关系讲完了。</p>
+<h2 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h2><ol>
+<li><p>子线程能否使用handler？如果可以需要注意什么？如果没有消息后应该如何处理？<br>Handler其实就是一个类，当然可以在子线程中使用。子线程handler创建的时候一定需要设定一个Looper给这个handler(Looper.prepare())，否则会在调用loop() 的时候抛出Runtime异常。主要是如下代码</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (me == <span class="keyword">null</span>) {</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> RuntimeException(<span class="string">"No Looper; Looper.prepare() wasn't called on this thread."</span>);</span><br><span class="line">}   </span><br></pre></td></tr></tbody></table></figure>
+<p>当没有消息的时候，我们应该调用looper.quit() 方法释放资源，否则会因为死循环导致线程内存泄漏。</p>
+</li>
+<li><p>Handler在等待新消息的时候会阻塞吗？ 如果会，那会不会导致ANR？<br>Handler在等待新消息的时候其实就是在死循环的过程，也称为looper阻塞。所以是会阻塞的。但不会导致ANR，因为Android系统本来就是事件驱动的，looper.loop不断接受事件和处理事件，如果它停止了，App也就停止了，所以这个问题本身就是假命题。</p>
+</li>
+</ol>
+<p>另一种说法就是ANR本来就是类似定时炸弹一样的设计，在事件发送时埋下定时炸弹，如果在规定的时间内没有收到处理完的通知，则判定为超时，引爆炸弹（ANR），收到则拆除炸弹。而Looper在loop的过程并没埋下这个定时炸弹</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>通过跟踪源码，我们清晰了解到了Handler处理消息的过程。</p>
+<ol>
+<li>首先在程序入口调用Looper.prepareMainLooper()方法，提供主线程Looper和MessageQueue</li>
+<li>然后继续调用Looper的loop方法进入死循环，通过MessageQueue的next方法取得消息并处理</li>
+<li>取得的消息怎么来的？ Handler send/post(post方式会传入Runable给message)来的</li>
+<li>在send过程中，handler会被赋给message.target</li>
+<li>取得的消息中，Message拿到target，即为handler，处理消息就是通过handler.dispatchMessage方法调用回调方法返回主线程处理(因为这里的handler是在主线程创建的)</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>请我一杯咖啡吧！</div>
+  <button>
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/reward/wechat.jpg" alt="D&J 微信">
+        <span>微信</span>
+      </div>
+      <div>
+        <img src="/images/reward/alipay.jpg" alt="D&J 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/Handler/" rel="tag"># Handler</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/2021/09/11/5c71264a/" rel="prev" title="Coroutines + Retrofit + MVVM 简单实现">
+                  <i class="fa fa-angle-left"></i> Coroutines + Retrofit + MVVM 简单实现
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/2022/06/08/ed292b98/" rel="next" title="RPC with Kotlinx Serialization">
+                  RPC with Kotlinx Serialization <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="waline"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2021 – 
+    <span itemprop="copyrightYear">2024</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">D&J</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js","integrity":"sha256-mm3Re3y7xlvh+yCD+l/Zs1d+PU0AEad93MkWvljfm/s="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.3.0/wavedrom.min.js","integrity":"sha256-IRMDzTC+wK5stMucZ/XSXkeS5VNtxZ+/Bm8Mcqfoxdo="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.3.0/skins/default.js","integrity":"sha256-fduc/Zszk5ezWws2uInY/ALWVmIrmV6VTgXbsYSReFI="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+
+  
+
+
+
+
+<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-CN","enable":true,"serverURL":"https://blog-waline-git-main-breakzeros-projects.vercel.app","cssUrl":"https://unpkg.com/@waline/client@v2/dist/waline.css","commentCount":false,"pageview":false,"dark":"auto","imageUploader":false,"copyright":false,"search":false,"meta":["nick","mail"],"requiredMeta":["nick"],"el":"#waline","comment":true,"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","path":"/posts/2021/10/12/84a43c7b/"}</script>
+<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css">
+<script>
+document.addEventListener('page:loaded', () => {
+  NexT.utils.loadComments(CONFIG.waline.el).then(() =>
+    NexT.utils.getScript(CONFIG.waline.libUrl, { condition: window.Waline })
+  ).then(() => 
+    Waline.init(Object.assign({}, CONFIG.waline,{ el: document.querySelector(CONFIG.waline.el) }))
+  );
+});
+</script>
+
+<script async>window.onload=function(){var a=document.createElement('script'),b=document.getElementsByTagName('script')[0];a.type='text/javascript',a.async=!0,a.src='/sw-register.js?v='+Date.now(),b.parentNode.insertBefore(a,b)};</script></body></html>
