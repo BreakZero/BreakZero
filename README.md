@@ -1,4 +1,15 @@
-<div align="center">
+<!-- I am a systems engineer 👨🏻‍💻 with experience in blockchain, trading systems, and distribute storage systems, passionately working towards web3.
+
+
+🙇🏻 I am studying everything about BTC and ZK.
+
+📫 How to reach me: codingqi@gmail.com | Linkedin.
+
+⚡ Fun fact: I do love synthwave🎤 and sociology📖. -->
+
+![Metrics](/github-metrics.svg)
+
+<!-- <div align="center">
     <picture>
         <source media="(prefers-color-scheme: dark)" srcset="https://readme-typing-svg.herokuapp.com/?font=Fira+Code&pause=1000&color=4eacf8&width=435&lines=Welcome+to+my+modest+corner">
         <img alt="" src="https://readme-typing-svg.herokuapp.com/?font=Fira+Code&pause=1000&color=F09431&width=435&lines=Welcome+to+my+modest+corner">
@@ -24,8 +35,9 @@
 <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://github-readme-activity-graph.vercel.app/graph?username=BreakZero&bg_color=070f2a&color=4eacf8&line=ffffff&point=4eacf8&area=true&area_color=ffffff">
     <img alt="Shows MrL's GitHub Contributions" src="https://github-readme-activity-graph.vercel.app/graph?username=BreakZero&bg_color=ffffff&color=f09431&line=649b40&point=f09431&area=true&area_color=649b40">
-</picture>
+</picture> -->
 
+<!-- =============================== -->
 
 <!-- # Pinned -->
 <!-- <a href="https://github.com/EasyZone-org/E-Wallet-KMP"> -->
