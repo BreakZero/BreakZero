@@ -1,7 +1,5 @@
 I am an android engineer 👨🏻‍💻 with experience in blockchain, passionately working towards web3.
 
-
-🙇🏻 I am studying everything about Bitcoin and EVM.
-
+A small thing: I am interesting in modern android technical and web3 like Bitcoin/EVM.
 
 ![Metrics](/github-metrics.svg)
