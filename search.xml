@@ -395,6 +395,77 @@ dispose --&gt; [*]
       </tags>
   </entry>
   <entry>
+    <title>MVVM/MVI in Android</title>
+    <url>/posts/2024/03/06/8c99ce9c/</url>
+    <content><![CDATA[<p>还记得刚开始接触Android开发工作，哪有什么架构模式选择，几乎所有逻辑都放到Activity中。随着时间推移，后来听过MVC，用过MVP，MVVM和对MVI模糊的理解（为何是模糊的理解，因为我在使用的时候，并没有觉得和MVVM有差异，也不知道是否正确地使用&gt;_&lt;）</p>
+<p>而这两年通过在项目实践过程中的经验积累，多少对近年比较流行的MVVM/MVI有了一定的理解。想尝试写篇博文，如有错误请指出。</p>
+<h2 id="MVVM"><a href="#MVVM" class="headerlink" title="MVVM"></a>MVVM</h2><p>MVVM是Model-View-ViewModel的缩写，是前些年在Android中比较火的一个词。是Android开发中备受欢迎的架构模式，其架构图如下：</p>
+<img src="/posts/2024/03/06/8c99ce9c/mvvm_architecture.jpg" class="" title="mvvm_architecture">
+<p>图片来自<a href="https://www.geeksforgeeks.org/mvvm-model-view-viewmodel-architecture-pattern-in-android/">MVVM (Model View ViewModel) Architecture Pattern in Android</a></p>
+<p><strong>Model</strong>： 模型，业务领域模型<br><strong>View</strong>： 用户界面，展示给用户能看到的。可以是Activit/Fragment(xml)或者Compose中的可组合项。一般通过观察的方式绑定业务模型数据实现界面同步更新<br><strong>ViewModel</strong>： 前两者数据连接的桥梁。其职责有</p>
+<ul>
+<li>根据View操作事件，实现业务逻辑处理</li>
+<li>实现View和Model数据绑定，同步更新</li>
+</ul>
+<p>基本工作流程: </p>
+<ol>
+<li>界面在初始化完成后，ViewModel会将View和Model进行双向绑定(如：xxxBinding.setViewModel(**))</li>
+<li>用户操作界面，触发View操作事件</li>
+<li>ViewModel收到View的操作事件，实现业务逻辑处理</li>
+<li>业务逻辑处理结果导致Model内容改变，用户界面观察到内容改变从而更新界面</li>
+</ol>
+<p>优点：</p>
+<ul>
+<li>解偶度高。View和Model之间完全解偶</li>
+<li>提高开发效率。基于双向绑定，在开发过程中无需手动更新UI，关注点侧重放在业务逻辑和Model内容关系上，降低开发复杂性和工作量</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>双向绑定导致Model变化难以跟踪，增加错误调试难度</li>
+</ul>
+<h2 id="MVI"><a href="#MVI" class="headerlink" title="MVI"></a>MVI</h2><p>MVI，Model-View-Intent的缩写，网上说法各种各样，唯独对于Intent层基本都是理解为用户意图。来自官方的架构图:</p>
+<img src="/posts/2024/03/06/8c99ce9c/UDF_works_in_app_architecture.jpg" class="" title="how_UDF_works_in_app_architecture">
+
+<p>MVI有两大特点：</p>
+<ul>
+<li>状态统一管理<br>MVI中还有一个概念，UiState。它一般是不可变的(data class)，每一个界面对应一个UiState</li>
+<li>数据单向流动<br>根据上图，了解UDF状态是自上而下，而事件则自下而上形成一个环<img src="/posts/2024/03/06/8c99ce9c/cycle_of_events_and_data_in_UDF.jpg" class="" title="cycle_of_events_and_data_in_UDF"></li>
+</ul>
+<p>以下则是笔者参考并结合自己开发过程的理解来说明的</p>
+<p><strong>Model</strong>: 如MVVM一样，领域模型。UiState根据Model变化而改变<br><strong>View</strong>: 如MVVM一样，展示给用户的界面<br><strong>Intent</strong>: 用户意图，用户对界面功能的操作意图。比如想要返回而点击按钮</p>
+<p>基本工作流程: （参考自<a href="https://developer.android.com/topic/architecture/ui-layer#state-holders">官方文档</a>）</p>
+<ol>
+<li>ViewModel持有并展露UiState，View会根据UiState渲染界面</li>
+<li>用户通过意图操作通知ViewModel</li>
+<li>ViewModel根据用户意图处理逻辑并更新状态(UiState)</li>
+<li>对于任何状态都是重复以上步骤</li>
+</ol>
+<p>优点:</p>
+<ul>
+<li>数据单向流动保证了数据的一致性，提高了可测试性和调试便利</li>
+<li>统一管理状态，一个界面对应一个状态，加强了代码可读性</li>
+</ul>
+<p>缺点:</p>
+<ul>
+<li>由于Intent的存在，需要定义Event并通过UI传递给ViewModel，会导致ViewModel逻辑代码增加。</li>
+</ul>
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><p>其实在实际开发过程中，大多时候MVVM也渐渐从双向绑定走向了数据单向流实现。从Google官方对架构的介绍中可以看出，类似的MVI很大程度上和MVVM相同的。</p>
+<p>在Google介绍的MVI中，每个UiState对应一个UI界面，这对于声明式UI特别友好。比如Jetpack Compose中，收到UiState触发重组即可。但对于传统的xml开发界面，你会发现判断条件并没有少多少。</p>
+<p>由于这种架构模式的设计，为了解耦，层级分明导致需要更多类来实现，对于一些简单的app或者feature来说，笔者有时候看着空荡荡的类会觉得其实没必要。所以在接受范围内做一些妥协并没有什么。</p>
+<p>开发的过程要有自己的思想和理解，才能更有效提升。</p>
+<!--  ## 差异总结
+
+## 应用
+在上篇文章中了解到MVVM/MVI架构模式是应用程序开发过程中对数据（或状态）和用户界面之间关系管理的一种解决方案。
+
+## 后话 -->
+
+]]></content>
+      <categories>
+        <category>Technical</category>
+      </categories>
+  </entry>
+  <entry>
     <title>Jetpack Compose实现放大镜效果竟如此简单</title>
     <url>/posts/2024/01/06/a0983be/</url>
     <content><![CDATA[<h3 id="例子说明"><a href="#例子说明" class="headerlink" title="例子说明"></a>例子说明</h3><p>在一个Box中，显示图片并支持放大镜功能。</p>
@@ -815,6 +886,14 @@ dispose --&gt; [*]
 <li>Clean是一种架构风格，其核心思想就是关注点分离，强调应用程序不同部分应有明确的责任且相互独立，通过分层来提升代码可读性、可测试性和可维护性，针对于整个应用设计的。</li>
 <li>MVP，MVVM，MVI这些则是架构模式，是应用程序对数据（或状态）和用户界面之间关系管理的一种解决方案（注：在app开发过程中，笔者个人是这么理解的）。</li>
 </ul>
+<p><strong>为什么笔者认为这些架构模式是应用程序对数据（或状态）和用户界面之间关系管理的一种解决方案？</strong></p>
+<p>相信大家都有过MVVM开发经验，在开发一个feature的时候，应该都有如下步骤：</p>
+<ol>
+<li>通过Rest Api获取请求体并转换成Model(一般data class)</li>
+<li>ViewModel通过Repo获取得到Model，并根据情况转换或组合成UiState</li>
+<li>在View上观察UiState并刷新界面<br>以上步骤不管MVVM还是MVI都有类似。</li>
+</ol>
+<p>在获得Model之前，不管经过Network还是LocalDB亦或组合成的数据的方式拿到Model，都不属于MVVM/MVI架构模式下的考虑范围。所以这些架构模式就是解决了传统Android开发过程中几乎所有业务逻辑代码都放在Activity中让人难以忍受的问题。</p>
 <h3 id="Clean架构在Android应用上的变体"><a href="#Clean架构在Android应用上的变体" class="headerlink" title="Clean架构在Android应用上的变体"></a>Clean架构在Android应用上的变体</h3><p>Clean架构是<em>Uncle Bob</em>提出的一种软件设计架构，其架构图如下：</p>
 <img src="/posts/2024/02/12/53af0ebf/clean-architecture.webp" class="" title="clean-architecture">
 
