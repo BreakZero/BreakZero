@@ -449,17 +449,19 @@ dispose --&gt; [*]
 <ul>
 <li>由于Intent的存在，需要定义Event并通过UI传递给ViewModel，会导致ViewModel逻辑代码增加。</li>
 </ul>
-<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><p>其实在实际开发过程中，大多时候MVVM也渐渐从双向绑定走向了数据单向流实现。从Google官方对架构的介绍中可以看出，类似的MVI很大程度上和MVVM相同的。</p>
+<h2 id="说一说"><a href="#说一说" class="headerlink" title="说一说"></a>说一说</h2><p>对于MVVM的实现，相信大多开发者都跟笔者差不多，使用DataBinding/LiveData吧，不过后来Kotlin出现了StateFlow/SharedFlow，LiveData就也被替换了。</p>
+<ol>
+<li><p>MVVM with DataBinding<br>  对于DataBinding，对于目前声明式UI的实现无需考虑。在命令式UI时候，通过外层加<code>&lt;layout&gt;&lt;/layout&gt;</code>使得代码生成Binding类，然后通过set方法持有Model对象实现View &lt;-&gt; Model之间的绑定。<br>  不过随着界面的增加，编译速度会越来越慢，而且出问题的时候相对难定位。在Model中，更是几乎每个属性都需要用ObservableField，如遇到不支持的Binding还需要手动添加BindingAdapter支持等。</p>
+</li>
+<li><p>MVVM with LiveData/StateFlow<br>  在这套MVVM实现方式中，你需要更多了解LiveData和StateFlow，因为出问题的时候很多是因为对LiveData/StateFlow原理实现不理解，如为什么突然界面就刷新了？为什么数据被覆盖而显示错误的界面等。</p>
+</li>
+<li><p>MVI<br>  在学习Jetpack Compose过程中，笔者使用最多的就是MVI架构模式了。因为MVI中设计的UiState和Jetpack Compose重组刷新界面正好可以一一对应。在开发过程中会根据需求和界面定义好各种UiState，然后只需要考虑好这些UiState在ViewModel经过逻辑之后的输出正确即可(对于单元测试挺友好的)。<br>  在使用MVI开发过程中，也曾有些时候矛盾过，创建这么多类真的有必要吗？但是好像为了按照架构来实现又不能删掉。</p>
+</li>
+</ol>
+<h2 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h2><p>其实在实际开发过程中，大多时候MVVM也渐渐从双向绑定走向了数据单向流实现。从Google官方对架构的介绍中可以看出，类似的MVI很大程度上和MVVM相同的。</p>
 <p>在Google介绍的MVI中，每个UiState对应一个UI界面，这对于声明式UI特别友好。比如Jetpack Compose中，收到UiState触发重组即可。但对于传统的xml开发界面，你会发现判断条件并没有少多少。</p>
 <p>由于这种架构模式的设计，为了解耦，层级分明导致需要更多类来实现，对于一些简单的app或者feature来说，笔者有时候看着空荡荡的类会觉得其实没必要。所以在接受范围内做一些妥协并没有什么。</p>
-<p>开发的过程要有自己的思想和理解，才能更有效提升。</p>
-<!--  ## 差异总结
-
-## 应用
-在上篇文章中了解到MVVM/MVI架构模式是应用程序开发过程中对数据（或状态）和用户界面之间关系管理的一种解决方案。
-
-## 后话 -->
-
+<p>其实不管哪种实现，在开发过程中，都会因为需求不同而遇到各种各样问题的，没有任何一种解决方案是完美的。 开发的过程要有自己的思想和理解，才能更有效提升。</p>
 ]]></content>
       <categories>
         <category>Technical</category>
