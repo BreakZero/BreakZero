@@ -21,7 +21,12 @@ jobs:
           plugin_topics: yes
           plugin_languages: yes
           plugin_topics_limit: 8
-          plugin_topics_mode: icons
+          plugin_topics_mode: labels
           plugin_topics_sort: starred
           plugin_calendar: yes
           plugin_calendar_limit: 2
+          plugin_crypto: yes
+          plugin_crypto_id: bitcoin
+          plugin_crypto_vs_currency: usd
+          plugin_crypto_days: 1
+          plugin_crypto_precision: 8
