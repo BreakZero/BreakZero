@@ -686,40 +686,6 @@ val intro by remember {
       </tags>
   </entry>
   <entry>
-    <title>如何避免生成代码/拷贝文件影响GitHub Languages stats</title>
-    <url>/posts/2023/09/25/b9b953e9/</url>
-    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在GitHub Repository中，右边基本都会有一个名为<code>Languages</code>的Section，展示了该仓库所用语言的占比，而作为一个开发者，GitHub的信息多少能够体现owner的能力和经验，所以会存在通过api统计GitHub信息的需要。<br>例如：<br><img src="/images/post/top-langs.jpg" alt="BreakZero stats" title="BreakZero stats"><br>参考：<a href="https://github.com/anuraghazra/github-readme-stats">github-readme-stats</a></p>
-<p>但是，有时候我们的仓库中会存在一些copy过来的文件(e.g: jQuery.js)或者是工具生成的代码，而这些的代码通常会比较大从而大大影响我们统计的实际结果。<br>同样，笔者在Profile中添加了Top Languages的分析，由于<code>Blog</code>这个仓库中使用了theme/生成的文件中存在大量的js文件，导致Top Languages 中javascript排名第一，而笔者对javascript只是了解和看懂的水平，所以统计出来的结果比较不符合实际。<br><code>Linguist</code>能帮你避免分析这类文件。</p>
-<span id="more"></span>
-
-<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><pre class="line-numbers language-markdown" data-language="markdown"><code class="language-markdown">Linguist is used on GitHub.com to detect blob languages, ignore binary or vendored files, suppress generated files in diffs, and generate language breakdown graphs.<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-<p>更多请看 <a href="https://github.com/github-linguist/linguist">linguist</a></p>
-<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p><code>Linguist</code> 能做的东西挺多，本文只根据笔者所遇情况介绍<code>Excluded from stats(从统计中排除)</code>的用法。<br>只需两步：</p>
-<ol>
-<li>在仓库根目录上创建一个名为<code>.gitattributes</code>的文件</li>
-<li>按照文档将你需要标记的文件目录写入文件中，并使用对应的<code>attribute</code>标识<br> 例如: <pre class="line-numbers language-text" data-language="text"><code class="language-text">js/** linguist-vendored
-css/** linguist-vendored
-libs/** linguist-vendored<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-更多信息请看 <a href="https://github.com/github-linguist/linguist/blob/master/docs/overrides.md">Overrides</a></li>
-</ol>
-<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>如果你是在已存在的仓库中设置，当你提交后，可能发现它并没有效果，因为之前的所有提交并没有得到这些<code>attribute</code>处理文件。<br>解决也很简单</p>
-<ol>
-<li>首先确保当前没有其他提交，如果有，请先push或隐藏，可以使用命令查看 <pre class="line-numbers language-git" data-language="git"><code class="language-git">git status<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
-<li>重置 <pre class="line-numbers language-git" data-language="git"><code class="language-git">git rm --cached -r .
-git reset --hard<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-重置会让文件使用上定义的<code>attribute</code>s</li>
-</ol>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><code>Linguist</code> 不仅在Language统计分析上能有效避免错误结果，同样支持不同语言定义和路径覆盖等功能。在每次创建和保存文件时，git都会根据定义的<code>attribute</code>s自动保存文件。</p>
-<h2 id="Ending"><a href="#Ending" class="headerlink" title="Ending"></a>Ending</h2>]]></content>
-      <categories>
-        <category>Technical</category>
-        <category>Tools</category>
-      </categories>
-      <tags>
-        <tag>Github</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Flutter学习记录 - Widget、State、Context</title>
     <url>/posts/2023/10/04/e5178a3c/</url>
     <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
@@ -823,6 +789,40 @@ dispose --&gt; [*]
       </categories>
       <tags>
         <tag>Flutter</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>如何避免生成代码/拷贝文件影响GitHub Languages stats</title>
+    <url>/posts/2023/09/25/b9b953e9/</url>
+    <content><![CDATA[<h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>在GitHub Repository中，右边基本都会有一个名为<code>Languages</code>的Section，展示了该仓库所用语言的占比，而作为一个开发者，GitHub的信息多少能够体现owner的能力和经验，所以会存在通过api统计GitHub信息的需要。<br>例如：<br><img src="/images/post/top-langs.jpg" alt="BreakZero stats" title="BreakZero stats"><br>参考：<a href="https://github.com/anuraghazra/github-readme-stats">github-readme-stats</a></p>
+<p>但是，有时候我们的仓库中会存在一些copy过来的文件(e.g: jQuery.js)或者是工具生成的代码，而这些的代码通常会比较大从而大大影响我们统计的实际结果。<br>同样，笔者在Profile中添加了Top Languages的分析，由于<code>Blog</code>这个仓库中使用了theme/生成的文件中存在大量的js文件，导致Top Languages 中javascript排名第一，而笔者对javascript只是了解和看懂的水平，所以统计出来的结果比较不符合实际。<br><code>Linguist</code>能帮你避免分析这类文件。</p>
+<span id="more"></span>
+
+<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><pre class="line-numbers language-markdown" data-language="markdown"><code class="language-markdown">Linguist is used on GitHub.com to detect blob languages, ignore binary or vendored files, suppress generated files in diffs, and generate language breakdown graphs.<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>更多请看 <a href="https://github.com/github-linguist/linguist">linguist</a></p>
+<h2 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h2><p><code>Linguist</code> 能做的东西挺多，本文只根据笔者所遇情况介绍<code>Excluded from stats(从统计中排除)</code>的用法。<br>只需两步：</p>
+<ol>
+<li>在仓库根目录上创建一个名为<code>.gitattributes</code>的文件</li>
+<li>按照文档将你需要标记的文件目录写入文件中，并使用对应的<code>attribute</code>标识<br> 例如: <pre class="line-numbers language-text" data-language="text"><code class="language-text">js/** linguist-vendored
+css/** linguist-vendored
+libs/** linguist-vendored<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+更多信息请看 <a href="https://github.com/github-linguist/linguist/blob/master/docs/overrides.md">Overrides</a></li>
+</ol>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>如果你是在已存在的仓库中设置，当你提交后，可能发现它并没有效果，因为之前的所有提交并没有得到这些<code>attribute</code>处理文件。<br>解决也很简单</p>
+<ol>
+<li>首先确保当前没有其他提交，如果有，请先push或隐藏，可以使用命令查看 <pre class="line-numbers language-git" data-language="git"><code class="language-git">git status<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
+<li>重置 <pre class="line-numbers language-git" data-language="git"><code class="language-git">git rm --cached -r .
+git reset --hard<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+重置会让文件使用上定义的<code>attribute</code>s</li>
+</ol>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><code>Linguist</code> 不仅在Language统计分析上能有效避免错误结果，同样支持不同语言定义和路径覆盖等功能。在每次创建和保存文件时，git都会根据定义的<code>attribute</code>s自动保存文件。</p>
+<h2 id="Ending"><a href="#Ending" class="headerlink" title="Ending"></a>Ending</h2>]]></content>
+      <categories>
+        <category>Technical</category>
+        <category>Tools</category>
+      </categories>
+      <tags>
+        <tag>Github</tag>
       </tags>
   </entry>
   <entry>
