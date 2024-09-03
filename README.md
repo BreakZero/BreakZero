@@ -4,8 +4,9 @@
 
 ## 📚 Interests
 
-- **Mobile Development**: Crafting apps that don’t crash... too often.
+- **Mobile Development**: Android, iOS, KMP
 - **Jetpack Compose**: Writing less XML, and more code that actually makes sense.
+- **TypeScript**
 - **Web3**: Exploring the decentralized web and imagining a future.
   
 ---
