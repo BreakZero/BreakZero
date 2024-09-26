@@ -826,6 +826,54 @@ git reset --hard<span aria-hidden="true" class="line-numbers-rows"><span></span>
       </tags>
   </entry>
   <entry>
+    <title>Google Play Store API Caller Settings</title>
+    <url>/posts/2024/09/26/3de1644d/</url>
+    <content><![CDATA[<p>错误信息： 通过CI 部署Google Play Store Internal测试通道的版本，提示Caller no permission</p>
+<p>主要原因有2个</p>
+<ul>
+<li>用错了service account json文件</li>
+<li>对应的Service Account没有配置到权限</li>
+</ul>
+<p>一个简单的步骤：</p>
+<ol>
+<li><p>创建Service Account</p>
+</li>
+<li><p>Enable Google Play Developer API </p>
+</li>
+<li><p>通过 API Access 授权</p>
+</li>
+<li><p>授予 Google Play Console 中的权限<br> 在 Play Console 中，找到您的服务账号，并授予以下权限：</p>
+<ul>
+<li>View app information（查看应用信息）：允许查看应用的基本信息。</li>
+<li>Create and edit releases（创建和编辑发布）：允许上传 APK/AAB 并创建新版本。</li>
+<li>Manage testing tracks（管理测试轨道）：允许管理内部测试轨道及相关测试设置。</li>
+</ul>
+</li>
+<li><p>分配基础角色</p>
+<ul>
+<li>在 IAM 页面，找到您的服务账号，点击 编辑。</li>
+<li>添加以下基础角色：<ul>
+<li>Editor（编辑者）：这会赋予服务账号广泛的权限，包括编辑和管理项目资源。</li>
+<li>Service Account User（服务账号用户）：允许该服务账号执行操作，作为用户与 API 交互。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Firebase 有以下4个角色</p>
+<ul>
+<li>Firebase Admin SDK Administrator Service Agent</li>
+<li>Firebase App Distribution Admin</li>
+<li>Firebase App Distribution Admin SDK Service Agent</li>
+<li>Service Account Token Creator</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p>Android Publisher API Role, 不清楚是不是个人开发者账号没有还是怎样，找不到</p>
+</blockquote>
+]]></content>
+  </entry>
+  <entry>
     <title>浅谈Jetpack Compose LaunchedEffect</title>
     <url>/posts/2023/07/04/c6b943f6/</url>
     <content><![CDATA[<p>在Jetpack Compose 代码中，我们经常看到<code>LaunchedEffect</code>这个常见的。今天就简单了解下这个方法吧。在说<code>LaunchedEffect</code>前，让我们先说一下<code>Side Effect</code>.</p>
