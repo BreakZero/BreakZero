@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.1.1">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/siteicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/siteic%20%20on/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/siteicon/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/siteicon/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-center-simple.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"dejinlu.cn","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.22.0","exturl":false,"sidebar":{"position":"right","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12,"width":300},"copycode":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="随着Jetpack Compose发布之后，它出现在Android开发者视野中越来越频繁，而作为一个移动端开发者，性能上的考虑一直放在很重要的位置。Jetpack Compose中的组件是通过重组刷新UI的，所以避免没必要的重组是最基本的性能优化方案之一，其中&#96;remember {}&#96;和&#96;rememberSaveable {}&#96;都有让组件跳过重组的作用，但它们又存在着区别。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="remember VS rememberSaveable">
+<meta property="og:url" content="https://dejinlu.cn/posts/2023/12/04/f68195/index.html">
+<meta property="og:site_name" content="D&amp;JのZONE">
+<meta property="og:description" content="随着Jetpack Compose发布之后，它出现在Android开发者视野中越来越频繁，而作为一个移动端开发者，性能上的考虑一直放在很重要的位置。Jetpack Compose中的组件是通过重组刷新UI的，所以避免没必要的重组是最基本的性能优化方案之一，其中&#96;remember {}&#96;和&#96;rememberSaveable {}&#96;都有让组件跳过重组的作用，但它们又存在着区别。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dejinlu.cn/images/post/remember.gif">
+<meta property="og:image" content="https://dejinlu.cn/images/post/remember_log.jpg">
+<meta property="og:image" content="https://dejinlu.cn/images/post/remember_log1.jpg">
+<meta property="article:published_time" content="2023-12-04T03:14:00.000Z">
+<meta property="article:modified_time" content="2024-12-19T06:31:09.879Z">
+<meta property="article:author" content="D&amp;J">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Jetpack Compose">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://dejinlu.cn/images/post/remember.gif">
+
+
+<link rel="canonical" href="https://dejinlu.cn/posts/2023/12/04/f68195/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://dejinlu.cn/posts/2023/12/04/f68195/","path":"posts/2023/12/04/f68195/","title":"remember VS rememberSaveable"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>remember VS rememberSaveable | D&JのZONE</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?456d489b36d14e73cf4e36ecf2114b5d"></script>
+
+
+
+
+
+
+<link rel="dns-prefetch" href="https://blog-waline-git-main-breakzeros-projects.vercel.app">
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">D&JのZONE</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">知之者不如好之者，好之者不如乐之者</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#remember-%E5%92%8C-rememberSaveable-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">2.</span> <span class="nav-text">remember {} 和 rememberSaveable {}的区别</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#remember"><span class="nav-number">2.1.</span> <span class="nav-text">remember {}</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#rememberSaveable"><span class="nav-number">2.2.</span> <span class="nav-text">rememberSaveable {}</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%AA%8C%E8%AF%81"><span class="nav-number">3.</span> <span class="nav-text">验证</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%A9%E5%B1%95"><span class="nav-number">4.</span> <span class="nav-text">扩展</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="D&J"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">D&J</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/BreakZero" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;BreakZero" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:dejin.po@gmail.com" title="E-Mail → mailto:dejin.po@gmail.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/MrL51907231" title="Twitter → https:&#x2F;&#x2F;twitter.com&#x2F;MrL51907231" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i></a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://dejinlu.cn/posts/2023/12/04/f68195/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="D&J">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="D&JのZONE">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="remember VS rememberSaveable | D&JのZONE">
+      <meta itemprop="description" content="随着Jetpack Compose发布之后，它出现在Android开发者视野中越来越频繁，而作为一个移动端开发者，性能上的考虑一直放在很重要的位置。Jetpack Compose中的组件是通过重组刷新UI的，所以避免没必要的重组是最基本的性能优化方案之一，其中`remember {}`和`rememberSaveable {}`都有让组件跳过重组的作用，但它们又存在着区别。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          remember VS rememberSaveable
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2023-12-04 11:14:00" itemprop="dateCreated datePublished" datetime="2023-12-04T11:14:00+08:00">2023-12-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Technical/" itemprop="url" rel="index"><span itemprop="name">Technical</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Technical/Multiplatform/" itemprop="url" rel="index"><span itemprop="name">Multiplatform</span></a>
+        </span>
+    </span>
+
+  
+  
+  <span class="post-meta-item">
+    
+    <span class="post-meta-item-icon">
+      <i class="far fa-comment"></i>
+    </span>
+    <span class="post-meta-item-text">Waline：</span>
+  
+    <a title="waline" href="/posts/2023/12/04/f68195/#waline" itemprop="discussionUrl">
+      <span class="post-comments-count waline-comment-count" data-path="/posts/2023/12/04/f68195/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+            <div class="post-description">随着Jetpack Compose发布之后，它出现在Android开发者视野中越来越频繁，而作为一个移动端开发者，性能上的考虑一直放在很重要的位置。Jetpack Compose中的组件是通过重组刷新UI的，所以避免没必要的重组是最基本的性能优化方案之一，其中`remember {}`和`rememberSaveable {}`都有让组件跳过重组的作用，但它们又存在着区别。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>在Jetpack Compose中，存在两种方式记住某个计算的值，从而避免在重组的时候重新计算实现性能上的提升，这两种方式分别为<code>remember {}</code>和<code>rememberSaveable {}</code>。</p>
+<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>笔者在前段时间遇到这么个情况：<br>在一个页面存在两部分组件，分别是Dashboard和Asset List，其中List是可以滚动，而Dashboard会根据用户滑动behavior来调整Scale动画（当然，这并不是最终效果，只是一个简单的use case）<br>当使用<code>remember {}</code>来记录Scale，如果在tab之间切换比较快的话，偶尔能正常的，但是如果在其他tab停留了一段时间再切回这个tab，scale将被重置从而放大了Dashboard UI，情况如下显示：<br><img src="/images/post/remember.gif" alt="Recording" title="remember"><br>如果使用<code>rememberSaveable {}</code>则符合预期，不管如何，回到页面都能展示之前的scale。<br>伪代码：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// remember/rememberSaveable</span>
+<span class="token keyword">var</span> scale <span class="token keyword">by</span> rememberSaveable <span class="token punctuation">{</span>
+    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">val</span> nestedScrollConnection <span class="token operator">=</span> remember <span class="token punctuation">{</span><span class="token operator">..</span><span class="token punctuation">.</span><span class="token punctuation">}</span>
+<span class="token function">Box</span><span class="token punctuation">(</span>
+    modifier <span class="token operator">=</span> modifier<span class="token punctuation">.</span><span class="token function">nestedScroll</span><span class="token punctuation">(</span>nestedScrollConnection<span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">DashboardView</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> Modifier
+            <span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">scale</span><span class="token punctuation">(</span>scale<span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarHeightRange<span class="token punctuation">.</span>last <span class="token operator">*</span> <span class="token punctuation">(</span>scale <span class="token operator">-</span> <span class="token number">1.0f</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        onEvent <span class="token operator">=</span> onEvent
+    <span class="token punctuation">)</span>
+    <span class="token function">LazyColumn</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> Modifier
+            <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarState<span class="token punctuation">.</span>height <span class="token operator">+</span> toolbarState<span class="token punctuation">.</span>offset <span class="token punctuation">}</span>
+            <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>MaterialTheme<span class="token punctuation">.</span>colorScheme<span class="token punctuation">.</span>background<span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">shadow</span><span class="token punctuation">(</span>
+                elevation <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span>
+                shape <span class="token operator">=</span> <span class="token function">RoundedCornerShape</span><span class="token punctuation">(</span>topEnd <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> topStart <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
+            <span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">pointerInput</span><span class="token punctuation">(</span>Unit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">detectTapGestures</span><span class="token punctuation">(</span>
+                    onPress <span class="token operator">=</span> <span class="token punctuation">{</span> scope<span class="token punctuation">.</span>coroutineContext<span class="token punctuation">.</span><span class="token function">cancelChildren</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
+                <span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        verticalArrangement <span class="token operator">=</span> Arrangement<span class="token punctuation">.</span><span class="token function">spacedBy</span><span class="token punctuation">(</span><span class="token number">12</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        state <span class="token operator">=</span> listState
+    <span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">items</span><span class="token punctuation">(</span>uiState<span class="token punctuation">.</span>tokens<span class="token punctuation">,</span> key <span class="token operator">=</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span>token<span class="token punctuation">.</span>id <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">TokenItemView</span><span class="token punctuation">(</span>extraToken <span class="token operator">=</span> it<span class="token punctuation">,</span> onEvent <span class="token operator">=</span> onEvent<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>所以在Compose中如何正确使用这两个方法呢？</p>
+<h3 id="remember-和-rememberSaveable-的区别"><a href="#remember-和-rememberSaveable-的区别" class="headerlink" title="remember {} 和 rememberSaveable {}的区别"></a>remember {} 和 rememberSaveable {}的区别</h3><h4 id="remember"><a href="#remember" class="headerlink" title="remember {}"></a>remember {}</h4><p>在官方文档对可重组项的生命周期描述中<a target="_blank" rel="noopener" href="https://developer.android.com/jetpack/compose/lifecycle">Lifecycle of composables</a><br>我们知道对于每一个可重组项，其生命周期分为3个阶段， 进入组合 -&gt; 重组 -&gt; 退出组合<br>其中对于<code>remember {}</code>方法的注释如下</p>
+<blockquote>
+<p>Remember the value produced by calculation. calculation will only be evaluated during the composition. Recomposition will always return the value produced by composition.</p>
+</blockquote>
+<p>参考对应的生命周期，可以理解为在仅仅是在进入组合时<code>remember {}</code>中的block会被执行计算，而重组则直接返回无需再计算（当然也可以添加key参数增加重新计算条件）</p>
+<h4 id="rememberSaveable"><a href="#rememberSaveable" class="headerlink" title="rememberSaveable {}"></a>rememberSaveable {}</h4><p>在官方文档对<code>rememberSaveable {}</code>的说明是这样的，<a target="_blank" rel="noopener" href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/saveable/package-summary#rememberSaveable(kotlin.Array,androidx.compose.runtime.saveable.Saver,kotlin.String,kotlin.Function0)">参考文档</a></p>
+<blockquote>
+<p>Remember the value produced by init.<br>It behaves similarly to remember, but the stored value will survive the activity or process recreation using the saved instance state mechanism (for example it happens when the screen is rotated in the Android application).</p>
+</blockquote>
+<p>翻译过来大概意思就是：它和<code>remember</code>一样，都是用来保留某个结果的值的，但是其保留的值在Activity重建之后仍然存在</p>
+<blockquote>
+<p>注：If you use it with types which can be stored inside the Bundle then it will be saved and restored automatically using autoSaver, otherwise you will need to provide a custom Saver implementation via the saver param.</p>
+</blockquote>
+<p>在默认的情况下，会使用<code>autoSaver()</code>保存在Bundle中，当然可以自己实现Saver。</p>
+<p>因为Bundle不支持没有被系列化的对象，所以普通的data class是无法正常使用的，需要自己实现Saver。<br>笔者已经验证过，存储普通的data class会报如下错误信息：<br><span style="color:red"><br>java.lang.IllegalArgumentException: MutableState containing ScaleStore(scale=0.0) cannot be saved using the current SaveableStateRegistry. The default implementation only supports types which can be stored inside the Bundle.<br></span></p>
+<p>想要使用<code>rememberSaveable</code>保留特殊的类型，需要自己实现Saver</p>
+<p>通过上面的描述，大致了解了<code>remember {}</code> 和 <code>rememberSaveable {}</code>的过程</p>
+<ul>
+<li>remember {} 会在进入组合时开始计算，重组则直接返回记录下来的值；当可重组项退出组合后再进入组合，这属于开始新的生命周期，自然会重新计算。</li>
+<li>rememberSaveable {} 默认是将数据缓存到Bundle中，在屏幕旋转或者其他Configuration变化时，触发重建，直接从Bundle中取得保留过的值，无需重新计算。</li>
+</ul>
+<h3 id="验证"><a href="#验证" class="headerlink" title="验证"></a>验证</h3><p>首先验证使用<code>remember {}</code>的用例，使用最简单的日志法。加上如下代码</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 验证是否进行重新计算</span>
+<span class="token keyword">var</span> scale <span class="token keyword">by</span> remember <span class="token punctuation">{</span>
+    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== re-calculate"</span></span><span class="token punctuation">)</span>
+    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+<span class="token comment">// 是否退出组合</span>
+<span class="token function">DisposableEffect</span><span class="token punctuation">(</span>key1 <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    onDispose <span class="token punctuation">{</span>
+        <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== onDispose"</span></span><span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>DisposableEffect 和 key1 = null，是为了保证可重组项是因为退出组合时才执行<code>onDispose</code>。<br>打印日志如下：<br><img src="/images/post/remember_log.jpg" alt="Logger" title="remember_log"><br>除了第一次进入组合打印的<code>re-calculate</code>，之后的都是要经过dispose之后再打印，在dispose之后，重新进入重组而进行再次计算，会将scale重置为1.0，也就是放大了Dashboard组件的大小。符合笔者遇到情况的解释。<br>（注：如果在tab之间切换较快，两条日志都不会出现。这也对应前面提到过当在tab之间切换较快，结果正常，scale没有变化，而是保留了原来的大小。笔者对这种情况的猜测解释是可组合项还没来得及回收保留的数据，又被重新唤醒了）<br>同样将remember 换成 rememberSaveable，日志如下：<br><img src="/images/post/remember_log1.jpg" alt="Logger1" title="remember_log1"><br>除了第一次进入组合打印的<code>re-calculate</code>，之后再也没有出现<code>re-calculate</code>，证明了一直使用的都是记录下来的数据。</p>
+</blockquote>
+<h3 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h3><p>在搜索资料时，笔者找到这么一篇记录 <a target="_blank" rel="noopener" href="https://jetc.dev/slack/2021-04-13-when-do-we-use-remembersaveable.html">One Off the Slack: When Do We Use rememberSaveable()?</a><br>在整个过程中，笔者对这句话<code>composable leaving the screen is not recreation</code>一直有些疑惑。<br>笔者个人认为，这句话在文中的理解应该是，Configuration变化导致重建，但是可组合项目离开屏幕不是Configuration变化，所以不会导致重建，可以理解成字面上的不是重建的意思。<br>但是对于Compose中的可重组项来说，当离开了屏幕，会调用onDispose，对于生命周期的上，这个可重组项重新进入屏幕，是重新走了一遍生命周期的，应该属于重建。<br>日常开发过程中，除去特殊情况，可组合项离开屏幕包含2种：</p>
+<ol>
+<li>Navigation跳转</li>
+<li>滑动导致某些可组合项滑出屏幕外</li>
+</ol>
+<p>对于Navigation跳转，上文已经解释了，此处就不赘述。接下来通过简单的例子看看滑动的情况：<br>一个简单的LazyColumn + Item DisposableEffect</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token function">LazyColumn</span><span class="token punctuation">(</span>
+    modifier <span class="token operator">=</span> Modifier
+        <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">padding</span><span class="token punctuation">(</span>it<span class="token punctuation">)</span>
+<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">items</span><span class="token punctuation">(</span>uiState<span class="token punctuation">.</span>instruments<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">SpotItemView</span><span class="token punctuation">(</span>
+            modifier <span class="token operator">=</span> Modifier
+                <span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+                <span class="token punctuation">.</span><span class="token function">padding</span><span class="token punctuation">(</span>horizontal <span class="token operator">=</span> <span class="token number">16</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">,</span> instrument <span class="token operator">=</span> it
+        <span class="token punctuation">)</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+
+<span class="token annotation builtin">@Composable</span>
+<span class="token keyword">private</span> <span class="token keyword">fun</span> <span class="token function">SpotItemView</span><span class="token punctuation">(</span>
+    modifier<span class="token operator">:</span> Modifier <span class="token operator">=</span> Modifier<span class="token punctuation">,</span>
+    instrument<span class="token operator">:</span> Instrument
+<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">DisposableEffect</span><span class="token punctuation">(</span>key1 <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span> effect <span class="token operator">=</span> <span class="token punctuation">{</span>
+        onDispose <span class="token punctuation">{</span>
+            <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span><span class="token expression">instrument<span class="token punctuation">.</span>instId</span><span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">)</span>
+    <span class="token function">Row</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> modifier<span class="token punctuation">,</span>
+        horizontalArrangement <span class="token operator">=</span> Arrangement<span class="token punctuation">.</span>SpaceBetween
+    <span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token operator">..</span><span class="token punctuation">.</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>跑起来通过日志可以了解到，当某个item滑出屏幕外时，<code>onDispose</code>会触发，意味退出组合。<br>在可组合项目的生命周期来看，退出组合则表明这个可重组项生命周期结束，当需要重新回到屏幕，需要重新走一遍，所以remember中会重新进行计算。<br>但是对于LazyColumn，当前position的记录需要考虑下个页面返回到当前页面而需要记录当前位置的情况，所以<code>rememberLazyListState</code>使用的就是rememberSaveable记录状态的。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>如果某个状态只考虑在重组的时候记录的，remember是最好的选择。</li>
+<li>对于其他情况，rememberSaveable或许会更符合。</li>
+<li>当然ViewModel中存储也是一种方式，不过有些时候组件的封装，状态提升是更好的设计，ViewModel就不符合这个理念了</li>
+</ul>
+<p>不管如何，弄明白其原理和实现之后，再使用的过程中自然会考虑到这方面的差异而选择更好的。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Android/" rel="tag"># Android</a>
+              <a href="/tags/Jetpack-Compose/" rel="tag"># Jetpack Compose</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/2023/08/13/bb96b1c7/" rel="prev" title="iOS通过Container读取文件问题笔录">
+                  <i class="fa fa-angle-left"></i> iOS通过Container读取文件问题笔录
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="waline"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2021 – 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">D&J</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/sidebar.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.4.0/mermaid.min.js","integrity":"sha256-G8ouPAnw4zzMbnAenHnVz6h9XpKbNdOkrqTh7AadyHs="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.5.0/wavedrom.min.js","integrity":"sha256-INLAoJc6quTNfiMWkGZniYO2cxE8mHpddnLow1m6RFs="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.5.0/skins/default.js","integrity":"sha256-fduc/Zszk5ezWws2uInY/ALWVmIrmV6VTgXbsYSReFI="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+
+  
+
+
+
+
+<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-CN","enable":true,"serverURL":"https://blog-waline-git-main-breakzeros-projects.vercel.app","cssUrl":"https://unpkg.com/@waline/client@v2/dist/waline.css","commentCount":false,"pageview":false,"dark":"auto","imageUploader":false,"copyright":false,"search":false,"meta":["nick","mail"],"requiredMeta":["nick"],"el":"#waline","comment":true,"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","path":"/posts/2023/12/04/f68195/"}</script>
+<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css">
+<script>
+document.addEventListener('page:loaded', () => {
+  NexT.utils.loadComments(CONFIG.waline.el).then(() =>
+    NexT.utils.getScript(CONFIG.waline.libUrl, { condition: window.Waline })
+  ).then(() => 
+    Waline.init(Object.assign({}, CONFIG.waline,{ el: document.querySelector(CONFIG.waline.el) }))
+  );
+});
+</script>
+
+<script async>window.onload=function(){var a=document.createElement('script'),b=document.getElementsByTagName('script')[0];a.type='text/javascript',a.async=!0,a.src='/sw-register.js?v='+Date.now(),b.parentNode.insertBefore(a,b)};</script></body></html>
