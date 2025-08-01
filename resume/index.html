@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<!--[if IE 8]> <html lang="en" class="ie8"> <![endif]-->
+<!--[if IE 9]> <html lang="en" class="ie9"> <![endif]-->
+<!--[if !IE]><!-->
+<html lang="en"> <!--<![endif]-->
+<head>
+  <title>D&J's RESUME</title>
+
+  <!-- Meta -->
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A beautiful Jekyll theme for creating resume">
+
+  <!-- Favicon -->
+  <link rel="shortcut icon" href="/images/favicon.ico">
+
+  <!-- Global CSS -->
+  <link rel="stylesheet" href="/resume/assets/plugins/bootstrap/css/bootstrap.css">
+
+  <!-- Plugins CSS -->
+  <link rel="stylesheet" href="/resume/assets/plugins/font-awesome/css/all.css">
+
+  <!-- html2pdf library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+    integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+  <!-- Theme CSS -->
+  <link id="theme-style" rel="stylesheet" href="/resume/assets/css/main.css">
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+  <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+  <!-- <button onclick="print()" class="print-button d-print-none">
+    <i class="fas fa-file-pdf"></i>Print
+  </button> -->
+
+  <button onclick="generatePDF()" class="pdf-button d-print-none" id="pdfButton">
+    <i class="fas fa-file-pdf"></i>PDF
+  </button>
+
+  <div class="wrapper">
+    
+<div class="sidebar-wrapper">
+
+  <div class="profile-container">
+
+    
+    <img class="avatar" src="/resume/assets/images/profile.png" alt="profile picture" />
+    
+
+    
+    <h1 class="name">卢德瑾</h1>
+    
+
+    
+    <h3 class="tagline">Senior Software Developer</h3>
+    
+
+  </div><!--//profile-container-->
+
+  <div class="contact-container container-block">
+  <ul class="list-unstyled contact-list">
+
+    
+    <li class="email"><i class="fas fa-envelope"></i>
+      <a href="mailto:dejin.po@gmail.com">dejin.po@gmail.com</a>
+    </li>
+    
+
+    
+    <li class="phone"><i class="fas fa-phone"></i>
+      <a href="tel:+86 13178596575">+86 13178596575</a>
+    </li>
+    
+
+    
+
+    
+
+    
+
+    
+    <li class="website"><i class="fas fa-globe-americas"></i>
+      <a href="https://dejinlu.com" target="_blank">dejinlu.com</a>
+    </li>
+    
+
+    
+
+    
+
+    
+    <li class="github"><i class="fab fa-github"></i>
+      <a href="https://github.com/BreakZero" target="_blank">BreakZero</a>
+    </li>
+    
+
+    
+
+    
+
+    
+    <li class="twitter"><i class="fab fa-twitter"></i>
+      <a href="https://twitter.com/@MrL51907231" target="_blank">@MrL51907231</a>
+    </li>
+    
+    
+    
+    
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+  </ul>
+</div><!--//contact-container-->
+
+
+  
+    
+
+  
+  <div class="education-container container-block">
+
+    <h2 class="container-block-title">
+      教育经验
+    </h2>
+
+    
+    <div class="item">
+      <h4 class="degree">软件工程 学士学位</h4>
+      <h5 class="meta">北京理工大学珠海学院</h5>
+      <div class="time">2011 - 2015</div>
+    </div><!--//item-->
+    
+
+  </div><!--//education-container-->
+  
+
+
+  
+
+  
+
+<div class="languages-container container-block">
+
+  <h2 class="container-block-title">
+    语言
+  </h2>
+
+  <ul class="list-unstyled interests-list">
+    
+    <li>
+      中文
+      <span class="lang-desc">(Native)</span>
+    </li>
+    
+    <li>
+      English
+      <span class="lang-desc">(CET-6)</span>
+    </li>
+    
+  </ul>
+
+</div><!--//interests-->
+
+
+  
+
+<div class="interests-container container-block">
+
+  <h2 class="container-block-title">
+    兴趣
+  </h2>
+
+  <ul class="list-unstyled interests-list">
+    
+
+      
+      <li>动漫(热血、搞笑)</li>
+      
+
+    
+
+      
+      <li>运动/听音乐/偶尔旅游</li>
+      
+
+    
+  </ul>
+
+</div><!--//interests-->
+
+
+
+  
+
+</div><!--//sidebar-wrapper-->
+
+
+    <div class="main-wrapper">
+      
+
+<section class="section summary-section">
+
+  <h2 class="section-title">
+    <span class="fa-stack fa-xs">
+      <i class="fas fa-circle fa-stack-2x"></i>
+      <i class="fas fa-user fa-stack-1x fa-inverse"></i>
+    </span>
+    简介
+  </h2>
+
+  <div class="summary">
+    <p>拥有 8 年以上 Android 开发经验，熟练掌握 Java 与 Kotlin，具备扎实的开发基础与现代 Android 技术实践经验（如 Jetpack Compose、协程、Flow 等）<br />
+参与多个完整项目的核心开发与架构设计，熟悉 MVVM、MVI 架构，能够实现高复用、易维护的组件，具备良好的单元测试习惯与代码质量意识。<br />
+具备较强的业务理解能力和问题定位能力，能够高效推进需求实现与技术落地。<br />
+在区块链领域有近 4 年项目经验，了解 Bitcoin、Ethereum、Cosmos 等主流链的运行机制，具备基础的 EVM 合约开发理解和源码分析能力。<br />
+目前希望寻找一份 Android 开发工程师岗位，继续提升技术广度，并发挥在移动端与区块链结合方向的经验优势。</p>
+
+  </div><!--//summary-->
+    
+</section><!--//section-->
+
+
+
+
+
+
+
+<section class="section experiences-section">
+  <h2 class="section-title">
+    <span class="fa-stack fa-xs">
+      <i class="fas fa-circle fa-stack-2x"></i>
+      <i class="fas fa-briefcase fa-stack-1x fa-inverse"></i>
+    </span>
+    工作经验
+  </h2>
+
+  
+  <div class="item">
+
+    <div class="meta">
+
+      <div class="upper-row">
+        <h3 class="job-title">高级Android开发工程师</h3>
+        <div class="time">2024 - 至今</div>
+      </div><!--//upper-row-->
+
+      <div class="company">Xmind, 深圳</div>
+
+    </div><!--//meta-->
+
+    
+    <div class="details">
+      <p>在Xmind主要负责Xmind Android客户端功能编码和单元测试实现和Quin功能迭代和维护。</p>
+<ul>
+  <li>使用Jetpack Compose高效实现UI，可复用组件和动画效果</li>
+  <li>跟踪并完成Google Play Store上架要求</li>
+  <li>编写GitHub Action脚本，实现高效迭代和发版流程(支持Firebase/Google Play Store)，规范团队从开发到上架流程</li>
+  <li>重构优化功能实现，提高应用稳定性</li>
+</ul>
+
+    </div><!--//details-->
+    
+
+  </div><!--//item-->
+  
+  <div class="item">
+
+    <div class="meta">
+
+      <div class="upper-row">
+        <h3 class="job-title">高级/管理 Android开发工程师</h3>
+        <div class="time">2019/08 - 2023/02</div>
+      </div><!--//upper-row-->
+
+      <div class="company">Crypto.com, 深圳</div>
+
+    </div><!--//meta-->
+
+    
+    <div class="details">
+      <p>作为核心开发者，参与公司两大核心产品 <a href="https://play.google.com/store/apps/details?id=co.mona.android">Crypto.com App</a> 与 
+<a href="https://play.google.com/store/apps/details?id=com.defi.wallet">DeFi Wallet</a> 的架构设计与关键功能研发。</p>
+
+<p>核心贡献：</p>
+<ul>
+  <li>主导项目 MVVM 架构重构，引入 Kotlin 协程与 Flow，提升项目稳定性与响应性能。</li>
+  <li>基于 UniSwap 源码，用 Kotlin 实现 DApp 原生交易功能；改造 trust-web3-provider 提升原生适配效率。</li>
+  <li>深入支持 NFT 功能落地，协助产品完成资产展示与交易；</li>
+  <li>重构资产类型结构设计，实现多币种灵活扩展与管理，解决代币新增难问题。</li>
+  <li>优化交易所功能（价格预警、图表交互等）与接入 Firebase 性能监控和埋点系统，提升用户体验与数据可视性。</li>
+  <li>推动团队工程化能力建设：集成 ktlint + Git Hook 统一代码风格，编写 CI/CD 脚本（GitHub Action + Slack Hook）实现一键发包与通知。</li>
+</ul>
+
+    </div><!--//details-->
+    
+
+  </div><!--//item-->
+  
+  <div class="item">
+
+    <div class="meta">
+
+      <div class="upper-row">
+        <h3 class="job-title">软件工程师(Android)</h3>
+        <div class="time">2018/11 - 2019/07</div>
+      </div><!--//upper-row-->
+
+      <div class="company">TinkLabs, 深圳</div>
+
+    </div><!--//meta-->
+
+    
+    <div class="details">
+      <p>首次在项目中全面采用 Kotlin，并深入参与现代化工具链（GitHub、Jira、Slack、CI/CD）的实战应用。通过与资深工程师协作提升代码思维与开发规范意识。</p>
+
+<p>核心工作与成果：</p>
+<ul>
+  <li>参与 Phone2 项目开发，独立负责 Keyless 项目开发与重构，显著提升门锁与手机之间通信稳定性。</li>
+  <li>开发应用内自检功能，支持网络、蓝牙等 IoT 连接问题诊断。</li>
+  <li>协作完成 VoIP（Sinch）语音通话接入，优化通话质量。</li>
+  <li>初步参与 CI/CD 构建流程，提升交付效率。</li>
+</ul>
+
+    </div><!--//details-->
+    
+
+  </div><!--//item-->
+  
+  <div class="item">
+
+    <div class="meta">
+
+      <div class="upper-row">
+        <h3 class="job-title">初级软件工程师(后端/Android)</h3>
+        <div class="time">2015/07 - 2018/11</div>
+      </div><!--//upper-row-->
+
+      <div class="company">Creawor, 珠海</div>
+
+    </div><!--//meta-->
+
+    
+    <div class="details">
+      <p>作为毕业后的首份工作，最初负责后端 API 开发，后期因项目需要转向 Android 方向，完成从后端向客户端开发的技能转型。<br />
+参与“甘肃通”政务类App开发项目（与甘肃公安局合作），在实际项目中不断学习成长，完成多个核心功能模块。</p>
+
+<p>主要工作与技术实践：</p>
+<ul>
+  <li>后端阶段使用 Spring MVC + Hibernate 搭建基础 API 服务，支持系统数据交互。</li>
+  <li>Android 阶段参与“甘肃通”政务项目开发，掌握 RxJava 进行异步线程管理，使用 Retrofit + OkHttp 优化网络层，替代 Volley 提升代码可维护性。</li>
+  <li>在项目实战中打下扎实 Android 基础，完成从全栈转向移动端的能力构建。</li>
+</ul>
+
+    </div><!--//details-->
+    
+
+  </div><!--//item-->
+  
+
+</section><!--//section-->
+
+
+
+
+ 
+
+
+
+
+<section class="section projects-section">
+
+  <h2 class="section-title">
+    <span class="fa-stack fa-xs">
+      <i class="fas fa-circle fa-stack-2x"></i>
+      <i class="fas fa-archive fa-stack-1x fa-inverse"></i>
+    </span>
+    项目
+  </h2>
+
+  
+  <div class="intro">
+      <p></p>
+  </div><!--//intro-->
+  
+
+  
+    <div class="item">
+
+      <span class="project-title">
+        
+        <a href="https://play.google.com/store/apps/details?id=com.defi.wallet" target="_blank">Crypto.com ｜ DeFi Wallet</a>
+        
+      </span>
+
+      
+      - <span class="project-tagline">去中心化多链钱包产品，支持主流币种及 Layer2 资产管理，集成 NFT 浏览与交易、DApp 交互等核心功能。负责多个关键模块开发与优化，涵盖资产模型设计、交易逻辑、DApp 原生交互等。</span>
+      
+
+    </div><!--//item-->
+  
+    <div class="item">
+
+      <span class="project-title">
+        
+        <a href="https://github.com/BreakZero/EasyAIClient" target="_blank">EasyAIClient</a>
+        
+      </span>
+
+      
+      - <span class="project-tagline">基于 Gemini 模型的 Android AI 工具应用，支持文本与图文输入、多模型配置，用户可通过自定义 API Key 快速使用。</span>
+      
+
+    </div><!--//item-->
+  
+    <div class="item">
+
+      <span class="project-title">
+        
+        <a href="https://github.com/BreakZero/EasyWallet-KMP" target="_blank">EasyWallet</a>
+        
+      </span>
+
+      
+      - <span class="project-tagline">基于 Trust Wallet Core 的多链去中心化钱包，采用 Kotlin Multiplatform 技术开发，用于巩固区块链底层知识与新技术实践。项目持续开发中，涵盖地址生成、转账签名、资产展示等模块。</span>
+      
+
+    </div><!--//item-->
+  
+
+</section><!--//section-->
+
+
+
+
+
+<section class="section oss-section">
+  <h2 class="section-title">
+    <span class="fa-stack fa-xs">
+      <i class="fas fa-circle fa-stack-2x"></i>
+      <i class="fas fa-box-open fa-stack-1x fa-inverse"></i>
+    </span>
+    开源贡献
+  </h2>
+
+  
+  <div class="intro">
+    <p></p>
+  </div>
+  <!--//intro-->
+  
+
+  
+  <div class="item">
+
+    <span class="project-title">
+      
+      <a href="https://github.com/trustwallet/trust-web3-provider" target="_blank">trust-web3-provider</a>
+      
+    </span>
+
+    
+    - <span class="project-tagline">多链 Web3 Provider，支持 Cosmos、Ethereum、Solana 等链的 DApp 交互。贡献完整的 Android 使用示例与兼容性优化建议，增强项目在移动端的适配能力与文档可用性。</span>
+    
+
+  </div>
+  <!--//item-->
+  
+  <div class="item">
+
+    <span class="project-title">
+      
+      <a href="https://github.com/BreakZero/build-logic" target="_blank">Build Logic</a>
+      
+    </span>
+
+    
+    - <span class="project-tagline">基于 Now in Android 项目，提炼并整理的 Android 开发依赖管理与构建脚本模块。支持统一管理常用第三方库与 Gradle 插件，提升项目构建规范性与开发效率。</span>
+    
+
+  </div>
+  <!--//item-->
+  
+
+</section>
+<!--//section-->
+
+
+
+
+
+
+
+ 
+
+
+ 
+<section class="skills-section section">
+  <h2 class="section-title">
+    <span class="fa-stack fa-xs">
+      <i class="fas fa-circle fa-stack-2x"></i>
+      <i class="fas fa-wrench fa-stack-1x fa-inverse"></i>
+    </span>
+    技能 &amp; 熟练程度
+  </h2>
+
+  <div class="skillset">
+    
+    <div class="item">
+      <h3 class="level-title">Java & Kotlin</h3>
+      
+      <div class="level-bar">
+        <div class="level-bar-inner" style="width: 95%"></div>
+      </div>
+      <!--//level-bar-->
+    </div>
+    <!--//item-->
+    
+    <div class="item">
+      <h3 class="level-title">Git/Vim</h3>
+      
+      <div class="level-bar">
+        <div class="level-bar-inner" style="width: 80%"></div>
+      </div>
+      <!--//level-bar-->
+    </div>
+    <!--//item-->
+    
+    <div class="item">
+      <h3 class="level-title">SwiftUI</h3>
+      
+      <div class="level-bar">
+        <div class="level-bar-inner" style="width: 70%"></div>
+      </div>
+      <!--//level-bar-->
+    </div>
+    <!--//item-->
+    
+    <div class="item">
+      <h3 class="level-title">Flutter/Javascript</h3>
+      
+      <div class="level-bar">
+        <div class="level-bar-inner" style="width: 60%"></div>
+      </div>
+      <!--//level-bar-->
+    </div>
+    <!--//item-->
+    
+  </div>
+</section>
+<!--//skills-section-->
+
+
+
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="text-center">
+        <!--/* This template is released under the Creative Commons Attribution 3.0 License. Please keep the attribution link below when using for your own project. Thank you for your support. :) If you'd like to use the template without the attribution, you can check out other license options via our website: themes.3rdwavemedia.com */-->
+        <small class="copyright"></small>
+    </div><!--//container-->
+</footer><!--//footer-->
+
+
+  <!-- Javascript -->
+
+
+  <script src="/resume/assets/js/pdf-generator.js"></script>
+<script async>window.onload=function(){var a=document.createElement('script'),b=document.getElementsByTagName('script')[0];a.type='text/javascript',a.async=!0,a.src='/sw-register.js?v='+Date.now(),b.parentNode.insertBefore(a,b)};</script></body></html>
