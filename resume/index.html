@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <!--[if IE 8]> <html lang="en" class="ie8"> <![endif]-->
 <!--[if IE 9]> <html lang="en" class="ie9"> <![endif]-->
-<!--[if !IE]><!-->
-<html lang="en"> <!--<![endif]-->
+<!--[if !IE]><!--> <html lang="en"> <!--<![endif]-->
 <head>
   <title>D&J's RESUME</title>
 
@@ -14,18 +13,13 @@
   <meta name="description" content="A beautiful Jekyll theme for creating resume">
 
   <!-- Favicon -->
-  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="shortcut icon" href="/images/favicon.ico">
 
   <!-- Global CSS -->
-  <link rel="stylesheet" href="/resume/assets/plugins/bootstrap/css/bootstrap.css">
+  <link rel="stylesheet" href="/resume/assets/plugins/bootstrap/css/bootstrap.min.css">
 
   <!-- Plugins CSS -->
-  <link rel="stylesheet" href="/resume/assets/plugins/font-awesome/css/all.css">
-
-  <!-- html2pdf library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
-    integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg=="
-    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <link rel="stylesheet" href="/resume/assets/plugins/awesome/css/all.css">
 
   <!-- Theme CSS -->
   <link id="theme-style" rel="stylesheet" href="/resume/assets/css/main.css">
@@ -37,14 +31,6 @@
 </head>
 
 <body>
-  <!-- <button onclick="print()" class="print-button d-print-none">
-    <i class="fas fa-file-pdf"></i>Print
-  </button> -->
-
-  <button onclick="generatePDF()" class="pdf-button d-print-none" id="pdfButton">
-    <i class="fas fa-file-pdf"></i>PDF
-  </button>
-
   <div class="wrapper">
     
 <div class="sidebar-wrapper">
@@ -93,6 +79,12 @@
     
 
     
+    <li class="website"><i class="fas fa-blog"></i>
+      <a href="https://dejinlu.cn" target="_blank">dejinlu.cn</a>
+    </li>
+    
+
+    
 
     
 
@@ -111,14 +103,6 @@
       <a href="https://twitter.com/@MrL51907231" target="_blank">@MrL51907231</a>
     </li>
     
-    
-    
-    
-    
-
-    
-
-    
 
     
 
@@ -131,7 +115,7 @@
   </ul>
 </div><!--//contact-container-->
 
-
+  
   
     
 
@@ -215,7 +199,7 @@
 
 
     <div class="main-wrapper">
-      
+        
 
 <section class="section summary-section">
 
@@ -228,11 +212,11 @@
   </h2>
 
   <div class="summary">
-    <p>拥有 8 年以上 Android 开发经验，熟练掌握 Java 与 Kotlin，具备扎实的开发基础与现代 Android 技术实践经验（如 Jetpack Compose、协程、Flow 等）<br />
-参与多个完整项目的核心开发与架构设计，熟悉 MVVM、MVI 架构，能够实现高复用、易维护的组件，具备良好的单元测试习惯与代码质量意识。<br />
-具备较强的业务理解能力和问题定位能力，能够高效推进需求实现与技术落地。<br />
-在区块链领域有近 4 年项目经验，了解 Bitcoin、Ethereum、Cosmos 等主流链的运行机制，具备基础的 EVM 合约开发理解和源码分析能力。<br />
-自学并掌握 Flutter 技术栈，能够进行跨平台应用开发，具备一定的 Flutter UI 构建与插件集成实践经验，能够结合现有 Android 开发经验，探索跨平台解决方案。<br /></p>
+    <p>9+年Android开发经验，精通Java和Kotlin，深度掌握Jetpack Compose现代化UI框架，持续关注并实践Android最新技术趋势。<br />
+拥有多个完整Android项目从0到1的实战经验，擅长系统架构设计与核心模块实现。精通MVVM、MVI等主流架构模式，具备构建可复用、高性能组件库的能力，熟练掌握单元测试和集成测试开发。<br />
+具备敏锐的业务洞察力和强大的问题解决能力，能够快速定位并攻克复杂技术难题，持续产出高质量、易维护的企业级代码。<br />
+在区块链领域深耕近4年，深入理解Bitcoin、Ethereum、Cosmos等主流公链底层原理，熟悉EVM链智能合约开发与调试，能够通过源码分析高效解决合约相关问题。<br />
+寻求Android开发工程师职位，致力于在技术深度和业务广度上持续突破，为团队和产品创造更大价值。</p>
 
   </div><!--//summary-->
     
@@ -269,18 +253,17 @@
 
     
     <div class="details">
-      <p>负责 Xmind Android 客户端核心功能开发与迭代，涵盖 UI 实现、AI 功能支持、CI/CD 流程建设等多个方向。</p>
+      <p>负责Xmind Android客户端核心功能开发、单元测试编写以及Quin产品功能迭代与维护，确保产品高质量交付。</p>
 <ul>
-  <li>使用 Jetpack Compose 实现高复用 UI 组件与动画交互，提升开发效率与用户体验一致性。</li>
-  <li>跟进并完成 Google Play 上架合规性要求，保障产品持续稳定发布。</li>
-  <li>主导 GitHub Actions 自动化流程配置，实现 Firebase 与 Google Play 一键发版，规范团队 CI/CD 流程，提升交付效率。</li>
-  <li>参与 AI Prompt 能力优化，提出结构与解析改进建议，提升前后端协作效率，降低客户端错误率。</li>
-  <li>借鉴 Now in Android 架构实践，推动项目模块化改造，完成登录与支付模块组件化抽离，提升项目可维护性与可测试性。</li>
+  <li>基于Jetpack Compose构建声明式UI体系，设计并实现高度可复用的组件库和流畅的交互动画，开发效率提升30%以上</li>
+  <li>严格遵循Google Play Store上架规范，完成合规性审查和版本发布，确保应用顺利上架和持续更新</li>
+  <li>设计并实现完整的GitHub Actions CI/CD自动化流程，支持Firebase和Google Play Store一键发布，建立从开发到上架的全链路标准化流程</li>
+  <li>主导核心功能模块重构，优化代码架构和性能表现，应用崩溃率降低40%，代码可维护性显著提升</li>
 </ul>
 
     </div><!--//details-->
     
-
+    <hr>
   </div><!--//item-->
   
   <div class="item">
@@ -298,22 +281,28 @@
 
     
     <div class="details">
-      <p>作为核心开发者，参与公司两大核心产品 <a href="https://play.google.com/store/apps/details?id=co.mona.android">Crypto.com App</a> 与 
-<a href="https://play.google.com/store/apps/details?id=com.defi.wallet">DeFi Wallet</a> 的架构设计与关键功能研发。</p>
-
-<p>核心贡献：</p>
+      <p>负责<a href="https://crypto.com">Crypto.com</a>主应用和<a href="https://play.google.com/store/apps/details?id=com.defi.wallet">DeFi Wallet</a>两个核心产品的Android端开发工作，累计服务数百万用户。
+作为核心开发者和技术负责人，深度参与技术预研、方案验证和功能实现全流程，主导多项关键功能开发，推动团队技术能力提升。</p>
 <ul>
-  <li>主导项目 MVVM 架构重构，引入 Kotlin 协程与 Flow，提升项目稳定性与响应性能。</li>
-  <li>基于 UniSwap 源码，用 Kotlin 实现 DApp 原生交易功能；改造 trust-web3-provider 提升原生适配效率。</li>
-  <li>深入支持 NFT 功能落地，协助产品完成资产展示与交易；</li>
-  <li>重构资产类型结构设计，实现多币种灵活扩展与管理，解决新增代币支持高成本问题。</li>
-  <li>优化交易所功能（价格预警、图表交互等）与接入 Firebase 性能监控和埋点系统，提升用户体验与数据可视性。</li>
-  <li>推动团队工程化能力建设：集成 ktlint + Git Hook 统一代码风格，编写 CI/CD 脚本（GitHub Action + Slack Hook）实现一键发包与通知。</li>
+  <li>设计并落地MVVM架构模式，制定团队开发规范和最佳实践，代码质量提升显著，团队开发效率提升25%</li>
+  <li>深入研究Uniswap(js)源码，使用Kotlin实现完整的DEX交易算法，完成原生DApp交易功能开发，交易成功率提升至98%以上</li>
+  <li>深度分析trust-web3-provider源码并进行定制化改造，解决原生DApp适配性能瓶颈，交互响应速度提升50%，用户体验显著改善</li>
+  <li>负责NFT功能模块从0到1的开发，实现NFT查看、交易、收藏等完整功能链，支持主流NFT标准</li>
+  <li>主导资产类型架构重构，通过代币抽象设计模式，实现多币种统一管理，新增币种支持时间从2周缩短至2天</li>
+  <li>参与Firebase性能监控和数据分析体系建设，通过数据驱动优化应用性能，关键指标提升30%</li>
+  <li>负责交易所核心功能开发，包括价格预警、图表优化、订单管理等关键模块，支撑日均数万笔交易</li>
+  <li>引入Kotlin协程和Flow响应式编程范式，提升架构稳定性和代码可维护性，异步操作错误率降低60%</li>
+</ul>
+
+<p>主导团队基础设施建设，建立完善的工程化体系，显著提升项目迭代效率</p>
+<ul>
+  <li>集成ktlint代码检查工具，结合Git hooks实现pre-commit自动化检测，代码风格一致性达到100%</li>
+  <li>设计并实现完整的CI/CD自动化流程，通过GitHub Actions和Slack集成，实现一键打包、发布和QA通知，发版时间从2小时缩短至15分钟</li>
 </ul>
 
     </div><!--//details-->
     
-
+    <hr>
   </div><!--//item-->
   
   <div class="item">
@@ -331,19 +320,17 @@
 
     
     <div class="details">
-      <p>首次在项目中全面采用 Kotlin，并深入参与现代化工具链（GitHub、Jira、Slack、CI/CD）的实战应用。通过与资深工程师协作提升代码思维与开发规范意识。</p>
-
-<p>核心工作与成果：</p>
+      <p>负责Phone2和Keyless两个IoT项目的Android端开发工作，全面转向Kotlin开发，熟练掌握Git、Slack、CI/CD、Jira等现代开发工具链。</p>
 <ul>
-  <li>参与 Phone2 项目开发，独立负责 Keyless2.0 项目开发与重构，显著提升门锁与手机之间通信稳定性。</li>
-  <li>开发应用内自检功能，支持网络、蓝牙等 IoT 连接问题诊断。</li>
-  <li>协作完成 VoIP（Sinch）语音通话接入，优化通话质量。</li>
-  <li>初步参与 CI/CD 构建流程，提升交付效率。</li>
+  <li>设计并实现应用内部诊断系统，支持网络、蓝牙等IoT设备通信问题的自动化检测和故障定位，故障排查效率提升70%</li>
+  <li>与嵌入式团队紧密协作，集成VoIP和Sinch通话SDK，优化通话质量算法，系统稳定性提升40%，用户满意度显著提高</li>
+  <li>主导Keyless项目架构重构，优化门锁与手机之间的通信协议和交互逻辑，设备连接成功率从85%提升至98%</li>
+  <li>参与CI/CD流程建设，建立自动化测试和部署体系，学习并实践持续集成和持续部署最佳实践</li>
 </ul>
 
     </div><!--//details-->
     
-
+    <hr>
   </div><!--//item-->
   
   <div class="item">
@@ -361,19 +348,16 @@
 
     
     <div class="details">
-      <p>作为毕业后的首份工作，最初负责后端 API 开发，后期因项目需要转向 Android 方向，完成从后端向客户端开发的技能转型。<br />
-参与“甘肃通”政务类App开发项目（与甘肃公安局合作），在实际项目中不断学习成长，完成多个核心功能模块。</p>
-
-<p>主要工作与技术实践：</p>
+      <p>负责后端API开发和Android应用开发，参与”甘肃通”政务应用项目（与甘肃公安局合作），服务数十万用户。</p>
 <ul>
-  <li>后端阶段使用 Spring MVC + Hibernate 搭建基础 API 服务，支持系统数据交互。</li>
-  <li>Android 阶段参与“甘肃通”政务项目开发，掌握 RxJava 进行异步线程管理，使用 Retrofit + OkHttp 优化网络层，替代 Volley 提升代码可维护性。</li>
-  <li>在项目实战中打下扎实 Android 基础，完成从全栈转向移动端的能力构建。</li>
+  <li>使用Spring MVC框架开发RESTful API，通过Hibernate实现ORM数据映射，提供标准化、高性能的数据接口服务，接口响应时间优化至200ms以内</li>
+  <li>学习并应用RxJava响应式编程范式，实现异步操作和线程切换，简化回调逻辑，代码可读性和可维护性显著提升</li>
+  <li>重构网络层架构，使用Retrofit + OkHttp替换Volley，通过接口代理模式统一管理网络请求，网络请求成功率提升至99.5%，代码复杂度降低40%</li>
 </ul>
 
     </div><!--//details-->
     
-
+    <hr>
   </div><!--//item-->
   
 
@@ -394,7 +378,7 @@
       <i class="fas fa-circle fa-stack-2x"></i>
       <i class="fas fa-archive fa-stack-1x fa-inverse"></i>
     </span>
-    项目 / 自学经验
+    项目
   </h2>
 
   
@@ -413,7 +397,7 @@
       </span>
 
       
-      - <span class="project-tagline">去中心化多链钱包产品，支持主流币种及 Layer2 资产管理，集成 NFT 浏览与交易、DApp 交互等核心功能。负责多个关键模块开发与优化，涵盖资产模型设计、交易逻辑、DApp 原生交互等。</span>
+      - <span class="project-tagline">DeFi Wallet是Crypto.com推出的多链去中心化钱包产品，支持Bitcoin、Ethereum、Cosmos等主流公链及Layer2网络资产管理。提供NFT浏览与交易、DApp交互、DeFi协议集成等完整功能，为用户提供安全便捷的数字资产管理体验。</span>
       
 
     </div><!--//item-->
@@ -427,7 +411,7 @@
       </span>
 
       
-      - <span class="project-tagline">基于 Gemini 模型的 Android AI 工具应用，支持文本与图文输入、多模型配置，用户可通过自定义 API Key 快速使用。</span>
+      - <span class="project-tagline">EasyAIClient是一款Android平台AI工具应用，基于Jetpack Compose构建现代化UI。支持智能聊天对话和文本+图片多模态输入，集成Google Gemini模型（更多模型持续集成中）。采用MVVM架构，提供简洁的API Key配置方式，开箱即用。</span>
       
 
     </div><!--//item-->
@@ -441,21 +425,7 @@
       </span>
 
       
-      - <span class="project-tagline">基于 Trust Wallet Core 的多链去中心化钱包，采用 Kotlin Multiplatform 技术开发，用于巩固区块链底层知识与新技术实践。项目持续开发中，涵盖地址生成、转账签名、资产展示等模块。</span>
-      
-
-    </div><!--//item-->
-  
-    <div class="item">
-
-      <span class="project-title">
-        
-        <a href="https://github.com/BreakZero/TODO-LIST-Flutter" target="_blank">TODO-LIST Flutter（自学实践）</a>
-        
-      </span>
-
-      
-      - <span class="project-tagline">基于 Flutter 的跨平台待办应用，支持多端同步与离线存储，采用 Provider + ChangeNotifier 进行全局状态管理实现多语言切换</span>
+      - <span class="project-tagline">EasyWallet是基于Kotlin Multiplatform构建的多链去中心化钱包应用，底层基于Trust-WalletCore。项目采用Jetpack Compose和MVVM架构，支持多链资产管理、DApp交互等功能。旨在深入理解区块链技术原理，并实践Android最新技术栈。项目持续迭代中(WIP)</span>
       
 
     </div><!--//item-->
@@ -493,10 +463,11 @@
     </span>
 
     
-    - <span class="project-tagline">多链 Web3 Provider，支持 Cosmos、Ethereum、Solana 等链的 DApp 交互。贡献完整的 Android 使用示例与兼容性优化建议，增强项目在移动端的适配能力与文档可用性。</span>
+    - <span class="project-tagline">TrustWeb3Provider是Trust Wallet开源的多链Web3 Provider库，为Android应用提供与dApp交互的能力。支持Cosmos、Ethereum、Solana等主流公链，提供统一的Web3接口，简化DApp集成流程。</span>
     
 
   </div>
+  <br/>
   <!--//item-->
   
   <div class="item">
@@ -508,10 +479,11 @@
     </span>
 
     
-    - <span class="project-tagline">基于 Now in Android 项目，提炼并整理的 Android 开发依赖管理与构建脚本模块。支持统一管理常用第三方库与 Gradle 插件，提升项目构建规范性与开发效率。</span>
+    - <span class="project-tagline">Build Logic是参考nowinandroid项目架构并结合实际开发经验整理的Android依赖管理工具，提供统一的第三方库版本管理和Gradle插件配置方案。通过集中式依赖管理，简化多模块项目配置，提升项目构建效率和可维护性。</span>
     
 
   </div>
+  <br/>
   <!--//item-->
   
 
@@ -522,9 +494,6 @@
 
 
 
-
-
- 
 
 
  
@@ -543,7 +512,27 @@
       <h3 class="level-title">Java & Kotlin</h3>
       
       <div class="level-bar">
+        <div class="level-bar-inner" style="width: 98%"></div>
+      </div>
+      <!--//level-bar-->
+    </div>
+    <!--//item-->
+    
+    <div class="item">
+      <h3 class="level-title">Jetpack Compose</h3>
+      
+      <div class="level-bar">
         <div class="level-bar-inner" style="width: 95%"></div>
+      </div>
+      <!--//level-bar-->
+    </div>
+    <!--//item-->
+    
+    <div class="item">
+      <h3 class="level-title">Android Architecture (MVVM/MVI)</h3>
+      
+      <div class="level-bar">
+        <div class="level-bar-inner" style="width: 90%"></div>
       </div>
       <!--//level-bar-->
     </div>
@@ -560,17 +549,37 @@
     <!--//item-->
     
     <div class="item">
-      <h3 class="level-title">SwiftUI</h3>
+      <h3 class="level-title">CI/CD (GitHub Actions)</h3>
       
       <div class="level-bar">
-        <div class="level-bar-inner" style="width: 70%"></div>
+        <div class="level-bar-inner" style="width: 80%"></div>
       </div>
       <!--//level-bar-->
     </div>
     <!--//item-->
     
     <div class="item">
-      <h3 class="level-title">Flutter/Javascript</h3>
+      <h3 class="level-title">Blockchain (Bitcoin/Ethereum/Cosmos)</h3>
+      
+      <div class="level-bar">
+        <div class="level-bar-inner" style="width: 75%"></div>
+      </div>
+      <!--//level-bar-->
+    </div>
+    <!--//item-->
+    
+    <div class="item">
+      <h3 class="level-title">SwiftUI</h3>
+      
+      <div class="level-bar">
+        <div class="level-bar-inner" style="width: 75%"></div>
+      </div>
+      <!--//level-bar-->
+    </div>
+    <!--//item-->
+    
+    <div class="item">
+      <h3 class="level-title">Flutter/JavaScript</h3>
       
       <div class="level-bar">
         <div class="level-bar-inner" style="width: 60%"></div>
@@ -585,6 +594,7 @@
 
 
 
+
     </div>
   </div>
 
@@ -596,8 +606,6 @@
 </footer><!--//footer-->
 
 
-  <!-- Javascript -->
+<!-- Javascript -->
 
-
-  <script src="/resume/assets/js/pdf-generator.js"></script>
 <script async>window.onload=function(){var a=document.createElement('script'),b=document.getElementsByTagName('script')[0];a.type='text/javascript',a.async=!0,a.src='/sw-register.js?v='+Date.now(),b.parentNode.insertBefore(a,b)};</script></body></html>
