@@ -257,7 +257,7 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>随着 Jetpack Compose 的普及，它在 Android 开发中的应用越来越广泛。对于移动端开发者来说，性能优化始终是关键问题。Jetpack Compose 通过重组（Recomposition）更新 UI，因此避免不必要的重组是基本的优化手段之一。remember {} 和 rememberSaveable {} 都能帮助组件跳过重组，但它们的作用机制有所不同。</p>
+          <p>Jetpack Compose 中 remember 与 rememberSaveable 的差异：前者只在组合内保持状态，后者可跨进程/Activity 重建恢复。结合 Tab 切换导致 scale 被重置的案例说明原理与选型。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/posts/2023/12/04/f68195/">
@@ -344,8 +344,12 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="问题背景及描述"><a href="#问题背景及描述" class="headerlink" title="问题背景及描述"></a>问题背景及描述</h2><p>在Kotlin Multiplatform项目中，实现iOS平台的文件存储时，虽然可以通过导出<code>.xcappdata</code>文件确认文件确实存在于目录下，但在调用<code>NSData.dataWithContentsOfFile</code>读取时却始终返回空。错误信息显示找不到该文件或目录 (<code>No such File or Directory</code>)。</p>
-<p>示例代码如下：</p>
+          <h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：</p>
+<ul>
+<li><strong>现象</strong>：导出 <code>.xcappdata</code> 可以确认文件确实在 Documents 目录下，但用 <code>NSData.dataWithContentsOfFile</code> 读取时始终返回空。</li>
+<li><strong>报错</strong>：<code>No such File or Directory</code>（找不到该文件或目录）。</li>
+</ul>
+<p>当时使用的读取代码如下（为便于排查，增加了 <code>errorPtr</code> 输出错误信息）：</p>
 <pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> errorPtr<span class="token operator">:</span> ObjCObjectVar<span class="token operator">&lt;</span>NSError<span class="token operator">?</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token function">alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
     <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
@@ -354,7 +358,6 @@ NSData<span class="token punctuation">.</span><span class="token function">dataW
 <span class="token punctuation">}</span>
 <span class="token function">println</span><span class="token punctuation">(</span>errorPtr<span class="token punctuation">.</span>value<span class="token operator">?</span><span class="token punctuation">.</span>description<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
 <span class="token keyword">return</span><span class="token label symbol">@withContext</span> <span class="token keyword">null</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p><em>Note: 为了更好地定位问题，添加了<code>errorPtr</code>以查看具体错误信息</em></p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/posts/2023/08/13/bb96b1c7/#more" rel="contents">

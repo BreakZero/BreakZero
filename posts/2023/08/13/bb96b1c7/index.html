@@ -22,15 +22,15 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"dejinlu.cn","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.22.0","exturl":false,"sidebar":{"position":"right","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12,"width":300},"copycode":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="问题背景及描述在Kotlin Multiplatform项目中，实现iOS平台的文件存储时，虽然可以通过导出.xcappdata文件确认文件确实存在于目录下，但在调用NSData.dataWithContentsOfFile读取时却始终返回空。错误信息显示找不到该文件或目录 (No such File or Directory)。 示例代码如下： val errorPtr: ObjCObjectV">
+    <meta name="description" content="一、问题现象在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：  现象：导出 .xcappdata 可以确认文件确实在 Documents 目录下，但用 NSData.dataWithContentsOfFile 读取时始终返回空。 报错：No such File or Directory（找不到该文件或目录）。  当时使用的读取代码如下（为便于排查">
 <meta property="og:type" content="article">
 <meta property="og:title" content="iOS通过Container读取文件问题笔录">
 <meta property="og:url" content="https://dejinlu.cn/posts/2023/08/13/bb96b1c7/index.html">
 <meta property="og:site_name" content="D&amp;JのZONE">
-<meta property="og:description" content="问题背景及描述在Kotlin Multiplatform项目中，实现iOS平台的文件存储时，虽然可以通过导出.xcappdata文件确认文件确实存在于目录下，但在调用NSData.dataWithContentsOfFile读取时却始终返回空。错误信息显示找不到该文件或目录 (No such File or Directory)。 示例代码如下： val errorPtr: ObjCObjectV">
+<meta property="og:description" content="一、问题现象在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：  现象：导出 .xcappdata 可以确认文件确实在 Documents 目录下，但用 NSData.dataWithContentsOfFile 读取时始终返回空。 报错：No such File or Directory（找不到该文件或目录）。  当时使用的读取代码如下（为便于排查">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2023-08-13T04:24:44.000Z">
-<meta property="article:modified_time" content="2025-03-18T07:03:25.300Z">
+<meta property="article:modified_time" content="2026-02-06T02:27:34.771Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="SwiftUI">
 <meta property="article:tag" content="Kotlin Native">
@@ -147,7 +147,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E8%83%8C%E6%99%AF%E5%8F%8A%E6%8F%8F%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">问题背景及描述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E5%AE%9A%E4%BD%8D"><span class="nav-number">2.</span> <span class="nav-text">问题定位</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-number">3.</span> <span class="nav-text">解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%B3%951-%E9%81%8D%E5%8E%86%E7%9B%AE%E5%BD%95%EF%BC%8C%E9%80%9A%E8%BF%87fileName%E8%BF%87%E6%BB%A4%E6%8B%BF%E5%88%B0%E5%AF%B9%E5%BA%94%E7%9A%84%E6%96%87%E4%BB%B6"><span class="nav-number">3.1.</span> <span class="nav-text">方法1. 遍历目录，通过fileName过滤拿到对应的文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%B3%952-%E7%9B%B4%E6%8E%A5%E8%8E%B7%E5%8F%96-Documents-%E7%9B%AE%E5%BD%95%E8%B7%AF%E5%BE%84%E5%B9%B6%E6%8B%BC%E6%8E%A5%E6%96%87%E4%BB%B6%E5%90%8D"><span class="nav-number">3.2.</span> <span class="nav-text">方法2. 直接获取 Documents 目录路径并拼接文件名</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%99%84"><span class="nav-number">5.</span> <span class="nav-text">附</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E7%8E%B0%E8%B1%A1"><span class="nav-number">1.</span> <span class="nav-text">一、问题现象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E9%97%AE%E9%A2%98%E5%AE%9A%E4%BD%8D"><span class="nav-number">2.</span> <span class="nav-text">二、问题定位</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E6%80%80%E7%96%91%E7%82%B9%EF%BC%9A%E8%B7%AF%E5%BE%84%E5%8F%AF%E8%83%BD%E4%B8%8D%E5%AF%B9"><span class="nav-number">2.1.</span> <span class="nav-text">2.1 怀疑点：路径可能不对</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-%E5%AF%B9%E6%AF%94%E9%AA%8C%E8%AF%81%EF%BC%9AApplication-%E7%9B%AE%E5%BD%95%E7%9A%84-UUID-%E4%B8%8D%E4%B8%80%E8%87%B4"><span class="nav-number">2.2.</span> <span class="nav-text">2.2 对比验证：Application 目录的 UUID 不一致</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-%E6%A0%B9%E5%9B%A0%E7%BB%93%E8%AE%BA"><span class="nav-number">2.3.</span> <span class="nav-text">2.3 根因结论</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-number">3.</span> <span class="nav-text">三、解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E4%B8%80%EF%BC%9A%E9%81%8D%E5%8E%86-Documents%EF%BC%8C%E6%8C%89%E6%96%87%E4%BB%B6%E5%90%8D%E5%8C%B9%E9%85%8D"><span class="nav-number">3.1.</span> <span class="nav-text">方法一：遍历 Documents，按文件名匹配</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%96%B9%E6%B3%95%E4%BA%8C%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89%EF%BC%9A%E7%9B%B4%E6%8E%A5%E5%8F%96-Documents-%E8%B7%AF%E5%BE%84%E5%86%8D%E6%8B%BC%E6%8E%A5%E6%96%87%E4%BB%B6%E5%90%8D"><span class="nav-number">3.2.</span> <span class="nav-text">方法二（推荐）：直接取 Documents 路径再拼接文件名</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">四、总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%99%84%E5%BD%95%EF%BC%9AUUID-%E4%BD%95%E6%97%B6%E4%BC%9A%E5%8F%98%E5%8C%96"><span class="nav-number">5.</span> <span class="nav-text">附录：UUID 何时会变化</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -275,8 +275,12 @@
     
     
     
-    <div class="post-body" itemprop="articleBody"><h2 id="问题背景及描述"><a href="#问题背景及描述" class="headerlink" title="问题背景及描述"></a>问题背景及描述</h2><p>在Kotlin Multiplatform项目中，实现iOS平台的文件存储时，虽然可以通过导出<code>.xcappdata</code>文件确认文件确实存在于目录下，但在调用<code>NSData.dataWithContentsOfFile</code>读取时却始终返回空。错误信息显示找不到该文件或目录 (<code>No such File or Directory</code>)。</p>
-<p>示例代码如下：</p>
+    <div class="post-body" itemprop="articleBody"><h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：</p>
+<ul>
+<li><strong>现象</strong>：导出 <code>.xcappdata</code> 可以确认文件确实在 Documents 目录下，但用 <code>NSData.dataWithContentsOfFile</code> 读取时始终返回空。</li>
+<li><strong>报错</strong>：<code>No such File or Directory</code>（找不到该文件或目录）。</li>
+</ul>
+<p>当时使用的读取代码如下（为便于排查，增加了 <code>errorPtr</code> 输出错误信息）：</p>
 <pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> errorPtr<span class="token operator">:</span> ObjCObjectVar<span class="token operator">&lt;</span>NSError<span class="token operator">?</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token function">alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
 NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
     <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
@@ -285,106 +289,115 @@ NSData<span class="token punctuation">.</span><span class="token function">dataW
 <span class="token punctuation">}</span>
 <span class="token function">println</span><span class="token punctuation">(</span>errorPtr<span class="token punctuation">.</span>value<span class="token operator">?</span><span class="token punctuation">.</span>description<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
 <span class="token keyword">return</span><span class="token label symbol">@withContext</span> <span class="token keyword">null</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p><em>Note: 为了更好地定位问题，添加了<code>errorPtr</code>以查看具体错误信息</em></p>
+
 <span id="more"></span>
 
-<h2 id="问题定位"><a href="#问题定位" class="headerlink" title="问题定位"></a>问题定位</h2><ol>
-<li>通过错误日志发现，<code>fullPath</code>(这指的是问题描述中kotlin代码上的fullPath)可能是错误的路径。尽管导出的<code>.xcappdata</code>确认文件确实存在，但<code>NSData.dataWithContentsOfFile</code>依旧找不到。</li>
-<li>通过对比<code>fullPath</code>和 Swift 代码获取的目录路径，发现 Application 目录后的 UUID 并不一致。例如：</li>
-</ol>
+<h2 id="二、问题定位"><a href="#二、问题定位" class="headerlink" title="二、问题定位"></a>二、问题定位</h2><h3 id="2-1-怀疑点：路径可能不对"><a href="#2-1-怀疑点：路径可能不对" class="headerlink" title="2.1 怀疑点：路径可能不对"></a>2.1 怀疑点：路径可能不对</h3><p>从错误日志看，传入的 <code>fullPath</code> 很可能并不是当前运行时的真实路径，所以即使文件实际存在，<code>NSData.dataWithContentsOfFile</code> 仍然找不到。</p>
+<h3 id="2-2-对比验证：Application-目录的-UUID-不一致"><a href="#2-2-对比验证：Application-目录的-UUID-不一致" class="headerlink" title="2.2 对比验证：Application 目录的 UUID 不一致"></a>2.2 对比验证：Application 目录的 UUID 不一致</h3><p>用 Swift 在运行时获取 Documents 目录并列出文件，与 Kotlin 里使用的 <code>fullPath</code> 对比：</p>
 <ul>
-<li>fullPath路径是这样的<blockquote>
-<p>/var/mobile/Containers/Data/Application/3FC1CCE9-A788-47AB-902A-FA133FAA3D30/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg</p>
-</blockquote>
-</li>
-<li>而文件url则是<blockquote>
-<p>file:///private/var/mobile/Containers/Data/Application/C5AC5178-6887-40F4-9EE5-8D56CB830CB3/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg</p>
-</blockquote>
-</li>
+<li><strong>Kotlin 中使用的 fullPath</strong>（可能是之前保存的完整路径）：<pre class="line-numbers language-none"><code class="language-none">/var/mobile/Containers/Data/Application/3FC1CCE9-A788-47AB-902A-FA133FAA3D30/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
+<li><strong>Swift 当前拿到的文件 URL</strong>：<pre class="line-numbers language-none"><code class="language-none">file:///private/var/mobile/Containers/Data/Application/C5AC5178-6887-40F4-9EE5-8D56CB830CB3/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
 </ul>
-<p>Swift代码获取文件路径代码</p>
+<p>可见，<code>Application</code> 后面那一段 UUID 不一致：一个是 <code>3FC1CCE9-...</code>，一个是 <code>C5AC5178-...</code>。</p>
+<p>Swift 侧获取 Documents 的示例代码：</p>
 <pre class="line-numbers language-swift" data-language="swift"><code class="language-swift"><span class="token keyword">let</span> fileManager <span class="token operator">=</span> <span class="token class-name">FileManager</span><span class="token punctuation">.</span><span class="token keyword">default</span>
 <span class="token keyword">let</span> documentsURL <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">urls</span><span class="token punctuation">(</span><span class="token keyword">for</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>documentDirectory<span class="token punctuation">,</span> <span class="token keyword">in</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>userDomainMask<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
 <span class="token keyword">do</span> <span class="token punctuation">{</span>
     <span class="token keyword">let</span> fileURLs <span class="token operator">=</span> <span class="token keyword">try</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectory</span><span class="token punctuation">(</span>at<span class="token punctuation">:</span> documentsURL<span class="token punctuation">,</span> includingPropertiesForKeys<span class="token punctuation">:</span> <span class="token nil constant">nil</span><span class="token punctuation">)</span>
     <span class="token function">print</span><span class="token punctuation">(</span>fileURLs<span class="token punctuation">)</span>
-    <span class="token comment">// process files</span>
 <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">{</span>
     <span class="token function">print</span><span class="token punctuation">(</span><span class="token string-literal"><span class="token string">"Error while enumerating files </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">documentsURL<span class="token punctuation">.</span>path</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">: </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">error<span class="token punctuation">.</span>localizedDescription</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">"</span></span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<ol start="3">
-<li>经过一番查阅了解，自 iOS 8.0 开始，每次用户卸载并重新安装应用时，应用的 <strong>沙盒目录路径</strong>（<code>Application</code> 目录）中的 UUID 部分都会发生变化。因此，存储完整路径是不可靠的。</li>
-</ol>
-<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><p>通过上述，已经确认问题是由于路径不一致导致，只要解决路径问题即可。这里提供两种比较直观的解决方案</p>
-<h3 id="方法1-遍历目录，通过fileName过滤拿到对应的文件"><a href="#方法1-遍历目录，通过fileName过滤拿到对应的文件" class="headerlink" title="方法1. 遍历目录，通过fileName过滤拿到对应的文件"></a>方法1. 遍历目录，通过fileName过滤拿到对应的文件</h3><p>既然存储路径会变化，而文件存在，可以遍历 Documents 目录并通过文件名匹配来获取文件路径。</p>
-<pre class="line-numbers language-Kotlin" data-language="Kotlin"><code class="language-Kotlin">// 拿到目录的url
-val url = fileManager.URLForDirectory(
-    directory = NSDocumentDirectory,
-    inDomain = NSUserDomainMask,
-    appropriateForURL = null,
-    create = false,
-    error = null
-)!!
-// 拿到目录下所有文件的url
-val fileUrls = fileManager.contentsOfDirectoryAtURL(url = url, includingPropertiesForKeys = null, options = 0, error = errorPtr.ptr)
-// 通过全路径拿到文件名，然后通过文件名过滤得到唯一的文件url
-val currentFileUrl = fileUrls?.first { it.toString().contains(fileName) } as? NSURL
-// 读取到NSData中
-currentFileUrl?.let {
-    NSData.dataWithContentsOfURL(currentFileUrl)
-    ?.let { bytes -&gt;
-        val array = ByteArray(bytes.length.toInt())
-        bytes.getBytes(array.refTo(0).getPointer(this), bytes.length)
-        return@withContext array
-    }
-}<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<h3 id="2-3-根因结论"><a href="#2-3-根因结论" class="headerlink" title="2.3 根因结论"></a>2.3 根因结论</h3><p>自 <strong>iOS 8.0</strong> 起，应用沙盒里 <code>Application</code> 这一级目录的 <strong>UUID 会随安装/部署方式变化</strong>（例如卸载重装、Xcode 重新安装等）。若把「完整路径」存下来，下次启动或重装后 UUID 变了，旧路径就失效，导致「文件在，但按旧路径读不到」。</p>
+<p>因此：<strong>不能依赖存储的完整路径来读文件，只能依赖「相对位置 + 文件名」并在运行时重新解析。</strong></p>
+<h2 id="三、解决方案"><a href="#三、解决方案" class="headerlink" title="三、解决方案"></a>三、解决方案</h2><p>思路统一为：<strong>只存文件名（或相对路径），读的时候先拿到当前 Documents 目录，再拼出完整路径或 URL。</strong> 下面两种写法都符合这一思路。</p>
+<h3 id="方法一：遍历-Documents，按文件名匹配"><a href="#方法一：遍历-Documents，按文件名匹配" class="headerlink" title="方法一：遍历 Documents，按文件名匹配"></a>方法一：遍历 Documents，按文件名匹配</h3><p>不依赖完整路径，先取到 Documents 的 URL，再在目录下按文件名找到对应文件：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 拿到 Documents 目录的 url</span>
+<span class="token keyword">val</span> url <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">URLForDirectory</span><span class="token punctuation">(</span>
+    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
+    inDomain <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
+    appropriateForURL <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
+    create <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+    error <span class="token operator">=</span> <span class="token keyword">null</span>
+<span class="token punctuation">)</span><span class="token operator">!!</span>
+<span class="token comment">// 列出目录下所有文件的 url</span>
+<span class="token keyword">val</span> fileUrls <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectoryAtURL</span><span class="token punctuation">(</span>url <span class="token operator">=</span> url<span class="token punctuation">,</span> includingPropertiesForKeys <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span>
+<span class="token comment">// 按文件名匹配得到目标文件的 url</span>
+<span class="token keyword">val</span> currentFileUrl <span class="token operator">=</span> fileUrls<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">first</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">contains</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span> <span class="token punctuation">}</span> <span class="token keyword">as</span><span class="token operator">?</span> NSURL
+<span class="token comment">// 用 URL 读取</span>
+currentFileUrl<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span>
+    NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfURL</span><span class="token punctuation">(</span>currentFileUrl<span class="token punctuation">)</span>
+        <span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
+            <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+            <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
+        <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h3 id="方法2-直接获取-Documents-目录路径并拼接文件名"><a href="#方法2-直接获取-Documents-目录路径并拼接文件名" class="headerlink" title="方法2. 直接获取 Documents 目录路径并拼接文件名"></a>方法2. 直接获取 Documents 目录路径并拼接文件名</h3><p>遍历文件目录可能带来性能开销，优化方案是直接获取 Documents 目录的路径并拼接文件名：</p>
-<pre class="line-numbers language-Kotlin" data-language="Kotlin"><code class="language-Kotlin">val documentDirectory = NSSearchPathForDirectoriesInDomains(
-    directory = NSDocumentDirectory,
-    domainMask = NSUserDomainMask,
-    expandTilde = true
-).first() as NSString
-val fullPath = documentDirectory.stringByAppendingPathComponent(fileName)
-println(fullPath)<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-<p>这样可以保证 <code>fullPath</code> 始终指向当前应用实例的正确 <code>Documents</code> 目录，避免了 UUID 变化带来的问题。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ol>
-<li><strong>不要存储完整路径</strong>，因为 iOS 8.0 之后 Application 目录的 UUID 会发生变化。</li>
-<li><strong>推荐存储文件名</strong>，在使用时动态获取 Documents 目录并拼接文件名。</li>
-<li><strong>优先使用 <code>NSSearchPathForDirectoriesInDomains</code> 获取 Documents 目录路径</strong>，比遍历文件更高效。</li>
-</ol>
-<p>通过上述方法，成功解决了 NSData.dataWithContentsOfFile 无法读取文件的问题。</p>
-<h2 id="附"><a href="#附" class="headerlink" title="附"></a>附</h2><table>
+<h3 id="方法二（推荐）：直接取-Documents-路径再拼接文件名"><a href="#方法二（推荐）：直接取-Documents-路径再拼接文件名" class="headerlink" title="方法二（推荐）：直接取 Documents 路径再拼接文件名"></a>方法二（推荐）：直接取 Documents 路径再拼接文件名</h3><p>遍历有额外开销，更稳妥且高效的方式是：<strong>每次读取时用系统 API 取当前 Documents 目录，再拼接文件名</strong>：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> documentDirectory <span class="token operator">=</span> <span class="token function">NSSearchPathForDirectoriesInDomains</span><span class="token punctuation">(</span>
+    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
+    domainMask <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
+    expandTilde <span class="token operator">=</span> <span class="token boolean">true</span>
+<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">first</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> NSString
+<span class="token keyword">val</span> fullPath <span class="token operator">=</span> documentDirectory<span class="token punctuation">.</span><span class="token function">stringByAppendingPathComponent</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span>
+<span class="token comment">// 此处 fullPath 一定是当前应用实例的真实路径</span>
+NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> <span class="token operator">..</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这样得到的 <code>fullPath</code> 始终对应当前运行时的 Documents，不受 UUID 变化影响。</p>
+<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><table>
 <thead>
 <tr>
-<th><strong>安装/运行方式</strong></th>
-<th><strong>UUID 是否变化</strong></th>
+<th>要点</th>
+<th>说明</th>
 </tr>
 </thead>
 <tbody><tr>
-<td><strong>App 卸载后重新安装</strong></td>
-<td>✅ 变化（iOS 8+ 开始引入的安全机制）</td>
+<td>不要存完整路径</td>
+<td>iOS 8+ 下 Application 目录 UUID 会变，存完整路径容易失效。</td>
 </tr>
 <tr>
-<td><strong>App 通过 Xcode 重新安装</strong></td>
-<td>✅ 变化（Xcode 重新部署应用时相当于卸载+安装）</td>
+<td>推荐只存文件名</td>
+<td>使用时通过 API 获取当前 Documents 目录，再拼接文件名。</td>
 </tr>
 <tr>
-<td><strong>App 通过 Xcode 直接运行（不卸载）</strong></td>
-<td>❌ 不变（如果 Xcode 仅执行 <code>Build &amp; Run</code>，不删除 App）</td>
+<td>优先用系统 API 取目录</td>
+<td>使用 <code>NSSearchPathForDirectoriesInDomains</code> 获取 Documents，比遍历目录更简单、高效。</td>
+</tr>
+</tbody></table>
+<p>按上述方式改造后，<code>NSData.dataWithContentsOfFile</code> 无法读取文件的问题即可解决。</p>
+<h2 id="附录：UUID-何时会变化"><a href="#附录：UUID-何时会变化" class="headerlink" title="附录：UUID 何时会变化"></a>附录：UUID 何时会变化</h2><p>不同安装/运行方式下，沙盒中 Application 目录的 UUID 是否变化可参考下表：</p>
+<table>
+<thead>
+<tr>
+<th>安装/运行方式</th>
+<th>UUID 是否变化</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>App 卸载后重新安装</td>
+<td>✅ 变化（iOS 8+ 的安全机制）</td>
 </tr>
 <tr>
-<td><strong>App 在模拟器上运行</strong></td>
-<td>✅ 变化（某些情况下，每次启动可能会变化）</td>
+<td>通过 Xcode 重新安装</td>
+<td>✅ 变化（相当于卸载再安装）</td>
 </tr>
 <tr>
-<td><strong>App 通过 TestFlight 或 App Store 安装</strong></td>
+<td>Xcode 直接运行（不卸载）</td>
+<td>❌ 不变（仅 Build &amp; Run 且未删除 App）</td>
+</tr>
+<tr>
+<td>模拟器上运行</td>
+<td>✅ 可能变化（视情况而定）</td>
+</tr>
+<tr>
+<td>TestFlight / App Store 安装</td>
 <td>✅ 变化（安装时生成新 UUID）</td>
 </tr>
 <tr>
-<td><strong>iOS OTA（无线更新 App）</strong></td>
-<td>❌ 不变（更新时不会改变 UUID）</td>
+<td>iOS OTA 更新 App</td>
+<td>❌ 不变（更新不改变 UUID）</td>
 </tr>
 </tbody></table>
 
