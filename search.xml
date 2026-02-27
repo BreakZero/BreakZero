@@ -1,6 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>Jetpack Compose Performance Tips Every Developer Should Know</title>
+    <url>/posts/2026/02/27/4ae1fc92/</url>
+    <content><![CDATA[<h1 id="Jetpack-Compose-Performance-Why-graphicsLayer-is-Your-Secret-Weapon"><a href="#Jetpack-Compose-Performance-Why-graphicsLayer-is-Your-Secret-Weapon" class="headerlink" title="Jetpack Compose Performance: Why .graphicsLayer { } is Your Secret Weapon"></a>Jetpack Compose Performance: Why .graphicsLayer { } is Your Secret Weapon</h1><p>In the world of Jetpack Compose, there are usually multiple ways to achieve the same visual result. Want to fade a button? You could use <code>.alpha(0.5f)</code> or <code>.graphicsLayer { alpha = 0.5f }</code>. </p>
+<p>Both look identical on screen, but under the hood, one is a performance gas-guzzler and the other is a streamlined electric racer. Here’s why <code>graphicsLayer { }</code> is the superior choice for high-performance UI.</p>
+<hr>
+<h2 id="1-The-Three-Phases-of-Compose"><a href="#1-The-Three-Phases-of-Compose" class="headerlink" title="1. The Three Phases of Compose"></a>1. The Three Phases of Compose</h2><p>To understand the speed difference, you have to understand the “Compose Pipeline.” When you update a state variable, Compose goes through three steps:</p>
+<ol>
+<li><strong>Composition:</strong> What to show (Building the UI tree).</li>
+<li><strong>Layout:</strong> Where to show it (Measuring and placing elements).</li>
+<li><strong>Drawing:</strong> How to show it (Rendering pixels, rotations, and fades).</li>
+</ol>
+<h3 id="The-Problem-with-Standard-Modifiers"><a href="#The-Problem-with-Standard-Modifiers" class="headerlink" title="The Problem with Standard Modifiers"></a>The Problem with Standard Modifiers</h3><p>When you use <code>.alpha(myState)</code>, you are passing a <strong>value</strong>. When that value changes, Compose says: <em>“Wait, the parameters changed! I need to re-run the Composition phase.”</em> This triggers a <strong>Recomposition</strong>, which is the most expensive operation in the pipeline.</p>
+<h3 id="The-Magic-of-the-Lambda"><a href="#The-Magic-of-the-Lambda" class="headerlink" title="The Magic of the Lambda"></a>The Magic of the Lambda</h3><p>When you use <code>.graphicsLayer { alpha = myState }</code>, you aren’t passing a value; you are passing a <strong>lambda (a block of code)</strong>. Compose is smart enough to skip Composition and Layout entirely. It waits until the <strong>Drawing phase</strong> to execute that block. </p>
+<blockquote>
+<p><strong>The Result:</strong> You bypass the heavy lifting and go straight to the finish line.</p>
+</blockquote>
+<hr>
+<h2 id="2-Hardware-Layers-RenderNodes"><a href="#2-Hardware-Layers-RenderNodes" class="headerlink" title="2. Hardware Layers &amp; RenderNodes"></a>2. Hardware Layers &amp; RenderNodes</h2><p><code>graphicsLayer</code> doesn’t just skip phases; it changes how the GPU talks to your screen. </p>
+<p>When you wrap content in a <code>graphicsLayer</code>, Compose creates a <strong>RenderNode</strong>. This is a dedicated “layer” in the display list.</p>
+<ul>
+<li><strong>Isolation:</strong> If you rotate a layer, the GPU just tilts the existing “texture” it already has in memory. It doesn’t need to ask the CPU to redraw the text or shapes inside it.</li>
+<li><strong>Efficiency:</strong> Multiple transformations (scale, rotation, alpha) inside one <code>graphicsLayer</code> block are batched together.</li>
+</ul>
+<hr>
+<h2 id="3-Comparison-Table"><a href="#3-Comparison-Table" class="headerlink" title="3. Comparison Table"></a>3. Comparison Table</h2><table>
+<thead>
+<tr>
+<th align="left">Feature</th>
+<th align="left"><code>.alpha()</code>, <code>.rotate()</code>, etc.</th>
+<th align="left"><code>.graphicsLayer { ... }</code></th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>Input Type</strong></td>
+<td align="left">Value (Direct)</td>
+<td align="left">Lambda (Deferred)</td>
+</tr>
+<tr>
+<td align="left"><strong>Triggers Recomposition?</strong></td>
+<td align="left">Yes 🔴</td>
+<td align="left">No 🟢</td>
+</tr>
+<tr>
+<td align="left"><strong>Phase Target</strong></td>
+<td align="left">Composition</td>
+<td align="left">Drawing</td>
+</tr>
+<tr>
+<td align="left"><strong>Best For</strong></td>
+<td align="left">Static or rare changes</td>
+<td align="left">Animations, Scroll-based effects</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="4-Practical-Example-The-“Fast”-Way"><a href="#4-Practical-Example-The-“Fast”-Way" class="headerlink" title="4. Practical Example: The “Fast” Way"></a>4. Practical Example: The “Fast” Way</h2><p>If you are animating a value (like a scroll offset or a pulsing heart icon), <strong>always</strong> use the lambda-based version to keep your frame rate at a buttery-smooth 60 (or 120) FPS.</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> animatedScale <span class="token keyword">by</span> <span class="token function">animateFloatAsState</span><span class="token punctuation">(</span>targetValue <span class="token operator">=</span> <span class="token number">1.2f</span><span class="token punctuation">)</span>
+
+<span class="token function">Box</span><span class="token punctuation">(</span>
+    Modifier
+        <span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>Magenta<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
+            <span class="token comment">// State read is DEFERRED to the Draw phase.</span>
+            <span class="token comment">// No Recomposition happens when scaleX/Y changes!</span>
+            scaleX <span class="token operator">=</span> animatedScale
+            scaleY <span class="token operator">=</span> animatedScale
+            clip <span class="token operator">=</span> <span class="token boolean">true</span>
+            shape <span class="token operator">=</span> <span class="token function">RoundedCornerShape</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="5-Summary"><a href="#5-Summary" class="headerlink" title="5. Summary"></a>5. Summary</h2><p>By using graphicsLayer { }, you are essentially telling Compose: “Don’t rebuild the whole house just because I want to change the color of the curtains.” You save CPU cycles, reduce battery drain, and ensure your animations never drop a frame.</p>
+]]></content>
+      <categories>
+        <category>Compose</category>
+      </categories>
+      <tags>
+        <tag>Jetpack Compose</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>iOS通过Container读取文件问题笔录</title>
     <url>/posts/2023/08/13/bb96b1c7/</url>
     <content><![CDATA[<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：</p>
@@ -265,89 +346,8 @@ The default implementation only supports types which can be stored inside the Bu
         <category>Technical</category>
       </categories>
       <tags>
+        <tag>Jetpack Compose</tag>
         <tag>Android</tag>
-        <tag>Jetpack Compose</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Jetpack Compose Performance Tips Every Developer Should Know</title>
-    <url>/posts/2026/02/27/4ae1fc92/</url>
-    <content><![CDATA[<h1 id="Jetpack-Compose-Performance-Why-graphicsLayer-is-Your-Secret-Weapon"><a href="#Jetpack-Compose-Performance-Why-graphicsLayer-is-Your-Secret-Weapon" class="headerlink" title="Jetpack Compose Performance: Why .graphicsLayer { } is Your Secret Weapon"></a>Jetpack Compose Performance: Why .graphicsLayer { } is Your Secret Weapon</h1><p>In the world of Jetpack Compose, there are usually multiple ways to achieve the same visual result. Want to fade a button? You could use <code>.alpha(0.5f)</code> or <code>.graphicsLayer { alpha = 0.5f }</code>. </p>
-<p>Both look identical on screen, but under the hood, one is a performance gas-guzzler and the other is a streamlined electric racer. Here’s why <code>graphicsLayer { }</code> is the superior choice for high-performance UI.</p>
-<hr>
-<h2 id="1-The-Three-Phases-of-Compose"><a href="#1-The-Three-Phases-of-Compose" class="headerlink" title="1. The Three Phases of Compose"></a>1. The Three Phases of Compose</h2><p>To understand the speed difference, you have to understand the “Compose Pipeline.” When you update a state variable, Compose goes through three steps:</p>
-<ol>
-<li><strong>Composition:</strong> What to show (Building the UI tree).</li>
-<li><strong>Layout:</strong> Where to show it (Measuring and placing elements).</li>
-<li><strong>Drawing:</strong> How to show it (Rendering pixels, rotations, and fades).</li>
-</ol>
-<h3 id="The-Problem-with-Standard-Modifiers"><a href="#The-Problem-with-Standard-Modifiers" class="headerlink" title="The Problem with Standard Modifiers"></a>The Problem with Standard Modifiers</h3><p>When you use <code>.alpha(myState)</code>, you are passing a <strong>value</strong>. When that value changes, Compose says: <em>“Wait, the parameters changed! I need to re-run the Composition phase.”</em> This triggers a <strong>Recomposition</strong>, which is the most expensive operation in the pipeline.</p>
-<h3 id="The-Magic-of-the-Lambda"><a href="#The-Magic-of-the-Lambda" class="headerlink" title="The Magic of the Lambda"></a>The Magic of the Lambda</h3><p>When you use <code>.graphicsLayer { alpha = myState }</code>, you aren’t passing a value; you are passing a <strong>lambda (a block of code)</strong>. Compose is smart enough to skip Composition and Layout entirely. It waits until the <strong>Drawing phase</strong> to execute that block. </p>
-<blockquote>
-<p><strong>The Result:</strong> You bypass the heavy lifting and go straight to the finish line.</p>
-</blockquote>
-<hr>
-<h2 id="2-Hardware-Layers-RenderNodes"><a href="#2-Hardware-Layers-RenderNodes" class="headerlink" title="2. Hardware Layers &amp; RenderNodes"></a>2. Hardware Layers &amp; RenderNodes</h2><p><code>graphicsLayer</code> doesn’t just skip phases; it changes how the GPU talks to your screen. </p>
-<p>When you wrap content in a <code>graphicsLayer</code>, Compose creates a <strong>RenderNode</strong>. This is a dedicated “layer” in the display list.</p>
-<ul>
-<li><strong>Isolation:</strong> If you rotate a layer, the GPU just tilts the existing “texture” it already has in memory. It doesn’t need to ask the CPU to redraw the text or shapes inside it.</li>
-<li><strong>Efficiency:</strong> Multiple transformations (scale, rotation, alpha) inside one <code>graphicsLayer</code> block are batched together.</li>
-</ul>
-<hr>
-<h2 id="3-Comparison-Table"><a href="#3-Comparison-Table" class="headerlink" title="3. Comparison Table"></a>3. Comparison Table</h2><table>
-<thead>
-<tr>
-<th align="left">Feature</th>
-<th align="left"><code>.alpha()</code>, <code>.rotate()</code>, etc.</th>
-<th align="left"><code>.graphicsLayer { ... }</code></th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left"><strong>Input Type</strong></td>
-<td align="left">Value (Direct)</td>
-<td align="left">Lambda (Deferred)</td>
-</tr>
-<tr>
-<td align="left"><strong>Triggers Recomposition?</strong></td>
-<td align="left">Yes 🔴</td>
-<td align="left">No 🟢</td>
-</tr>
-<tr>
-<td align="left"><strong>Phase Target</strong></td>
-<td align="left">Composition</td>
-<td align="left">Drawing</td>
-</tr>
-<tr>
-<td align="left"><strong>Best For</strong></td>
-<td align="left">Static or rare changes</td>
-<td align="left">Animations, Scroll-based effects</td>
-</tr>
-</tbody></table>
-<hr>
-<h2 id="4-Practical-Example-The-“Fast”-Way"><a href="#4-Practical-Example-The-“Fast”-Way" class="headerlink" title="4. Practical Example: The “Fast” Way"></a>4. Practical Example: The “Fast” Way</h2><p>If you are animating a value (like a scroll offset or a pulsing heart icon), <strong>always</strong> use the lambda-based version to keep your frame rate at a buttery-smooth 60 (or 120) FPS.</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> animatedScale <span class="token keyword">by</span> <span class="token function">animateFloatAsState</span><span class="token punctuation">(</span>targetValue <span class="token operator">=</span> <span class="token number">1.2f</span><span class="token punctuation">)</span>
-
-<span class="token function">Box</span><span class="token punctuation">(</span>
-    Modifier
-        <span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
-        <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>Magenta<span class="token punctuation">)</span>
-        <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
-            <span class="token comment">// State read is DEFERRED to the Draw phase.</span>
-            <span class="token comment">// No Recomposition happens when scaleX/Y changes!</span>
-            scaleX <span class="token operator">=</span> animatedScale
-            scaleY <span class="token operator">=</span> animatedScale
-            clip <span class="token operator">=</span> <span class="token boolean">true</span>
-            shape <span class="token operator">=</span> <span class="token function">RoundedCornerShape</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
-        <span class="token punctuation">}</span>
-<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="5-Summary"><a href="#5-Summary" class="headerlink" title="5. Summary"></a>5. Summary</h2><p>By using graphicsLayer { }, you are essentially telling Compose: “Don’t rebuild the whole house just because I want to change the color of the curtains.” You save CPU cycles, reduce battery drain, and ensure your animations never drop a frame.</p>
-]]></content>
-      <categories>
-        <category>Compose</category>
-      </categories>
-      <tags>
-        <tag>Jetpack Compose</tag>
       </tags>
   </entry>
 </search>
