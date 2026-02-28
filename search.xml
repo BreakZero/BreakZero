@@ -350,4 +350,240 @@ The default implementation only supports types which can be stored inside the Bu
         <tag>Android</tag>
       </tags>
   </entry>
+  <entry>
+    <title>深入理解Jetpack Compose key() {} 方法</title>
+    <url>/posts/2026/02/28/ec0aeab/</url>
+    <content><![CDATA[<h1 id="Jetpack-Compose-中-key-的作用与性能优化解析"><a href="#Jetpack-Compose-中-key-的作用与性能优化解析" class="headerlink" title="Jetpack Compose 中 key() 的作用与性能优化解析"></a>Jetpack Compose 中 key() 的作用与性能优化解析</h1><p>在 Jetpack Compose 中，<code>key()</code> 是一个非常重要但容易被忽视的 API。</p>
+<p>很多开发者知道：</p>
+<blockquote>
+<p>“列表里最好加 key”</p>
+</blockquote>
+<p>但却不清楚：</p>
+<ul>
+<li>它到底解决了什么问题？</li>
+<li>不加会发生什么？</li>
+<li>它是如何影响 recomposition 的？</li>
+<li>它是否真的优化性能？</li>
+</ul>
+<p>这篇文章会从 <strong>机制 → 问题 → 原理 → 优化效果 → 实战建议</strong> 全面讲清楚。</p>
+<hr>
+<h1 id="一、Compose-如何判断-UI-的“身份”？"><a href="#一、Compose-如何判断-UI-的“身份”？" class="headerlink" title="一、Compose 如何判断 UI 的“身份”？"></a>一、Compose 如何判断 UI 的“身份”？</h1><p>Compose 在重组（Recomposition）时，需要判断：</p>
+<blockquote>
+<p>“这个 Composable 是之前那个吗？”</p>
+</blockquote>
+<p>默认情况下，它使用的是：</p>
+<pre class="line-numbers language-none"><code class="language-none">调用位置（Call Position）<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>也就是说：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">if</span> <span class="token punctuation">(</span>代码位置没变<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    认为是同一个节点
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<hr>
+<h1 id="二、问题：动态列表会出错"><a href="#二、问题：动态列表会出错" class="headerlink" title="二、问题：动态列表会出错"></a>二、问题：动态列表会出错</h1><p>假设有如下代码：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">for</span> <span class="token punctuation">(</span>item <span class="token keyword">in</span> list<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">Text</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>如果 list 发生了排序变化：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">list <span class="token operator">=</span> list<span class="token punctuation">.</span><span class="token function">sortedBy</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span>price <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>Compose 会认为：</p>
+<ul>
+<li>第 0 个位置还是 Text</li>
+<li>第 1 个位置还是 Text</li>
+</ul>
+<p>它不知道：</p>
+<blockquote>
+<p>这些 item 已经换人了</p>
+</blockquote>
+<p>这就会导致：</p>
+<ul>
+<li>remember 状态错位</li>
+<li>动画异常</li>
+<li>选中状态跑错对象</li>
+<li>UI 重建异常</li>
+</ul>
+<hr>
+<h1 id="三、key-的核心作用"><a href="#三、key-的核心作用" class="headerlink" title="三、key() 的核心作用"></a>三、key() 的核心作用</h1><pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token function">key</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span>id<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">Text</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span>name<span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>加入 key 之后：</p>
+<p>Compose 不再通过“位置”判断身份，而是通过：</p>
+<pre class="line-numbers language-none"><code class="language-none">你提供的 key<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<h3 id="对比"><a href="#对比" class="headerlink" title="对比"></a>对比</h3><table>
+<thead>
+<tr>
+<th>无 key</th>
+<th>有 key</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>通过位置判断身份</td>
+<td>通过 key 判断身份</td>
+</tr>
+<tr>
+<td>列表 reorder 会错位</td>
+<td>顺序变化也能正确匹配</td>
+</tr>
+<tr>
+<td>remember 可能串数据</td>
+<td>状态跟随 item</td>
+</tr>
+<tr>
+<td>可能重建 subtree</td>
+<td>精准复用节点</td>
+</tr>
+</tbody></table>
+<hr>
+<h1 id="四、它解决的核心问题"><a href="#四、它解决的核心问题" class="headerlink" title="四、它解决的核心问题"></a>四、它解决的核心问题</h1><h2 id="1️⃣-避免状态错位"><a href="#1️⃣-避免状态错位" class="headerlink" title="1️⃣ 避免状态错位"></a>1️⃣ 避免状态错位</h2><p>错误示例：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">for</span> <span class="token punctuation">(</span>stock <span class="token keyword">in</span> stocks<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">var</span> expanded <span class="token keyword">by</span> remember <span class="token punctuation">{</span> <span class="token function">mutableStateOf</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>当 stocks 重排时：</p>
+<ul>
+<li>expanded 会跟“位置”走</li>
+<li>A 股票的状态跑到 B 股票上</li>
+</ul>
+<p>正确做法：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">for</span> <span class="token punctuation">(</span>stock <span class="token keyword">in</span> stocks<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">key</span><span class="token punctuation">(</span>stock<span class="token punctuation">.</span>code<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token keyword">var</span> expanded <span class="token keyword">by</span> remember <span class="token punctuation">{</span> <span class="token function">mutableStateOf</span><span class="token punctuation">(</span><span class="token boolean">false</span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>现在：</p>
+<blockquote>
+<p>expanded 会跟 stock.code 走</p>
+</blockquote>
+<hr>
+<h2 id="2️⃣-减少错误重建"><a href="#2️⃣-减少错误重建" class="headerlink" title="2️⃣ 减少错误重建"></a>2️⃣ 减少错误重建</h2><p>没有 key：</p>
+<ul>
+<li>Compose 认为每个位置都变了</li>
+<li>销毁 + 重建节点</li>
+</ul>
+<p>有 key：</p>
+<ul>
+<li>只移动节点</li>
+<li>不销毁 subtree</li>
+<li>状态正确复用</li>
+</ul>
+<hr>
+<h2 id="3️⃣-列表-reorder-性能更稳定"><a href="#3️⃣-列表-reorder-性能更稳定" class="headerlink" title="3️⃣ 列表 reorder 性能更稳定"></a>3️⃣ 列表 reorder 性能更稳定</h2><p>对于：</p>
+<ul>
+<li>LazyColumn</li>
+<li>LazyRow</li>
+<li>HorizontalPager</li>
+<li>动态排序列表</li>
+</ul>
+<p>key 能避免大量不必要的重建。</p>
+<p>⚠️ 注意：</p>
+<p>key 并不是“加速 UI”，<br>它是“避免错误的重建”。</p>
+<hr>
+<h1 id="五、和-LazyColumn-key-的区别"><a href="#五、和-LazyColumn-key-的区别" class="headerlink" title="五、和 LazyColumn key 的区别"></a>五、和 LazyColumn key 的区别</h1><p>Lazy API 也有 key：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">LazyColumn <span class="token punctuation">{</span>
+    <span class="token function">items</span><span class="token punctuation">(</span>list<span class="token punctuation">,</span> key <span class="token operator">=</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span>id <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token operator">..</span><span class="token punctuation">.</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>区别：</p>
+<table>
+<thead>
+<tr>
+<th>key()</th>
+<th>LazyColumn key</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>普通 Compose 作用域</td>
+<td>Lazy 内部 diff 用</td>
+</tr>
+<tr>
+<td>手动控制 identity</td>
+<td>Lazy 自动 diff</td>
+</tr>
+<tr>
+<td>影响 remember</td>
+<td>影响 item 复用</td>
+</tr>
+</tbody></table>
+<p>本质机制相似，但作用域不同。</p>
+<hr>
+<h1 id="六、底层原理（进阶理解）"><a href="#六、底层原理（进阶理解）" class="headerlink" title="六、底层原理（进阶理解）"></a>六、底层原理（进阶理解）</h1><p>Compose 内部维护一个 SlotTable。</p>
+<p>默认：</p>
+<pre class="line-numbers language-none"><code class="language-none">identity = callPosition<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>使用 key 后：</p>
+<pre class="line-numbers language-none"><code class="language-none">identity = callPosition + keyHash<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>这会影响：</p>
+<ul>
+<li>remember slot</li>
+<li>状态恢复</li>
+<li>node 复用</li>
+<li>subtree 移动</li>
+</ul>
+<hr>
+<h1 id="七、什么时候必须使用-key"><a href="#七、什么时候必须使用-key" class="headerlink" title="七、什么时候必须使用 key()"></a>七、什么时候必须使用 key()</h1><p>✅ 动态列表<br>✅ 列表会 reorder<br>✅ item 内部有 remember<br>✅ item 内有动画<br>✅ Pager 页面切换<br>✅ 可折叠列表  </p>
+<p>❌ 静态 UI<br>❌ 结构固定且顺序不变  </p>
+<hr>
+<h1 id="八、key-vs-remember-key"><a href="#八、key-vs-remember-key" class="headerlink" title="八、key() vs remember(key)"></a>八、key() vs remember(key)</h1><p>很多人会混淆：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token function">key</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span>id<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token operator">..</span><span class="token punctuation">.</span> <span class="token punctuation">}</span>
+<span class="token function">remember</span><span class="token punctuation">(</span>item<span class="token punctuation">.</span>id<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token operator">..</span><span class="token punctuation">.</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>区别：</p>
+<table>
+<thead>
+<tr>
+<th>API</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>key()</td>
+<td>改变节点身份</td>
+</tr>
+<tr>
+<td>remember(key)</td>
+<td>控制值是否重算</td>
+</tr>
+</tbody></table>
+<p>它们解决的是完全不同的问题。</p>
+<hr>
+<h1 id="九、一句话总结"><a href="#九、一句话总结" class="headerlink" title="九、一句话总结"></a>九、一句话总结</h1><blockquote>
+<p>key() 的本质是告诉 Compose：<br>这个节点是谁，而不是它在第几个位置。</p>
+</blockquote>
+<p>它的价值不是“提升性能”，<br>而是：</p>
+<ul>
+<li>防止状态错位</li>
+<li>防止错误重组</li>
+<li>保证结构稳定性</li>
+<li>减少 subtree 重建</li>
+</ul>
+<hr>
+<h1 id="十、结语"><a href="#十、结语" class="headerlink" title="十、结语"></a>十、结语</h1><p>如果你在开发：</p>
+<ul>
+<li>股票/Trading 列表</li>
+<li>可折叠列表</li>
+<li>动态排序列表</li>
+<li>HorizontalPager</li>
+<li>带动画的 LazyColumn</li>
+</ul>
+<p>那么：</p>
+<blockquote>
+<p>key 不是优化选项，而是结构安全保证。</p>
+</blockquote>
+<p>当你理解 identity 的概念后，你就真正理解了 Compose 的重组机制。</p>
+]]></content>
+      <categories>
+        <category>Compose</category>
+      </categories>
+      <tags>
+        <tag>Compose</tag>
+      </tags>
+  </entry>
 </search>
