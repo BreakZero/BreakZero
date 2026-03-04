@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.1.1">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/siteicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/siteic%20%20on/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/siteicon/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/siteicon/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-center-simple.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"dejinlu.cn","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.22.0","exturl":false,"sidebar":{"position":"right","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12,"width":300},"copycode":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="乐歌升降桌突然显示 RST&#x2F;E07 错误，升降时一边桌脚不动？客服说要年后才能处理，我决定自己动手排查。从查询 E07&#x2F;E08 错误代码含义，到拆开桌脚逐一测试电机，最终通过手动找平和系统重置成功修复。记录这次完整的故障排查过程，希望能帮到遇到同样问题的朋友。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="升降桌故障排查记">
+<meta property="og:url" content="https://dejinlu.cn/posts/2026/03/02/fbb9923f/index.html">
+<meta property="og:site_name" content="D&amp;JのZONE">
+<meta property="og:description" content="乐歌升降桌突然显示 RST&#x2F;E07 错误，升降时一边桌脚不动？客服说要年后才能处理，我决定自己动手排查。从查询 E07&#x2F;E08 错误代码含义，到拆开桌脚逐一测试电机，最终通过手动找平和系统重置成功修复。记录这次完整的故障排查过程，希望能帮到遇到同样问题的朋友。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dejinlu.cn/img/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg">
+<meta property="og:image" content="https://dejinlu.cn/img/202603028BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg">
+<meta property="og:image" content="https://dejinlu.cn/img/20260302C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg">
+<meta property="og:image" content="https://dejinlu.cn/img/20260302379220D3-EF81-44D3-AFD3-1A9DA10B1F23.jpg">
+<meta property="article:published_time" content="2026-03-02T09:04:17.000Z">
+<meta property="article:modified_time" content="2026-03-04T05:10:42.302Z">
+<meta property="article:author" content="D&amp;J">
+<meta property="article:tag" content="随笔">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://dejinlu.cn/img/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg">
+
+
+<link rel="canonical" href="https://dejinlu.cn/posts/2026/03/02/fbb9923f/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://dejinlu.cn/posts/2026/03/02/fbb9923f/","path":"posts/2026/03/02/fbb9923f/","title":"升降桌故障排查记"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>升降桌故障排查记 | D&JのZONE</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?456d489b36d14e73cf4e36ecf2114b5d"></script>
+
+
+
+
+
+
+<link rel="dns-prefetch" href="https://blog-waline-git-main-breakzeros-projects.vercel.app">
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">D&JのZONE</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">知之者不如好之者，好之者不如乐之者</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8D%87%E9%99%8D%E6%A1%8C%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5%E8%AE%B0%EF%BC%9A%E4%B8%80%E6%AC%A1%E4%B8%8E-E07-E08-%E9%94%99%E8%AF%AF%E4%BB%A3%E7%A0%81%E7%9A%84%E2%80%9D%E8%BE%83%E9%87%8F%E2%80%9D"><span class="nav-number">1.</span> <span class="nav-text">升降桌故障排查记：一次与 E07&#x2F;E08 错误代码的”较量”</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E6%95%85%E9%9A%9C%E7%8E%B0%E8%B1%A1"><span class="nav-number">1.1.</span> <span class="nav-text">一、故障现象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%AE%A2%E6%9C%8D%E6%B2%9F%E9%80%9A%E4%B8%8E%E5%88%9D%E6%AD%A5%E5%88%A4%E6%96%AD"><span class="nav-number">1.2.</span> <span class="nav-text">二、客服沟通与初步判断</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%88%91%E7%9A%84%E6%8E%92%E6%9F%A5%E8%A7%A3%E5%86%B3%E8%BF%87%E7%A8%8B"><span class="nav-number">1.3.</span> <span class="nav-text">三、我的排查解决过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E6%AD%A5%EF%BC%9A%E6%9F%A5%E8%AF%A2%E8%B5%84%E6%96%99%EF%BC%8C%E6%90%9E%E6%B8%85%E6%A5%9A%E9%94%99%E8%AF%AF%E4%BB%A3%E7%A0%81%E5%90%AB%E4%B9%89"><span class="nav-number">1.3.1.</span> <span class="nav-text">第一步：查询资料，搞清楚错误代码含义</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E6%AD%A5%EF%BC%9A%E6%8B%86%E5%BC%80%E6%A1%8C%E8%84%9A%EF%BC%8C%E9%80%90%E4%B8%80%E6%A3%80%E6%9F%A5%E7%94%B5%E6%9C%BA"><span class="nav-number">1.3.2.</span> <span class="nav-text">第二步：拆开桌脚，逐一检查电机</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E4%B8%89%E6%AD%A5%EF%BC%9A%E6%89%8B%E5%8A%A8%E6%89%BE%E5%B9%B3%EF%BC%8C%E5%B0%86%E4%B8%A4%E6%A1%8C%E8%84%9A%E9%99%8D%E5%88%B0%E6%9C%80%E4%BD%8E"><span class="nav-number">1.3.3.</span> <span class="nav-text">第三步：手动找平，将两桌脚降到最低</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%AC%E5%9B%9B%E6%AD%A5%EF%BC%9A%E5%8F%8C%E7%94%B5%E6%9C%BA%E5%90%8C%E6%97%B6%E5%A4%8D%E4%BD%8D%EF%BC%8C%E9%97%AE%E9%A2%98%E8%A7%A3%E5%86%B3"><span class="nav-number">1.3.4.</span> <span class="nav-text">第四步：双电机同时复位，问题解决</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E7%BB%8F%E9%AA%8C%E6%80%BB%E7%BB%93"><span class="nav-number">1.4.</span> <span class="nav-text">四、经验总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E5%8E%9F%E7%90%86"><span class="nav-number">1.4.1.</span> <span class="nav-text">核心原理</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%99%E9%81%87%E5%88%B0%E5%90%8C%E6%A0%B7%E9%97%AE%E9%A2%98%E7%9A%84%E6%9C%8B%E5%8F%8B%E7%9A%84%E5%BB%BA%E8%AE%AE"><span class="nav-number">1.4.2.</span> <span class="nav-text">给遇到同样问题的朋友的建议</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%86%99%E5%9C%A8%E6%9C%80%E5%90%8E"><span class="nav-number">1.5.</span> <span class="nav-text">五、写在最后</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="D&J"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">D&J</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/BreakZero" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;BreakZero" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:dejin.po@gmail.com" title="E-Mail → mailto:dejin.po@gmail.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/MrL51907231" title="Twitter → https:&#x2F;&#x2F;twitter.com&#x2F;MrL51907231" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i></a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://dejinlu.cn/posts/2026/03/02/fbb9923f/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="D&J">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="D&JのZONE">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="升降桌故障排查记 | D&JのZONE">
+      <meta itemprop="description" content="乐歌升降桌突然显示 RST/E07 错误，升降时一边桌脚不动？客服说要年后才能处理，我决定自己动手排查。从查询 E07/E08 错误代码含义，到拆开桌脚逐一测试电机，最终通过手动找平和系统重置成功修复。记录这次完整的故障排查过程，希望能帮到遇到同样问题的朋友。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          升降桌故障排查记
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-03-02 17:04:17" itemprop="dateCreated datePublished" datetime="2026-03-02T17:04:17+08:00">2026-03-02</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Life/" itemprop="url" rel="index"><span itemprop="name">Life</span></a>
+        </span>
+    </span>
+
+  
+  
+  <span class="post-meta-item">
+    
+    <span class="post-meta-item-icon">
+      <i class="far fa-comment"></i>
+    </span>
+    <span class="post-meta-item-text">Waline：</span>
+  
+    <a title="waline" href="/posts/2026/03/02/fbb9923f/#waline" itemprop="discussionUrl">
+      <span class="post-comments-count waline-comment-count" data-path="/posts/2026/03/02/fbb9923f/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+            <div class="post-description">乐歌升降桌突然显示 RST/E07 错误，升降时一边桌脚不动？客服说要年后才能处理，我决定自己动手排查。从查询 E07/E08 错误代码含义，到拆开桌脚逐一测试电机，最终通过手动找平和系统重置成功修复。记录这次完整的故障排查过程，希望能帮到遇到同样问题的朋友。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="升降桌故障排查记：一次与-E07-E08-错误代码的”较量”"><a href="#升降桌故障排查记：一次与-E07-E08-错误代码的”较量”" class="headerlink" title="升降桌故障排查记：一次与 E07/E08 错误代码的”较量”"></a>升降桌故障排查记：一次与 E07/E08 错误代码的”较量”</h1><blockquote>
+<p><strong>前言</strong>：家里的乐歌升降桌突然罢工了，控制面板显示”RST”错误，升降时只有一边桌脚能动。联系客服后，对方建议年后等技术人员处理。但作为一个喜欢动手折腾的人，我决定自己先试试看。没想到，这一试还真把问题解决了。记录下这次排查过程，希望能帮到遇到同样问题的朋友。</p>
+</blockquote>
+<hr>
+<h2 id="一、故障现象"><a href="#一、故障现象" class="headerlink" title="一、故障现象"></a>一、故障现象</h2><p>事情发生在 2026 年 2 月的一个晚上。当我像往常一样按下升降桌的上升按钮时，桌子却只有左边桌脚能动，而且只能下降，不能上升，右边下降/上升都无法操作。低头一看，控制面板上赫然显示着 <strong>“RST”<strong>，</strong>“E07”</strong> 三个字母。</p>
+<p><img src="/img/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg" alt="联系客服反馈问题"></p>
+<p><em>图 1：控制面板显示 RST/E07/E08 错误代码</em></p>
+<p>尝试了几下，发现更奇怪的现象：<strong>升降操作时只有一边桌脚在动</strong>，另一边完全没反应。桌子就这样”瘸”了。</p>
+<hr>
+<h2 id="二、客服沟通与初步判断"><a href="#二、客服沟通与初步判断" class="headerlink" title="二、客服沟通与初步判断"></a>二、客服沟通与初步判断</h2><p>第一时间联系了乐歌京东自营店的客服。客服很热情，先是建议我把桌子降到最低位置，然后长按向下键 7 秒试试——这是常见的重置操作。但试了之后问题依旧。</p>
+<p>客服又建议我拆开桌腿挡板，把 M1 和 M2 电机线交叉插接，看看错误代码会不会变化，以此判断是哪个部件出了问题。</p>
+<p><img src="/img/202603028BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg" alt="客服建议拆开检查"></p>
+<p><em>图 2：客服建议交叉插线排查问题位置</em></p>
+<p>按照客服的指导操作后，错误代码果然变了——从 <strong>E07 变成了 E08</strong>。客服据此判断可能是控制盒有问题，但表示需要年后才能反馈技术部门核实和调配配件。</p>
+<p><img src="/img/20260302C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg" alt="错误代码变化反馈"></p>
+<p><em>图 3：交叉插线后错误代码从 E07 变为 E08</em></p>
+<p>“年后？那还得等多久？” 看着一边高一边低的桌子，我决定不等了，自己动手排查！</p>
+<hr>
+<h2 id="三、我的排查解决过程"><a href="#三、我的排查解决过程" class="headerlink" title="三、我的排查解决过程"></a>三、我的排查解决过程</h2><h3 id="第一步：查询资料，搞清楚错误代码含义"><a href="#第一步：查询资料，搞清楚错误代码含义" class="headerlink" title="第一步：查询资料，搞清楚错误代码含义"></a>第一步：查询资料，搞清楚错误代码含义</h3><p>既然错误代码能从 E07 变成 E08，说明代码本身是有意义的。我上网搜索了乐歌升降桌的错误代码说明：</p>
+<ul>
+<li><strong>E07</strong>：通常表示两桌脚高度不一致（左右不平衡）</li>
+<li><strong>E08</strong>：通常表示电机通信或连接问题</li>
+</ul>
+<p>这下心里有数了——<strong>问题的核心可能是两桌脚不等高导致的保护性锁定</strong>。</p>
+<h3 id="第二步：拆开桌脚，逐一检查电机"><a href="#第二步：拆开桌脚，逐一检查电机" class="headerlink" title="第二步：拆开桌脚，逐一检查电机"></a>第二步：拆开桌脚，逐一检查电机</h3><p>为了确认到底是电机坏了还是其他问题，我决定拆开桌脚逐一测试。</p>
+<ol>
+<li>拧开桌腿挡板的螺丝（客服说的”挡板拆开，螺丝拧松就行”）</li>
+<li>断开两个电机的连接线</li>
+<li>分别单独给每个电机通电测试</li>
+</ol>
+<p><strong>测试结果：两个电机都能正常运转！</strong> 这说明电机本身没有问题，问题出在同步控制上。</p>
+<h3 id="第三步：手动找平，将两桌脚降到最低"><a href="#第三步：手动找平，将两桌脚降到最低" class="headerlink" title="第三步：手动找平，将两桌脚降到最低"></a>第三步：手动找平，将两桌脚降到最低</h3><p>既然电机没问题，那 E07（两桌脚不等高）就是症结所在了。</p>
+<p>我观察到：由于之前升降时只有一边动，现在两边桌脚的高度差距很大。于是我用那个能正常下降的电机，<strong>把两个桌脚都手动降到了最低位置</strong>——这样两边就处于同一基准高度了。</p>
+<h3 id="第四步：双电机同时复位，问题解决"><a href="#第四步：双电机同时复位，问题解决" class="headerlink" title="第四步：双电机同时复位，问题解决"></a>第四步：双电机同时复位，问题解决</h3><p>两个桌脚都降到最低后，我重新把两个电机都接回控制盒，然后按照说明书上的重置方法：</p>
+<blockquote>
+<p><strong>长按下降键约 7 秒</strong></p>
+</blockquote>
+<p>奇迹发生了！控制面板上的错误代码消失了，重新显示出了正常的数字高度！试着按上升、下降键，<strong>两边桌脚终于同步运动了</strong>！</p>
+<p><img src="/img/20260302379220D3-EF81-44D3-AFD3-1A9DA10B1F23.jpg" alt="问题解决后反馈客服"></p>
+<p><em>图 4：问题解决后告知客服</em></p>
+<hr>
+<h2 id="四、经验总结"><a href="#四、经验总结" class="headerlink" title="四、经验总结"></a>四、经验总结</h2><p>这次故障排查让我收获颇丰，总结几点经验：</p>
+<table>
+<thead>
+<tr>
+<th>排查步骤</th>
+<th>关键操作</th>
+<th>目的</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1. 查代码</td>
+<td>搜索 E07/E08 含义</td>
+<td>确定问题方向</td>
+</tr>
+<tr>
+<td>2. 测电机</td>
+<td>单独通电测试</td>
+<td>排除硬件故障</td>
+</tr>
+<tr>
+<td>3. 找平</td>
+<td>将两边都降到最低</td>
+<td>恢复基准高度</td>
+</tr>
+<tr>
+<td>4. 重置</td>
+<td>长按下降键 7 秒</td>
+<td>系统重新校准</td>
+</tr>
+</tbody></table>
+<h3 id="核心原理"><a href="#核心原理" class="headerlink" title="核心原理"></a>核心原理</h3><p>升降桌的 E07 错误是一种<strong>保护机制</strong>——当系统检测到两边桌脚高度差超过安全阈值时，会自动锁定防止进一步损坏。解决的关键就是让两边回到同一高度，然后执行重置操作让系统重新校准。</p>
+<h3 id="给遇到同样问题的朋友的建议"><a href="#给遇到同样问题的朋友的建议" class="headerlink" title="给遇到同样问题的朋友的建议"></a>给遇到同样问题的朋友的建议</h3><ol>
+<li><strong>先查错误代码</strong>：了解问题本质是解决问题的第一步</li>
+<li><strong>别急着换配件</strong>：很多时候不是硬件坏了，而是需要重新校准</li>
+<li><strong>动手前先观察</strong>：像我这次，发现”一边能动一边不能动”这个关键现象，就找到了突破口</li>
+<li><strong>善用客服资源</strong>：即使最后自己解决了，客服提供的排查思路也很有价值</li>
+</ol>
+<hr>
+<h2 id="五、写在最后"><a href="#五、写在最后" class="headerlink" title="五、写在最后"></a>五、写在最后</h2><p>这次经历让我深刻体会到：<strong>很多问题看似复杂，但只要理清思路、逐步排查，往往能找到简单的解决方案</strong>。当然，如果电机真的坏了，或者控制盒确实故障，那该换还得换。但在那之前，不妨先自己动手试试——说不定就像我这样，省下了等待配件的时间，还收获了一次满满的成就感。</p>
+<p>希望这篇随笔能帮到遇到同样问题的朋友。如果你也有类似的动手经历，欢迎交流分享！</p>
+<hr>
+<p><em>本文记录于 2026 年 3 月</em></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag"># 随笔</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/2026/02/28/ec0aeab/" rel="prev" title="深入理解Jetpack Compose key() {} 方法">
+                  <i class="fa fa-angle-left"></i> 深入理解Jetpack Compose key() {} 方法
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="waline"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2021 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">D&J</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/sidebar.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.4.0/mermaid.min.js","integrity":"sha256-G8ouPAnw4zzMbnAenHnVz6h9XpKbNdOkrqTh7AadyHs="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.5.0/wavedrom.min.js","integrity":"sha256-INLAoJc6quTNfiMWkGZniYO2cxE8mHpddnLow1m6RFs="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.5.0/skins/default.js","integrity":"sha256-fduc/Zszk5ezWws2uInY/ALWVmIrmV6VTgXbsYSReFI="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+
+  
+
+
+
+
+<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-CN","enable":true,"serverURL":"https://blog-waline-git-main-breakzeros-projects.vercel.app","cssUrl":"https://unpkg.com/@waline/client@v2/dist/waline.css","commentCount":false,"pageview":false,"dark":"auto","imageUploader":false,"copyright":false,"search":false,"meta":["nick","mail"],"requiredMeta":["nick"],"el":"#waline","comment":true,"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","path":"/posts/2026/03/02/fbb9923f/"}</script>
+<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css">
+<script>
+document.addEventListener('page:loaded', () => {
+  NexT.utils.loadComments(CONFIG.waline.el).then(() =>
+    NexT.utils.getScript(CONFIG.waline.libUrl, { condition: window.Waline })
+  ).then(() => 
+    Waline.init(Object.assign({}, CONFIG.waline,{ el: document.querySelector(CONFIG.waline.el) }))
+  );
+});
+</script>
+
+<script async>window.onload=function(){var a=document.createElement('script'),b=document.getElementsByTagName('script')[0];a.type='text/javascript',a.async=!0,a.src='/sw-register.js?v='+Date.now(),b.parentNode.insertBefore(a,b)};</script></body></html>
