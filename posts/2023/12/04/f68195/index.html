@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/siteicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/siteic%20%20on/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/siteicon/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/siteicon/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-center-simple.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"dejinlu.cn","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.22.0","exturl":false,"sidebar":{"position":"right","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12,"width":300},"copycode":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="Jetpack Compose 中 remember 与 rememberSaveable 的差异：前者只在组合内保持状态，后者可跨进程&#x2F;Activity 重建恢复。结合 Tab 切换导致 scale 被重置的案例说明原理与选型。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="remember VS rememberSaveable">
+<meta property="og:url" content="https://dejinlu.cn/posts/2023/12/04/f68195/index.html">
+<meta property="og:site_name" content="D&amp;JのZONE">
+<meta property="og:description" content="Jetpack Compose 中 remember 与 rememberSaveable 的差异：前者只在组合内保持状态，后者可跨进程&#x2F;Activity 重建恢复。结合 Tab 切换导致 scale 被重置的案例说明原理与选型。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dejinlu.cn/img/20231204/remember.gif">
+<meta property="og:image" content="https://dejinlu.cn/img/20231204/remember_log.jpg">
+<meta property="og:image" content="https://dejinlu.cn/img/20231204/remember_log1.jpg">
+<meta property="article:published_time" content="2023-12-04T03:14:00.000Z">
+<meta property="article:modified_time" content="2026-03-15T08:39:12.930Z">
+<meta property="article:author" content="D&amp;J">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="Jetpack Compose">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://dejinlu.cn/img/20231204/remember.gif">
+
+
+<link rel="canonical" href="https://dejinlu.cn/posts/2023/12/04/f68195/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://dejinlu.cn/posts/2023/12/04/f68195/","path":"posts/2023/12/04/f68195/","title":"remember VS rememberSaveable"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>remember VS rememberSaveable | D&JのZONE</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?456d489b36d14e73cf4e36ecf2114b5d"></script>
+
+
+
+
+
+
+<link rel="dns-prefetch" href="https://blog-waline-git-main-breakzeros-projects.vercel.app">
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">D&JのZONE</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">知之者不如好之者，好之者不如乐之者</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E7%8E%B0%E8%B1%A1"><span class="nav-number">2.</span> <span class="nav-text">一、问题现象</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E4%BB%A3%E7%A0%81%E7%89%87%E6%AE%B5"><span class="nav-number">2.1.</span> <span class="nav-text">相关代码片段</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">二、原理解析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E5%8F%AF%E7%BB%84%E5%90%88%E9%A1%B9%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="nav-number">3.1.</span> <span class="nav-text">2.1 可组合项的生命周期</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-remember"><span class="nav-number">3.2.</span> <span class="nav-text">2.2 remember {}</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-rememberSaveable"><span class="nav-number">3.3.</span> <span class="nav-text">2.3 rememberSaveable {}</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E9%AA%8C%E8%AF%81%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.</span> <span class="nav-text">三、验证实验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%BB%B6%E4%BC%B8%EF%BC%9A%E7%A6%BB%E5%BC%80%E5%B1%8F%E5%B9%95-%E2%89%A0-%E9%87%8D%E5%BB%BA"><span class="nav-number">5.</span> <span class="nav-text">四、延伸：离开屏幕 ≠ 重建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9"><span class="nav-number">6.</span> <span class="nav-text">五、如何选择</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="D&J"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">D&J</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/BreakZero" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;BreakZero" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:dejin.po@gmail.com" title="E-Mail → mailto:dejin.po@gmail.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/MrL51907231" title="Twitter → https:&#x2F;&#x2F;twitter.com&#x2F;MrL51907231" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i></a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://dejinlu.cn/posts/2023/12/04/f68195/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="D&J">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="D&JのZONE">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="remember VS rememberSaveable | D&JのZONE">
+      <meta itemprop="description" content="Jetpack Compose 中 remember 与 rememberSaveable 的差异：前者只在组合内保持状态，后者可跨进程/Activity 重建恢复。结合 Tab 切换导致 scale 被重置的案例说明原理与选型。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          remember VS rememberSaveable
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2023-12-04 11:14:00" itemprop="dateCreated datePublished" datetime="2023-12-04T11:14:00+08:00">2023-12-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Technical/" itemprop="url" rel="index"><span itemprop="name">Technical</span></a>
+        </span>
+    </span>
+
+  
+  
+  <span class="post-meta-item">
+    
+    <span class="post-meta-item-icon">
+      <i class="far fa-comment"></i>
+    </span>
+    <span class="post-meta-item-text">Waline：</span>
+  
+    <a title="waline" href="/posts/2023/12/04/f68195/#waline" itemprop="discussionUrl">
+      <span class="post-comments-count waline-comment-count" data-path="/posts/2023/12/04/f68195/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+            <div class="post-description">Jetpack Compose 中 remember 与 rememberSaveable 的差异：前者只在组合内保持状态，后者可跨进程/Activity 重建恢复。结合 Tab 切换导致 scale 被重置的案例说明原理与选型。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在 Jetpack Compose 中，我们常需要「记住」某个计算结果，避免在重组时重复计算以提升性能。Compose 提供了两种常用方式：<code>remember {}</code> 和 <code>rememberSaveable {}</code>。二者都能在重组时复用值，但<strong>持久化范围不同</strong>，选错会导致状态在特定场景下被重置。本文结合一次实际问题和文档/实验，说明两者的区别与使用场景。</p>
+<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>页面中有两个主要部分：<strong>Dashboard</strong>（根据滚动做缩放动画）和 <strong>Asset List</strong>（可滚动列表）。用 <code>remember {}</code> 保存 scale 状态时：</p>
+<ul>
+<li><strong>快速切换 Tab</strong>：表现正常，scale 保持。</li>
+<li><strong>在其他 Tab 停留一段时间再切回</strong>：scale 被重置，Dashboard 突然放大。</li>
+</ul>
+<p><img src="/img/20231204/remember.gif" alt="Recording" title="remember"></p>
+<p>改为 <code>rememberSaveable {}</code> 后，无论如何切换 Tab，返回时 Dashboard 都能保持之前的 scale，符合预期。</p>
+<h3 id="相关代码片段"><a href="#相关代码片段" class="headerlink" title="相关代码片段"></a>相关代码片段</h3><pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 使用 rememberSaveable 保持 scale，避免离开屏幕后再进入时被重置</span>
+<span class="token keyword">var</span> scale <span class="token keyword">by</span> rememberSaveable <span class="token punctuation">{</span>
+    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">val</span> nestedScrollConnection <span class="token operator">=</span> remember <span class="token punctuation">{</span> <span class="token operator">..</span><span class="token punctuation">.</span> <span class="token punctuation">}</span>
+<span class="token function">Box</span><span class="token punctuation">(</span>modifier <span class="token operator">=</span> modifier<span class="token punctuation">.</span><span class="token function">nestedScroll</span><span class="token punctuation">(</span>nestedScrollConnection<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">DashboardView</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> Modifier
+            <span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">scale</span><span class="token punctuation">(</span>scale<span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarHeightRange<span class="token punctuation">.</span>last <span class="token operator">*</span> <span class="token punctuation">(</span>scale <span class="token operator">-</span> <span class="token number">1.0f</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        onEvent <span class="token operator">=</span> onEvent
+    <span class="token punctuation">)</span>
+    <span class="token function">LazyColumn</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> Modifier
+            <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarState<span class="token punctuation">.</span>height <span class="token operator">+</span> toolbarState<span class="token punctuation">.</span>offset <span class="token punctuation">}</span>
+            <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>MaterialTheme<span class="token punctuation">.</span>colorScheme<span class="token punctuation">.</span>background<span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">shadow</span><span class="token punctuation">(</span>elevation <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> shape <span class="token operator">=</span> <span class="token function">RoundedCornerShape</span><span class="token punctuation">(</span>topEnd <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> topStart <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">pointerInput</span><span class="token punctuation">(</span>Unit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">detectTapGestures</span><span class="token punctuation">(</span>onPress <span class="token operator">=</span> <span class="token punctuation">{</span> scope<span class="token punctuation">.</span>coroutineContext<span class="token punctuation">.</span><span class="token function">cancelChildren</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        verticalArrangement <span class="token operator">=</span> Arrangement<span class="token punctuation">.</span><span class="token function">spacedBy</span><span class="token punctuation">(</span><span class="token number">12</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        state <span class="token operator">=</span> listState
+    <span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">items</span><span class="token punctuation">(</span>uiState<span class="token punctuation">.</span>tokens<span class="token punctuation">,</span> key <span class="token operator">=</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span>token<span class="token punctuation">.</span>id <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">TokenItemView</span><span class="token punctuation">(</span>extraToken <span class="token operator">=</span> it<span class="token punctuation">,</span> onEvent <span class="token operator">=</span> onEvent<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="二、原理解析"><a href="#二、原理解析" class="headerlink" title="二、原理解析"></a>二、原理解析</h2><h3 id="2-1-可组合项的生命周期"><a href="#2-1-可组合项的生命周期" class="headerlink" title="2.1 可组合项的生命周期"></a>2.1 可组合项的生命周期</h3><p>根据官方文档 <a target="_blank" rel="noopener" href="https://developer.android.com/jetpack/compose/lifecycle">Lifecycle of composables</a>，可组合项的生命周期可分为三阶段：</p>
+<ul>
+<li><strong>进入组合（Enter Composition）</strong></li>
+<li><strong>重组（Recomposition）</strong></li>
+<li><strong>退出组合（Exit Composition）</strong></li>
+</ul>
+<p>离开当前页面（如切换 Tab）时，该页面的可组合项会<strong>退出组合</strong>；再次进入时则会<strong>重新进入组合</strong>，相当于新一轮生命周期。</p>
+<h3 id="2-2-remember"><a href="#2-2-remember" class="headerlink" title="2.2 remember {}"></a>2.2 remember {}</h3><p>对 <code>remember {}</code> 的文档说明大致如下：</p>
+<blockquote>
+<p>Remember the value produced by calculation. calculation will only be evaluated during the composition. Recomposition will always return the value produced by composition.<br>即：值在<strong>进入组合时</strong>由 block 计算得到，<strong>重组时</strong>直接返回该值，不会重新计算。</p>
+</blockquote>
+<p>因此：</p>
+<ul>
+<li><strong>初次进入组合</strong>：执行 block，计算并保存值。</li>
+<li><strong>重组</strong>：直接返回已保存的值，不执行 block。</li>
+<li><strong>退出组合后再次进入</strong>：视为新的组合，block <strong>会再次执行</strong>，状态会被重新初始化。</li>
+</ul>
+<p>这就是「在其他 Tab 停留一段时间再切回」时 scale 被重置的原因：页面先退出组合，再进入时 <code>remember { mutableFloatStateOf(1.0f) }</code> 重新执行，scale 又变回 1.0。若切换很快，组合尚未被回收，就不会触发重新计算，看起来就「正常」。</p>
+<h3 id="2-3-rememberSaveable"><a href="#2-3-rememberSaveable" class="headerlink" title="2.3 rememberSaveable {}"></a>2.3 rememberSaveable {}</h3><p>官方对 <a target="_blank" rel="noopener" href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/saveable/package-summary#rememberSaveable(kotlin.Array,androidx.compose.runtime.saveable.Saver,kotlin.String,kotlin.Function0)">rememberSaveable</a> 的说明：</p>
+<blockquote>
+<p>与 <code>remember {}</code> 类似，但存储的值会在 <strong>Activity 或进程重建后</strong> 仍然保留，基于 Android 的 <code>SavedInstanceState</code> 机制。</p>
+</blockquote>
+<p>要点：</p>
+<ul>
+<li><p>默认使用 <code>autoSaver()</code> 将值写入 Bundle；也可自定义 <code>Saver</code>。</p>
+</li>
+<li><p>仅支持可放入 Bundle 的类型（如 Int、String、Float 等）。</p>
+</li>
+<li><p>若保存的是自定义类型（如 data class），必须提供 <code>Saver</code> 实现，否则会报错：</p>
+<pre class="line-numbers language-none"><code class="language-none">java.lang.IllegalArgumentException: MutableState containing ... cannot be saved using the current SaveableStateRegistry.
+The default implementation only supports types which can be stored inside the Bundle.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre></li>
+</ul>
+<p>因此，<strong>离开屏幕再进入</strong>时，只要没有发生 Activity/进程重建，<code>rememberSaveable</code> 仍会从 SaveableStateRegistry 里恢复之前保存的值，scale 得以保留。</p>
+<h2 id="三、验证实验"><a href="#三、验证实验" class="headerlink" title="三、验证实验"></a>三、验证实验</h2><p>用简单日志验证「退出组合后再进入会重新计算」：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">var</span> scale <span class="token keyword">by</span> remember <span class="token punctuation">{</span>
+    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== re-calculate"</span></span><span class="token punctuation">)</span>
+    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+<span class="token function">DisposableEffect</span><span class="token punctuation">(</span>key1 <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    onDispose <span class="token punctuation">{</span> <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== onDispose"</span></span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><code>DisposableEffect(key1 = null)</code> 保证只有在<strong>退出组合</strong>时才会执行 <code>onDispose</code>。</p>
+<ul>
+<li>**使用 <code>remember {}</code>**：第一次进入打印 <code>re-calculate</code>；切到其他 Tab 停留后，先打印 <code>onDispose</code>，再切回来会再次打印 <code>re-calculate</code>，scale 被重置。<br><img src="/img/20231204/remember_log.jpg" alt="Logger" title="remember_log"></li>
+<li>**改用 <code>rememberSaveable {}</code>**：只有第一次进入时打印一次 <code>re-calculate</code>，之后切 Tab 再回来也不会再打印，说明一直用的是已保存的值。<br><img src="/img/20231204/remember_log1.jpg" alt="Logger1" title="remember_log1"></li>
+</ul>
+<h2 id="四、延伸：离开屏幕-≠-重建"><a href="#四、延伸：离开屏幕-≠-重建" class="headerlink" title="四、延伸：离开屏幕 ≠ 重建"></a>四、延伸：离开屏幕 ≠ 重建</h2><p><a target="_blank" rel="noopener" href="https://jetc.dev/slack/2021-04-13-when-do-we-use-remembersaveable.html">Jetpack Compose 相关讨论</a> 里有一句：**”Composable leaving the screen is not recreation”**（可组合项离开屏幕并不等于重建）。</p>
+<p>在 Compose 中：</p>
+<ul>
+<li>组件离开屏幕会触发 <code>onDispose</code>，生命周期结束。</li>
+<li>再次进入屏幕会重新组合，相当于新的生命周期，<code>remember {}</code> 会重新计算。</li>
+</ul>
+<p>所以「离开屏幕」和「Configuration 变化导致 Activity 重建」是两回事：前者不会触发 SavedInstanceState 流程，只会让可组合项退出组合；后者才会触发进程/Activity 重建，此时才用到 <code>rememberSaveable</code> 的持久化。</p>
+<p>常见「离开屏幕」场景包括：</p>
+<ol>
+<li><strong>Navigation 跳转 / Tab 切换</strong>（如本文案例）</li>
+<li><strong>列表滑动</strong>：Item 滑出视口时会退出组合，<code>onDispose</code> 会执行</li>
+</ol>
+<p>例如 LazyColumn 的 Item 配合 <code>DisposableEffect</code> 可以观察到滑出时打印；若需要<strong>跨页面或重新进入页面时恢复列表滚动位置</strong>，应使用基于 <code>rememberSaveable</code> 的 <code>rememberLazyListState</code> 等 API。</p>
+<h2 id="五、如何选择"><a href="#五、如何选择" class="headerlink" title="五、如何选择"></a>五、如何选择</h2><table>
+<thead>
+<tr>
+<th>需求</th>
+<th>推荐</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>状态只需在<strong>重组</strong>过程中保持</td>
+<td><code>remember {}</code></td>
+</tr>
+<tr>
+<td>状态需要在 <strong>Activity/进程重建</strong>（如旋转、内存回收）后恢复</td>
+<td><code>rememberSaveable {}</code></td>
+</tr>
+<tr>
+<td>状态需要<strong>跨页面</strong>或更复杂的作用域</td>
+<td>ViewModel 等；若仅在单页内且需应对「离开再进入」，<code>rememberSaveable {}</code> 仍适用</td>
+</tr>
+</tbody></table>
+<p>理解「进入/重组/退出组合」与「SavedInstanceState 重建」的差异后，就能在开发中按场景选用 <code>remember</code> 或 <code>rememberSaveable</code>，避免状态被意外重置。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Android/" rel="tag"># Android</a>
+              <a href="/tags/Jetpack-Compose/" rel="tag"># Jetpack Compose</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/2023/08/13/bb96b1c7/" rel="prev" title="iOS通过Container读取文件问题笔录">
+                  <i class="fa fa-angle-left"></i> iOS通过Container读取文件问题笔录
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/2026/02/27/4ae1fc92/" rel="next" title="Jetpack Compose Performance Tips Every Developer Should Know">
+                  Jetpack Compose Performance Tips Every Developer Should Know <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="waline"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2021 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">D&J</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/sidebar.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.4.0/mermaid.min.js","integrity":"sha256-G8ouPAnw4zzMbnAenHnVz6h9XpKbNdOkrqTh7AadyHs="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.5.0/wavedrom.min.js","integrity":"sha256-INLAoJc6quTNfiMWkGZniYO2cxE8mHpddnLow1m6RFs="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.5.0/skins/default.js","integrity":"sha256-fduc/Zszk5ezWws2uInY/ALWVmIrmV6VTgXbsYSReFI="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+
+  
+
+
+
+
+<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-CN","enable":true,"serverURL":"https://blog-waline-git-main-breakzeros-projects.vercel.app","cssUrl":"https://unpkg.com/@waline/client@v2/dist/waline.css","commentCount":false,"pageview":false,"dark":"auto","imageUploader":false,"copyright":false,"search":false,"meta":["nick","mail"],"requiredMeta":["nick"],"el":"#waline","comment":true,"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","path":"/posts/2023/12/04/f68195/"}</script>
+<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css">
+<script>
+document.addEventListener('page:loaded', () => {
+  NexT.utils.loadComments(CONFIG.waline.el).then(() =>
+    NexT.utils.getScript(CONFIG.waline.libUrl, { condition: window.Waline })
+  ).then(() => 
+    Waline.init(Object.assign({}, CONFIG.waline,{ el: document.querySelector(CONFIG.waline.el) }))
+  );
+});
+</script>
+
+<script async>window.onload=function(){var a=document.createElement('script'),b=document.getElementsByTagName('script')[0];a.type='text/javascript',a.async=!0,a.src='/sw-register.js?v='+Date.now(),b.parentNode.insertBefore(a,b)};</script></body></html>
