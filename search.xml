@@ -1,6 +1,542 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证</title>
+    <url>/posts/2026/04/09/4dc832d4/</url>
+    <content><![CDATA[<h1 id="从0开始实操MCP：用TypeScript接入CoinGecko，并在Inspector-Codex中验证"><a href="#从0开始实操MCP：用TypeScript接入CoinGecko，并在Inspector-Codex中验证" class="headerlink" title="从0开始实操MCP：用TypeScript接入CoinGecko，并在Inspector/Codex中验证"></a>从0开始实操MCP：用TypeScript接入CoinGecko，并在Inspector/Codex中验证</h1><p>如果你已经看过不少 MCP 介绍，却始终没有真正跑通过一个完整例子，那么这篇文章会更适合你。</p>
+<p>这篇文章不讲太多抽象概念，也不一开始堆很多工具，而是只做一件事：</p>
+<p><strong>从零写一个最小的 TypeScript MCP Server，接入 CoinGecko 的真实市场数据接口，并在 Inspector 和 Codex 中完成验证。</strong></p>
+<p>整个过程只围绕一个工具展开：<code>fetch_market_data</code>。</p>
+<p>你可以把它理解成一条完整的入门链路：</p>
+<ul>
+<li>先理解 MCP 在这个案例里到底是什么</li>
+<li>再动手写一个最小可运行的 MCP Server</li>
+<li>然后接入真实 API</li>
+<li>最后验证这个工具确实能被宿主发现和调用</li>
+</ul>
+<p>这样学的好处是，你不会停留在“知道 MCP 是什么”，而是能真正完成一次从开发到验证的闭环。</p>
+<p>本文配套示例代码已上传 GitHub，方便你边看边对照实践：</p>
+<ul>
+<li>GitHub 仓库：<a href="https://github.com/BreakZero/mcp-tooling-example">mcp-tooling-example</a></li>
+</ul>
+<hr>
+<h2 id="一、先明确目标：这篇文章会带你完成什么"><a href="#一、先明确目标：这篇文章会带你完成什么" class="headerlink" title="一、先明确目标：这篇文章会带你完成什么"></a>一、先明确目标：这篇文章会带你完成什么</h2><p>学 MCP 时，很多人最容易卡住的地方，不是概念看不懂，而是<strong>不知道一个最小可运行项目到底长什么样</strong>。</p>
+<p>所以先把本文的目标说清楚。读完并跑通后，你会完成下面几件事：</p>
+<ol>
+<li>理解 MCP 在这个例子里的定位</li>
+<li>用 TypeScript 写一个最小 MCP Server</li>
+<li>注册一个可调用的工具：<code>fetch_market_data</code></li>
+<li>让这个工具真正调用 CoinGecko API 获取市场价格</li>
+<li>用 MCP Inspector 验证工具是否可用</li>
+<li>把它接入 Codex CLI，验证宿主确实能够调用它</li>
+</ol>
+<p>也就是说，这不是一个只打印 <code>hello world</code> 的示例，而是一个<strong>真正有外部数据输入、有工具注册、有调试验证的完整入门项目</strong>。</p>
+<hr>
+<h2 id="二、先别急着写代码：MCP-在这个例子里到底是什么"><a href="#二、先别急着写代码：MCP-在这个例子里到底是什么" class="headerlink" title="二、先别急着写代码：MCP 在这个例子里到底是什么"></a>二、先别急着写代码：MCP 在这个例子里到底是什么</h2><p>在开始搭项目之前，先把最关键的问题讲清楚：</p>
+<p><strong>MCP 在这里不是业务逻辑本身，而是一层标准化的工具协议。</strong></p>
+<p>你可以先看这条链路：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">Codex / ChatGPT / Inspector
+    -&gt; MCP Client
+    -&gt; 你的 MCP Server
+    -&gt; 你的 TypeScript 逻辑
+    -&gt; CoinGecko API<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这里面每一层的职责都不一样：</p>
+<ul>
+<li><p><strong>宿主（Host）</strong>：比如 Codex、Inspector、ChatGPT<br>它们负责发现工具、调用工具、消费结果</p>
+</li>
+<li><p><strong>MCP Client</strong>：负责按 MCP 协议和 Server 通信</p>
+</li>
+<li><p><strong>你的 MCP Server</strong>：负责把你的能力暴露成标准工具</p>
+</li>
+<li><p><strong>你的业务逻辑</strong>：真正做事的部分，比如“根据 symbol 拉取市场价格”</p>
+</li>
+<li><p><strong>第三方 API</strong>：比如 CoinGecko，提供真实数据来源</p>
+</li>
+</ul>
+<p>所以，本文里你真正要实现的核心能力，其实是：</p>
+<p><strong>输入一个币种 symbol，比如 BTC，返回对应的实时市场数据。</strong></p>
+<p>而 MCP 做的事，是让这个能力能够被宿主以标准方式调用。</p>
+<p>这点对新手非常重要。因为很多人一开始会把 MCP 和 Agent、业务逻辑、应用框架混在一起。其实更准确的理解应该是：</p>
+<p><strong>MCP 解决的是“能力如何暴露和被调用”，不是“业务本身如何实现”。</strong></p>
+<hr>
+<h2 id="三、为什么这篇文章先从-STDIO-开始，而不是-HTTP"><a href="#三、为什么这篇文章先从-STDIO-开始，而不是-HTTP" class="headerlink" title="三、为什么这篇文章先从 STDIO 开始，而不是 HTTP"></a>三、为什么这篇文章先从 STDIO 开始，而不是 HTTP</h2><p>MCP 支持不同传输方式，但对新手来说，最适合入门的通常不是远程 HTTP，而是本地 <strong>STDIO</strong>。</p>
+<p>原因很简单，STDIO 足够直接：</p>
+<ul>
+<li>不需要先搭 Web 服务</li>
+<li>不需要处理端口和路由</li>
+<li>不需要 HTTPS 或公网暴露</li>
+<li>本地调试链路更短，更容易定位问题</li>
+</ul>
+<p>也就是说，你现在最需要的是<strong>先把一个工具从“写出来”到“被调用成功”跑通</strong>，而不是一上来解决部署问题。</p>
+<p>所以这篇文章的策略是：</p>
+<p><strong>先用 STDIO 完成最小闭环，再考虑远程服务化。</strong></p>
+<p>这个顺序对初学者更稳，也更容易建立对 MCP 的直觉。</p>
+<hr>
+<h2 id="四、准备工作"><a href="#四、准备工作" class="headerlink" title="四、准备工作"></a>四、准备工作</h2><p>开始之前，先准备好本地环境：</p>
+<ul>
+<li>Node.js 18 或更高版本</li>
+<li>npm</li>
+<li>一个 CoinGecko API Key</li>
+<li>已安装 Codex CLI（后文用于扩展验证，可选）</li>
+</ul>
+<h3 id="1-获取-CoinGecko-API-Key"><a href="#1-获取-CoinGecko-API-Key" class="headerlink" title="1. 获取 CoinGecko API Key"></a>1. 获取 CoinGecko API Key</h3><p>CoinGecko 提供 API Key 认证。常见方式是通过请求头传递：</p>
+<ul>
+<li>Demo Key：<code>x-cg-demo-api-key</code></li>
+<li>Pro Key：<code>x-cg-pro-api-key</code></li>
+</ul>
+<p>本文先使用 Demo Key 即可。因为我们的目标是跑通 MCP 链路，不是做高并发或生产级接入。</p>
+<hr>
+<h2 id="五、创建项目"><a href="#五、创建项目" class="headerlink" title="五、创建项目"></a>五、创建项目</h2><p>先初始化一个最小项目：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> mcp-coingecko-demo
+<span class="token builtin class-name">cd</span> mcp-coingecko-demo
+<span class="token function">npm</span> init <span class="token parameter variable">-y</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>安装依赖：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> <span class="token function">install</span> @modelcontextprotocol/sdk zod dotenv
+<span class="token function">npm</span> <span class="token function">install</span> <span class="token parameter variable">-D</span> typescript tsx @types/node<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>初始化 TypeScript 配置：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">npx tsc <span class="token parameter variable">--init</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>到这里，你就有了一个可以写 MCP Server 的基础项目。</p>
+<hr>
+<h2 id="六、先看项目结构：为什么这样拆分"><a href="#六、先看项目结构：为什么这样拆分" class="headerlink" title="六、先看项目结构：为什么这样拆分"></a>六、先看项目结构：为什么这样拆分</h2><p>为了让示例保持简单，同时又不过度把所有逻辑塞进一个文件，这里建议先用下面这套结构：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">mcp-coingecko-demo/
+  package.json
+  .env
+  src/
+    server.ts
+    domain/
+      market.ts<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>各文件职责如下：</p>
+<ul>
+<li><p><code>src/server.ts</code><br>MCP Server 入口，负责注册工具、定义输入输出、连接传输层</p>
+</li>
+<li><p><code>src/domain/market.ts</code><br>业务逻辑层，负责调用 CoinGecko API，处理市场数据</p>
+</li>
+</ul>
+<p>这样拆的好处很明显：</p>
+<ol>
+<li><p><strong>协议层和业务层分开</strong><br>你能更清楚地理解：什么是 MCP，什么是业务逻辑</p>
+</li>
+<li><p><strong>后续更容易扩展</strong><br>将来无论接 CLI、HTTP、ChatGPT，甚至测试脚本，都可以复用 <code>domain</code> 层</p>
+</li>
+<li><p><strong>更符合真实项目演进方式</strong><br>哪怕这是一个入门项目，也最好从一开始建立基本的分层意识</p>
+</li>
+</ol>
+<p>对新手来说，这种拆分不是“为了架构而架构”，而是为了以后少踩坑。</p>
+<hr>
+<h2 id="七、配置环境变量"><a href="#七、配置环境变量" class="headerlink" title="七、配置环境变量"></a>七、配置环境变量</h2><p>在项目根目录创建 <code>.env</code> 文件：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token assign-left variable">COINGECKO_API_KEY</span><span class="token operator">=</span>your_demo_key_here
+<span class="token assign-left variable">COINGECKO_API_PLAN</span><span class="token operator">=</span>demo<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>这两个环境变量分别表示：</p>
+<ul>
+<li><code>COINGECKO_API_KEY</code>：你的 CoinGecko API Key</li>
+<li><code>COINGECKO_API_PLAN</code>：当前使用的套餐类型，本文先填 <code>demo</code></li>
+</ul>
+<p>这样做的意义是把配置和代码分开。以后如果你切换到 Pro Key，或者在不同环境使用不同配置，就不用改业务代码。</p>
+<hr>
+<h2 id="八、先写业务逻辑：把“获取市场数据”这件事做出来"><a href="#八、先写业务逻辑：把“获取市场数据”这件事做出来" class="headerlink" title="八、先写业务逻辑：把“获取市场数据”这件事做出来"></a>八、先写业务逻辑：把“获取市场数据”这件事做出来</h2><p>先新建 <code>src/domain/market.ts</code>：</p>
+<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">import</span> <span class="token string">"dotenv/config"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">type</span> <span class="token class-name">MarketData</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  id<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+  <span class="token builtin">symbol</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+  price<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+  currency<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+  source<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+  change24h<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span> <span class="token operator">|</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  lastUpdatedAt<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span> <span class="token operator">|</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token constant">SYMBOL_TO_COINGECKO_ID</span><span class="token operator">:</span> Record<span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">string</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token constant">BTC</span><span class="token operator">:</span> <span class="token string">"bitcoin"</span><span class="token punctuation">,</span>
+  <span class="token constant">ETH</span><span class="token operator">:</span> <span class="token string">"ethereum"</span><span class="token punctuation">,</span>
+  <span class="token constant">SOL</span><span class="token operator">:</span> <span class="token string">"solana"</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function">getCoinGeckoConfig</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> plan <span class="token operator">=</span> <span class="token punctuation">(</span>process<span class="token punctuation">.</span>env<span class="token punctuation">.</span><span class="token constant">COINGECKO_API_PLAN</span> <span class="token operator">||</span> <span class="token string">"demo"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toLowerCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> apiKey <span class="token operator">=</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span><span class="token constant">COINGECKO_API_KEY</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>apiKey<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">"Missing COINGECKO_API_KEY"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>plan <span class="token operator">===</span> <span class="token string">"pro"</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      baseUrl<span class="token operator">:</span> <span class="token string">"https://pro-api.coingecko.com/api/v3"</span><span class="token punctuation">,</span>
+      headers<span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token string-property property">"x-cg-pro-api-key"</span><span class="token operator">:</span> apiKey<span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      source<span class="token operator">:</span> <span class="token string">"coingecko-pro"</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">return</span> <span class="token punctuation">{</span>
+    baseUrl<span class="token operator">:</span> <span class="token string">"https://api.coingecko.com/api/v3"</span><span class="token punctuation">,</span>
+    headers<span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token string-property property">"x-cg-demo-api-key"</span><span class="token operator">:</span> apiKey<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    source<span class="token operator">:</span> <span class="token string">"coingecko-demo"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">resolveCoinId</span><span class="token punctuation">(</span><span class="token builtin">symbol</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> normalizedSymbol <span class="token operator">=</span> <span class="token builtin">symbol</span><span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toUpperCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>normalizedSymbol<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">"symbol is required"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">const</span> coinId <span class="token operator">=</span> <span class="token constant">SYMBOL_TO_COINGECKO_ID</span><span class="token punctuation">[</span>normalizedSymbol<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>coinId<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Unsupported symbol: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>normalizedSymbol<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">return</span> coinId<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">fetchMarketData</span><span class="token punctuation">(</span><span class="token builtin">symbol</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">Promise</span><span class="token operator">&lt;</span>MarketData<span class="token operator">&gt;</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> normalizedSymbol <span class="token operator">=</span> <span class="token builtin">symbol</span><span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toUpperCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> coinId <span class="token operator">=</span> <span class="token function">resolveCoinId</span><span class="token punctuation">(</span>normalizedSymbol<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">{</span> baseUrl<span class="token punctuation">,</span> headers<span class="token punctuation">,</span> source <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">getCoinGeckoConfig</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> url <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name"><span class="token constant">URL</span></span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>baseUrl<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">/simple/price</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"ids"</span><span class="token punctuation">,</span> coinId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"vs_currencies"</span><span class="token punctuation">,</span> <span class="token string">"usd"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"include_24hr_change"</span><span class="token punctuation">,</span> <span class="token string">"true"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"include_last_updated_at"</span><span class="token punctuation">,</span> <span class="token string">"true"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span>url<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+    method<span class="token operator">:</span> <span class="token string">"GET"</span><span class="token punctuation">,</span>
+    headers<span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>response<span class="token punctuation">.</span>ok<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> text <span class="token operator">=</span> <span class="token keyword">await</span> response<span class="token punctuation">.</span><span class="token function">text</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">CoinGecko API error: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>response<span class="token punctuation">.</span>status<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>text<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">const</span> json <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">await</span> response<span class="token punctuation">.</span><span class="token function">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token keyword">as</span> Record<span class="token operator">&lt;</span>
+    <span class="token builtin">string</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      usd<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+      usd_24h_change<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+      last_updated_at<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token operator">&gt;</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> data <span class="token operator">=</span> json<span class="token punctuation">[</span>coinId<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>data <span class="token operator">||</span> <span class="token keyword">typeof</span> data<span class="token punctuation">.</span>usd <span class="token operator">!==</span> <span class="token string">"number"</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">No price data returned for </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>coinId<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">return</span> <span class="token punctuation">{</span>
+    id<span class="token operator">:</span> coinId<span class="token punctuation">,</span>
+    <span class="token builtin">symbol</span><span class="token operator">:</span> normalizedSymbol<span class="token punctuation">,</span>
+    price<span class="token operator">:</span> data<span class="token punctuation">.</span>usd<span class="token punctuation">,</span>
+    currency<span class="token operator">:</span> <span class="token string">"USD"</span><span class="token punctuation">,</span>
+    source<span class="token punctuation">,</span>
+    change24h<span class="token operator">:</span> <span class="token keyword">typeof</span> data<span class="token punctuation">.</span>usd_24h_change <span class="token operator">===</span> <span class="token string">"number"</span> <span class="token operator">?</span> data<span class="token punctuation">.</span>usd_24h_change <span class="token operator">:</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
+    lastUpdatedAt<span class="token operator">:</span>
+      <span class="token keyword">typeof</span> data<span class="token punctuation">.</span>last_updated_at <span class="token operator">===</span> <span class="token string">"number"</span> <span class="token operator">?</span> data<span class="token punctuation">.</span>last_updated_at <span class="token operator">:</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<hr>
+<h2 id="九、这段业务代码到底做了什么"><a href="#九、这段业务代码到底做了什么" class="headerlink" title="九、这段业务代码到底做了什么"></a>九、这段业务代码到底做了什么</h2><p>这段代码看起来不长，但已经覆盖了一个真实工具最关键的几个环节。</p>
+<p>它主要做了 5 件事：</p>
+<ol>
+<li>读取环境变量，确定用 Demo 还是 Pro 配置</li>
+<li>把输入的 symbol 映射成 CoinGecko 识别的 coin id</li>
+<li>调用 CoinGecko 的 <code>/simple/price</code> 接口</li>
+<li>从响应里提取价格、24 小时涨跌幅、更新时间</li>
+<li>把结果整理成统一的数据结构返回</li>
+</ol>
+<p>换句话说，这一层解决的是：</p>
+<p><strong>“怎么把一个用户能理解的输入，变成第三方 API 能理解的请求，再把返回值整理成自己可控的输出格式。”</strong></p>
+<p>这就是典型的业务逻辑层职责。</p>
+<hr>
+<h2 id="十、为什么这里先手写-symbol-映射，而不是自动支持所有币种"><a href="#十、为什么这里先手写-symbol-映射，而不是自动支持所有币种" class="headerlink" title="十、为什么这里先手写 symbol 映射，而不是自动支持所有币种"></a>十、为什么这里先手写 symbol 映射，而不是自动支持所有币种</h2><p>这一步看起来很小，但其实很值得解释。</p>
+<p>你会发现这里没有一开始就去拉 <code>/coins/list</code>，而是先手写了几个映射：</p>
+<ul>
+<li><code>BTC -&gt; bitcoin</code></li>
+<li><code>ETH -&gt; ethereum</code></li>
+<li><code>SOL -&gt; solana</code></li>
+</ul>
+<p>这样做不是因为它更高级，而是因为它更适合入门阶段。</p>
+<p>原因有两个：</p>
+<h3 id="1-先降低复杂度，优先跑通链路"><a href="#1-先降低复杂度，优先跑通链路" class="headerlink" title="1. 先降低复杂度，优先跑通链路"></a>1. 先降低复杂度，优先跑通链路</h3><p>新手最重要的不是“支持所有币种”，而是先确认整条链路能正常工作。<br>如果一开始就引入动态映射、缓存、搜索、容错等问题，排错成本会明显升高。</p>
+<h3 id="2-把问题拆小，更容易理解"><a href="#2-把问题拆小，更容易理解" class="headerlink" title="2. 把问题拆小，更容易理解"></a>2. 把问题拆小，更容易理解</h3><p>在这一阶段，你只需要先理解：</p>
+<ul>
+<li>工具如何注册</li>
+<li>请求如何发出</li>
+<li>数据如何返回</li>
+<li>宿主如何调用</li>
+</ul>
+<p>至于“如何支持所有 symbol”，那是下一阶段的问题。</p>
+<p>技术学习里，一个很重要的原则就是：</p>
+<p><strong>先完成最小可运行版本，再逐步扩展能力。</strong></p>
+<hr>
+<h2 id="十一、再写-MCP-Server：把业务能力暴露成工具"><a href="#十一、再写-MCP-Server：把业务能力暴露成工具" class="headerlink" title="十一、再写 MCP Server：把业务能力暴露成工具"></a>十一、再写 MCP Server：把业务能力暴露成工具</h2><p>当业务逻辑已经能独立工作后，再来写 <code>src/server.ts</code>：</p>
+<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">import</span> <span class="token punctuation">{</span> McpServer <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@modelcontextprotocol/sdk/server/mcp.js"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> StdioServerTransport <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@modelcontextprotocol/sdk/server/stdio.js"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> z <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"zod"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> fetchMarketData <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"./domain/market.js"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> server <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">McpServer</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  name<span class="token operator">:</span> <span class="token string">"market-data-server"</span><span class="token punctuation">,</span>
+  version<span class="token operator">:</span> <span class="token string">"1.1.0"</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+server<span class="token punctuation">.</span><span class="token function">tool</span><span class="token punctuation">(</span>
+  <span class="token string">"fetch_market_data"</span><span class="token punctuation">,</span>
+  <span class="token string">"Fetch crypto market data from CoinGecko for symbols like BTC, ETH, or SOL"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    <span class="token builtin">symbol</span><span class="token operator">:</span> z
+      <span class="token punctuation">.</span><span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      <span class="token punctuation">.</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token string">"symbol cannot be empty"</span><span class="token punctuation">)</span>
+      <span class="token punctuation">.</span><span class="token function">describe</span><span class="token punctuation">(</span><span class="token string">"Crypto asset symbol, for example BTC, ETH, or SOL"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token builtin">symbol</span> <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword">try</span> <span class="token punctuation">{</span>
+      <span class="token keyword">const</span> result <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">fetchMarketData</span><span class="token punctuation">(</span><span class="token builtin">symbol</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token keyword">return</span> <span class="token punctuation">{</span>
+        content<span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token punctuation">{</span>
+            type<span class="token operator">:</span> <span class="token string">"text"</span><span class="token punctuation">,</span>
+            text<span class="token operator">:</span> <span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">stringify</span><span class="token punctuation">(</span>result<span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+          <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">const</span> message <span class="token operator">=</span>
+        error <span class="token keyword">instanceof</span> <span class="token class-name">Error</span> <span class="token operator">?</span> error<span class="token punctuation">.</span>message <span class="token operator">:</span> <span class="token string">"Unknown error occurred"</span><span class="token punctuation">;</span>
+
+      <span class="token keyword">return</span> <span class="token punctuation">{</span>
+        content<span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token punctuation">{</span>
+            type<span class="token operator">:</span> <span class="token string">"text"</span><span class="token punctuation">,</span>
+            text<span class="token operator">:</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Failed to fetch market data: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>message<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span>
+          <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        isError<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> transport <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">StdioServerTransport</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">await</span> server<span class="token punctuation">.</span><span class="token function">connect</span><span class="token punctuation">(</span>transport<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token string">"MCP server is running..."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">catch</span><span class="token punctuation">(</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token string">"Server error:"</span><span class="token punctuation">,</span> error<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  process<span class="token punctuation">.</span><span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<hr>
+<h2 id="十二、这段-MCP-Server-代码应该怎么看"><a href="#十二、这段-MCP-Server-代码应该怎么看" class="headerlink" title="十二、这段 MCP Server 代码应该怎么看"></a>十二、这段 MCP Server 代码应该怎么看</h2><p>到这里，文章最关键的一层连接出现了：</p>
+<p><strong>业务逻辑已经有了，现在我们要把它变成一个标准工具。</strong></p>
+<p>上面这段代码主要做了 4 件事：</p>
+<h3 id="1-创建一个-MCP-Server"><a href="#1-创建一个-MCP-Server" class="headerlink" title="1. 创建一个 MCP Server"></a>1. 创建一个 MCP Server</h3><pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">const</span> server <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">McpServer</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  name<span class="token operator">:</span> <span class="token string">"market-data-server"</span><span class="token punctuation">,</span>
+  version<span class="token operator">:</span> <span class="token string">"1.1.0"</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这一步是在声明你的服务身份。宿主连接时，会把它当成一个 MCP Server 来识别。</p>
+<h3 id="2-注册一个工具"><a href="#2-注册一个工具" class="headerlink" title="2. 注册一个工具"></a>2. 注册一个工具</h3><pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript">server<span class="token punctuation">.</span><span class="token function">tool</span><span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>这里注册了一个名为 <code>fetch_market_data</code> 的工具。<br>从宿主视角看，它不关心你内部怎么实现，它只关心：</p>
+<ul>
+<li>工具叫什么</li>
+<li>接收什么参数</li>
+<li>返回什么结果</li>
+</ul>
+<h3 id="3-用-Zod-描述输入参数"><a href="#3-用-Zod-描述输入参数" class="headerlink" title="3. 用 Zod 描述输入参数"></a>3. 用 Zod 描述输入参数</h3><pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token builtin">symbol</span><span class="token operator">:</span> z<span class="token punctuation">.</span><span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>这一步不是为了“写得更正式”，而是为了让工具输入更可验证、更清晰。<br>这样在 Inspector 或其他宿主里，也更容易看到工具需要什么参数。</p>
+<h3 id="4-把业务逻辑接进来"><a href="#4-把业务逻辑接进来" class="headerlink" title="4. 把业务逻辑接进来"></a>4. 把业务逻辑接进来</h3><pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">const</span> result <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">fetchMarketData</span><span class="token punctuation">(</span><span class="token builtin">symbol</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>这一行其实最能体现分层价值。因为 MCP 层只负责协议和工具暴露，真正的业务仍然交给 <code>domain/market.ts</code>。</p>
+<p>这就是为什么前面要先拆文件。<br>如果你把所有代码都写在一个地方，新手很容易分不清“协议代码”和“业务代码”分别在干什么。</p>
+<hr>
+<h2 id="十三、为什么日志要写到-stderr，而不是-stdout"><a href="#十三、为什么日志要写到-stderr，而不是-stdout" class="headerlink" title="十三、为什么日志要写到 stderr，而不是 stdout"></a>十三、为什么日志要写到 stderr，而不是 stdout</h2><p>接下来是一个非常容易踩坑、但又必须知道的点。</p>
+<p>如果你使用的是 <strong>STDIO</strong> 传输，那么：</p>
+<p><strong>stdout 是 MCP 协议消息通道，不能随便输出普通日志。</strong></p>
+<p>也就是说，下面这种做法是有风险的：</p>
+<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">"server started"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>因为这类普通日志会混进协议输出，可能直接破坏通信。</p>
+<p>所以在 STDIO 模式下，普通日志应该写到：</p>
+<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>也就是 stderr。</p>
+<p>这类细节很适合在入门文章里强调一下。因为很多人第一次跑不通，不是 MCP 本身有问题，而是被日志输出干扰了。</p>
+<hr>
+<h2 id="十四、配置-package-json-并启动服务"><a href="#十四、配置-package-json-并启动服务" class="headerlink" title="十四、配置 package.json 并启动服务"></a>十四、配置 package.json 并启动服务</h2><p>接下来给 <code>package.json</code> 增加脚本：</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"module"</span><span class="token punctuation">,</span>
+  <span class="token property">"scripts"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"dev"</span><span class="token operator">:</span> <span class="token string">"tsx src/server.ts"</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>然后启动：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> run dev<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>如果没有报错，而且进程保持运行、等待输入，那么通常说明你的 MCP Server 已经启动成功了。</p>
+<p>这里要注意一点：</p>
+<p><strong>对 STDIO Server 来说，“启动后挂起等待输入”是正常现象，不是程序卡死。</strong></p>
+<p>因为它本来就是在等宿主通过标准输入和它通信。</p>
+<hr>
+<h2 id="十五、先用-MCP-Inspector-验证：确认工具真的存在、真的能调用"><a href="#十五、先用-MCP-Inspector-验证：确认工具真的存在、真的能调用" class="headerlink" title="十五、先用 MCP Inspector 验证：确认工具真的存在、真的能调用"></a>十五、先用 MCP Inspector 验证：确认工具真的存在、真的能调用</h2><p>在真正接入 Codex 前，最好的做法是先用 MCP Inspector 验证。因为 Inspector 更适合做“工具级调试”。</p>
+<h3 id="1-启动-Inspector"><a href="#1-启动-Inspector" class="headerlink" title="1. 启动 Inspector"></a>1. 启动 Inspector</h3><p>如果你已经编译成 JS，可以这样启动：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">npx tsc
+npx @modelcontextprotocol/inspector <span class="token function">node</span> dist/server.js<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>如果你更习惯直接用 <code>tsx</code> 跑，也可以按自己的本地执行方式配置。</p>
+<h3 id="2-在-Inspector-里重点验证什么"><a href="#2-在-Inspector-里重点验证什么" class="headerlink" title="2. 在 Inspector 里重点验证什么"></a>2. 在 Inspector 里重点验证什么</h3><p>你不需要一上来测试很多场景，先抓住 3 个核心问题：</p>
+<ul>
+<li>Server 是否连接成功</li>
+<li>是否能看到 <code>fetch_market_data</code></li>
+<li>这个工具是否真的可以被调用</li>
+</ul>
+<p>也就是说，Inspector 阶段的重点不是“功能多强”，而是“工具链路是否成立”。</p>
+<h3 id="3-测试正常输入"><a href="#3-测试正常输入" class="headerlink" title="3. 测试正常输入"></a>3. 测试正常输入</h3><p>输入：</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"BTC"</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>预期返回类似：</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"id"</span><span class="token operator">:</span> <span class="token string">"bitcoin"</span><span class="token punctuation">,</span>
+  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"BTC"</span><span class="token punctuation">,</span>
+  <span class="token property">"price"</span><span class="token operator">:</span> <span class="token number">123456</span><span class="token punctuation">,</span>
+  <span class="token property">"currency"</span><span class="token operator">:</span> <span class="token string">"USD"</span><span class="token punctuation">,</span>
+  <span class="token property">"source"</span><span class="token operator">:</span> <span class="token string">"coingecko-demo"</span><span class="token punctuation">,</span>
+  <span class="token property">"change24h"</span><span class="token operator">:</span> <span class="token number">1.23</span><span class="token punctuation">,</span>
+  <span class="token property">"lastUpdatedAt"</span><span class="token operator">:</span> <span class="token number">1712345678</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>其中价格会变化，这正说明你拿到的是实时数据，而不是写死的 mock 数据。</p>
+<h3 id="4-测试异常输入"><a href="#4-测试异常输入" class="headerlink" title="4. 测试异常输入"></a>4. 测试异常输入</h3><p>除了成功场景，建议至少测下面几种失败输入。</p>
+<h4 id="空字符串"><a href="#空字符串" class="headerlink" title="空字符串"></a>空字符串</h4><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">""</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<h4 id="不支持的-symbol"><a href="#不支持的-symbol" class="headerlink" title="不支持的 symbol"></a>不支持的 symbol</h4><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"DOGE"</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<h4 id="缺少字段"><a href="#缺少字段" class="headerlink" title="缺少字段"></a>缺少字段</h4><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span><span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>这一步的目的不是追求“所有输入都成功”，而是确认下面三件事：</p>
+<ul>
+<li>合法输入能正常返回</li>
+<li>非法输入不会把 Server 打崩</li>
+<li>错误信息对人来说是可理解的</li>
+</ul>
+<p>一个入门项目做到这里，其实已经比很多纯演示性质的示例更接近真实开发了。</p>
+<hr>
+<h3 id="5-执行结果证明图"><a href="#5-执行结果证明图" class="headerlink" title="5. 执行结果证明图"></a>5. 执行结果证明图</h3><p>下面这张图是 <code>fetch_market_data</code> 在 MCP Inspector 中连接成功并调用成功的结果。可以看到：</p>
+<ul>
+<li>左侧已成功连接本地 <code>market-data-server</code></li>
+<li>工具列表中已经出现 <code>fetch_market_data</code></li>
+<li>右侧输入 <code>ETH</code> 后，工具返回了来自 CoinGecko 的真实市场数据</li>
+<li><code>Tool Result: Success</code> 说明这条本地 MCP 调用链路已经跑通</li>
+</ul>
+<p><img src="/images/20260409/inspector-validation-success.png" alt="Inspector 连接验证成功结果"></p>
+<hr>
+<h2 id="十六、再接入-Codex-CLI：验证宿主是否真的会调用你的工具"><a href="#十六、再接入-Codex-CLI：验证宿主是否真的会调用你的工具" class="headerlink" title="十六、再接入 Codex CLI：验证宿主是否真的会调用你的工具"></a>十六、再接入 Codex CLI：验证宿主是否真的会调用你的工具</h2><p>当 Inspector 验证通过后，再接入 Codex 才更稳。因为这时候你已经知道问题不在工具本身，而只可能在宿主配置或调用方式上。</p>
+<h3 id="1-准备-Codex-配置文件"><a href="#1-准备-Codex-配置文件" class="headerlink" title="1. 准备 Codex 配置文件"></a>1. 准备 Codex 配置文件</h3><p>创建或编辑：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">~/.codex/config.toml<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>加入 MCP Server 配置：</p>
+<pre class="line-numbers language-toml" data-language="toml"><code class="language-toml"><span class="token key property">model</span> <span class="token punctuation">=</span> <span class="token string">"gpt-5.4"</span>
+
+<span class="token punctuation">[</span><span class="token table class-name">mcp_servers.market_data</span><span class="token punctuation">]</span>
+<span class="token key property">command</span> <span class="token punctuation">=</span> <span class="token string">"npx"</span>
+<span class="token key property">args</span> <span class="token punctuation">=</span> <span class="token punctuation">[</span><span class="token string">"tsx"</span><span class="token punctuation">,</span> <span class="token string">"/绝对路径/mcp-coingecko-demo/src/server.ts"</span><span class="token punctuation">]</span>
+
+<span class="token punctuation">[</span><span class="token table class-name">mcp_servers.market_data.env</span><span class="token punctuation">]</span>
+<span class="token key property">COINGECKO_API_KEY</span> <span class="token punctuation">=</span> <span class="token string">"your_demo_key_here"</span>
+<span class="token key property">COINGECKO_API_PLAN</span> <span class="token punctuation">=</span> <span class="token string">"demo"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>注意把路径替换成你自己的绝对路径。</p>
+<h3 id="2-启动-Codex"><a href="#2-启动-Codex" class="headerlink" title="2. 启动 Codex"></a>2. 启动 Codex</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">codex<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<h3 id="3-第一次测试时，尽量显式要求调用工具"><a href="#3-第一次测试时，尽量显式要求调用工具" class="headerlink" title="3. 第一次测试时，尽量显式要求调用工具"></a>3. 第一次测试时，尽量显式要求调用工具</h3><p>建议用比较明确的提示词，例如：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">Use the MCP tool fetch_market_data with symbol BTC. Return the raw result first, then explain it.<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>为什么要写得这么明确？<br>因为在验证阶段，你的目标不是“写一个自然对话提示词”，而是先确认宿主是否真的触发了工具调用。</p>
+<h3 id="4-如何判断-Codex-不是在“猜答案”"><a href="#4-如何判断-Codex-不是在“猜答案”" class="headerlink" title="4. 如何判断 Codex 不是在“猜答案”"></a>4. 如何判断 Codex 不是在“猜答案”</h3><p>你可以重点看返回结果里是否出现你自己定义过的字段，比如：</p>
+<ul>
+<li><code>source: coingecko-demo</code></li>
+<li><code>id: bitcoin</code></li>
+<li><code>change24h</code></li>
+<li><code>lastUpdatedAt</code></li>
+</ul>
+<p>这些字段如果都出现了，通常就可以比较确定：</p>
+<p><strong>它不是在凭语言模型常识回答，而是真的通过 MCP 调用了你的工具。</strong></p>
+<hr>
+<h3 id="5-执行结果证明图-1"><a href="#5-执行结果证明图-1" class="headerlink" title="5. 执行结果证明图"></a>5. 执行结果证明图</h3><p>下面这张图展示的是把 MCP Server 接入 Codex 后的调用结果。可以看到 Codex 明确调用了：</p>
+<p><code>market_data.fetch_market_data({"symbol":"BTC"})</code></p>
+<p>并返回了你在工具中定义的字段，例如：</p>
+<ul>
+<li><code>id: bitcoin</code></li>
+<li><code>symbol: BTC</code></li>
+<li><code>price</code></li>
+<li><code>source: coingecko-demo</code></li>
+<li><code>change24h</code></li>
+<li><code>lastUpdatedAt</code></li>
+</ul>
+<p>这说明 Codex 并不是在“猜答案”，而是真的通过 MCP 工具拿到了返回结果。</p>
+<p><img src="/images/20260409/codex-execution-success.png" alt="Codex 配置执行结果"></p>
+<hr>
+<h2 id="十七、走到这里，你其实已经完成了一个-MCP-入门闭环"><a href="#十七、走到这里，你其实已经完成了一个-MCP-入门闭环" class="headerlink" title="十七、走到这里，你其实已经完成了一个 MCP 入门闭环"></a>十七、走到这里，你其实已经完成了一个 MCP 入门闭环</h2><p>如果前面的步骤都已经跑通，那么你完成的其实不是一个简单 demo，而是一个完整的入门闭环：</p>
+<ol>
+<li>你写了一个 TypeScript MCP Server</li>
+<li>你注册了一个真实可用的工具 <code>fetch_market_data</code></li>
+<li>你接入了第三方 API，而不是只返回静态内容</li>
+<li>你用 Inspector 验证了工具层是否正常</li>
+<li>你用 Codex 验证了宿主能否真正调用工具</li>
+</ol>
+<p>这一步很重要，因为它意味着你已经跨过了 MCP 入门最难的那道坎：</p>
+<p><strong>从“知道概念”进入“能做出一个可验证的工具”。</strong></p>
+<p>很多人学到这里，后面再增加第二个工具、替换数据源、接入更多宿主，都会顺很多。</p>
+<hr>
+<hr>
+<h2 id="二十、总结：新手学-MCP，最重要的不是记概念，而是跑通一条链路"><a href="#二十、总结：新手学-MCP，最重要的不是记概念，而是跑通一条链路" class="headerlink" title="二十、总结：新手学 MCP，最重要的不是记概念，而是跑通一条链路"></a>二十、总结：新手学 MCP，最重要的不是记概念，而是跑通一条链路</h2><p>这篇文章本质上只做了一件事：</p>
+<p><strong>用一个真实的 CoinGecko 市场数据工具，把 MCP 的完整入门流程跑通。</strong></p>
+<p>如果你刚接触 MCP，其实不需要一开始就把所有协议细节都啃透。<br>更重要的是先建立这几个直觉：</p>
+<ul>
+<li>MCP 是一层工具协议</li>
+<li>业务逻辑仍然是你自己写</li>
+<li>宿主通过 MCP 发现并调用你的工具</li>
+<li>Inspector 适合做调试验证</li>
+<li>Codex 可以作为真实宿主来消费你的工具能力</li>
+</ul>
+<p>只要这条链路你亲手跑通过一次，后面再去扩展更多工具、更多数据源，甚至更完整的 agent 体系，理解都会快很多。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>MCP</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>升降桌故障排查记</title>
     <url>/posts/2026/03/02/fbb9923f/</url>
     <content><![CDATA[<h1 id="升降桌故障排查记：和-E07-E08-的一场小拉扯"><a href="#升降桌故障排查记：和-E07-E08-的一场小拉扯" class="headerlink" title="升降桌故障排查记：和 E07 / E08 的一场小拉扯"></a>升降桌故障排查记：和 E07 / E08 的一场小拉扯</h1><p>有时候，家里的小故障最磨人。</p>
@@ -17,7 +553,7 @@
 <li>右边桌脚无论上升还是下降都<strong>完全没反应</strong></li>
 <li>控制面板反复显示 <strong>RST、E07、E08</strong> 等报码</li>
 </ul>
-<p><img src="/img/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg" alt="联系客服反馈问题"></p>
+<p><img src="/images/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg" alt="联系客服反馈问题"></p>
 <p><em>图 1：控制面板显示 RST / E07 / E08 等报码</em></p>
 <p>我又试了几次，结论基本一致：</p>
 <blockquote>
@@ -34,10 +570,10 @@
 <p>这是升降桌常见的初始化方式。很多时候，报码并不一定意味着零件损坏，也可能只是系统需要重新校准。</p>
 <p>可惜，对我这台桌子来说，这一步并没有起作用。</p>
 <h3 id="2-再交叉插线"><a href="#2-再交叉插线" class="headerlink" title="2. 再交叉插线"></a>2. 再交叉插线</h3><p>接下来，客服让我拆开桌腿挡板，把控制盒上的 <strong>M1 和 M2 电机线互换</strong>，再观察报码变化。</p>
-<p><img src="/img/20260302/8BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg" alt="客服建议拆开检查"></p>
+<p><img src="/images/20260302/8BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg" alt="客服建议拆开检查"></p>
 <p><em>图 2：客服建议交叉插线排查问题位置</em></p>
 <p>我照着做完之后，面板上的报码确实变了，从 <strong>E07</strong> 变成了 <strong>E08</strong>。</p>
-<p><img src="/img/20260302/C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg" alt="错误代码变化反馈"></p>
+<p><img src="/images/20260302/C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg" alt="错误代码变化反馈"></p>
 <p><em>图 3：交叉插线后，报码从 E07 变成 E08</em></p>
 <p>客服根据这个变化，初步判断可能是控制盒有问题，需要进一步反馈技术部门，再安排后续处理。问题是，当时已经临近假期，对方给出的答复大意是：</p>
 <blockquote>
@@ -111,7 +647,7 @@
 <li>显示重新变回正常的高度数字</li>
 <li>再测试升降时，左右两边终于恢复了同步运动</li>
 </ul>
-<p><img src="/img/20260302/379220D3-EF81-44D3-AFD3-1A9DA10B1F23.jpg" alt="问题解决后反馈客服"></p>
+<p><img src="/images/20260302/379220D3-EF81-44D3-AFD3-1A9DA10B1F23.jpg" alt="问题解决后反馈客服"></p>
 <p><em>图 4：问题解决后，回头告知客服</em></p>
 <p>那一刻其实挺有成就感的。</p>
 <p>不是那种“我会修机器了”的成就感，而是你顺着现象一点点摸过去，最后真的把问题捋顺了。前面那种说不上来的烦躁，也一下子散掉了。</p>
@@ -347,7 +883,7 @@ NSData<span class="token punctuation">.</span><span class="token function">dataW
 <li><strong>快速切换 Tab</strong>：表现正常，scale 保持。</li>
 <li><strong>在其他 Tab 停留一段时间再切回</strong>：scale 被重置，Dashboard 突然放大。</li>
 </ul>
-<p><img src="/img/20231204/remember.gif" alt="Recording" title="remember"></p>
+<p><img src="/images/20231204/remember.gif" alt="Recording" title="remember"></p>
 <p>改为 <code>rememberSaveable {}</code> 后，无论如何切换 Tab，返回时 Dashboard 都能保持之前的 scale，符合预期。</p>
 <h3 id="相关代码片段"><a href="#相关代码片段" class="headerlink" title="相关代码片段"></a>相关代码片段</h3><pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 使用 rememberSaveable 保持 scale，避免离开屏幕后再进入时被重置</span>
 <span class="token keyword">var</span> scale <span class="token keyword">by</span> rememberSaveable <span class="token punctuation">{</span>
@@ -424,8 +960,8 @@ The default implementation only supports types which can be stored inside the Bu
 
 <p><code>DisposableEffect(key1 = null)</code> 保证只有在<strong>退出组合</strong>时才会执行 <code>onDispose</code>。</p>
 <ul>
-<li>**使用 <code>remember {}</code>**：第一次进入打印 <code>re-calculate</code>；切到其他 Tab 停留后，先打印 <code>onDispose</code>，再切回来会再次打印 <code>re-calculate</code>，scale 被重置。<br><img src="/img/20231204/remember_log.jpg" alt="Logger" title="remember_log"></li>
-<li>**改用 <code>rememberSaveable {}</code>**：只有第一次进入时打印一次 <code>re-calculate</code>，之后切 Tab 再回来也不会再打印，说明一直用的是已保存的值。<br><img src="/img/20231204/remember_log1.jpg" alt="Logger1" title="remember_log1"></li>
+<li>**使用 <code>remember {}</code>**：第一次进入打印 <code>re-calculate</code>；切到其他 Tab 停留后，先打印 <code>onDispose</code>，再切回来会再次打印 <code>re-calculate</code>，scale 被重置。<br><img src="/images/20231204/remember_log.jpg" alt="Logger" title="remember_log"></li>
+<li>**改用 <code>rememberSaveable {}</code>**：只有第一次进入时打印一次 <code>re-calculate</code>，之后切 Tab 再回来也不会再打印，说明一直用的是已保存的值。<br><img src="/images/20231204/remember_log1.jpg" alt="Logger1" title="remember_log1"></li>
 </ul>
 <h2 id="四、延伸：离开屏幕-≠-重建"><a href="#四、延伸：离开屏幕-≠-重建" class="headerlink" title="四、延伸：离开屏幕 ≠ 重建"></a>四、延伸：离开屏幕 ≠ 重建</h2><p><a href="https://jetc.dev/slack/2021-04-13-when-do-we-use-remembersaveable.html">Jetpack Compose 相关讨论</a> 里有一句：**”Composable leaving the screen is not recreation”**（可组合项离开屏幕并不等于重建）。</p>
 <p>在 Compose 中：</p>
@@ -467,6 +1003,168 @@ The default implementation only supports types which can be stored inside the Bu
       </categories>
       <tags>
         <tag>Android</tag>
+        <tag>Jetpack Compose</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Jetpack Compose Performance Tips Every Developer Should Know</title>
+    <url>/posts/2026/02/27/4ae1fc92/</url>
+    <content><![CDATA[<h1 id="Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握"><a href="#Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握" class="headerlink" title="Jetpack Compose 性能优化：为什么 graphicsLayer 值得你重点掌握"></a>Jetpack Compose 性能优化：为什么 <code>graphicsLayer</code> 值得你重点掌握</h1><p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
+<p>比如，想让一个组件半透明，你可以这样写：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">alpha</span><span class="token punctuation">(</span><span class="token number">0.5f</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>也可以这样写：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> alpha <span class="token operator">=</span> <span class="token number">0.5f</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>从界面效果来看，它们几乎一样。<br>但在<strong>动画</strong>、<strong>滚动联动</strong>、<strong>高频状态变化</strong>这类场景里，两者背后的性能路径并不完全相同。</p>
+<p>真正的关键不是“哪个 API 更高级”，而是：</p>
+<blockquote>
+<p><strong>你在哪个阶段读取状态。</strong></p>
+</blockquote>
+<p>如果状态读取发生在 Composition 阶段，就可能触发更多重组工作。<br>如果状态读取被延后到 Draw 阶段，Compose 就有机会跳过 Composition 和 Layout，只做更轻量的绘制更新。</p>
+<hr>
+<h2 id="Compose-UI-的三大阶段"><a href="#Compose-UI-的三大阶段" class="headerlink" title="Compose UI 的三大阶段"></a>Compose UI 的三大阶段</h2><p>理解这件事，先要知道 Compose 的渲染流程主要分为三个阶段：</p>
+<h3 id="1-Composition"><a href="#1-Composition" class="headerlink" title="1. Composition"></a>1. Composition</h3><p>决定“<strong>要显示什么</strong>”。<br>也就是执行 Composable，构建或更新 UI 树。</p>
+<h3 id="2-Layout"><a href="#2-Layout" class="headerlink" title="2. Layout"></a>2. Layout</h3><p>决定“<strong>显示在哪里、多大</strong>”。<br>也就是测量和摆放组件。</p>
+<h3 id="3-Draw"><a href="#3-Draw" class="headerlink" title="3. Draw"></a>3. Draw</h3><p>决定“<strong>最终画成什么样</strong>”。<br>包括透明度、缩放、旋转、裁剪等绘制相关操作。</p>
+<p>如果一个变化只影响 Draw 阶段，通常会比影响 Layout 阶段更高效，因为整体需要做的工作更少。</p>
+<hr>
+<h2 id="真正的性能差异，来自“状态读取时机”"><a href="#真正的性能差异，来自“状态读取时机”" class="headerlink" title="真正的性能差异，来自“状态读取时机”"></a>真正的性能差异，来自“状态读取时机”</h2><p>很多文章会把这件事简单总结成：</p>
+<ul>
+<li><code>.alpha()</code> 会触发重组</li>
+<li><code>.graphicsLayer {}</code> 不会触发重组</li>
+</ul>
+<p>这个说法<strong>不够准确</strong>。</p>
+<p>更准确的说法是：</p>
+<blockquote>
+<p><strong>是否发生重组，取决于状态是在 Composition、Layout 还是 Draw 阶段被读取。</strong></p>
+</blockquote>
+<p><code>graphicsLayer</code> 的优势并不只是“它能做透明度和缩放”，而是它提供了一个很适合承载<strong>绘制阶段状态读取</strong>的入口。</p>
+<p>也就是说，在适合的场景下，你可以把频繁变化的状态放到更靠后的阶段去处理，从而减少不必要的 Composition 和 Layout 开销。</p>
+<hr>
+<h2 id="为什么-graphicsLayer-常常更适合动画"><a href="#为什么-graphicsLayer-常常更适合动画" class="headerlink" title="为什么 graphicsLayer 常常更适合动画"></a>为什么 <code>graphicsLayer</code> 常常更适合动画</h2><p><code>Modifier.graphicsLayer</code> 主要影响的是绘制阶段，不会改变组件的测量尺寸和摆放位置。</p>
+<p>这意味着下面这些变化，通常更适合放进 <code>graphicsLayer</code>：</p>
+<ul>
+<li><code>alpha</code></li>
+<li><code>scaleX / scaleY</code></li>
+<li><code>translationX / translationY</code></li>
+<li><code>rotationZ</code></li>
+</ul>
+<p>对于高频更新的 UI，这通常更有利，比如：</p>
+<ul>
+<li>滚动时的视差效果</li>
+<li>列表项渐隐渐现</li>
+<li>卡片缩放</li>
+<li>图标呼吸动画</li>
+<li>拖拽过程中的位移或旋转</li>
+</ul>
+<p>因为这些效果本质上更多是在改变“怎么画”，而不是“怎么排版”。</p>
+<hr>
+<h2 id="graphicsLayer-还有一层意义：图形层隔离"><a href="#graphicsLayer-还有一层意义：图形层隔离" class="headerlink" title="graphicsLayer 还有一层意义：图形层隔离"></a><code>graphicsLayer</code> 还有一层意义：图形层隔离</h2><p><code>graphicsLayer</code> 不只是一个 modifier，它还会带来图形层的隔离效果。</p>
+<p>你可以把它理解成：</p>
+<ul>
+<li>组件内容先被组织成一个独立绘制层</li>
+<li>后续对这个层做透明度、缩放、旋转等操作</li>
+<li>不必每次都重新“重画里面的内容”</li>
+</ul>
+<p>这也是它特别适合动画场景的原因之一。</p>
+<p>不过要注意，<strong>有 layer 不代表一定更快</strong>。</p>
+<p>如果只是静态 UI，或者变化频率很低，没必要为了“性能优化”而到处套 <code>graphicsLayer</code>。真正值得优化的，是那些：</p>
+<ul>
+<li>高频变化</li>
+<li>容易掉帧的动画</li>
+<li>滚动联动效果</li>
+<li>明显存在性能瓶颈的界面</li>
+</ul>
+<hr>
+<h2 id="一个更准确的对比方式"><a href="#一个更准确的对比方式" class="headerlink" title="一个更准确的对比方式"></a>一个更准确的对比方式</h2><table>
+<thead>
+<tr>
+<th align="left">对比项</th>
+<th align="left">普通值传递写法</th>
+<th align="left"><code>graphicsLayer { ... }</code> / lambda-based 写法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">状态读取位置</td>
+<td align="left">常见于 Composition 阶段</td>
+<td align="left">可延后到 Draw 阶段</td>
+</tr>
+<tr>
+<td align="left">是否一定触发重组</td>
+<td align="left">不一定，但更容易发生</td>
+<td align="left">不一定完全没有，但更容易跳过 Composition</td>
+</tr>
+<tr>
+<td align="left">是否影响布局</td>
+<td align="left">取决于具体 modifier</td>
+<td align="left"><code>graphicsLayer</code> 本身只影响绘制</td>
+</tr>
+<tr>
+<td align="left">适合场景</td>
+<td align="left">静态 UI、低频变化</td>
+<td align="left">动画、滚动联动、高频视觉变化</td>
+</tr>
+</tbody></table>
+<p>这里最重要的是一句话：</p>
+<blockquote>
+<p><strong>不是 <code>graphicsLayer</code> 天生“无敌”，而是它更适合处理那些只需要改变视觉表现、不需要重新布局的更新。</strong></p>
+</blockquote>
+<hr>
+<h2 id="实战示例：把动画状态留到绘制阶段处理"><a href="#实战示例：把动画状态留到绘制阶段处理" class="headerlink" title="实战示例：把动画状态留到绘制阶段处理"></a>实战示例：把动画状态留到绘制阶段处理</h2><p>下面这个例子非常适合这个思路：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> animatedScale <span class="token keyword">by</span> <span class="token function">animateFloatAsState</span><span class="token punctuation">(</span>targetValue <span class="token operator">=</span> <span class="token number">1.2f</span><span class="token punctuation">)</span>
+
+<span class="token function">Box</span><span class="token punctuation">(</span>
+    Modifier
+        <span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>Magenta<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
+            scaleX <span class="token operator">=</span> animatedScale
+            scaleY <span class="token operator">=</span> animatedScale
+            alpha <span class="token operator">=</span> <span class="token number">0.9f</span>
+        <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这种写法的好处是，<code>scaleX</code> 和 <code>scaleY</code> 这类纯视觉变化，更适合放在 <code>graphicsLayer</code> 中处理。因为它们不需要改变组件本身的测量结果和摆放位置。</p>
+<p>如果你的动画只是让组件“看起来变大”，而不是让布局系统认为“它真的变大了”，这种方式通常更划算。</p>
+<hr>
+<h2 id="什么时候优先考虑-graphicsLayer"><a href="#什么时候优先考虑-graphicsLayer" class="headerlink" title="什么时候优先考虑 graphicsLayer"></a>什么时候优先考虑 <code>graphicsLayer</code></h2><p>你可以优先在下面这些场景考虑它：</p>
+<h3 id="1-高频动画"><a href="#1-高频动画" class="headerlink" title="1. 高频动画"></a>1. 高频动画</h3><p>例如透明度、缩放、旋转、位移持续变化。<br>这类变化通常只影响视觉呈现，不需要反复参与布局。</p>
+<h3 id="2-滚动驱动效果"><a href="#2-滚动驱动效果" class="headerlink" title="2. 滚动驱动效果"></a>2. 滚动驱动效果</h3><p>比如顶部标题渐隐、列表项视差、卡片缩放。<br>这类状态更新非常频繁，更适合尽量延后到 Draw 阶段处理。</p>
+<h3 id="3-不想因为视觉变化触发布局连锁反应"><a href="#3-不想因为视觉变化触发布局连锁反应" class="headerlink" title="3. 不想因为视觉变化触发布局连锁反应"></a>3. 不想因为视觉变化触发布局连锁反应</h3><p>如果变化不会影响组件大小和位置，就尽量别让它进入 Layout。</p>
+<hr>
+<h2 id="什么时候不要滥用"><a href="#什么时候不要滥用" class="headerlink" title="什么时候不要滥用"></a>什么时候不要滥用</h2><p><code>graphicsLayer</code> 不是“看到动画就全上”的银弹。</p>
+<p>下面这些情况要谨慎：</p>
+<h3 id="1-变化本身会影响布局"><a href="#1-变化本身会影响布局" class="headerlink" title="1. 变化本身会影响布局"></a>1. 变化本身会影响布局</h3><p>如果你需要的不是“看起来变大”，而是“真的占更多空间”，那就不能只靠 Draw 阶段处理。</p>
+<h3 id="2-页面本身没有性能问题"><a href="#2-页面本身没有性能问题" class="headerlink" title="2. 页面本身没有性能问题"></a>2. 页面本身没有性能问题</h3><p>优化应该服务于实际瓶颈。<br>如果页面没有掉帧、没有频繁重组、没有滚动抖动，过度使用 <code>graphicsLayer</code> 反而会增加理解成本。</p>
+<h3 id="3-为了“听起来高级”而替换所有-modifier"><a href="#3-为了“听起来高级”而替换所有-modifier" class="headerlink" title="3. 为了“听起来高级”而替换所有 modifier"></a>3. 为了“听起来高级”而替换所有 modifier</h3><p>性能优化不是 API 崇拜。<br>重点是识别哪些状态变化只是视觉层面的，哪些真的会影响布局和结构。</p>
+<hr>
+<h2 id="一句话总结"><a href="#一句话总结" class="headerlink" title="一句话总结"></a>一句话总结</h2><p><code>graphicsLayer</code> 的核心价值，不是“它比 <code>.alpha()</code> 更酷”，而是：</p>
+<blockquote>
+<p><strong>它很适合承载那些只影响绘制结果的高频状态变化，让 Compose 有机会跳过更重的 Composition 和 Layout。</strong></p>
+</blockquote>
+<p>所以，当你在做这些效果时：</p>
+<ul>
+<li>渐隐渐现</li>
+<li>缩放</li>
+<li>旋转</li>
+<li>平移</li>
+<li>滚动联动动画</li>
+</ul>
+<p>优先想一件事：</p>
+<p><strong>这次变化，是不是其实只需要改 Draw，而不必让整个 UI 重新参与组合和布局？</strong></p>
+<p>如果答案是“对”，那 <code>graphicsLayer</code> 往往就是非常值得尝试的方案。</p>
+<hr>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>写 Compose 性能优化时，最容易踩的坑就是把结论说得太绝对。<br>真正值得记住的不是“某个 modifier 一定更快”，而是这条原则：</p>
+<blockquote>
+<p><strong>把状态读取尽量放到更晚的阶段，尤其是 Draw 阶段。</strong></p>
+</blockquote>
+<p>这才是很多 Compose 性能优化技巧背后的共同思路。</p>
+]]></content>
+      <categories>
+        <category>Compose</category>
+      </categories>
+      <tags>
         <tag>Jetpack Compose</tag>
       </tags>
   </entry>
@@ -728,168 +1426,6 @@ The default implementation only supports types which can be stored inside the Bu
       </categories>
       <tags>
         <tag>Compose</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Jetpack Compose Performance Tips Every Developer Should Know</title>
-    <url>/posts/2026/02/27/4ae1fc92/</url>
-    <content><![CDATA[<h1 id="Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握"><a href="#Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握" class="headerlink" title="Jetpack Compose 性能优化：为什么 graphicsLayer 值得你重点掌握"></a>Jetpack Compose 性能优化：为什么 <code>graphicsLayer</code> 值得你重点掌握</h1><p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
-<p>比如，想让一个组件半透明，你可以这样写：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">alpha</span><span class="token punctuation">(</span><span class="token number">0.5f</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>也可以这样写：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> alpha <span class="token operator">=</span> <span class="token number">0.5f</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>从界面效果来看，它们几乎一样。<br>但在<strong>动画</strong>、<strong>滚动联动</strong>、<strong>高频状态变化</strong>这类场景里，两者背后的性能路径并不完全相同。</p>
-<p>真正的关键不是“哪个 API 更高级”，而是：</p>
-<blockquote>
-<p><strong>你在哪个阶段读取状态。</strong></p>
-</blockquote>
-<p>如果状态读取发生在 Composition 阶段，就可能触发更多重组工作。<br>如果状态读取被延后到 Draw 阶段，Compose 就有机会跳过 Composition 和 Layout，只做更轻量的绘制更新。</p>
-<hr>
-<h2 id="Compose-UI-的三大阶段"><a href="#Compose-UI-的三大阶段" class="headerlink" title="Compose UI 的三大阶段"></a>Compose UI 的三大阶段</h2><p>理解这件事，先要知道 Compose 的渲染流程主要分为三个阶段：</p>
-<h3 id="1-Composition"><a href="#1-Composition" class="headerlink" title="1. Composition"></a>1. Composition</h3><p>决定“<strong>要显示什么</strong>”。<br>也就是执行 Composable，构建或更新 UI 树。</p>
-<h3 id="2-Layout"><a href="#2-Layout" class="headerlink" title="2. Layout"></a>2. Layout</h3><p>决定“<strong>显示在哪里、多大</strong>”。<br>也就是测量和摆放组件。</p>
-<h3 id="3-Draw"><a href="#3-Draw" class="headerlink" title="3. Draw"></a>3. Draw</h3><p>决定“<strong>最终画成什么样</strong>”。<br>包括透明度、缩放、旋转、裁剪等绘制相关操作。</p>
-<p>如果一个变化只影响 Draw 阶段，通常会比影响 Layout 阶段更高效，因为整体需要做的工作更少。</p>
-<hr>
-<h2 id="真正的性能差异，来自“状态读取时机”"><a href="#真正的性能差异，来自“状态读取时机”" class="headerlink" title="真正的性能差异，来自“状态读取时机”"></a>真正的性能差异，来自“状态读取时机”</h2><p>很多文章会把这件事简单总结成：</p>
-<ul>
-<li><code>.alpha()</code> 会触发重组</li>
-<li><code>.graphicsLayer {}</code> 不会触发重组</li>
-</ul>
-<p>这个说法<strong>不够准确</strong>。</p>
-<p>更准确的说法是：</p>
-<blockquote>
-<p><strong>是否发生重组，取决于状态是在 Composition、Layout 还是 Draw 阶段被读取。</strong></p>
-</blockquote>
-<p><code>graphicsLayer</code> 的优势并不只是“它能做透明度和缩放”，而是它提供了一个很适合承载<strong>绘制阶段状态读取</strong>的入口。</p>
-<p>也就是说，在适合的场景下，你可以把频繁变化的状态放到更靠后的阶段去处理，从而减少不必要的 Composition 和 Layout 开销。</p>
-<hr>
-<h2 id="为什么-graphicsLayer-常常更适合动画"><a href="#为什么-graphicsLayer-常常更适合动画" class="headerlink" title="为什么 graphicsLayer 常常更适合动画"></a>为什么 <code>graphicsLayer</code> 常常更适合动画</h2><p><code>Modifier.graphicsLayer</code> 主要影响的是绘制阶段，不会改变组件的测量尺寸和摆放位置。</p>
-<p>这意味着下面这些变化，通常更适合放进 <code>graphicsLayer</code>：</p>
-<ul>
-<li><code>alpha</code></li>
-<li><code>scaleX / scaleY</code></li>
-<li><code>translationX / translationY</code></li>
-<li><code>rotationZ</code></li>
-</ul>
-<p>对于高频更新的 UI，这通常更有利，比如：</p>
-<ul>
-<li>滚动时的视差效果</li>
-<li>列表项渐隐渐现</li>
-<li>卡片缩放</li>
-<li>图标呼吸动画</li>
-<li>拖拽过程中的位移或旋转</li>
-</ul>
-<p>因为这些效果本质上更多是在改变“怎么画”，而不是“怎么排版”。</p>
-<hr>
-<h2 id="graphicsLayer-还有一层意义：图形层隔离"><a href="#graphicsLayer-还有一层意义：图形层隔离" class="headerlink" title="graphicsLayer 还有一层意义：图形层隔离"></a><code>graphicsLayer</code> 还有一层意义：图形层隔离</h2><p><code>graphicsLayer</code> 不只是一个 modifier，它还会带来图形层的隔离效果。</p>
-<p>你可以把它理解成：</p>
-<ul>
-<li>组件内容先被组织成一个独立绘制层</li>
-<li>后续对这个层做透明度、缩放、旋转等操作</li>
-<li>不必每次都重新“重画里面的内容”</li>
-</ul>
-<p>这也是它特别适合动画场景的原因之一。</p>
-<p>不过要注意，<strong>有 layer 不代表一定更快</strong>。</p>
-<p>如果只是静态 UI，或者变化频率很低，没必要为了“性能优化”而到处套 <code>graphicsLayer</code>。真正值得优化的，是那些：</p>
-<ul>
-<li>高频变化</li>
-<li>容易掉帧的动画</li>
-<li>滚动联动效果</li>
-<li>明显存在性能瓶颈的界面</li>
-</ul>
-<hr>
-<h2 id="一个更准确的对比方式"><a href="#一个更准确的对比方式" class="headerlink" title="一个更准确的对比方式"></a>一个更准确的对比方式</h2><table>
-<thead>
-<tr>
-<th align="left">对比项</th>
-<th align="left">普通值传递写法</th>
-<th align="left"><code>graphicsLayer { ... }</code> / lambda-based 写法</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">状态读取位置</td>
-<td align="left">常见于 Composition 阶段</td>
-<td align="left">可延后到 Draw 阶段</td>
-</tr>
-<tr>
-<td align="left">是否一定触发重组</td>
-<td align="left">不一定，但更容易发生</td>
-<td align="left">不一定完全没有，但更容易跳过 Composition</td>
-</tr>
-<tr>
-<td align="left">是否影响布局</td>
-<td align="left">取决于具体 modifier</td>
-<td align="left"><code>graphicsLayer</code> 本身只影响绘制</td>
-</tr>
-<tr>
-<td align="left">适合场景</td>
-<td align="left">静态 UI、低频变化</td>
-<td align="left">动画、滚动联动、高频视觉变化</td>
-</tr>
-</tbody></table>
-<p>这里最重要的是一句话：</p>
-<blockquote>
-<p><strong>不是 <code>graphicsLayer</code> 天生“无敌”，而是它更适合处理那些只需要改变视觉表现、不需要重新布局的更新。</strong></p>
-</blockquote>
-<hr>
-<h2 id="实战示例：把动画状态留到绘制阶段处理"><a href="#实战示例：把动画状态留到绘制阶段处理" class="headerlink" title="实战示例：把动画状态留到绘制阶段处理"></a>实战示例：把动画状态留到绘制阶段处理</h2><p>下面这个例子非常适合这个思路：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> animatedScale <span class="token keyword">by</span> <span class="token function">animateFloatAsState</span><span class="token punctuation">(</span>targetValue <span class="token operator">=</span> <span class="token number">1.2f</span><span class="token punctuation">)</span>
-
-<span class="token function">Box</span><span class="token punctuation">(</span>
-    Modifier
-        <span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
-        <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>Magenta<span class="token punctuation">)</span>
-        <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
-            scaleX <span class="token operator">=</span> animatedScale
-            scaleY <span class="token operator">=</span> animatedScale
-            alpha <span class="token operator">=</span> <span class="token number">0.9f</span>
-        <span class="token punctuation">}</span>
-<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>这种写法的好处是，<code>scaleX</code> 和 <code>scaleY</code> 这类纯视觉变化，更适合放在 <code>graphicsLayer</code> 中处理。因为它们不需要改变组件本身的测量结果和摆放位置。</p>
-<p>如果你的动画只是让组件“看起来变大”，而不是让布局系统认为“它真的变大了”，这种方式通常更划算。</p>
-<hr>
-<h2 id="什么时候优先考虑-graphicsLayer"><a href="#什么时候优先考虑-graphicsLayer" class="headerlink" title="什么时候优先考虑 graphicsLayer"></a>什么时候优先考虑 <code>graphicsLayer</code></h2><p>你可以优先在下面这些场景考虑它：</p>
-<h3 id="1-高频动画"><a href="#1-高频动画" class="headerlink" title="1. 高频动画"></a>1. 高频动画</h3><p>例如透明度、缩放、旋转、位移持续变化。<br>这类变化通常只影响视觉呈现，不需要反复参与布局。</p>
-<h3 id="2-滚动驱动效果"><a href="#2-滚动驱动效果" class="headerlink" title="2. 滚动驱动效果"></a>2. 滚动驱动效果</h3><p>比如顶部标题渐隐、列表项视差、卡片缩放。<br>这类状态更新非常频繁，更适合尽量延后到 Draw 阶段处理。</p>
-<h3 id="3-不想因为视觉变化触发布局连锁反应"><a href="#3-不想因为视觉变化触发布局连锁反应" class="headerlink" title="3. 不想因为视觉变化触发布局连锁反应"></a>3. 不想因为视觉变化触发布局连锁反应</h3><p>如果变化不会影响组件大小和位置，就尽量别让它进入 Layout。</p>
-<hr>
-<h2 id="什么时候不要滥用"><a href="#什么时候不要滥用" class="headerlink" title="什么时候不要滥用"></a>什么时候不要滥用</h2><p><code>graphicsLayer</code> 不是“看到动画就全上”的银弹。</p>
-<p>下面这些情况要谨慎：</p>
-<h3 id="1-变化本身会影响布局"><a href="#1-变化本身会影响布局" class="headerlink" title="1. 变化本身会影响布局"></a>1. 变化本身会影响布局</h3><p>如果你需要的不是“看起来变大”，而是“真的占更多空间”，那就不能只靠 Draw 阶段处理。</p>
-<h3 id="2-页面本身没有性能问题"><a href="#2-页面本身没有性能问题" class="headerlink" title="2. 页面本身没有性能问题"></a>2. 页面本身没有性能问题</h3><p>优化应该服务于实际瓶颈。<br>如果页面没有掉帧、没有频繁重组、没有滚动抖动，过度使用 <code>graphicsLayer</code> 反而会增加理解成本。</p>
-<h3 id="3-为了“听起来高级”而替换所有-modifier"><a href="#3-为了“听起来高级”而替换所有-modifier" class="headerlink" title="3. 为了“听起来高级”而替换所有 modifier"></a>3. 为了“听起来高级”而替换所有 modifier</h3><p>性能优化不是 API 崇拜。<br>重点是识别哪些状态变化只是视觉层面的，哪些真的会影响布局和结构。</p>
-<hr>
-<h2 id="一句话总结"><a href="#一句话总结" class="headerlink" title="一句话总结"></a>一句话总结</h2><p><code>graphicsLayer</code> 的核心价值，不是“它比 <code>.alpha()</code> 更酷”，而是：</p>
-<blockquote>
-<p><strong>它很适合承载那些只影响绘制结果的高频状态变化，让 Compose 有机会跳过更重的 Composition 和 Layout。</strong></p>
-</blockquote>
-<p>所以，当你在做这些效果时：</p>
-<ul>
-<li>渐隐渐现</li>
-<li>缩放</li>
-<li>旋转</li>
-<li>平移</li>
-<li>滚动联动动画</li>
-</ul>
-<p>优先想一件事：</p>
-<p><strong>这次变化，是不是其实只需要改 Draw，而不必让整个 UI 重新参与组合和布局？</strong></p>
-<p>如果答案是“对”，那 <code>graphicsLayer</code> 往往就是非常值得尝试的方案。</p>
-<hr>
-<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>写 Compose 性能优化时，最容易踩的坑就是把结论说得太绝对。<br>真正值得记住的不是“某个 modifier 一定更快”，而是这条原则：</p>
-<blockquote>
-<p><strong>把状态读取尽量放到更晚的阶段，尤其是 Draw 阶段。</strong></p>
-</blockquote>
-<p>这才是很多 Compose 性能优化技巧背后的共同思路。</p>
-]]></content>
-      <categories>
-        <category>Compose</category>
-      </categories>
-      <tags>
-        <tag>Jetpack Compose</tag>
       </tags>
   </entry>
 </search>
