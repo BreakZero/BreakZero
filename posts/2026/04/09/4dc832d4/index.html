@@ -32,7 +32,7 @@
 <meta property="og:image" content="https://dejinlu.cn/images/20260409/inspector-validation-success.png">
 <meta property="og:image" content="https://dejinlu.cn/images/20260409/codex-execution-success.png">
 <meta property="article:published_time" content="2026-04-09T05:22:38.000Z">
-<meta property="article:modified_time" content="2026-04-09T08:22:39.989Z">
+<meta property="article:modified_time" content="2026-04-09T08:37:45.347Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="MCP">
@@ -150,7 +150,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8E0%E5%BC%80%E5%A7%8B%E5%AE%9E%E6%93%8DMCP%EF%BC%9A%E7%94%A8TypeScript%E6%8E%A5%E5%85%A5CoinGecko%EF%BC%8C%E5%B9%B6%E5%9C%A8Inspector-Codex%E4%B8%AD%E9%AA%8C%E8%AF%81"><span class="nav-number">1.</span> <span class="nav-text">从0开始实操MCP：用TypeScript接入CoinGecko，并在Inspector&#x2F;Codex中验证</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%85%88%E6%98%8E%E7%A1%AE%E7%9B%AE%E6%A0%87%EF%BC%9A%E8%BF%99%E7%AF%87%E6%96%87%E7%AB%A0%E4%BC%9A%E5%B8%A6%E4%BD%A0%E5%AE%8C%E6%88%90%E4%BB%80%E4%B9%88"><span class="nav-number">1.1.</span> <span class="nav-text">一、先明确目标：这篇文章会带你完成什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%85%88%E5%88%AB%E6%80%A5%E7%9D%80%E5%86%99%E4%BB%A3%E7%A0%81%EF%BC%9AMCP-%E5%9C%A8%E8%BF%99%E4%B8%AA%E4%BE%8B%E5%AD%90%E9%87%8C%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-number">1.2.</span> <span class="nav-text">二、先别急着写代码：MCP 在这个例子里到底是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E7%AF%87%E6%96%87%E7%AB%A0%E5%85%88%E4%BB%8E-STDIO-%E5%BC%80%E5%A7%8B%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF-HTTP"><span class="nav-number">1.3.</span> <span class="nav-text">三、为什么这篇文章先从 STDIO 开始，而不是 HTTP</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="nav-number">1.4.</span> <span class="nav-text">四、准备工作</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E8%8E%B7%E5%8F%96-CoinGecko-API-Key"><span class="nav-number">1.4.1.</span> <span class="nav-text">1. 获取 CoinGecko API Key</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%88%9B%E5%BB%BA%E9%A1%B9%E7%9B%AE"><span class="nav-number">1.5.</span> <span class="nav-text">五、创建项目</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AD%E3%80%81%E5%85%88%E7%9C%8B%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E6%A0%B7%E6%8B%86%E5%88%86"><span class="nav-number">1.6.</span> <span class="nav-text">六、先看项目结构：为什么这样拆分</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%83%E3%80%81%E9%85%8D%E7%BD%AE%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="nav-number">1.7.</span> <span class="nav-text">七、配置环境变量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AB%E3%80%81%E5%85%88%E5%86%99%E4%B8%9A%E5%8A%A1%E9%80%BB%E8%BE%91%EF%BC%9A%E6%8A%8A%E2%80%9C%E8%8E%B7%E5%8F%96%E5%B8%82%E5%9C%BA%E6%95%B0%E6%8D%AE%E2%80%9D%E8%BF%99%E4%BB%B6%E4%BA%8B%E5%81%9A%E5%87%BA%E6%9D%A5"><span class="nav-number">1.8.</span> <span class="nav-text">八、先写业务逻辑：把“获取市场数据”这件事做出来</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B9%9D%E3%80%81%E8%BF%99%E6%AE%B5%E4%B8%9A%E5%8A%A1%E4%BB%A3%E7%A0%81%E5%88%B0%E5%BA%95%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-number">1.9.</span> <span class="nav-text">九、这段业务代码到底做了什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E9%87%8C%E5%85%88%E6%89%8B%E5%86%99-symbol-%E6%98%A0%E5%B0%84%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E8%87%AA%E5%8A%A8%E6%94%AF%E6%8C%81%E6%89%80%E6%9C%89%E5%B8%81%E7%A7%8D"><span class="nav-number">1.10.</span> <span class="nav-text">十、为什么这里先手写 symbol 映射，而不是自动支持所有币种</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%85%88%E9%99%8D%E4%BD%8E%E5%A4%8D%E6%9D%82%E5%BA%A6%EF%BC%8C%E4%BC%98%E5%85%88%E8%B7%91%E9%80%9A%E9%93%BE%E8%B7%AF"><span class="nav-number">1.10.1.</span> <span class="nav-text">1. 先降低复杂度，优先跑通链路</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%8A%8A%E9%97%AE%E9%A2%98%E6%8B%86%E5%B0%8F%EF%BC%8C%E6%9B%B4%E5%AE%B9%E6%98%93%E7%90%86%E8%A7%A3"><span class="nav-number">1.10.2.</span> <span class="nav-text">2. 把问题拆小，更容易理解</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E4%B8%80%E3%80%81%E5%86%8D%E5%86%99-MCP-Server%EF%BC%9A%E6%8A%8A%E4%B8%9A%E5%8A%A1%E8%83%BD%E5%8A%9B%E6%9A%B4%E9%9C%B2%E6%88%90%E5%B7%A5%E5%85%B7"><span class="nav-number">1.11.</span> <span class="nav-text">十一、再写 MCP Server：把业务能力暴露成工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E8%BF%99%E6%AE%B5-MCP-Server-%E4%BB%A3%E7%A0%81%E5%BA%94%E8%AF%A5%E6%80%8E%E4%B9%88%E7%9C%8B"><span class="nav-number">1.12.</span> <span class="nav-text">十二、这段 MCP Server 代码应该怎么看</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA-MCP-Server"><span class="nav-number">1.12.1.</span> <span class="nav-text">1. 创建一个 MCP Server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%B3%A8%E5%86%8C%E4%B8%80%E4%B8%AA%E5%B7%A5%E5%85%B7"><span class="nav-number">1.12.2.</span> <span class="nav-text">2. 注册一个工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E7%94%A8-Zod-%E6%8F%8F%E8%BF%B0%E8%BE%93%E5%85%A5%E5%8F%82%E6%95%B0"><span class="nav-number">1.12.3.</span> <span class="nav-text">3. 用 Zod 描述输入参数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E6%8A%8A%E4%B8%9A%E5%8A%A1%E9%80%BB%E8%BE%91%E6%8E%A5%E8%BF%9B%E6%9D%A5"><span class="nav-number">1.12.4.</span> <span class="nav-text">4. 把业务逻辑接进来</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E6%97%A5%E5%BF%97%E8%A6%81%E5%86%99%E5%88%B0-stderr%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF-stdout"><span class="nav-number">1.13.</span> <span class="nav-text">十三、为什么日志要写到 stderr，而不是 stdout</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81%E9%85%8D%E7%BD%AE-package-json-%E5%B9%B6%E5%90%AF%E5%8A%A8%E6%9C%8D%E5%8A%A1"><span class="nav-number">1.14.</span> <span class="nav-text">十四、配置 package.json 并启动服务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E4%BA%94%E3%80%81%E5%85%88%E7%94%A8-MCP-Inspector-%E9%AA%8C%E8%AF%81%EF%BC%9A%E7%A1%AE%E8%AE%A4%E5%B7%A5%E5%85%B7%E7%9C%9F%E7%9A%84%E5%AD%98%E5%9C%A8%E3%80%81%E7%9C%9F%E7%9A%84%E8%83%BD%E8%B0%83%E7%94%A8"><span class="nav-number">1.15.</span> <span class="nav-text">十五、先用 MCP Inspector 验证：确认工具真的存在、真的能调用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%90%AF%E5%8A%A8-Inspector"><span class="nav-number">1.15.1.</span> <span class="nav-text">1. 启动 Inspector</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%9C%A8-Inspector-%E9%87%8C%E9%87%8D%E7%82%B9%E9%AA%8C%E8%AF%81%E4%BB%80%E4%B9%88"><span class="nav-number">1.15.2.</span> <span class="nav-text">2. 在 Inspector 里重点验证什么</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E6%B5%8B%E8%AF%95%E6%AD%A3%E5%B8%B8%E8%BE%93%E5%85%A5"><span class="nav-number">1.15.3.</span> <span class="nav-text">3. 测试正常输入</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E6%B5%8B%E8%AF%95%E5%BC%82%E5%B8%B8%E8%BE%93%E5%85%A5"><span class="nav-number">1.15.4.</span> <span class="nav-text">4. 测试异常输入</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%A9%BA%E5%AD%97%E7%AC%A6%E4%B8%B2"><span class="nav-number">1.15.4.1.</span> <span class="nav-text">空字符串</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%8D%E6%94%AF%E6%8C%81%E7%9A%84-symbol"><span class="nav-number">1.15.4.2.</span> <span class="nav-text">不支持的 symbol</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BC%BA%E5%B0%91%E5%AD%97%E6%AE%B5"><span class="nav-number">1.15.4.3.</span> <span class="nav-text">缺少字段</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E8%AF%81%E6%98%8E%E5%9B%BE"><span class="nav-number">1.15.5.</span> <span class="nav-text">5. 执行结果证明图</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E5%85%AD%E3%80%81%E5%86%8D%E6%8E%A5%E5%85%A5-Codex-CLI%EF%BC%9A%E9%AA%8C%E8%AF%81%E5%AE%BF%E4%B8%BB%E6%98%AF%E5%90%A6%E7%9C%9F%E7%9A%84%E4%BC%9A%E8%B0%83%E7%94%A8%E4%BD%A0%E7%9A%84%E5%B7%A5%E5%85%B7"><span class="nav-number">1.16.</span> <span class="nav-text">十六、再接入 Codex CLI：验证宿主是否真的会调用你的工具</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%87%86%E5%A4%87-Codex-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="nav-number">1.16.1.</span> <span class="nav-text">1. 准备 Codex 配置文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%90%AF%E5%8A%A8-Codex"><span class="nav-number">1.16.2.</span> <span class="nav-text">2. 启动 Codex</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B5%8B%E8%AF%95%E6%97%B6%EF%BC%8C%E5%B0%BD%E9%87%8F%E6%98%BE%E5%BC%8F%E8%A6%81%E6%B1%82%E8%B0%83%E7%94%A8%E5%B7%A5%E5%85%B7"><span class="nav-number">1.16.3.</span> <span class="nav-text">3. 第一次测试时，尽量显式要求调用工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E5%A6%82%E4%BD%95%E5%88%A4%E6%96%AD-Codex-%E4%B8%8D%E6%98%AF%E5%9C%A8%E2%80%9C%E7%8C%9C%E7%AD%94%E6%A1%88%E2%80%9D"><span class="nav-number">1.16.4.</span> <span class="nav-text">4. 如何判断 Codex 不是在“猜答案”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E8%AF%81%E6%98%8E%E5%9B%BE-1"><span class="nav-number">1.16.5.</span> <span class="nav-text">5. 执行结果证明图</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8D%81%E4%B8%83%E3%80%81%E8%B5%B0%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%8C%E4%BD%A0%E5%85%B6%E5%AE%9E%E5%B7%B2%E7%BB%8F%E5%AE%8C%E6%88%90%E4%BA%86%E4%B8%80%E4%B8%AA-MCP-%E5%85%A5%E9%97%A8%E9%97%AD%E7%8E%AF"><span class="nav-number">1.17.</span> <span class="nav-text">十七、走到这里，你其实已经完成了一个 MCP 入门闭环</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E5%8D%81%E3%80%81%E6%80%BB%E7%BB%93%EF%BC%9A%E6%96%B0%E6%89%8B%E5%AD%A6-MCP%EF%BC%8C%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84%E4%B8%8D%E6%98%AF%E8%AE%B0%E6%A6%82%E5%BF%B5%EF%BC%8C%E8%80%8C%E6%98%AF%E8%B7%91%E9%80%9A%E4%B8%80%E6%9D%A1%E9%93%BE%E8%B7%AF"><span class="nav-number">1.18.</span> <span class="nav-text">二十、总结：新手学 MCP，最重要的不是记概念，而是跑通一条链路</span></a></li></ol></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8E-0-%E5%BC%80%E5%A7%8B%E5%AE%9E%E6%93%8D-MCP%EF%BC%9A%E7%94%A8-TypeScript-%E6%8E%A5%E5%85%A5-CoinGecko%EF%BC%8C%E5%B9%B6%E5%9C%A8-Inspector-Codex-%E4%B8%AD%E9%AA%8C%E8%AF%81"><span class="nav-number">1.</span> <span class="nav-text">从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector &#x2F; Codex 中验证</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E8%BF%99%E7%AF%87%E6%96%87%E7%AB%A0%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="nav-number">1.1.</span> <span class="nav-text">一、这篇文章要解决什么问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%85%88%E5%BB%BA%E7%AB%8B%E4%B8%80%E4%B8%AA%E6%9C%80%E5%B0%8F%E8%AE%A4%E7%9F%A5%EF%BC%9AMCP-%E5%9C%A8%E8%BF%99%E4%B8%AA%E4%BE%8B%E5%AD%90%E9%87%8C%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-number">1.2.</span> <span class="nav-text">二、先建立一个最小认知：MCP 在这个例子里是什么</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E7%AF%87%E6%96%87%E7%AB%A0%E5%85%88%E4%BB%8E-STDIO-%E5%BC%80%E5%A7%8B%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF-HTTP"><span class="nav-number">1.2.1.</span> <span class="nav-text">为什么这篇文章先从 STDIO 开始，而不是 HTTP</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%BC%80%E5%A7%8B%E5%8A%A8%E6%89%8B%EF%BC%9A%E4%BB%8E-0-%E6%90%AD%E4%B8%80%E4%B8%AA%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%E7%9A%84-MCP-Server"><span class="nav-number">1.3.</span> <span class="nav-text">三、开始动手：从 0 搭一个最小可运行的 MCP Server</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="nav-number">1.3.1.</span> <span class="nav-text">1. 准备工作</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96-CoinGecko-API-Key"><span class="nav-number">1.3.1.1.</span> <span class="nav-text">获取 CoinGecko API Key</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%88%9B%E5%BB%BA%E9%A1%B9%E7%9B%AE"><span class="nav-number">1.3.2.</span> <span class="nav-text">2. 创建项目</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E8%AE%BE%E8%AE%A1%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84"><span class="nav-number">1.3.3.</span> <span class="nav-text">3. 设计项目结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E9%85%8D%E7%BD%AE%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="nav-number">1.3.4.</span> <span class="nav-text">4. 配置环境变量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E5%85%88%E5%86%99%E4%B8%9A%E5%8A%A1%E9%80%BB%E8%BE%91%EF%BC%9A%E8%8E%B7%E5%8F%96%E5%B8%82%E5%9C%BA%E6%95%B0%E6%8D%AE"><span class="nav-number">1.3.5.</span> <span class="nav-text">5. 先写业务逻辑：获取市场数据</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%99%E6%AE%B5%E4%B8%9A%E5%8A%A1%E4%BB%A3%E7%A0%81%E5%88%B0%E5%BA%95%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-number">1.3.5.1.</span> <span class="nav-text">这段业务代码到底做了什么</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E9%87%8C%E5%85%88%E6%89%8B%E5%86%99-symbol-%E6%98%A0%E5%B0%84%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E8%87%AA%E5%8A%A8%E6%94%AF%E6%8C%81%E6%89%80%E6%9C%89%E5%B8%81%E7%A7%8D"><span class="nav-number">1.3.5.2.</span> <span class="nav-text">为什么这里先手写 symbol 映射，而不是自动支持所有币种</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-%E5%86%8D%E5%86%99-MCP-Server%EF%BC%9A%E6%8A%8A%E4%B8%9A%E5%8A%A1%E8%83%BD%E5%8A%9B%E6%9A%B4%E9%9C%B2%E6%88%90%E5%B7%A5%E5%85%B7"><span class="nav-number">1.3.6.</span> <span class="nav-text">6. 再写 MCP Server：把业务能力暴露成工具</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%99%E6%AE%B5-MCP-Server-%E4%BB%A3%E7%A0%81%E5%BA%94%E8%AF%A5%E6%80%8E%E4%B9%88%E7%9C%8B"><span class="nav-number">1.3.6.1.</span> <span class="nav-text">这段 MCP Server 代码应该怎么看</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-%E5%90%AF%E5%8A%A8%E6%9C%8D%E5%8A%A1%E5%B9%B6%E7%90%86%E8%A7%A3%E8%BF%90%E8%A1%8C%E7%BB%86%E8%8A%82"><span class="nav-number">1.3.7.</span> <span class="nav-text">7. 启动服务并理解运行细节</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%97%A5%E5%BF%97%E8%A6%81%E5%86%99%E5%88%B0-stderr%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF-stdout"><span class="nav-number">1.3.7.1.</span> <span class="nav-text">为什么日志要写到 stderr，而不是 stdout</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E9%AA%8C%E8%AF%81%E8%BF%99%E4%B8%AA-MCP-%E5%B7%A5%E5%85%B7%E6%98%AF%E5%90%A6%E7%9C%9F%E7%9A%84%E5%8F%AF%E7%94%A8"><span class="nav-number">1.4.</span> <span class="nav-text">四、验证这个 MCP 工具是否真的可用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E7%94%A8-MCP-Inspector-%E9%AA%8C%E8%AF%81"><span class="nav-number">1.4.1.</span> <span class="nav-text">1. 用 MCP Inspector 验证</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8-Inspector"><span class="nav-number">1.4.1.1.</span> <span class="nav-text">启动 Inspector</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9C%A8-Inspector-%E9%87%8C%E9%87%8D%E7%82%B9%E9%AA%8C%E8%AF%81%E4%BB%80%E4%B9%88"><span class="nav-number">1.4.1.2.</span> <span class="nav-text">在 Inspector 里重点验证什么</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E6%AD%A3%E5%B8%B8%E8%BE%93%E5%85%A5"><span class="nav-number">1.4.1.3.</span> <span class="nav-text">测试正常输入</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E5%BC%82%E5%B8%B8%E8%BE%93%E5%85%A5"><span class="nav-number">1.4.1.4.</span> <span class="nav-text">测试异常输入</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%A9%BA%E5%AD%97%E7%AC%A6%E4%B8%B2"><span class="nav-number">1.4.1.4.1.</span> <span class="nav-text">空字符串</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%8D%E6%94%AF%E6%8C%81%E7%9A%84-symbol"><span class="nav-number">1.4.1.4.2.</span> <span class="nav-text">不支持的 symbol</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%BC%BA%E5%B0%91%E5%AD%97%E6%AE%B5"><span class="nav-number">1.4.1.4.3.</span> <span class="nav-text">缺少字段</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E8%AF%81%E6%98%8E%E5%9B%BE"><span class="nav-number">1.4.1.5.</span> <span class="nav-text">执行结果证明图</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%8E%A5%E5%85%A5-Codex-CLI-%E9%AA%8C%E8%AF%81"><span class="nav-number">1.4.2.</span> <span class="nav-text">2. 接入 Codex CLI 验证</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%87%86%E5%A4%87-Codex-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="nav-number">1.4.2.1.</span> <span class="nav-text">准备 Codex 配置文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8-Codex"><span class="nav-number">1.4.2.2.</span> <span class="nav-text">启动 Codex</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B5%8B%E8%AF%95%E6%97%B6%EF%BC%8C%E5%B0%BD%E9%87%8F%E6%98%BE%E5%BC%8F%E8%A6%81%E6%B1%82%E8%B0%83%E7%94%A8%E5%B7%A5%E5%85%B7"><span class="nav-number">1.4.2.3.</span> <span class="nav-text">第一次测试时，尽量显式要求调用工具</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E5%88%A4%E6%96%AD-Codex-%E4%B8%8D%E6%98%AF%E5%9C%A8%E2%80%9C%E7%8C%9C%E7%AD%94%E6%A1%88%E2%80%9D"><span class="nav-number">1.4.2.4.</span> <span class="nav-text">如何判断 Codex 不是在“猜答案”</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E8%AF%81%E6%98%8E%E5%9B%BE-1"><span class="nav-number">1.4.2.5.</span> <span class="nav-text">执行结果证明图</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E6%80%BB%E7%BB%93%EF%BC%9A%E8%B7%91%E9%80%9A%E8%BF%99%E6%9D%A1%E9%93%BE%E8%B7%AF%E5%90%8E%EF%BC%8C%E4%BD%A0%E7%9C%9F%E6%AD%A3%E6%8E%8C%E6%8F%A1%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-number">1.5.</span> <span class="nav-text">五、总结：跑通这条链路后，你真正掌握了什么</span></a></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -279,7 +279,7 @@
     
     
     
-    <div class="post-body" itemprop="articleBody"><h1 id="从0开始实操MCP：用TypeScript接入CoinGecko，并在Inspector-Codex中验证"><a href="#从0开始实操MCP：用TypeScript接入CoinGecko，并在Inspector-Codex中验证" class="headerlink" title="从0开始实操MCP：用TypeScript接入CoinGecko，并在Inspector/Codex中验证"></a>从0开始实操MCP：用TypeScript接入CoinGecko，并在Inspector/Codex中验证</h1><p>如果你已经看过不少 MCP 介绍，却始终没有真正跑通过一个完整例子，那么这篇文章会更适合你。</p>
+    <div class="post-body" itemprop="articleBody"><h1 id="从-0-开始实操-MCP：用-TypeScript-接入-CoinGecko，并在-Inspector-Codex-中验证"><a href="#从-0-开始实操-MCP：用-TypeScript-接入-CoinGecko，并在-Inspector-Codex-中验证" class="headerlink" title="从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"></a>从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证</h1><p>如果你已经看过不少 MCP 介绍，却始终没有真正跑通过一个完整例子，那么这篇文章会更适合你。</p>
 <p>这篇文章不讲太多抽象概念，也不一开始堆很多工具，而是只做一件事：</p>
 <p><strong>从零写一个最小的 TypeScript MCP Server，接入 CoinGecko 的真实市场数据接口，并在 Inspector 和 Codex 中完成验证。</strong></p>
 <p>整个过程只围绕一个工具展开：<code>fetch_market_data</code>。</p>
@@ -296,7 +296,7 @@
 <li>GitHub 仓库：<a target="_blank" rel="noopener" href="https://github.com/BreakZero/mcp-tooling-example">mcp-tooling-example</a></li>
 </ul>
 <hr>
-<h2 id="一、先明确目标：这篇文章会带你完成什么"><a href="#一、先明确目标：这篇文章会带你完成什么" class="headerlink" title="一、先明确目标：这篇文章会带你完成什么"></a>一、先明确目标：这篇文章会带你完成什么</h2><p>学 MCP 时，很多人最容易卡住的地方，不是概念看不懂，而是<strong>不知道一个最小可运行项目到底长什么样</strong>。</p>
+<h2 id="一、这篇文章要解决什么问题"><a href="#一、这篇文章要解决什么问题" class="headerlink" title="一、这篇文章要解决什么问题"></a>一、这篇文章要解决什么问题</h2><p>学 MCP 时，很多人最容易卡住的地方，不是概念看不懂，而是<strong>不知道一个最小可运行项目到底长什么样</strong>。</p>
 <p>所以先把本文的目标说清楚。读完并跑通后，你会完成下面几件事：</p>
 <ol>
 <li>理解 MCP 在这个例子里的定位</li>
@@ -308,7 +308,7 @@
 </ol>
 <p>也就是说，这不是一个只打印 <code>hello world</code> 的示例，而是一个<strong>真正有外部数据输入、有工具注册、有调试验证的完整入门项目</strong>。</p>
 <hr>
-<h2 id="二、先别急着写代码：MCP-在这个例子里到底是什么"><a href="#二、先别急着写代码：MCP-在这个例子里到底是什么" class="headerlink" title="二、先别急着写代码：MCP 在这个例子里到底是什么"></a>二、先别急着写代码：MCP 在这个例子里到底是什么</h2><p>在开始搭项目之前，先把最关键的问题讲清楚：</p>
+<h2 id="二、先建立一个最小认知：MCP-在这个例子里是什么"><a href="#二、先建立一个最小认知：MCP-在这个例子里是什么" class="headerlink" title="二、先建立一个最小认知：MCP 在这个例子里是什么"></a>二、先建立一个最小认知：MCP 在这个例子里是什么</h2><p>在开始搭项目之前，先把最关键的问题讲清楚：</p>
 <p><strong>MCP 在这里不是业务逻辑本身，而是一层标准化的工具协议。</strong></p>
 <p>你可以先看这条链路：</p>
 <pre class="line-numbers language-text" data-language="text"><code class="language-text">Codex / ChatGPT / Inspector
@@ -335,8 +335,7 @@
 <p>而 MCP 做的事，是让这个能力能够被宿主以标准方式调用。</p>
 <p>这点对新手非常重要。因为很多人一开始会把 MCP 和 Agent、业务逻辑、应用框架混在一起。其实更准确的理解应该是：</p>
 <p><strong>MCP 解决的是“能力如何暴露和被调用”，不是“业务本身如何实现”。</strong></p>
-<hr>
-<h2 id="三、为什么这篇文章先从-STDIO-开始，而不是-HTTP"><a href="#三、为什么这篇文章先从-STDIO-开始，而不是-HTTP" class="headerlink" title="三、为什么这篇文章先从 STDIO 开始，而不是 HTTP"></a>三、为什么这篇文章先从 STDIO 开始，而不是 HTTP</h2><p>MCP 支持不同传输方式，但对新手来说，最适合入门的通常不是远程 HTTP，而是本地 <strong>STDIO</strong>。</p>
+<h3 id="为什么这篇文章先从-STDIO-开始，而不是-HTTP"><a href="#为什么这篇文章先从-STDIO-开始，而不是-HTTP" class="headerlink" title="为什么这篇文章先从 STDIO 开始，而不是 HTTP"></a>为什么这篇文章先从 STDIO 开始，而不是 HTTP</h3><p>MCP 支持不同传输方式，但对新手来说，最适合入门的通常不是远程 HTTP，而是本地 <strong>STDIO</strong>。</p>
 <p>原因很简单，STDIO 足够直接：</p>
 <ul>
 <li>不需要先搭 Web 服务</li>
@@ -349,21 +348,20 @@
 <p><strong>先用 STDIO 完成最小闭环，再考虑远程服务化。</strong></p>
 <p>这个顺序对初学者更稳，也更容易建立对 MCP 的直觉。</p>
 <hr>
-<h2 id="四、准备工作"><a href="#四、准备工作" class="headerlink" title="四、准备工作"></a>四、准备工作</h2><p>开始之前，先准备好本地环境：</p>
+<h2 id="三、开始动手：从-0-搭一个最小可运行的-MCP-Server"><a href="#三、开始动手：从-0-搭一个最小可运行的-MCP-Server" class="headerlink" title="三、开始动手：从 0 搭一个最小可运行的 MCP Server"></a>三、开始动手：从 0 搭一个最小可运行的 MCP Server</h2><h3 id="1-准备工作"><a href="#1-准备工作" class="headerlink" title="1. 准备工作"></a>1. 准备工作</h3><p>开始之前，先准备好本地环境：</p>
 <ul>
 <li>Node.js 18 或更高版本</li>
 <li>npm</li>
 <li>一个 CoinGecko API Key</li>
 <li>已安装 Codex CLI（后文用于扩展验证，可选）</li>
 </ul>
-<h3 id="1-获取-CoinGecko-API-Key"><a href="#1-获取-CoinGecko-API-Key" class="headerlink" title="1. 获取 CoinGecko API Key"></a>1. 获取 CoinGecko API Key</h3><p>CoinGecko 提供 API Key 认证。常见方式是通过请求头传递：</p>
+<h4 id="获取-CoinGecko-API-Key"><a href="#获取-CoinGecko-API-Key" class="headerlink" title="获取 CoinGecko API Key"></a>获取 CoinGecko API Key</h4><p>CoinGecko 提供 API Key 认证。常见方式是通过请求头传递：</p>
 <ul>
 <li>Demo Key：<code>x-cg-demo-api-key</code></li>
 <li>Pro Key：<code>x-cg-pro-api-key</code></li>
 </ul>
 <p>本文先使用 Demo Key 即可。因为我们的目标是跑通 MCP 链路，不是做高并发或生产级接入。</p>
-<hr>
-<h2 id="五、创建项目"><a href="#五、创建项目" class="headerlink" title="五、创建项目"></a>五、创建项目</h2><p>先初始化一个最小项目：</p>
+<h3 id="2-创建项目"><a href="#2-创建项目" class="headerlink" title="2. 创建项目"></a>2. 创建项目</h3><p>先初始化一个最小项目：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> mcp-coingecko-demo
 <span class="token builtin class-name">cd</span> mcp-coingecko-demo
 <span class="token function">npm</span> init <span class="token parameter variable">-y</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
@@ -376,8 +374,7 @@
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">npx tsc <span class="token parameter variable">--init</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
 <p>到这里，你就有了一个可以写 MCP Server 的基础项目。</p>
-<hr>
-<h2 id="六、先看项目结构：为什么这样拆分"><a href="#六、先看项目结构：为什么这样拆分" class="headerlink" title="六、先看项目结构：为什么这样拆分"></a>六、先看项目结构：为什么这样拆分</h2><p>为了让示例保持简单，同时又不过度把所有逻辑塞进一个文件，这里建议先用下面这套结构：</p>
+<h3 id="3-设计项目结构"><a href="#3-设计项目结构" class="headerlink" title="3. 设计项目结构"></a>3. 设计项目结构</h3><p>为了让示例保持简单，同时又不过度把所有逻辑塞进一个文件，这里建议先用下面这套结构：</p>
 <pre class="line-numbers language-text" data-language="text"><code class="language-text">mcp-coingecko-demo/
   package.json
   .env
@@ -403,8 +400,7 @@
 </li>
 </ol>
 <p>对新手来说，这种拆分不是“为了架构而架构”，而是为了以后少踩坑。</p>
-<hr>
-<h2 id="七、配置环境变量"><a href="#七、配置环境变量" class="headerlink" title="七、配置环境变量"></a>七、配置环境变量</h2><p>在项目根目录创建 <code>.env</code> 文件：</p>
+<h3 id="4-配置环境变量"><a href="#4-配置环境变量" class="headerlink" title="4. 配置环境变量"></a>4. 配置环境变量</h3><p>在项目根目录创建 <code>.env</code> 文件：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token assign-left variable">COINGECKO_API_KEY</span><span class="token operator">=</span>your_demo_key_here
 <span class="token assign-left variable">COINGECKO_API_PLAN</span><span class="token operator">=</span>demo<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
@@ -414,8 +410,7 @@
 <li><code>COINGECKO_API_PLAN</code>：当前使用的套餐类型，本文先填 <code>demo</code></li>
 </ul>
 <p>这样做的意义是把配置和代码分开。以后如果你切换到 Pro Key，或者在不同环境使用不同配置，就不用改业务代码。</p>
-<hr>
-<h2 id="八、先写业务逻辑：把“获取市场数据”这件事做出来"><a href="#八、先写业务逻辑：把“获取市场数据”这件事做出来" class="headerlink" title="八、先写业务逻辑：把“获取市场数据”这件事做出来"></a>八、先写业务逻辑：把“获取市场数据”这件事做出来</h2><p>先新建 <code>src/domain/market.ts</code>：</p>
+<h3 id="5-先写业务逻辑：获取市场数据"><a href="#5-先写业务逻辑：获取市场数据" class="headerlink" title="5. 先写业务逻辑：获取市场数据"></a>5. 先写业务逻辑：获取市场数据</h3><p>先新建 <code>src/domain/market.ts</code>：</p>
 <pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">import</span> <span class="token string">"dotenv/config"</span><span class="token punctuation">;</span>
 
 <span class="token keyword">export</span> <span class="token keyword">type</span> <span class="token class-name">MarketData</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
@@ -525,8 +520,7 @@
   <span class="token punctuation">}</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<hr>
-<h2 id="九、这段业务代码到底做了什么"><a href="#九、这段业务代码到底做了什么" class="headerlink" title="九、这段业务代码到底做了什么"></a>九、这段业务代码到底做了什么</h2><p>这段代码看起来不长，但已经覆盖了一个真实工具最关键的几个环节。</p>
+<h4 id="这段业务代码到底做了什么"><a href="#这段业务代码到底做了什么" class="headerlink" title="这段业务代码到底做了什么"></a>这段业务代码到底做了什么</h4><p>这段代码看起来不长，但已经覆盖了一个真实工具最关键的几个环节。</p>
 <p>它主要做了 5 件事：</p>
 <ol>
 <li>读取环境变量，确定用 Demo 还是 Pro 配置</li>
@@ -538,9 +532,7 @@
 <p>换句话说，这一层解决的是：</p>
 <p><strong>“怎么把一个用户能理解的输入，变成第三方 API 能理解的请求，再把返回值整理成自己可控的输出格式。”</strong></p>
 <p>这就是典型的业务逻辑层职责。</p>
-<hr>
-<h2 id="十、为什么这里先手写-symbol-映射，而不是自动支持所有币种"><a href="#十、为什么这里先手写-symbol-映射，而不是自动支持所有币种" class="headerlink" title="十、为什么这里先手写 symbol 映射，而不是自动支持所有币种"></a>十、为什么这里先手写 symbol 映射，而不是自动支持所有币种</h2><p>这一步看起来很小，但其实很值得解释。</p>
-<p>你会发现这里没有一开始就去拉 <code>/coins/list</code>，而是先手写了几个映射：</p>
+<h4 id="为什么这里先手写-symbol-映射，而不是自动支持所有币种"><a href="#为什么这里先手写-symbol-映射，而不是自动支持所有币种" class="headerlink" title="为什么这里先手写 symbol 映射，而不是自动支持所有币种"></a>为什么这里先手写 symbol 映射，而不是自动支持所有币种</h4><p>你会发现这里没有一开始就去拉 <code>/coins/list</code>，而是先手写了几个映射：</p>
 <ul>
 <li><code>BTC -&gt; bitcoin</code></li>
 <li><code>ETH -&gt; ethereum</code></li>
@@ -548,19 +540,15 @@
 </ul>
 <p>这样做不是因为它更高级，而是因为它更适合入门阶段。</p>
 <p>原因有两个：</p>
-<h3 id="1-先降低复杂度，优先跑通链路"><a href="#1-先降低复杂度，优先跑通链路" class="headerlink" title="1. 先降低复杂度，优先跑通链路"></a>1. 先降低复杂度，优先跑通链路</h3><p>新手最重要的不是“支持所有币种”，而是先确认整条链路能正常工作。<br>如果一开始就引入动态映射、缓存、搜索、容错等问题，排错成本会明显升高。</p>
-<h3 id="2-把问题拆小，更容易理解"><a href="#2-把问题拆小，更容易理解" class="headerlink" title="2. 把问题拆小，更容易理解"></a>2. 把问题拆小，更容易理解</h3><p>在这一阶段，你只需要先理解：</p>
-<ul>
-<li>工具如何注册</li>
-<li>请求如何发出</li>
-<li>数据如何返回</li>
-<li>宿主如何调用</li>
-</ul>
-<p>至于“如何支持所有 symbol”，那是下一阶段的问题。</p>
+<ol>
+<li><p>先降低复杂度，优先跑通链路<br>新手最重要的不是“支持所有币种”，而是先确认整条链路能正常工作。如果一开始就引入动态映射、缓存、搜索、容错等问题，排错成本会明显升高。</p>
+</li>
+<li><p>把问题拆小，更容易理解<br>在这一阶段，你只需要先理解工具如何注册、请求如何发出、数据如何返回、宿主如何调用。至于“如何支持所有 symbol”，那是下一阶段的问题。</p>
+</li>
+</ol>
 <p>技术学习里，一个很重要的原则就是：</p>
 <p><strong>先完成最小可运行版本，再逐步扩展能力。</strong></p>
-<hr>
-<h2 id="十一、再写-MCP-Server：把业务能力暴露成工具"><a href="#十一、再写-MCP-Server：把业务能力暴露成工具" class="headerlink" title="十一、再写 MCP Server：把业务能力暴露成工具"></a>十一、再写 MCP Server：把业务能力暴露成工具</h2><p>当业务逻辑已经能独立工作后，再来写 <code>src/server.ts</code>：</p>
+<h3 id="6-再写-MCP-Server：把业务能力暴露成工具"><a href="#6-再写-MCP-Server：把业务能力暴露成工具" class="headerlink" title="6. 再写 MCP Server：把业务能力暴露成工具"></a>6. 再写 MCP Server：把业务能力暴露成工具</h3><p>当业务逻辑已经能独立工作后，再来写 <code>src/server.ts</code>：</p>
 <pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">import</span> <span class="token punctuation">{</span> McpServer <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@modelcontextprotocol/sdk/server/mcp.js"</span><span class="token punctuation">;</span>
 <span class="token keyword">import</span> <span class="token punctuation">{</span> StdioServerTransport <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@modelcontextprotocol/sdk/server/stdio.js"</span><span class="token punctuation">;</span>
 <span class="token keyword">import</span> <span class="token punctuation">{</span> z <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"zod"</span><span class="token punctuation">;</span>
@@ -620,34 +608,37 @@ server<span class="token punctuation">.</span><span class="token function">tool<
   process<span class="token punctuation">.</span><span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<hr>
-<h2 id="十二、这段-MCP-Server-代码应该怎么看"><a href="#十二、这段-MCP-Server-代码应该怎么看" class="headerlink" title="十二、这段 MCP Server 代码应该怎么看"></a>十二、这段 MCP Server 代码应该怎么看</h2><p>到这里，文章最关键的一层连接出现了：</p>
+<h4 id="这段-MCP-Server-代码应该怎么看"><a href="#这段-MCP-Server-代码应该怎么看" class="headerlink" title="这段 MCP Server 代码应该怎么看"></a>这段 MCP Server 代码应该怎么看</h4><p>到这里，文章最关键的一层连接出现了：</p>
 <p><strong>业务逻辑已经有了，现在我们要把它变成一个标准工具。</strong></p>
 <p>上面这段代码主要做了 4 件事：</p>
-<h3 id="1-创建一个-MCP-Server"><a href="#1-创建一个-MCP-Server" class="headerlink" title="1. 创建一个 MCP Server"></a>1. 创建一个 MCP Server</h3><pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">const</span> server <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">McpServer</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
-  name<span class="token operator">:</span> <span class="token string">"market-data-server"</span><span class="token punctuation">,</span>
-  version<span class="token operator">:</span> <span class="token string">"1.1.0"</span><span class="token punctuation">,</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+<ol>
+<li><p>创建一个 MCP Server<br>这一步是在声明你的服务身份。宿主连接时，会把它当成一个 MCP Server 来识别。</p>
+</li>
+<li><p>注册一个工具<br>这里注册了一个名为 <code>fetch_market_data</code> 的工具。从宿主视角看，它不关心你内部怎么实现，它只关心工具叫什么、接收什么参数、返回什么结果。</p>
+</li>
+<li><p>用 Zod 描述输入参数<br>这一步不是为了“写得更正式”，而是为了让工具输入更可验证、更清晰。这样在 Inspector 或其他宿主里，也更容易看到工具需要什么参数。</p>
+</li>
+<li><p>把业务逻辑接进来<br>MCP 层只负责协议和工具暴露，真正的业务仍然交给 <code>domain/market.ts</code>。</p>
+</li>
+</ol>
+<p>这就是为什么前面要先拆文件。如果你把所有代码都写在一个地方，新手很容易分不清“协议代码”和“业务代码”分别在干什么。</p>
+<h3 id="7-启动服务并理解运行细节"><a href="#7-启动服务并理解运行细节" class="headerlink" title="7. 启动服务并理解运行细节"></a>7. 启动服务并理解运行细节</h3><p>接下来给 <code>package.json</code> 增加脚本：</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"commonjs"</span><span class="token punctuation">,</span>
+  <span class="token property">"scripts"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"dev"</span><span class="token operator">:</span> <span class="token string">"tsx watch src/server.ts"</span><span class="token punctuation">,</span>
+    <span class="token property">"build"</span><span class="token operator">:</span> <span class="token string">"tsc src/server.ts --outDir dist --module commonjs --target es2020 --esModuleInterop"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>这一步是在声明你的服务身份。宿主连接时，会把它当成一个 MCP Server 来识别。</p>
-<h3 id="2-注册一个工具"><a href="#2-注册一个工具" class="headerlink" title="2. 注册一个工具"></a>2. 注册一个工具</h3><pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript">server<span class="token punctuation">.</span><span class="token function">tool</span><span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>然后启动：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> run dev<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<p>这里注册了一个名为 <code>fetch_market_data</code> 的工具。<br>从宿主视角看，它不关心你内部怎么实现，它只关心：</p>
-<ul>
-<li>工具叫什么</li>
-<li>接收什么参数</li>
-<li>返回什么结果</li>
-</ul>
-<h3 id="3-用-Zod-描述输入参数"><a href="#3-用-Zod-描述输入参数" class="headerlink" title="3. 用 Zod 描述输入参数"></a>3. 用 Zod 描述输入参数</h3><pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token builtin">symbol</span><span class="token operator">:</span> z<span class="token punctuation">.</span><span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>这一步不是为了“写得更正式”，而是为了让工具输入更可验证、更清晰。<br>这样在 Inspector 或其他宿主里，也更容易看到工具需要什么参数。</p>
-<h3 id="4-把业务逻辑接进来"><a href="#4-把业务逻辑接进来" class="headerlink" title="4. 把业务逻辑接进来"></a>4. 把业务逻辑接进来</h3><pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">const</span> result <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">fetchMarketData</span><span class="token punctuation">(</span><span class="token builtin">symbol</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>这一行其实最能体现分层价值。因为 MCP 层只负责协议和工具暴露，真正的业务仍然交给 <code>domain/market.ts</code>。</p>
-<p>这就是为什么前面要先拆文件。<br>如果你把所有代码都写在一个地方，新手很容易分不清“协议代码”和“业务代码”分别在干什么。</p>
-<hr>
-<h2 id="十三、为什么日志要写到-stderr，而不是-stdout"><a href="#十三、为什么日志要写到-stderr，而不是-stdout" class="headerlink" title="十三、为什么日志要写到 stderr，而不是 stdout"></a>十三、为什么日志要写到 stderr，而不是 stdout</h2><p>接下来是一个非常容易踩坑、但又必须知道的点。</p>
-<p>如果你使用的是 <strong>STDIO</strong> 传输，那么：</p>
+<p>如果没有报错，而且进程保持运行、等待输入，那么通常说明你的 MCP Server 已经启动成功了。</p>
+<p>这里要注意一点：</p>
+<p><strong>对 STDIO Server 来说，“启动后挂起等待输入”是正常现象，不是程序卡死。</strong></p>
+<p>因为它本来就是在等宿主通过标准输入和它通信。</p>
+<h4 id="为什么日志要写到-stderr，而不是-stdout"><a href="#为什么日志要写到-stderr，而不是-stdout" class="headerlink" title="为什么日志要写到 stderr，而不是 stdout"></a>为什么日志要写到 stderr，而不是 stdout</h4><p>如果你使用的是 <strong>STDIO</strong> 传输，那么：</p>
 <p><strong>stdout 是 MCP 协议消息通道，不能随便输出普通日志。</strong></p>
 <p>也就是说，下面这种做法是有风险的：</p>
 <pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">"server started"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
@@ -659,36 +650,20 @@ server<span class="token punctuation">.</span><span class="token function">tool<
 <p>也就是 stderr。</p>
 <p>这类细节很适合在入门文章里强调一下。因为很多人第一次跑不通，不是 MCP 本身有问题，而是被日志输出干扰了。</p>
 <hr>
-<h2 id="十四、配置-package-json-并启动服务"><a href="#十四、配置-package-json-并启动服务" class="headerlink" title="十四、配置 package.json 并启动服务"></a>十四、配置 package.json 并启动服务</h2><p>接下来给 <code>package.json</code> 增加脚本：</p>
-<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
-  <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"module"</span><span class="token punctuation">,</span>
-  <span class="token property">"scripts"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
-    <span class="token property">"dev"</span><span class="token operator">:</span> <span class="token string">"tsx src/server.ts"</span>
-  <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>然后启动：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> run dev<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>如果没有报错，而且进程保持运行、等待输入，那么通常说明你的 MCP Server 已经启动成功了。</p>
-<p>这里要注意一点：</p>
-<p><strong>对 STDIO Server 来说，“启动后挂起等待输入”是正常现象，不是程序卡死。</strong></p>
-<p>因为它本来就是在等宿主通过标准输入和它通信。</p>
-<hr>
-<h2 id="十五、先用-MCP-Inspector-验证：确认工具真的存在、真的能调用"><a href="#十五、先用-MCP-Inspector-验证：确认工具真的存在、真的能调用" class="headerlink" title="十五、先用 MCP Inspector 验证：确认工具真的存在、真的能调用"></a>十五、先用 MCP Inspector 验证：确认工具真的存在、真的能调用</h2><p>在真正接入 Codex 前，最好的做法是先用 MCP Inspector 验证。因为 Inspector 更适合做“工具级调试”。</p>
-<h3 id="1-启动-Inspector"><a href="#1-启动-Inspector" class="headerlink" title="1. 启动 Inspector"></a>1. 启动 Inspector</h3><p>如果你已经编译成 JS，可以这样启动：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">npx tsc
+<h2 id="四、验证这个-MCP-工具是否真的可用"><a href="#四、验证这个-MCP-工具是否真的可用" class="headerlink" title="四、验证这个 MCP 工具是否真的可用"></a>四、验证这个 MCP 工具是否真的可用</h2><h3 id="1-用-MCP-Inspector-验证"><a href="#1-用-MCP-Inspector-验证" class="headerlink" title="1. 用 MCP Inspector 验证"></a>1. 用 MCP Inspector 验证</h3><p>在真正接入 Codex 前，最好的做法是先用 MCP Inspector 验证。因为 Inspector 更适合做“工具级调试”。</p>
+<h4 id="启动-Inspector"><a href="#启动-Inspector" class="headerlink" title="启动 Inspector"></a>启动 Inspector</h4><p>如果你已经编译成 JS，可以这样启动：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> run build
 npx @modelcontextprotocol/inspector <span class="token function">node</span> dist/server.js<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <p>如果你更习惯直接用 <code>tsx</code> 跑，也可以按自己的本地执行方式配置。</p>
-<h3 id="2-在-Inspector-里重点验证什么"><a href="#2-在-Inspector-里重点验证什么" class="headerlink" title="2. 在 Inspector 里重点验证什么"></a>2. 在 Inspector 里重点验证什么</h3><p>你不需要一上来测试很多场景，先抓住 3 个核心问题：</p>
+<h4 id="在-Inspector-里重点验证什么"><a href="#在-Inspector-里重点验证什么" class="headerlink" title="在 Inspector 里重点验证什么"></a>在 Inspector 里重点验证什么</h4><p>你不需要一上来测试很多场景，先抓住 3 个核心问题：</p>
 <ul>
 <li>Server 是否连接成功</li>
 <li>是否能看到 <code>fetch_market_data</code></li>
 <li>这个工具是否真的可以被调用</li>
 </ul>
 <p>也就是说，Inspector 阶段的重点不是“功能多强”，而是“工具链路是否成立”。</p>
-<h3 id="3-测试正常输入"><a href="#3-测试正常输入" class="headerlink" title="3. 测试正常输入"></a>3. 测试正常输入</h3><p>输入：</p>
+<h4 id="测试正常输入"><a href="#测试正常输入" class="headerlink" title="测试正常输入"></a>测试正常输入</h4><p>输入：</p>
 <pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
   <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"BTC"</span>
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
@@ -705,16 +680,16 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>其中价格会变化，这正说明你拿到的是实时数据，而不是写死的 mock 数据。</p>
-<h3 id="4-测试异常输入"><a href="#4-测试异常输入" class="headerlink" title="4. 测试异常输入"></a>4. 测试异常输入</h3><p>除了成功场景，建议至少测下面几种失败输入。</p>
-<h4 id="空字符串"><a href="#空字符串" class="headerlink" title="空字符串"></a>空字符串</h4><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+<h4 id="测试异常输入"><a href="#测试异常输入" class="headerlink" title="测试异常输入"></a>测试异常输入</h4><p>除了成功场景，建议至少测下面几种失败输入。</p>
+<h5 id="空字符串"><a href="#空字符串" class="headerlink" title="空字符串"></a>空字符串</h5><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
   <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">""</span>
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
-<h4 id="不支持的-symbol"><a href="#不支持的-symbol" class="headerlink" title="不支持的 symbol"></a>不支持的 symbol</h4><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+<h5 id="不支持的-symbol"><a href="#不支持的-symbol" class="headerlink" title="不支持的 symbol"></a>不支持的 symbol</h5><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
   <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"DOGE"</span>
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
-<h4 id="缺少字段"><a href="#缺少字段" class="headerlink" title="缺少字段"></a>缺少字段</h4><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span><span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h5 id="缺少字段"><a href="#缺少字段" class="headerlink" title="缺少字段"></a>缺少字段</h5><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span><span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
 <p>这一步的目的不是追求“所有输入都成功”，而是确认下面三件事：</p>
 <ul>
@@ -723,8 +698,7 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
 <li>错误信息对人来说是可理解的</li>
 </ul>
 <p>一个入门项目做到这里，其实已经比很多纯演示性质的示例更接近真实开发了。</p>
-<hr>
-<h3 id="5-执行结果证明图"><a href="#5-执行结果证明图" class="headerlink" title="5. 执行结果证明图"></a>5. 执行结果证明图</h3><p>下面这张图是 <code>fetch_market_data</code> 在 MCP Inspector 中连接成功并调用成功的结果。可以看到：</p>
+<h4 id="执行结果证明图"><a href="#执行结果证明图" class="headerlink" title="执行结果证明图"></a>执行结果证明图</h4><p>下面这张图是 <code>fetch_market_data</code> 在 MCP Inspector 中连接成功并调用成功的结果。可以看到：</p>
 <ul>
 <li>左侧已成功连接本地 <code>market-data-server</code></li>
 <li>工具列表中已经出现 <code>fetch_market_data</code></li>
@@ -732,9 +706,8 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
 <li><code>Tool Result: Success</code> 说明这条本地 MCP 调用链路已经跑通</li>
 </ul>
 <p><img src="/images/20260409/inspector-validation-success.png" alt="Inspector 连接验证成功结果"></p>
-<hr>
-<h2 id="十六、再接入-Codex-CLI：验证宿主是否真的会调用你的工具"><a href="#十六、再接入-Codex-CLI：验证宿主是否真的会调用你的工具" class="headerlink" title="十六、再接入 Codex CLI：验证宿主是否真的会调用你的工具"></a>十六、再接入 Codex CLI：验证宿主是否真的会调用你的工具</h2><p>当 Inspector 验证通过后，再接入 Codex 才更稳。因为这时候你已经知道问题不在工具本身，而只可能在宿主配置或调用方式上。</p>
-<h3 id="1-准备-Codex-配置文件"><a href="#1-准备-Codex-配置文件" class="headerlink" title="1. 准备 Codex 配置文件"></a>1. 准备 Codex 配置文件</h3><p>创建或编辑：</p>
+<h3 id="2-接入-Codex-CLI-验证"><a href="#2-接入-Codex-CLI-验证" class="headerlink" title="2. 接入 Codex CLI 验证"></a>2. 接入 Codex CLI 验证</h3><p>当 Inspector 验证通过后，再接入 Codex 才更稳。因为这时候你已经知道问题不在工具本身，而只可能在宿主配置或调用方式上。</p>
+<h4 id="准备-Codex-配置文件"><a href="#准备-Codex-配置文件" class="headerlink" title="准备 Codex 配置文件"></a>准备 Codex 配置文件</h4><p>创建或编辑：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">~/.codex/config.toml<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
 <p>加入 MCP Server 配置：</p>
@@ -749,13 +722,13 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
 <span class="token key property">COINGECKO_API_PLAN</span> <span class="token punctuation">=</span> <span class="token string">"demo"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>注意把路径替换成你自己的绝对路径。</p>
-<h3 id="2-启动-Codex"><a href="#2-启动-Codex" class="headerlink" title="2. 启动 Codex"></a>2. 启动 Codex</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">codex<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h4 id="启动-Codex"><a href="#启动-Codex" class="headerlink" title="启动 Codex"></a>启动 Codex</h4><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">codex<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<h3 id="3-第一次测试时，尽量显式要求调用工具"><a href="#3-第一次测试时，尽量显式要求调用工具" class="headerlink" title="3. 第一次测试时，尽量显式要求调用工具"></a>3. 第一次测试时，尽量显式要求调用工具</h3><p>建议用比较明确的提示词，例如：</p>
+<h4 id="第一次测试时，尽量显式要求调用工具"><a href="#第一次测试时，尽量显式要求调用工具" class="headerlink" title="第一次测试时，尽量显式要求调用工具"></a>第一次测试时，尽量显式要求调用工具</h4><p>建议用比较明确的提示词，例如：</p>
 <pre class="line-numbers language-text" data-language="text"><code class="language-text">Use the MCP tool fetch_market_data with symbol BTC. Return the raw result first, then explain it.<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<p>为什么要写得这么明确？<br>因为在验证阶段，你的目标不是“写一个自然对话提示词”，而是先确认宿主是否真的触发了工具调用。</p>
-<h3 id="4-如何判断-Codex-不是在“猜答案”"><a href="#4-如何判断-Codex-不是在“猜答案”" class="headerlink" title="4. 如何判断 Codex 不是在“猜答案”"></a>4. 如何判断 Codex 不是在“猜答案”</h3><p>你可以重点看返回结果里是否出现你自己定义过的字段，比如：</p>
+<p>为什么要写得这么明确？因为在验证阶段，你的目标不是“写一个自然对话提示词”，而是先确认宿主是否真的触发了工具调用。</p>
+<h4 id="如何判断-Codex-不是在“猜答案”"><a href="#如何判断-Codex-不是在“猜答案”" class="headerlink" title="如何判断 Codex 不是在“猜答案”"></a>如何判断 Codex 不是在“猜答案”</h4><p>你可以重点看返回结果里是否出现你自己定义过的字段，比如：</p>
 <ul>
 <li><code>source: coingecko-demo</code></li>
 <li><code>id: bitcoin</code></li>
@@ -764,8 +737,7 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
 </ul>
 <p>这些字段如果都出现了，通常就可以比较确定：</p>
 <p><strong>它不是在凭语言模型常识回答，而是真的通过 MCP 调用了你的工具。</strong></p>
-<hr>
-<h3 id="5-执行结果证明图-1"><a href="#5-执行结果证明图-1" class="headerlink" title="5. 执行结果证明图"></a>5. 执行结果证明图</h3><p>下面这张图展示的是把 MCP Server 接入 Codex 后的调用结果。可以看到 Codex 明确调用了：</p>
+<h4 id="执行结果证明图-1"><a href="#执行结果证明图-1" class="headerlink" title="执行结果证明图"></a>执行结果证明图</h4><p>下面这张图展示的是把 MCP Server 接入 Codex 后的调用结果。可以看到 Codex 明确调用了：</p>
 <p><code>market_data.fetch_market_data({"symbol":"BTC"})</code></p>
 <p>并返回了你在工具中定义的字段，例如：</p>
 <ul>
@@ -779,7 +751,7 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
 <p>这说明 Codex 并不是在“猜答案”，而是真的通过 MCP 工具拿到了返回结果。</p>
 <p><img src="/images/20260409/codex-execution-success.png" alt="Codex 配置执行结果"></p>
 <hr>
-<h2 id="十七、走到这里，你其实已经完成了一个-MCP-入门闭环"><a href="#十七、走到这里，你其实已经完成了一个-MCP-入门闭环" class="headerlink" title="十七、走到这里，你其实已经完成了一个 MCP 入门闭环"></a>十七、走到这里，你其实已经完成了一个 MCP 入门闭环</h2><p>如果前面的步骤都已经跑通，那么你完成的其实不是一个简单 demo，而是一个完整的入门闭环：</p>
+<h2 id="五、总结：跑通这条链路后，你真正掌握了什么"><a href="#五、总结：跑通这条链路后，你真正掌握了什么" class="headerlink" title="五、总结：跑通这条链路后，你真正掌握了什么"></a>五、总结：跑通这条链路后，你真正掌握了什么</h2><p>如果前面的步骤都已经跑通，那么你完成的其实不是一个简单 demo，而是一个完整的入门闭环：</p>
 <ol>
 <li>你写了一个 TypeScript MCP Server</li>
 <li>你注册了一个真实可用的工具 <code>fetch_market_data</code></li>
@@ -790,11 +762,9 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
 <p>这一步很重要，因为它意味着你已经跨过了 MCP 入门最难的那道坎：</p>
 <p><strong>从“知道概念”进入“能做出一个可验证的工具”。</strong></p>
 <p>很多人学到这里，后面再增加第二个工具、替换数据源、接入更多宿主，都会顺很多。</p>
-<hr>
-<hr>
-<h2 id="二十、总结：新手学-MCP，最重要的不是记概念，而是跑通一条链路"><a href="#二十、总结：新手学-MCP，最重要的不是记概念，而是跑通一条链路" class="headerlink" title="二十、总结：新手学 MCP，最重要的不是记概念，而是跑通一条链路"></a>二十、总结：新手学 MCP，最重要的不是记概念，而是跑通一条链路</h2><p>这篇文章本质上只做了一件事：</p>
+<p>这篇文章本质上只做了一件事：</p>
 <p><strong>用一个真实的 CoinGecko 市场数据工具，把 MCP 的完整入门流程跑通。</strong></p>
-<p>如果你刚接触 MCP，其实不需要一开始就把所有协议细节都啃透。<br>更重要的是先建立这几个直觉：</p>
+<p>如果你刚接触 MCP，其实不需要一开始就把所有协议细节都啃透。更重要的是先建立这几个直觉：</p>
 <ul>
 <li>MCP 是一层工具协议</li>
 <li>业务逻辑仍然是你自己写</li>
