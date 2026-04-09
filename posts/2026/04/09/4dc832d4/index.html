@@ -32,7 +32,7 @@
 <meta property="og:image" content="https://dejinlu.cn/images/20260409/inspector-validation-success.png">
 <meta property="og:image" content="https://dejinlu.cn/images/20260409/codex-execution-success.png">
 <meta property="article:published_time" content="2026-04-09T05:22:38.000Z">
-<meta property="article:modified_time" content="2026-04-09T08:37:45.347Z">
+<meta property="article:modified_time" content="2026-04-09T14:54:13.276Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="MCP">
@@ -559,14 +559,17 @@
   version<span class="token operator">:</span> <span class="token string">"1.1.0"</span><span class="token punctuation">,</span>
 <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-server<span class="token punctuation">.</span><span class="token function">tool</span><span class="token punctuation">(</span>
+server<span class="token punctuation">.</span><span class="token function">registerTool</span><span class="token punctuation">(</span>
   <span class="token string">"fetch_market_data"</span><span class="token punctuation">,</span>
-  <span class="token string">"Fetch crypto market data from CoinGecko for symbols like BTC, ETH, or SOL"</span><span class="token punctuation">,</span>
   <span class="token punctuation">{</span>
-    <span class="token builtin">symbol</span><span class="token operator">:</span> z
-      <span class="token punctuation">.</span><span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-      <span class="token punctuation">.</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token string">"symbol cannot be empty"</span><span class="token punctuation">)</span>
-      <span class="token punctuation">.</span><span class="token function">describe</span><span class="token punctuation">(</span><span class="token string">"Crypto asset symbol, for example BTC, ETH, or SOL"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    description<span class="token operator">:</span>
+      <span class="token string">"Fetch crypto market data from CoinGecko for symbols like BTC, ETH, or SOL"</span><span class="token punctuation">,</span>
+    inputSchema<span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token builtin">symbol</span><span class="token operator">:</span> z
+        <span class="token punctuation">.</span><span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token string">"symbol cannot be empty"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">describe</span><span class="token punctuation">(</span><span class="token string">"Crypto asset symbol, for example BTC, ETH, or SOL"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
   <span class="token punctuation">}</span><span class="token punctuation">,</span>
   <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token builtin">symbol</span> <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
     <span class="token keyword">try</span> <span class="token punctuation">{</span>
@@ -606,7 +609,7 @@ server<span class="token punctuation">.</span><span class="token function">tool<
 <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">catch</span><span class="token punctuation">(</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
   <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token string">"Server error:"</span><span class="token punctuation">,</span> error<span class="token punctuation">)</span><span class="token punctuation">;</span>
   process<span class="token punctuation">.</span><span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h4 id="这段-MCP-Server-代码应该怎么看"><a href="#这段-MCP-Server-代码应该怎么看" class="headerlink" title="这段 MCP Server 代码应该怎么看"></a>这段 MCP Server 代码应该怎么看</h4><p>到这里，文章最关键的一层连接出现了：</p>
 <p><strong>业务逻辑已经有了，现在我们要把它变成一个标准工具。</strong></p>

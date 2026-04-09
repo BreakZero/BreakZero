@@ -283,14 +283,17 @@
   version<span class="token operator">:</span> <span class="token string">"1.1.0"</span><span class="token punctuation">,</span>
 <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 
-server<span class="token punctuation">.</span><span class="token function">tool</span><span class="token punctuation">(</span>
+server<span class="token punctuation">.</span><span class="token function">registerTool</span><span class="token punctuation">(</span>
   <span class="token string">"fetch_market_data"</span><span class="token punctuation">,</span>
-  <span class="token string">"Fetch crypto market data from CoinGecko for symbols like BTC, ETH, or SOL"</span><span class="token punctuation">,</span>
   <span class="token punctuation">{</span>
-    <span class="token builtin">symbol</span><span class="token operator">:</span> z
-      <span class="token punctuation">.</span><span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-      <span class="token punctuation">.</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token string">"symbol cannot be empty"</span><span class="token punctuation">)</span>
-      <span class="token punctuation">.</span><span class="token function">describe</span><span class="token punctuation">(</span><span class="token string">"Crypto asset symbol, for example BTC, ETH, or SOL"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    description<span class="token operator">:</span>
+      <span class="token string">"Fetch crypto market data from CoinGecko for symbols like BTC, ETH, or SOL"</span><span class="token punctuation">,</span>
+    inputSchema<span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token builtin">symbol</span><span class="token operator">:</span> z
+        <span class="token punctuation">.</span><span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token string">"symbol cannot be empty"</span><span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">describe</span><span class="token punctuation">(</span><span class="token string">"Crypto asset symbol, for example BTC, ETH, or SOL"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
   <span class="token punctuation">}</span><span class="token punctuation">,</span>
   <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token builtin">symbol</span> <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
     <span class="token keyword">try</span> <span class="token punctuation">{</span>
@@ -330,7 +333,7 @@ server<span class="token punctuation">.</span><span class="token function">tool<
 <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">catch</span><span class="token punctuation">(</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
   <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token string">"Server error:"</span><span class="token punctuation">,</span> error<span class="token punctuation">)</span><span class="token punctuation">;</span>
   process<span class="token punctuation">.</span><span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h4 id="这段-MCP-Server-代码应该怎么看"><a href="#这段-MCP-Server-代码应该怎么看" class="headerlink" title="这段 MCP Server 代码应该怎么看"></a>这段 MCP Server 代码应该怎么看</h4><p>到这里，文章最关键的一层连接出现了：</p>
 <p><strong>业务逻辑已经有了，现在我们要把它变成一个标准工具。</strong></p>
@@ -504,143 +507,6 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
       <tags>
         <tag>AI</tag>
         <tag>MCP</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>iOS通过Container读取文件问题笔录</title>
-    <url>/posts/2023/08/13/bb96b1c7/</url>
-    <content><![CDATA[<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：</p>
-<ul>
-<li><strong>现象</strong>：导出 <code>.xcappdata</code> 可以确认文件确实在 Documents 目录下，但用 <code>NSData.dataWithContentsOfFile</code> 读取时始终返回空。</li>
-<li><strong>报错</strong>：<code>No such File or Directory</code>（找不到该文件或目录）。</li>
-</ul>
-<p>当时使用的读取代码如下（为便于排查，增加了 <code>errorPtr</code> 输出错误信息）：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> errorPtr<span class="token operator">:</span> ObjCObjectVar<span class="token operator">&lt;</span>NSError<span class="token operator">?</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token function">alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
-    <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-    bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
-    <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
-<span class="token punctuation">}</span>
-<span class="token function">println</span><span class="token punctuation">(</span>errorPtr<span class="token punctuation">.</span>value<span class="token operator">?</span><span class="token punctuation">.</span>description<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">return</span><span class="token label symbol">@withContext</span> <span class="token keyword">null</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<span id="more"></span>
-
-<h2 id="二、问题定位"><a href="#二、问题定位" class="headerlink" title="二、问题定位"></a>二、问题定位</h2><h3 id="2-1-怀疑点：路径可能不对"><a href="#2-1-怀疑点：路径可能不对" class="headerlink" title="2.1 怀疑点：路径可能不对"></a>2.1 怀疑点：路径可能不对</h3><p>从错误日志看，传入的 <code>fullPath</code> 很可能并不是当前运行时的真实路径，所以即使文件实际存在，<code>NSData.dataWithContentsOfFile</code> 仍然找不到。</p>
-<h3 id="2-2-对比验证：Application-目录的-UUID-不一致"><a href="#2-2-对比验证：Application-目录的-UUID-不一致" class="headerlink" title="2.2 对比验证：Application 目录的 UUID 不一致"></a>2.2 对比验证：Application 目录的 UUID 不一致</h3><p>用 Swift 在运行时获取 Documents 目录并列出文件，与 Kotlin 里使用的 <code>fullPath</code> 对比：</p>
-<ul>
-<li><strong>Kotlin 中使用的 fullPath</strong>（可能是之前保存的完整路径）：<pre class="line-numbers language-none"><code class="language-none">/var/mobile/Containers/Data/Application/3FC1CCE9-A788-47AB-902A-FA133FAA3D30/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
-<li><strong>Swift 当前拿到的文件 URL</strong>：<pre class="line-numbers language-none"><code class="language-none">file:///private/var/mobile/Containers/Data/Application/C5AC5178-6887-40F4-9EE5-8D56CB830CB3/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
-</ul>
-<p>可见，<code>Application</code> 后面那一段 UUID 不一致：一个是 <code>3FC1CCE9-...</code>，一个是 <code>C5AC5178-...</code>。</p>
-<p>Swift 侧获取 Documents 的示例代码：</p>
-<pre class="line-numbers language-swift" data-language="swift"><code class="language-swift"><span class="token keyword">let</span> fileManager <span class="token operator">=</span> <span class="token class-name">FileManager</span><span class="token punctuation">.</span><span class="token keyword">default</span>
-<span class="token keyword">let</span> documentsURL <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">urls</span><span class="token punctuation">(</span><span class="token keyword">for</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>documentDirectory<span class="token punctuation">,</span> <span class="token keyword">in</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>userDomainMask<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
-<span class="token keyword">do</span> <span class="token punctuation">{</span>
-    <span class="token keyword">let</span> fileURLs <span class="token operator">=</span> <span class="token keyword">try</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectory</span><span class="token punctuation">(</span>at<span class="token punctuation">:</span> documentsURL<span class="token punctuation">,</span> includingPropertiesForKeys<span class="token punctuation">:</span> <span class="token nil constant">nil</span><span class="token punctuation">)</span>
-    <span class="token function">print</span><span class="token punctuation">(</span>fileURLs<span class="token punctuation">)</span>
-<span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">{</span>
-    <span class="token function">print</span><span class="token punctuation">(</span><span class="token string-literal"><span class="token string">"Error while enumerating files </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">documentsURL<span class="token punctuation">.</span>path</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">: </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">error<span class="token punctuation">.</span>localizedDescription</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">"</span></span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="2-3-根因结论"><a href="#2-3-根因结论" class="headerlink" title="2.3 根因结论"></a>2.3 根因结论</h3><p>自 <strong>iOS 8.0</strong> 起，应用沙盒里 <code>Application</code> 这一级目录的 <strong>UUID 会随安装/部署方式变化</strong>（例如卸载重装、Xcode 重新安装等）。若把「完整路径」存下来，下次启动或重装后 UUID 变了，旧路径就失效，导致「文件在，但按旧路径读不到」。</p>
-<p>因此：<strong>不能依赖存储的完整路径来读文件，只能依赖「相对位置 + 文件名」并在运行时重新解析。</strong></p>
-<h2 id="三、解决方案"><a href="#三、解决方案" class="headerlink" title="三、解决方案"></a>三、解决方案</h2><p>思路统一为：<strong>只存文件名（或相对路径），读的时候先拿到当前 Documents 目录，再拼出完整路径或 URL。</strong> 下面两种写法都符合这一思路。</p>
-<h3 id="方法一：遍历-Documents，按文件名匹配"><a href="#方法一：遍历-Documents，按文件名匹配" class="headerlink" title="方法一：遍历 Documents，按文件名匹配"></a>方法一：遍历 Documents，按文件名匹配</h3><p>不依赖完整路径，先取到 Documents 的 URL，再在目录下按文件名找到对应文件：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 拿到 Documents 目录的 url</span>
-<span class="token keyword">val</span> url <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">URLForDirectory</span><span class="token punctuation">(</span>
-    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
-    inDomain <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
-    appropriateForURL <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
-    create <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
-    error <span class="token operator">=</span> <span class="token keyword">null</span>
-<span class="token punctuation">)</span><span class="token operator">!!</span>
-<span class="token comment">// 列出目录下所有文件的 url</span>
-<span class="token keyword">val</span> fileUrls <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectoryAtURL</span><span class="token punctuation">(</span>url <span class="token operator">=</span> url<span class="token punctuation">,</span> includingPropertiesForKeys <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span>
-<span class="token comment">// 按文件名匹配得到目标文件的 url</span>
-<span class="token keyword">val</span> currentFileUrl <span class="token operator">=</span> fileUrls<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">first</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">contains</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span> <span class="token punctuation">}</span> <span class="token keyword">as</span><span class="token operator">?</span> NSURL
-<span class="token comment">// 用 URL 读取</span>
-currentFileUrl<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span>
-    NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfURL</span><span class="token punctuation">(</span>currentFileUrl<span class="token punctuation">)</span>
-        <span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
-            <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-            bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
-            <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
-        <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="方法二（推荐）：直接取-Documents-路径再拼接文件名"><a href="#方法二（推荐）：直接取-Documents-路径再拼接文件名" class="headerlink" title="方法二（推荐）：直接取 Documents 路径再拼接文件名"></a>方法二（推荐）：直接取 Documents 路径再拼接文件名</h3><p>遍历有额外开销，更稳妥且高效的方式是：<strong>每次读取时用系统 API 取当前 Documents 目录，再拼接文件名</strong>：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> documentDirectory <span class="token operator">=</span> <span class="token function">NSSearchPathForDirectoriesInDomains</span><span class="token punctuation">(</span>
-    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
-    domainMask <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
-    expandTilde <span class="token operator">=</span> <span class="token boolean">true</span>
-<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">first</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> NSString
-<span class="token keyword">val</span> fullPath <span class="token operator">=</span> documentDirectory<span class="token punctuation">.</span><span class="token function">stringByAppendingPathComponent</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span>
-<span class="token comment">// 此处 fullPath 一定是当前应用实例的真实路径</span>
-NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> <span class="token operator">..</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>这样得到的 <code>fullPath</code> 始终对应当前运行时的 Documents，不受 UUID 变化影响。</p>
-<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><table>
-<thead>
-<tr>
-<th>要点</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>不要存完整路径</td>
-<td>iOS 8+ 下 Application 目录 UUID 会变，存完整路径容易失效。</td>
-</tr>
-<tr>
-<td>推荐只存文件名</td>
-<td>使用时通过 API 获取当前 Documents 目录，再拼接文件名。</td>
-</tr>
-<tr>
-<td>优先用系统 API 取目录</td>
-<td>使用 <code>NSSearchPathForDirectoriesInDomains</code> 获取 Documents，比遍历目录更简单、高效。</td>
-</tr>
-</tbody></table>
-<p>按上述方式改造后，<code>NSData.dataWithContentsOfFile</code> 无法读取文件的问题即可解决。</p>
-<h2 id="附录：UUID-何时会变化"><a href="#附录：UUID-何时会变化" class="headerlink" title="附录：UUID 何时会变化"></a>附录：UUID 何时会变化</h2><p>不同安装/运行方式下，沙盒中 Application 目录的 UUID 是否变化可参考下表：</p>
-<table>
-<thead>
-<tr>
-<th>安装/运行方式</th>
-<th>UUID 是否变化</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>App 卸载后重新安装</td>
-<td>✅ 变化（iOS 8+ 的安全机制）</td>
-</tr>
-<tr>
-<td>通过 Xcode 重新安装</td>
-<td>✅ 变化（相当于卸载再安装）</td>
-</tr>
-<tr>
-<td>Xcode 直接运行（不卸载）</td>
-<td>❌ 不变（仅 Build &amp; Run 且未删除 App）</td>
-</tr>
-<tr>
-<td>模拟器上运行</td>
-<td>✅ 可能变化（视情况而定）</td>
-</tr>
-<tr>
-<td>TestFlight / App Store 安装</td>
-<td>✅ 变化（安装时生成新 UUID）</td>
-</tr>
-<tr>
-<td>iOS OTA 更新 App</td>
-<td>❌ 不变（更新不改变 UUID）</td>
-</tr>
-</tbody></table>
-]]></content>
-      <categories>
-        <category>Multiplatform</category>
-      </categories>
-      <tags>
-        <tag>SwiftUI</tag>
-        <tag>Kotlin Native</tag>
       </tags>
   </entry>
   <entry>
@@ -845,6 +711,143 @@ NSData<span class="token punctuation">.</span><span class="token function">dataW
       </tags>
   </entry>
   <entry>
+    <title>iOS通过Container读取文件问题笔录</title>
+    <url>/posts/2023/08/13/bb96b1c7/</url>
+    <content><![CDATA[<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：</p>
+<ul>
+<li><strong>现象</strong>：导出 <code>.xcappdata</code> 可以确认文件确实在 Documents 目录下，但用 <code>NSData.dataWithContentsOfFile</code> 读取时始终返回空。</li>
+<li><strong>报错</strong>：<code>No such File or Directory</code>（找不到该文件或目录）。</li>
+</ul>
+<p>当时使用的读取代码如下（为便于排查，增加了 <code>errorPtr</code> 输出错误信息）：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> errorPtr<span class="token operator">:</span> ObjCObjectVar<span class="token operator">&lt;</span>NSError<span class="token operator">?</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token function">alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
+    <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+    <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
+<span class="token punctuation">}</span>
+<span class="token function">println</span><span class="token punctuation">(</span>errorPtr<span class="token punctuation">.</span>value<span class="token operator">?</span><span class="token punctuation">.</span>description<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">return</span><span class="token label symbol">@withContext</span> <span class="token keyword">null</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<span id="more"></span>
+
+<h2 id="二、问题定位"><a href="#二、问题定位" class="headerlink" title="二、问题定位"></a>二、问题定位</h2><h3 id="2-1-怀疑点：路径可能不对"><a href="#2-1-怀疑点：路径可能不对" class="headerlink" title="2.1 怀疑点：路径可能不对"></a>2.1 怀疑点：路径可能不对</h3><p>从错误日志看，传入的 <code>fullPath</code> 很可能并不是当前运行时的真实路径，所以即使文件实际存在，<code>NSData.dataWithContentsOfFile</code> 仍然找不到。</p>
+<h3 id="2-2-对比验证：Application-目录的-UUID-不一致"><a href="#2-2-对比验证：Application-目录的-UUID-不一致" class="headerlink" title="2.2 对比验证：Application 目录的 UUID 不一致"></a>2.2 对比验证：Application 目录的 UUID 不一致</h3><p>用 Swift 在运行时获取 Documents 目录并列出文件，与 Kotlin 里使用的 <code>fullPath</code> 对比：</p>
+<ul>
+<li><strong>Kotlin 中使用的 fullPath</strong>（可能是之前保存的完整路径）：<pre class="line-numbers language-none"><code class="language-none">/var/mobile/Containers/Data/Application/3FC1CCE9-A788-47AB-902A-FA133FAA3D30/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
+<li><strong>Swift 当前拿到的文件 URL</strong>：<pre class="line-numbers language-none"><code class="language-none">file:///private/var/mobile/Containers/Data/Application/C5AC5178-6887-40F4-9EE5-8D56CB830CB3/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
+</ul>
+<p>可见，<code>Application</code> 后面那一段 UUID 不一致：一个是 <code>3FC1CCE9-...</code>，一个是 <code>C5AC5178-...</code>。</p>
+<p>Swift 侧获取 Documents 的示例代码：</p>
+<pre class="line-numbers language-swift" data-language="swift"><code class="language-swift"><span class="token keyword">let</span> fileManager <span class="token operator">=</span> <span class="token class-name">FileManager</span><span class="token punctuation">.</span><span class="token keyword">default</span>
+<span class="token keyword">let</span> documentsURL <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">urls</span><span class="token punctuation">(</span><span class="token keyword">for</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>documentDirectory<span class="token punctuation">,</span> <span class="token keyword">in</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>userDomainMask<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+<span class="token keyword">do</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> fileURLs <span class="token operator">=</span> <span class="token keyword">try</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectory</span><span class="token punctuation">(</span>at<span class="token punctuation">:</span> documentsURL<span class="token punctuation">,</span> includingPropertiesForKeys<span class="token punctuation">:</span> <span class="token nil constant">nil</span><span class="token punctuation">)</span>
+    <span class="token function">print</span><span class="token punctuation">(</span>fileURLs<span class="token punctuation">)</span>
+<span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">{</span>
+    <span class="token function">print</span><span class="token punctuation">(</span><span class="token string-literal"><span class="token string">"Error while enumerating files </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">documentsURL<span class="token punctuation">.</span>path</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">: </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">error<span class="token punctuation">.</span>localizedDescription</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">"</span></span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="2-3-根因结论"><a href="#2-3-根因结论" class="headerlink" title="2.3 根因结论"></a>2.3 根因结论</h3><p>自 <strong>iOS 8.0</strong> 起，应用沙盒里 <code>Application</code> 这一级目录的 <strong>UUID 会随安装/部署方式变化</strong>（例如卸载重装、Xcode 重新安装等）。若把「完整路径」存下来，下次启动或重装后 UUID 变了，旧路径就失效，导致「文件在，但按旧路径读不到」。</p>
+<p>因此：<strong>不能依赖存储的完整路径来读文件，只能依赖「相对位置 + 文件名」并在运行时重新解析。</strong></p>
+<h2 id="三、解决方案"><a href="#三、解决方案" class="headerlink" title="三、解决方案"></a>三、解决方案</h2><p>思路统一为：<strong>只存文件名（或相对路径），读的时候先拿到当前 Documents 目录，再拼出完整路径或 URL。</strong> 下面两种写法都符合这一思路。</p>
+<h3 id="方法一：遍历-Documents，按文件名匹配"><a href="#方法一：遍历-Documents，按文件名匹配" class="headerlink" title="方法一：遍历 Documents，按文件名匹配"></a>方法一：遍历 Documents，按文件名匹配</h3><p>不依赖完整路径，先取到 Documents 的 URL，再在目录下按文件名找到对应文件：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 拿到 Documents 目录的 url</span>
+<span class="token keyword">val</span> url <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">URLForDirectory</span><span class="token punctuation">(</span>
+    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
+    inDomain <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
+    appropriateForURL <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
+    create <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+    error <span class="token operator">=</span> <span class="token keyword">null</span>
+<span class="token punctuation">)</span><span class="token operator">!!</span>
+<span class="token comment">// 列出目录下所有文件的 url</span>
+<span class="token keyword">val</span> fileUrls <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectoryAtURL</span><span class="token punctuation">(</span>url <span class="token operator">=</span> url<span class="token punctuation">,</span> includingPropertiesForKeys <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span>
+<span class="token comment">// 按文件名匹配得到目标文件的 url</span>
+<span class="token keyword">val</span> currentFileUrl <span class="token operator">=</span> fileUrls<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">first</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">contains</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span> <span class="token punctuation">}</span> <span class="token keyword">as</span><span class="token operator">?</span> NSURL
+<span class="token comment">// 用 URL 读取</span>
+currentFileUrl<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span>
+    NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfURL</span><span class="token punctuation">(</span>currentFileUrl<span class="token punctuation">)</span>
+        <span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
+            <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+            <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
+        <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="方法二（推荐）：直接取-Documents-路径再拼接文件名"><a href="#方法二（推荐）：直接取-Documents-路径再拼接文件名" class="headerlink" title="方法二（推荐）：直接取 Documents 路径再拼接文件名"></a>方法二（推荐）：直接取 Documents 路径再拼接文件名</h3><p>遍历有额外开销，更稳妥且高效的方式是：<strong>每次读取时用系统 API 取当前 Documents 目录，再拼接文件名</strong>：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> documentDirectory <span class="token operator">=</span> <span class="token function">NSSearchPathForDirectoriesInDomains</span><span class="token punctuation">(</span>
+    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
+    domainMask <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
+    expandTilde <span class="token operator">=</span> <span class="token boolean">true</span>
+<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">first</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> NSString
+<span class="token keyword">val</span> fullPath <span class="token operator">=</span> documentDirectory<span class="token punctuation">.</span><span class="token function">stringByAppendingPathComponent</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span>
+<span class="token comment">// 此处 fullPath 一定是当前应用实例的真实路径</span>
+NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> <span class="token operator">..</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这样得到的 <code>fullPath</code> 始终对应当前运行时的 Documents，不受 UUID 变化影响。</p>
+<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><table>
+<thead>
+<tr>
+<th>要点</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>不要存完整路径</td>
+<td>iOS 8+ 下 Application 目录 UUID 会变，存完整路径容易失效。</td>
+</tr>
+<tr>
+<td>推荐只存文件名</td>
+<td>使用时通过 API 获取当前 Documents 目录，再拼接文件名。</td>
+</tr>
+<tr>
+<td>优先用系统 API 取目录</td>
+<td>使用 <code>NSSearchPathForDirectoriesInDomains</code> 获取 Documents，比遍历目录更简单、高效。</td>
+</tr>
+</tbody></table>
+<p>按上述方式改造后，<code>NSData.dataWithContentsOfFile</code> 无法读取文件的问题即可解决。</p>
+<h2 id="附录：UUID-何时会变化"><a href="#附录：UUID-何时会变化" class="headerlink" title="附录：UUID 何时会变化"></a>附录：UUID 何时会变化</h2><p>不同安装/运行方式下，沙盒中 Application 目录的 UUID 是否变化可参考下表：</p>
+<table>
+<thead>
+<tr>
+<th>安装/运行方式</th>
+<th>UUID 是否变化</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>App 卸载后重新安装</td>
+<td>✅ 变化（iOS 8+ 的安全机制）</td>
+</tr>
+<tr>
+<td>通过 Xcode 重新安装</td>
+<td>✅ 变化（相当于卸载再安装）</td>
+</tr>
+<tr>
+<td>Xcode 直接运行（不卸载）</td>
+<td>❌ 不变（仅 Build &amp; Run 且未删除 App）</td>
+</tr>
+<tr>
+<td>模拟器上运行</td>
+<td>✅ 可能变化（视情况而定）</td>
+</tr>
+<tr>
+<td>TestFlight / App Store 安装</td>
+<td>✅ 变化（安装时生成新 UUID）</td>
+</tr>
+<tr>
+<td>iOS OTA 更新 App</td>
+<td>❌ 不变（更新不改变 UUID）</td>
+</tr>
+</tbody></table>
+]]></content>
+      <categories>
+        <category>Multiplatform</category>
+      </categories>
+      <tags>
+        <tag>SwiftUI</tag>
+        <tag>Kotlin Native</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Jetpack Compose Performance Tips Every Developer Should Know</title>
     <url>/posts/2026/02/27/4ae1fc92/</url>
     <content><![CDATA[<h1 id="Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握"><a href="#Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握" class="headerlink" title="Jetpack Compose 性能优化：为什么 graphicsLayer 值得你重点掌握"></a>Jetpack Compose 性能优化：为什么 <code>graphicsLayer</code> 值得你重点掌握</h1><p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
@@ -1004,6 +1007,138 @@ NSData<span class="token punctuation">.</span><span class="token function">dataW
       </categories>
       <tags>
         <tag>Jetpack Compose</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>remember VS rememberSaveable</title>
+    <url>/posts/2023/12/04/f68195/</url>
+    <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在 Jetpack Compose 中，我们常需要「记住」某个计算结果，避免在重组时重复计算以提升性能。Compose 提供了两种常用方式：<code>remember {}</code> 和 <code>rememberSaveable {}</code>。二者都能在重组时复用值，但<strong>持久化范围不同</strong>，选错会导致状态在特定场景下被重置。本文结合一次实际问题和文档/实验，说明两者的区别与使用场景。</p>
+<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>页面中有两个主要部分：<strong>Dashboard</strong>（根据滚动做缩放动画）和 <strong>Asset List</strong>（可滚动列表）。用 <code>remember {}</code> 保存 scale 状态时：</p>
+<ul>
+<li><strong>快速切换 Tab</strong>：表现正常，scale 保持。</li>
+<li><strong>在其他 Tab 停留一段时间再切回</strong>：scale 被重置，Dashboard 突然放大。</li>
+</ul>
+<p><img src="/images/20231204/remember.gif" alt="Recording" title="remember"></p>
+<p>改为 <code>rememberSaveable {}</code> 后，无论如何切换 Tab，返回时 Dashboard 都能保持之前的 scale，符合预期。</p>
+<h3 id="相关代码片段"><a href="#相关代码片段" class="headerlink" title="相关代码片段"></a>相关代码片段</h3><pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 使用 rememberSaveable 保持 scale，避免离开屏幕后再进入时被重置</span>
+<span class="token keyword">var</span> scale <span class="token keyword">by</span> rememberSaveable <span class="token punctuation">{</span>
+    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">val</span> nestedScrollConnection <span class="token operator">=</span> remember <span class="token punctuation">{</span> <span class="token operator">..</span><span class="token punctuation">.</span> <span class="token punctuation">}</span>
+<span class="token function">Box</span><span class="token punctuation">(</span>modifier <span class="token operator">=</span> modifier<span class="token punctuation">.</span><span class="token function">nestedScroll</span><span class="token punctuation">(</span>nestedScrollConnection<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">DashboardView</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> Modifier
+            <span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">scale</span><span class="token punctuation">(</span>scale<span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarHeightRange<span class="token punctuation">.</span>last <span class="token operator">*</span> <span class="token punctuation">(</span>scale <span class="token operator">-</span> <span class="token number">1.0f</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        onEvent <span class="token operator">=</span> onEvent
+    <span class="token punctuation">)</span>
+    <span class="token function">LazyColumn</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> Modifier
+            <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarState<span class="token punctuation">.</span>height <span class="token operator">+</span> toolbarState<span class="token punctuation">.</span>offset <span class="token punctuation">}</span>
+            <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>MaterialTheme<span class="token punctuation">.</span>colorScheme<span class="token punctuation">.</span>background<span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">shadow</span><span class="token punctuation">(</span>elevation <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> shape <span class="token operator">=</span> <span class="token function">RoundedCornerShape</span><span class="token punctuation">(</span>topEnd <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> topStart <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">pointerInput</span><span class="token punctuation">(</span>Unit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">detectTapGestures</span><span class="token punctuation">(</span>onPress <span class="token operator">=</span> <span class="token punctuation">{</span> scope<span class="token punctuation">.</span>coroutineContext<span class="token punctuation">.</span><span class="token function">cancelChildren</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        verticalArrangement <span class="token operator">=</span> Arrangement<span class="token punctuation">.</span><span class="token function">spacedBy</span><span class="token punctuation">(</span><span class="token number">12</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        state <span class="token operator">=</span> listState
+    <span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">items</span><span class="token punctuation">(</span>uiState<span class="token punctuation">.</span>tokens<span class="token punctuation">,</span> key <span class="token operator">=</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span>token<span class="token punctuation">.</span>id <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">TokenItemView</span><span class="token punctuation">(</span>extraToken <span class="token operator">=</span> it<span class="token punctuation">,</span> onEvent <span class="token operator">=</span> onEvent<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="二、原理解析"><a href="#二、原理解析" class="headerlink" title="二、原理解析"></a>二、原理解析</h2><h3 id="2-1-可组合项的生命周期"><a href="#2-1-可组合项的生命周期" class="headerlink" title="2.1 可组合项的生命周期"></a>2.1 可组合项的生命周期</h3><p>根据官方文档 <a href="https://developer.android.com/jetpack/compose/lifecycle">Lifecycle of composables</a>，可组合项的生命周期可分为三阶段：</p>
+<ul>
+<li><strong>进入组合（Enter Composition）</strong></li>
+<li><strong>重组（Recomposition）</strong></li>
+<li><strong>退出组合（Exit Composition）</strong></li>
+</ul>
+<p>离开当前页面（如切换 Tab）时，该页面的可组合项会<strong>退出组合</strong>；再次进入时则会<strong>重新进入组合</strong>，相当于新一轮生命周期。</p>
+<h3 id="2-2-remember"><a href="#2-2-remember" class="headerlink" title="2.2 remember {}"></a>2.2 remember {}</h3><p>对 <code>remember {}</code> 的文档说明大致如下：</p>
+<blockquote>
+<p>Remember the value produced by calculation. calculation will only be evaluated during the composition. Recomposition will always return the value produced by composition.<br>即：值在<strong>进入组合时</strong>由 block 计算得到，<strong>重组时</strong>直接返回该值，不会重新计算。</p>
+</blockquote>
+<p>因此：</p>
+<ul>
+<li><strong>初次进入组合</strong>：执行 block，计算并保存值。</li>
+<li><strong>重组</strong>：直接返回已保存的值，不执行 block。</li>
+<li><strong>退出组合后再次进入</strong>：视为新的组合，block <strong>会再次执行</strong>，状态会被重新初始化。</li>
+</ul>
+<p>这就是「在其他 Tab 停留一段时间再切回」时 scale 被重置的原因：页面先退出组合，再进入时 <code>remember { mutableFloatStateOf(1.0f) }</code> 重新执行，scale 又变回 1.0。若切换很快，组合尚未被回收，就不会触发重新计算，看起来就「正常」。</p>
+<h3 id="2-3-rememberSaveable"><a href="#2-3-rememberSaveable" class="headerlink" title="2.3 rememberSaveable {}"></a>2.3 rememberSaveable {}</h3><p>官方对 <a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/saveable/package-summary#rememberSaveable(kotlin.Array,androidx.compose.runtime.saveable.Saver,kotlin.String,kotlin.Function0)">rememberSaveable</a> 的说明：</p>
+<blockquote>
+<p>与 <code>remember {}</code> 类似，但存储的值会在 <strong>Activity 或进程重建后</strong> 仍然保留，基于 Android 的 <code>SavedInstanceState</code> 机制。</p>
+</blockquote>
+<p>要点：</p>
+<ul>
+<li><p>默认使用 <code>autoSaver()</code> 将值写入 Bundle；也可自定义 <code>Saver</code>。</p>
+</li>
+<li><p>仅支持可放入 Bundle 的类型（如 Int、String、Float 等）。</p>
+</li>
+<li><p>若保存的是自定义类型（如 data class），必须提供 <code>Saver</code> 实现，否则会报错：</p>
+<pre class="line-numbers language-none"><code class="language-none">java.lang.IllegalArgumentException: MutableState containing ... cannot be saved using the current SaveableStateRegistry.
+The default implementation only supports types which can be stored inside the Bundle.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre></li>
+</ul>
+<p>因此，<strong>离开屏幕再进入</strong>时，只要没有发生 Activity/进程重建，<code>rememberSaveable</code> 仍会从 SaveableStateRegistry 里恢复之前保存的值，scale 得以保留。</p>
+<h2 id="三、验证实验"><a href="#三、验证实验" class="headerlink" title="三、验证实验"></a>三、验证实验</h2><p>用简单日志验证「退出组合后再进入会重新计算」：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">var</span> scale <span class="token keyword">by</span> remember <span class="token punctuation">{</span>
+    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== re-calculate"</span></span><span class="token punctuation">)</span>
+    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+<span class="token function">DisposableEffect</span><span class="token punctuation">(</span>key1 <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    onDispose <span class="token punctuation">{</span> <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== onDispose"</span></span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><code>DisposableEffect(key1 = null)</code> 保证只有在<strong>退出组合</strong>时才会执行 <code>onDispose</code>。</p>
+<ul>
+<li>**使用 <code>remember {}</code>**：第一次进入打印 <code>re-calculate</code>；切到其他 Tab 停留后，先打印 <code>onDispose</code>，再切回来会再次打印 <code>re-calculate</code>，scale 被重置。<br><img src="/images/20231204/remember_log.jpg" alt="Logger" title="remember_log"></li>
+<li>**改用 <code>rememberSaveable {}</code>**：只有第一次进入时打印一次 <code>re-calculate</code>，之后切 Tab 再回来也不会再打印，说明一直用的是已保存的值。<br><img src="/images/20231204/remember_log1.jpg" alt="Logger1" title="remember_log1"></li>
+</ul>
+<h2 id="四、延伸：离开屏幕-≠-重建"><a href="#四、延伸：离开屏幕-≠-重建" class="headerlink" title="四、延伸：离开屏幕 ≠ 重建"></a>四、延伸：离开屏幕 ≠ 重建</h2><p><a href="https://jetc.dev/slack/2021-04-13-when-do-we-use-remembersaveable.html">Jetpack Compose 相关讨论</a> 里有一句：**”Composable leaving the screen is not recreation”**（可组合项离开屏幕并不等于重建）。</p>
+<p>在 Compose 中：</p>
+<ul>
+<li>组件离开屏幕会触发 <code>onDispose</code>，生命周期结束。</li>
+<li>再次进入屏幕会重新组合，相当于新的生命周期，<code>remember {}</code> 会重新计算。</li>
+</ul>
+<p>所以「离开屏幕」和「Configuration 变化导致 Activity 重建」是两回事：前者不会触发 SavedInstanceState 流程，只会让可组合项退出组合；后者才会触发进程/Activity 重建，此时才用到 <code>rememberSaveable</code> 的持久化。</p>
+<p>常见「离开屏幕」场景包括：</p>
+<ol>
+<li><strong>Navigation 跳转 / Tab 切换</strong>（如本文案例）</li>
+<li><strong>列表滑动</strong>：Item 滑出视口时会退出组合，<code>onDispose</code> 会执行</li>
+</ol>
+<p>例如 LazyColumn 的 Item 配合 <code>DisposableEffect</code> 可以观察到滑出时打印；若需要<strong>跨页面或重新进入页面时恢复列表滚动位置</strong>，应使用基于 <code>rememberSaveable</code> 的 <code>rememberLazyListState</code> 等 API。</p>
+<h2 id="五、如何选择"><a href="#五、如何选择" class="headerlink" title="五、如何选择"></a>五、如何选择</h2><table>
+<thead>
+<tr>
+<th>需求</th>
+<th>推荐</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>状态只需在<strong>重组</strong>过程中保持</td>
+<td><code>remember {}</code></td>
+</tr>
+<tr>
+<td>状态需要在 <strong>Activity/进程重建</strong>（如旋转、内存回收）后恢复</td>
+<td><code>rememberSaveable {}</code></td>
+</tr>
+<tr>
+<td>状态需要<strong>跨页面</strong>或更复杂的作用域</td>
+<td>ViewModel 等；若仅在单页内且需应对「离开再进入」，<code>rememberSaveable {}</code> 仍适用</td>
+</tr>
+</tbody></table>
+<p>理解「进入/重组/退出组合」与「SavedInstanceState 重建」的差异后，就能在开发中按场景选用 <code>remember</code> 或 <code>rememberSaveable</code>，避免状态被意外重置。</p>
+]]></content>
+      <categories>
+        <category>Technical</category>
+      </categories>
+      <tags>
+        <tag>Jetpack Compose</tag>
+        <tag>Android</tag>
       </tags>
   </entry>
   <entry>
@@ -1264,138 +1399,6 @@ NSData<span class="token punctuation">.</span><span class="token function">dataW
       </categories>
       <tags>
         <tag>Compose</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>remember VS rememberSaveable</title>
-    <url>/posts/2023/12/04/f68195/</url>
-    <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在 Jetpack Compose 中，我们常需要「记住」某个计算结果，避免在重组时重复计算以提升性能。Compose 提供了两种常用方式：<code>remember {}</code> 和 <code>rememberSaveable {}</code>。二者都能在重组时复用值，但<strong>持久化范围不同</strong>，选错会导致状态在特定场景下被重置。本文结合一次实际问题和文档/实验，说明两者的区别与使用场景。</p>
-<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>页面中有两个主要部分：<strong>Dashboard</strong>（根据滚动做缩放动画）和 <strong>Asset List</strong>（可滚动列表）。用 <code>remember {}</code> 保存 scale 状态时：</p>
-<ul>
-<li><strong>快速切换 Tab</strong>：表现正常，scale 保持。</li>
-<li><strong>在其他 Tab 停留一段时间再切回</strong>：scale 被重置，Dashboard 突然放大。</li>
-</ul>
-<p><img src="/images/20231204/remember.gif" alt="Recording" title="remember"></p>
-<p>改为 <code>rememberSaveable {}</code> 后，无论如何切换 Tab，返回时 Dashboard 都能保持之前的 scale，符合预期。</p>
-<h3 id="相关代码片段"><a href="#相关代码片段" class="headerlink" title="相关代码片段"></a>相关代码片段</h3><pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 使用 rememberSaveable 保持 scale，避免离开屏幕后再进入时被重置</span>
-<span class="token keyword">var</span> scale <span class="token keyword">by</span> rememberSaveable <span class="token punctuation">{</span>
-    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span>
-<span class="token keyword">val</span> nestedScrollConnection <span class="token operator">=</span> remember <span class="token punctuation">{</span> <span class="token operator">..</span><span class="token punctuation">.</span> <span class="token punctuation">}</span>
-<span class="token function">Box</span><span class="token punctuation">(</span>modifier <span class="token operator">=</span> modifier<span class="token punctuation">.</span><span class="token function">nestedScroll</span><span class="token punctuation">(</span>nestedScrollConnection<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token function">DashboardView</span><span class="token punctuation">(</span>
-        modifier <span class="token operator">=</span> Modifier
-            <span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">scale</span><span class="token punctuation">(</span>scale<span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarHeightRange<span class="token punctuation">.</span>last <span class="token operator">*</span> <span class="token punctuation">(</span>scale <span class="token operator">-</span> <span class="token number">1.0f</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
-        onEvent <span class="token operator">=</span> onEvent
-    <span class="token punctuation">)</span>
-    <span class="token function">LazyColumn</span><span class="token punctuation">(</span>
-        modifier <span class="token operator">=</span> Modifier
-            <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarState<span class="token punctuation">.</span>height <span class="token operator">+</span> toolbarState<span class="token punctuation">.</span>offset <span class="token punctuation">}</span>
-            <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>MaterialTheme<span class="token punctuation">.</span>colorScheme<span class="token punctuation">.</span>background<span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">shadow</span><span class="token punctuation">(</span>elevation <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> shape <span class="token operator">=</span> <span class="token function">RoundedCornerShape</span><span class="token punctuation">(</span>topEnd <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> topStart <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">pointerInput</span><span class="token punctuation">(</span>Unit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-                <span class="token function">detectTapGestures</span><span class="token punctuation">(</span>onPress <span class="token operator">=</span> <span class="token punctuation">{</span> scope<span class="token punctuation">.</span>coroutineContext<span class="token punctuation">.</span><span class="token function">cancelChildren</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
-            <span class="token punctuation">}</span><span class="token punctuation">,</span>
-        verticalArrangement <span class="token operator">=</span> Arrangement<span class="token punctuation">.</span><span class="token function">spacedBy</span><span class="token punctuation">(</span><span class="token number">12</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">,</span>
-        state <span class="token operator">=</span> listState
-    <span class="token punctuation">)</span> <span class="token punctuation">{</span>
-        <span class="token function">items</span><span class="token punctuation">(</span>uiState<span class="token punctuation">.</span>tokens<span class="token punctuation">,</span> key <span class="token operator">=</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span>token<span class="token punctuation">.</span>id <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-            <span class="token function">TokenItemView</span><span class="token punctuation">(</span>extraToken <span class="token operator">=</span> it<span class="token punctuation">,</span> onEvent <span class="token operator">=</span> onEvent<span class="token punctuation">)</span>
-        <span class="token punctuation">}</span>
-    <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="二、原理解析"><a href="#二、原理解析" class="headerlink" title="二、原理解析"></a>二、原理解析</h2><h3 id="2-1-可组合项的生命周期"><a href="#2-1-可组合项的生命周期" class="headerlink" title="2.1 可组合项的生命周期"></a>2.1 可组合项的生命周期</h3><p>根据官方文档 <a href="https://developer.android.com/jetpack/compose/lifecycle">Lifecycle of composables</a>，可组合项的生命周期可分为三阶段：</p>
-<ul>
-<li><strong>进入组合（Enter Composition）</strong></li>
-<li><strong>重组（Recomposition）</strong></li>
-<li><strong>退出组合（Exit Composition）</strong></li>
-</ul>
-<p>离开当前页面（如切换 Tab）时，该页面的可组合项会<strong>退出组合</strong>；再次进入时则会<strong>重新进入组合</strong>，相当于新一轮生命周期。</p>
-<h3 id="2-2-remember"><a href="#2-2-remember" class="headerlink" title="2.2 remember {}"></a>2.2 remember {}</h3><p>对 <code>remember {}</code> 的文档说明大致如下：</p>
-<blockquote>
-<p>Remember the value produced by calculation. calculation will only be evaluated during the composition. Recomposition will always return the value produced by composition.<br>即：值在<strong>进入组合时</strong>由 block 计算得到，<strong>重组时</strong>直接返回该值，不会重新计算。</p>
-</blockquote>
-<p>因此：</p>
-<ul>
-<li><strong>初次进入组合</strong>：执行 block，计算并保存值。</li>
-<li><strong>重组</strong>：直接返回已保存的值，不执行 block。</li>
-<li><strong>退出组合后再次进入</strong>：视为新的组合，block <strong>会再次执行</strong>，状态会被重新初始化。</li>
-</ul>
-<p>这就是「在其他 Tab 停留一段时间再切回」时 scale 被重置的原因：页面先退出组合，再进入时 <code>remember { mutableFloatStateOf(1.0f) }</code> 重新执行，scale 又变回 1.0。若切换很快，组合尚未被回收，就不会触发重新计算，看起来就「正常」。</p>
-<h3 id="2-3-rememberSaveable"><a href="#2-3-rememberSaveable" class="headerlink" title="2.3 rememberSaveable {}"></a>2.3 rememberSaveable {}</h3><p>官方对 <a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/saveable/package-summary#rememberSaveable(kotlin.Array,androidx.compose.runtime.saveable.Saver,kotlin.String,kotlin.Function0)">rememberSaveable</a> 的说明：</p>
-<blockquote>
-<p>与 <code>remember {}</code> 类似，但存储的值会在 <strong>Activity 或进程重建后</strong> 仍然保留，基于 Android 的 <code>SavedInstanceState</code> 机制。</p>
-</blockquote>
-<p>要点：</p>
-<ul>
-<li><p>默认使用 <code>autoSaver()</code> 将值写入 Bundle；也可自定义 <code>Saver</code>。</p>
-</li>
-<li><p>仅支持可放入 Bundle 的类型（如 Int、String、Float 等）。</p>
-</li>
-<li><p>若保存的是自定义类型（如 data class），必须提供 <code>Saver</code> 实现，否则会报错：</p>
-<pre class="line-numbers language-none"><code class="language-none">java.lang.IllegalArgumentException: MutableState containing ... cannot be saved using the current SaveableStateRegistry.
-The default implementation only supports types which can be stored inside the Bundle.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre></li>
-</ul>
-<p>因此，<strong>离开屏幕再进入</strong>时，只要没有发生 Activity/进程重建，<code>rememberSaveable</code> 仍会从 SaveableStateRegistry 里恢复之前保存的值，scale 得以保留。</p>
-<h2 id="三、验证实验"><a href="#三、验证实验" class="headerlink" title="三、验证实验"></a>三、验证实验</h2><p>用简单日志验证「退出组合后再进入会重新计算」：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">var</span> scale <span class="token keyword">by</span> remember <span class="token punctuation">{</span>
-    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== re-calculate"</span></span><span class="token punctuation">)</span>
-    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span>
-<span class="token function">DisposableEffect</span><span class="token punctuation">(</span>key1 <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    onDispose <span class="token punctuation">{</span> <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== onDispose"</span></span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p><code>DisposableEffect(key1 = null)</code> 保证只有在<strong>退出组合</strong>时才会执行 <code>onDispose</code>。</p>
-<ul>
-<li>**使用 <code>remember {}</code>**：第一次进入打印 <code>re-calculate</code>；切到其他 Tab 停留后，先打印 <code>onDispose</code>，再切回来会再次打印 <code>re-calculate</code>，scale 被重置。<br><img src="/images/20231204/remember_log.jpg" alt="Logger" title="remember_log"></li>
-<li>**改用 <code>rememberSaveable {}</code>**：只有第一次进入时打印一次 <code>re-calculate</code>，之后切 Tab 再回来也不会再打印，说明一直用的是已保存的值。<br><img src="/images/20231204/remember_log1.jpg" alt="Logger1" title="remember_log1"></li>
-</ul>
-<h2 id="四、延伸：离开屏幕-≠-重建"><a href="#四、延伸：离开屏幕-≠-重建" class="headerlink" title="四、延伸：离开屏幕 ≠ 重建"></a>四、延伸：离开屏幕 ≠ 重建</h2><p><a href="https://jetc.dev/slack/2021-04-13-when-do-we-use-remembersaveable.html">Jetpack Compose 相关讨论</a> 里有一句：**”Composable leaving the screen is not recreation”**（可组合项离开屏幕并不等于重建）。</p>
-<p>在 Compose 中：</p>
-<ul>
-<li>组件离开屏幕会触发 <code>onDispose</code>，生命周期结束。</li>
-<li>再次进入屏幕会重新组合，相当于新的生命周期，<code>remember {}</code> 会重新计算。</li>
-</ul>
-<p>所以「离开屏幕」和「Configuration 变化导致 Activity 重建」是两回事：前者不会触发 SavedInstanceState 流程，只会让可组合项退出组合；后者才会触发进程/Activity 重建，此时才用到 <code>rememberSaveable</code> 的持久化。</p>
-<p>常见「离开屏幕」场景包括：</p>
-<ol>
-<li><strong>Navigation 跳转 / Tab 切换</strong>（如本文案例）</li>
-<li><strong>列表滑动</strong>：Item 滑出视口时会退出组合，<code>onDispose</code> 会执行</li>
-</ol>
-<p>例如 LazyColumn 的 Item 配合 <code>DisposableEffect</code> 可以观察到滑出时打印；若需要<strong>跨页面或重新进入页面时恢复列表滚动位置</strong>，应使用基于 <code>rememberSaveable</code> 的 <code>rememberLazyListState</code> 等 API。</p>
-<h2 id="五、如何选择"><a href="#五、如何选择" class="headerlink" title="五、如何选择"></a>五、如何选择</h2><table>
-<thead>
-<tr>
-<th>需求</th>
-<th>推荐</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>状态只需在<strong>重组</strong>过程中保持</td>
-<td><code>remember {}</code></td>
-</tr>
-<tr>
-<td>状态需要在 <strong>Activity/进程重建</strong>（如旋转、内存回收）后恢复</td>
-<td><code>rememberSaveable {}</code></td>
-</tr>
-<tr>
-<td>状态需要<strong>跨页面</strong>或更复杂的作用域</td>
-<td>ViewModel 等；若仅在单页内且需应对「离开再进入」，<code>rememberSaveable {}</code> 仍适用</td>
-</tr>
-</tbody></table>
-<p>理解「进入/重组/退出组合」与「SavedInstanceState 重建」的差异后，就能在开发中按场景选用 <code>remember</code> 或 <code>rememberSaveable</code>，避免状态被意外重置。</p>
-]]></content>
-      <categories>
-        <category>Technical</category>
-      </categories>
-      <tags>
-        <tag>Jetpack Compose</tag>
-        <tag>Android</tag>
       </tags>
   </entry>
 </search>
