@@ -1,212 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>AI Agent 和 Skill 有什么区别？从执行任务到沉淀能力</title>
-    <url>/posts/2026/05/17/a1b2c3d4/</url>
-    <content><![CDATA[<p>在使用 Codex 这类开发型 AI 工具时，一个很常见的困惑是：</p>
-<p><strong>Agent、Skill、提示词和工具调用到底是什么关系？</strong></p>
-<p>这些概念都和 AI 能力增强有关，但解决的问题并不一样。如果不区分清楚，很容易把所有要求都塞进一个超长提示词里，或者误以为只要有 Agent，就不需要沉淀可复用的工作方式。</p>
-<p>更清晰的理解是：</p>
-<p><strong>Agent 负责执行任务，Skill 负责沉淀能力。</strong></p>
-<p>Agent 更像一个能围绕目标持续推进的执行者；Skill 更像一套可复用的专业流程、经验规则和上下文说明。两者结合起来，才更接近一个稳定的 AI 工作流。</p>
-<hr>
-<h2 id="一、什么是-Agent"><a href="#一、什么是-Agent" class="headerlink" title="一、什么是 Agent"></a>一、什么是 Agent</h2><p>Agent 可以理解为：</p>
-<p><strong>一个带有明确角色、目标、上下文、工具权限和执行流程的 AI 助手。</strong></p>
-<p>它和普通聊天助手最大的区别，不是回答更长，而是可以围绕一个目标持续行动。</p>
-<p>当用户给出一个任务后，Agent 通常会完成一组动作：</p>
-<ol>
-<li>读取上下文</li>
-<li>判断任务要解决的问题</li>
-<li>制定执行步骤</li>
-<li>调用可用工具</li>
-<li>修改文件或生成内容</li>
-<li>运行命令或做验证</li>
-<li>交付结果并说明改动</li>
-</ol>
-<p>比如这个任务：</p>
-<blockquote>
-<p>帮我优化这篇博客文章，让它适合发布到个人博客和公众号。</p>
-</blockquote>
-<p>普通聊天助手可能会直接返回一版改写文本。</p>
-<p>开发型 Agent 则会先读取文章文件，理解仓库结构和写作约定，再修改 Markdown、补齐 front matter、检查构建结果，最后说明改动内容和验证结果。</p>
-<p>所以 Agent 的重点不是“会聊天”，而是：</p>
-<p><strong>它能围绕目标推进任务，并对最终交付负责。</strong></p>
-<hr>
-<h2 id="二、Agent-的核心能力"><a href="#二、Agent-的核心能力" class="headerlink" title="二、Agent 的核心能力"></a>二、Agent 的核心能力</h2><p>一个有用的 Agent，通常不只是“大模型 + 一段提示词”。</p>
-<p>它至少需要四类能力。</p>
-<h3 id="1-明确角色和目标"><a href="#1-明确角色和目标" class="headerlink" title="1. 明确角色和目标"></a>1. 明确角色和目标</h3><p>Agent 需要知道自己是谁，以及这次任务要解决什么问题。</p>
-<p>不同角色会带来不同的优先级：</p>
-<ul>
-<li>代码审查 Agent：优先发现 bug、风险和缺失测试</li>
-<li>写作优化 Agent：优先优化结构、表达、标题和 SEO</li>
-<li>数据分析 Agent：优先整理数据、发现趋势、输出结论</li>
-</ul>
-<p>角色越清楚，输出越稳定。</p>
-<h3 id="2-理解上下文"><a href="#2-理解上下文" class="headerlink" title="2. 理解上下文"></a>2. 理解上下文</h3><p>Agent 需要读取和任务相关的信息。</p>
-<p>对代码任务来说，上下文可能是项目结构、已有实现、测试结果和依赖版本。对写作任务来说，上下文可能是文章草稿、历史文章风格、发布平台要求和 SEO 字段。</p>
-<p>没有上下文时，Agent 很容易给出看似合理但不贴合实际的结果。</p>
-<h3 id="3-调用工具"><a href="#3-调用工具" class="headerlink" title="3. 调用工具"></a>3. 调用工具</h3><p>工具调用是 Agent 区别于普通问答的重要能力。</p>
-<p>Agent 可以读文件、搜索代码、运行测试、调用 API、查询数据，甚至直接修改项目文件。</p>
-<p>工具让 Agent 从“只能给建议”变成“可以完成任务”。</p>
-<h3 id="4-执行和验证"><a href="#4-执行和验证" class="headerlink" title="4. 执行和验证"></a>4. 执行和验证</h3><p>Agent 不应该只停留在方案层面。</p>
-<p>如果任务是修改代码，应该尽量运行测试；如果任务是优化文章，应该检查 Markdown、front matter 和构建结果；如果任务是接入 API，应该验证调用是否真的成功。</p>
-<p>这也是 Agent 的核心价值：</p>
-<p><strong>不只生成答案，而是推进任务并验证结果。</strong></p>
-<hr>
-<h2 id="三、什么是-Skill"><a href="#三、什么是-Skill" class="headerlink" title="三、什么是 Skill"></a>三、什么是 Skill</h2><p>如果说 Agent 是执行者，那么 Skill 可以理解为：</p>
-<p><strong>一组可复用的专业能力、操作流程和上下文说明。</strong></p>
-<p>Skill 通常不会自己主动执行任务。它更像一份能力说明，告诉 Agent 遇到某类任务时应该怎么做。</p>
-<p>它可以包含：</p>
-<ul>
-<li>任务判断规则</li>
-<li>推荐读取的文件或资料</li>
-<li>需要遵守的风格和边界</li>
-<li>可复用脚本、模板或参考资料</li>
-<li>结果交付格式</li>
-</ul>
-<p>比如“博客内容优化 Skill”可以规定：</p>
-<ul>
-<li>先阅读草稿和历史文章风格</li>
-<li>保留作者核心观点，不编造事实</li>
-<li>优化标题、开头、逻辑主线和结尾</li>
-<li>补齐 <code>description</code>、<code>keywords</code>、<code>tags</code></li>
-<li>输出适合个人博客和公众号的版本</li>
-</ul>
-<p>这样下次再优化文章时，就不需要重新写一大段提示词。Agent 加载这个 Skill 后，就能继承这套相对稳定的工作方式。</p>
-<p>所以 Skill 的重点不是独立完成任务，而是：</p>
-<p><strong>把某类任务的经验沉淀下来，让 Agent 更稳定地执行。</strong></p>
-<hr>
-<h2 id="四、Agent-和-Skill-的核心区别"><a href="#四、Agent-和-Skill-的核心区别" class="headerlink" title="四、Agent 和 Skill 的核心区别"></a>四、Agent 和 Skill 的核心区别</h2><p>可以用一张表快速区分：</p>
-<table>
-<thead>
-<tr>
-<th>维度</th>
-<th>Agent</th>
-<th>Skill</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>核心定位</td>
-<td>执行任务的主体</td>
-<td>可复用的能力包</td>
-</tr>
-<tr>
-<td>解决问题</td>
-<td>这次任务怎么完成</td>
-<td>这类任务应该怎么做</td>
-</tr>
-<tr>
-<td>关注点</td>
-<td>目标、上下文、工具、执行、验证</td>
-<td>流程、规范、模板、经验、约束</td>
-</tr>
-<tr>
-<td>是否主动执行</td>
-<td>会主动推进任务</td>
-<td>通常不主动执行</td>
-</tr>
-<tr>
-<td>典型形态</td>
-<td>具备工具权限的 AI 助手</td>
-<td>说明文档、脚本、模板或工作流</td>
-</tr>
-</tbody></table>
-<p>一句话概括：</p>
-<p><strong>Agent 是“谁来做”，Skill 是“怎么做得更专业”。</strong></p>
-<p>Agent 没有 Skill，也可以完成任务，但结果可能不够稳定，每次风格和判断标准都不一样。</p>
-<p>Skill 没有 Agent，也只是静态经验，需要被某个执行者调用后才会产生价值。</p>
-<p>两者结合起来，才能形成更稳定、可复用的 AI 工作流。</p>
-<hr>
-<h2 id="五、什么时候需要-Agent，什么时候需要-Skill"><a href="#五、什么时候需要-Agent，什么时候需要-Skill" class="headerlink" title="五、什么时候需要 Agent，什么时候需要 Skill"></a>五、什么时候需要 Agent，什么时候需要 Skill</h2><h3 id="适合使用-Agent-的场景"><a href="#适合使用-Agent-的场景" class="headerlink" title="适合使用 Agent 的场景"></a>适合使用 Agent 的场景</h3><p>如果任务需要连续判断、工具调用和结果验证，就适合交给 Agent。</p>
-<p>典型场景包括：</p>
-<ul>
-<li>修复一个代码 bug</li>
-<li>阅读项目并生成技术文档</li>
-<li>优化一篇博客文章并更新文件</li>
-<li>调用外部 API 获取数据后生成报告</li>
-<li>根据测试结果继续调整实现</li>
-</ul>
-<p>这些任务都有一个共同点：不是回答一句话就结束，而是需要持续推进。</p>
-<h3 id="适合沉淀成-Skill-的场景"><a href="#适合沉淀成-Skill-的场景" class="headerlink" title="适合沉淀成 Skill 的场景"></a>适合沉淀成 Skill 的场景</h3><p>如果某类任务会反复出现，而且希望结果保持稳定，就适合沉淀成 Skill。</p>
-<p>典型场景包括：</p>
-<ul>
-<li>博客文章优化规范</li>
-<li>代码审查流程</li>
-<li>前端设计规范</li>
-<li>API 文档生成流程</li>
-<li>项目初始化模板</li>
-<li>发布前检查清单</li>
-</ul>
-<p>这些任务的重点不是“今天完成一次”，而是“以后每次都按同样的标准完成”。</p>
-<hr>
-<h2 id="六、为什么不要把所有东西都写进提示词"><a href="#六、为什么不要把所有东西都写进提示词" class="headerlink" title="六、为什么不要把所有东西都写进提示词"></a>六、为什么不要把所有东西都写进提示词</h2><p>很多人在刚开始使用 AI 工具时，会不断加长提示词：</p>
-<blockquote>
-<p>你要这样做，不要那样做，遇到这种情况先检查这个文件，输出时按这个格式，风格要像之前那篇文章……</p>
-</blockquote>
-<p>短期看，这种方式有效。</p>
-<p>但提示词越长，维护成本越高，也越难复用。每次换任务、换项目、换上下文，都要重新组织一遍。</p>
-<p>更好的方式是分层：</p>
-<ul>
-<li>通用执行能力交给 Agent</li>
-<li>稳定经验沉淀成 Skill</li>
-<li>当前提示词只描述这一次的目标和材料</li>
-</ul>
-<p>这样提示词会变短，任务边界也更清楚。</p>
-<p>AI 的使用方式也会从“一次性问答”变成“可加载工作流的执行系统”。</p>
-<hr>
-<h2 id="七、用写作任务理解-Agent-和-Skill"><a href="#七、用写作任务理解-Agent-和-Skill" class="headerlink" title="七、用写作任务理解 Agent 和 Skill"></a>七、用写作任务理解 Agent 和 Skill</h2><p>以博客文章优化为例。</p>
-<p>Writer Agent 负责执行这次任务：</p>
-<ul>
-<li>读取文章草稿</li>
-<li>理解发布目标</li>
-<li>调整文章结构</li>
-<li>修改 Markdown 文件</li>
-<li>补齐发布字段</li>
-<li>检查构建结果</li>
-</ul>
-<p>博客内容优化 Skill 则负责提供稳定方法：</p>
-<ul>
-<li>不编造事实</li>
-<li>保留作者核心观点</li>
-<li>中文表达自然</li>
-<li>技术内容谨慎准确</li>
-<li>默认输出优化方向、完整文章、修改说明、标题候选和平台标签</li>
-</ul>
-<p>当用户提出：</p>
-<blockquote>
-<p>帮我把这篇草稿优化成适合个人博客和公众号发布的文章。</p>
-</blockquote>
-<p>Agent 负责完成这次交付，Skill 负责保证这类任务的执行方式稳定。</p>
-<p>这时得到的结果就不只是一次“文本改写”，而是更接近真实工作流的一次任务完成。</p>
-<hr>
-<h2 id="八、总结"><a href="#八、总结" class="headerlink" title="八、总结"></a>八、总结</h2><p>Agent 和 Skill 不是互相替代的关系。</p>
-<p>更准确地说：</p>
-<ul>
-<li><strong>Agent 是执行者</strong>：负责理解目标、读取上下文、调用工具、推进任务、验证结果。</li>
-<li><strong>Skill 是能力沉淀</strong>：负责把某类任务的经验、流程、规范和模板复用起来。</li>
-</ul>
-<p>如果只有 Agent，没有 Skill，任务也能做，但结果可能不够稳定。</p>
-<p>如果只有 Skill，没有 Agent，它只是静态说明，不能主动完成任务。</p>
-<p>更有价值的方式是：</p>
-<p><strong>用 Agent 执行任务，用 Skill 沉淀方法。</strong></p>
-<p>理解这层关系后，使用 AI 工具时就不只是思考“提示词怎么写”，而是会进一步思考：</p>
-<ul>
-<li>哪些任务应该交给 Agent？</li>
-<li>哪些经验应该沉淀成 Skill？</li>
-<li>哪些流程可以长期复用？</li>
-</ul>
-<p>这才是 AI 工作流真正变得稳定、可复制的开始。</p>
-]]></content>
-      <categories>
-        <category>AI</category>
-      </categories>
-      <tags>
-        <tag>AI</tag>
-        <tag>AI Agent</tag>
-        <tag>Skill</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>从 0 跑通 MCP：用 TypeScript 写一个 CoinGecko 工具，并接入 Inspector / Codex</title>
     <url>/posts/2026/04/09/4dc832d4/</url>
     <content><![CDATA[<p>如果你已经看过不少 MCP 介绍，但还没有亲手跑通过一个完整例子，这篇文章就是为你准备的。</p>
@@ -695,123 +489,289 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
       </tags>
   </entry>
   <entry>
-    <title>升降桌故障排查记</title>
-    <url>/posts/2026/03/02/fbb9923f/</url>
-    <content><![CDATA[<h1 id="升降桌故障排查记：和-E07-E08-的一场小拉扯"><a href="#升降桌故障排查记：和-E07-E08-的一场小拉扯" class="headerlink" title="升降桌故障排查记：和 E07 / E08 的一场小拉扯"></a>升降桌故障排查记：和 E07 / E08 的一场小拉扯</h1><p>有时候，家里的小故障最磨人。</p>
-<p>它不至于大到让人立刻崩溃，但又足够烦，烦到你坐在桌前看着它一高一低，心里只剩一句话：<strong>怎么偏偏是现在。</strong></p>
-<p>这次出问题的，是家里的乐歌升降桌。</p>
-<p>原本只是一次再普通不过的升降操作，我像往常一样按下上升键，结果桌子没有升起来，反而进入了一种很奇怪的状态：一边桌脚还在动，另一边彻底没反应，控制面板上还轮流跳出 <strong>RST、E07、E08</strong> 这些报码。</p>
-<p>那一瞬间其实挺真实的。不是“这下完了”的那种大惊失色，而是一种很具体的无奈：桌子没法正常用，售后不一定马上能处理，而你还得继续工作。</p>
-<p>于是，这篇记录就这么开始了。</p>
+    <title>iOS 沙盒路径踩坑：KMP 读取 Documents 文件为什么会报 No such file</title>
+    <url>/posts/2023/08/13/bb96b1c7/</url>
+    <content><![CDATA[<p>在 Kotlin Multiplatform 项目里做 iOS 文件存储时，遇到过一个很典型的问题：</p>
+<p><strong>文件明明存在于 Documents 目录，但用 <code>NSData.dataWithContentsOfFile</code> 读取时始终返回空，并报 <code>No such file or directory</code>。</strong></p>
+<p>这个问题看起来像是文件没写成功，最后排查下来，真正原因不是文件不存在，而是读取时使用了已经失效的 iOS 沙盒完整路径。</p>
 <hr>
-<h2 id="一、一边能动，一边“罢工”"><a href="#一、一边能动，一边“罢工”" class="headerlink" title="一、一边能动，一边“罢工”"></a>一、一边能动，一边“罢工”</h2><p>那天晚上，我按下升降桌的上升按钮后，很快发现事情不太对。</p>
-<p>桌子的状态大概是这样的：</p>
+<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>当时的现象比较明确：</p>
+<ul>
+<li>导出 <code>.xcappdata</code> 后，可以确认图片确实在 App 的 <code>Documents</code> 目录下</li>
+<li>Kotlin Native 侧用 <code>NSData.dataWithContentsOfFile(fullPath, ...)</code> 读取时返回 <code>null</code></li>
+<li>错误信息是 <code>No such File or Directory</code></li>
+</ul>
+<p>读取代码大概如下，为了排查问题，增加了 <code>errorPtr</code> 输出：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> errorPtr<span class="token operator">:</span> ObjCObjectVar<span class="token operator">&lt;</span>NSError<span class="token operator">?</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token function">alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
+    <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+    <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
+<span class="token punctuation">}</span>
+<span class="token function">println</span><span class="token punctuation">(</span>errorPtr<span class="token punctuation">.</span>value<span class="token operator">?</span><span class="token punctuation">.</span>description<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">return</span><span class="token label symbol">@withContext</span> <span class="token keyword">null</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><code>fullPath</code> 看起来没问题，文件也确实存在，但运行时就是读不到。</p>
+<span id="more"></span>
+
+<hr>
+<h2 id="二、定位过程：路径里的-UUID-不一致"><a href="#二、定位过程：路径里的-UUID-不一致" class="headerlink" title="二、定位过程：路径里的 UUID 不一致"></a>二、定位过程：路径里的 UUID 不一致</h2><p>第一反应是路径可能不对。</p>
+<p>于是用 Swift 在运行时重新获取当前 App 的 Documents 目录，并列出目录下文件，再和 Kotlin 侧保存的 <code>fullPath</code> 对比。</p>
+<p>Kotlin 中使用的完整路径类似：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">/var/mobile/Containers/Data/Application/3FC1CCE9-A788-47AB-902A-FA133FAA3D30/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>Swift 运行时拿到的文件 URL 是：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">file:///private/var/mobile/Containers/Data/Application/C5AC5178-6887-40F4-9EE5-8D56CB830CB3/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>关键差异在 <code>Application</code> 后面的 UUID：</p>
+<ul>
+<li>旧路径：<code>3FC1CCE9-...</code></li>
+<li>当前路径：<code>C5AC5178-...</code></li>
+</ul>
+<p>Swift 侧验证代码如下：</p>
+<pre class="line-numbers language-swift" data-language="swift"><code class="language-swift"><span class="token keyword">let</span> fileManager <span class="token operator">=</span> <span class="token class-name">FileManager</span><span class="token punctuation">.</span><span class="token keyword">default</span>
+<span class="token keyword">let</span> documentsURL <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">urls</span><span class="token punctuation">(</span><span class="token keyword">for</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>documentDirectory<span class="token punctuation">,</span> <span class="token keyword">in</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>userDomainMask<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+
+<span class="token keyword">do</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> fileURLs <span class="token operator">=</span> <span class="token keyword">try</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectory</span><span class="token punctuation">(</span>
+        at<span class="token punctuation">:</span> documentsURL<span class="token punctuation">,</span>
+        includingPropertiesForKeys<span class="token punctuation">:</span> <span class="token nil constant">nil</span>
+    <span class="token punctuation">)</span>
+    <span class="token function">print</span><span class="token punctuation">(</span>fileURLs<span class="token punctuation">)</span>
+<span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">{</span>
+    <span class="token function">print</span><span class="token punctuation">(</span><span class="token string-literal"><span class="token string">"Error while enumerating files </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">documentsURL<span class="token punctuation">.</span>path</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">: </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">error<span class="token punctuation">.</span>localizedDescription</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">"</span></span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>到这里，问题基本明确了：</p>
+<p><strong>文件存在，但之前保存的完整路径已经不是当前运行时的真实路径。</strong></p>
+<hr>
+<h2 id="三、根因：不要持久化-iOS-沙盒完整路径"><a href="#三、根因：不要持久化-iOS-沙盒完整路径" class="headerlink" title="三、根因：不要持久化 iOS 沙盒完整路径"></a>三、根因：不要持久化 iOS 沙盒完整路径</h2><p>从 iOS 8 开始，App 沙盒中 <code>Application</code> 这一层目录的 UUID 可能会随着安装和部署方式变化。</p>
+<p>例如：</p>
+<ul>
+<li>卸载后重新安装</li>
+<li>通过 Xcode 重新安装</li>
+<li>TestFlight / App Store 重新安装</li>
+</ul>
+<p>如果把完整路径持久化下来，下次启动或重新安装后，路径里的 UUID 可能已经变了。文件名还在，但旧路径不再有效。</p>
+<p>所以问题不在 <code>NSData</code> 本身，而在路径策略：</p>
+<p><strong>不能依赖持久化的完整路径读取文件，应该只保存文件名或相对路径，并在运行时重新解析当前 Documents 目录。</strong></p>
+<hr>
+<h2 id="四、解决方案"><a href="#四、解决方案" class="headerlink" title="四、解决方案"></a>四、解决方案</h2><p>核心思路只有一个：</p>
+<p><strong>保存文件名，读取时重新获取当前 Documents 目录，再拼出真实路径。</strong></p>
+<h3 id="方法一：遍历-Documents-后按文件名匹配"><a href="#方法一：遍历-Documents-后按文件名匹配" class="headerlink" title="方法一：遍历 Documents 后按文件名匹配"></a>方法一：遍历 Documents 后按文件名匹配</h3><p>这种方式不依赖旧完整路径，而是先拿到当前 Documents URL，再在目录中查找目标文件：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> url <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">URLForDirectory</span><span class="token punctuation">(</span>
+    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
+    inDomain <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
+    appropriateForURL <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
+    create <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+    error <span class="token operator">=</span> <span class="token keyword">null</span>
+<span class="token punctuation">)</span><span class="token operator">!!</span>
+
+<span class="token keyword">val</span> fileUrls <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectoryAtURL</span><span class="token punctuation">(</span>
+    url <span class="token operator">=</span> url<span class="token punctuation">,</span>
+    includingPropertiesForKeys <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
+    options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span>
+    error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr
+<span class="token punctuation">)</span>
+
+<span class="token keyword">val</span> currentFileUrl <span class="token operator">=</span> fileUrls<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">first</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">contains</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span> <span class="token punctuation">}</span> <span class="token keyword">as</span><span class="token operator">?</span> NSURL
+
+currentFileUrl<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span>
+    NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfURL</span><span class="token punctuation">(</span>currentFileUrl<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
+        <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+        <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这种方式适合调试和验证，但遍历目录会有额外开销。</p>
+<h3 id="方法二：运行时获取-Documents，再拼接文件名"><a href="#方法二：运行时获取-Documents，再拼接文件名" class="headerlink" title="方法二：运行时获取 Documents，再拼接文件名"></a>方法二：运行时获取 Documents，再拼接文件名</h3><p>更推荐的方式是直接获取当前 Documents 路径，然后拼接文件名：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> documentDirectory <span class="token operator">=</span> <span class="token function">NSSearchPathForDirectoriesInDomains</span><span class="token punctuation">(</span>
+    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
+    domainMask <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
+    expandTilde <span class="token operator">=</span> <span class="token boolean">true</span>
+<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">first</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> NSString
+
+<span class="token keyword">val</span> fullPath <span class="token operator">=</span> documentDirectory<span class="token punctuation">.</span><span class="token function">stringByAppendingPathComponent</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span>
+
+NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> <span class="token operator">..</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这样得到的 <code>fullPath</code> 始终对应当前 App 实例的真实 Documents 路径，不受旧 UUID 影响。</p>
+<hr>
+<h2 id="五、排查结论"><a href="#五、排查结论" class="headerlink" title="五、排查结论"></a>五、排查结论</h2><p>这次问题可以总结成下面几点：</p>
+<table>
+<thead>
+<tr>
+<th>要点</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>不要保存完整路径</td>
+<td>iOS 沙盒 <code>Application</code> 目录 UUID 可能变化，旧路径会失效</td>
+</tr>
+<tr>
+<td>推荐保存文件名</td>
+<td>持久化文件名或相对路径，读取时重新解析目录</td>
+</tr>
+<tr>
+<td>优先使用系统 API</td>
+<td>通过 <code>NSSearchPathForDirectoriesInDomains</code> 或 FileManager 获取当前目录</td>
+</tr>
+<tr>
+<td>错误表象容易误导</td>
+<td><code>No such file</code> 不一定是文件没写入，也可能是路径已经过期</td>
+</tr>
+</tbody></table>
+<p>改造后，读取逻辑不再依赖旧路径，<code>NSData.dataWithContentsOfFile</code> 无法读取文件的问题也就解决了。</p>
+<hr>
+<h2 id="附录：哪些情况下-UUID-可能变化"><a href="#附录：哪些情况下-UUID-可能变化" class="headerlink" title="附录：哪些情况下 UUID 可能变化"></a>附录：哪些情况下 UUID 可能变化</h2><table>
+<thead>
+<tr>
+<th>安装 / 运行方式</th>
+<th>UUID 是否变化</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>App 卸载后重新安装</td>
+<td>会变化</td>
+</tr>
+<tr>
+<td>通过 Xcode 重新安装</td>
+<td>会变化</td>
+</tr>
+<tr>
+<td>Xcode 直接运行且未卸载 App</td>
+<td>通常不变</td>
+</tr>
+<tr>
+<td>模拟器运行</td>
+<td>可能变化</td>
+</tr>
+<tr>
+<td>TestFlight / App Store 安装</td>
+<td>会变化</td>
+</tr>
+<tr>
+<td>iOS OTA 更新 App</td>
+<td>通常不变</td>
+</tr>
+</tbody></table>
+<p>所以在 iOS 文件存储里，比较稳妥的原则是：</p>
+<p><strong>业务层只保存文件名或相对路径，运行时再解析真实沙盒目录。</strong></p>
+]]></content>
+      <categories>
+        <category>Multiplatform</category>
+      </categories>
+      <tags>
+        <tag>SwiftUI</tag>
+        <tag>Kotlin Native</tag>
+        <tag>iOS</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>乐歌升降桌 E07 / E08 故障排查：一边桌脚不动时，我是怎么修好的</title>
+    <url>/posts/2026/03/02/fbb9923f/</url>
+    <content><![CDATA[<p>家里的小故障有时候最磨人。</p>
+<p>它不至于让人立刻崩溃，但足够影响日常使用。尤其是当升降桌突然一边能动、一边完全没反应，桌面变得一高一低时，工作状态也会被一起打断。</p>
+<p>这次出问题的是家里的乐歌升降桌。</p>
+<p>原本只是一次普通的升降操作，按下上升键后，桌子没有正常升起来，反而进入了异常状态：</p>
+<ul>
+<li>一边桌脚还在动</li>
+<li>另一边桌脚完全没反应</li>
+<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
+</ul>
+<p>售后当时无法马上处理，于是只能先自己排查。最后发现，问题并不是电机彻底损坏，而更像是左右桌脚高度不同步后触发了保护机制。</p>
+<p>这篇文章记录完整过程，也给遇到类似情况的人一个参考。</p>
+<blockquote>
+<p>说明：本文只是一次个人排查记录，不是官方维修教程。涉及拆卸、插线或通电测试时，务必先断电，确认安全后再操作；如果不确定，优先联系售后。</p>
+</blockquote>
+<hr>
+<h2 id="一、故障现象：一边能动，一边不动"><a href="#一、故障现象：一边能动，一边不动" class="headerlink" title="一、故障现象：一边能动，一边不动"></a>一、故障现象：一边能动，一边不动</h2><p>那天晚上，按下升降桌的上升按钮后，很快发现状态不对。</p>
+<p>桌子的表现大概是：</p>
 <ul>
 <li>左边桌脚还有反应，但<strong>只能往下，不能上升</strong></li>
 <li>右边桌脚无论上升还是下降都<strong>完全没反应</strong></li>
-<li>控制面板反复显示 <strong>RST、E07、E08</strong> 等报码</li>
+<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
 </ul>
-<p><img src="/images/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg" alt="联系客服反馈问题"></p>
+<p><img src="/images/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg" alt="控制面板显示 RST / E07 / E08 等报码"></p>
 <p><em>图 1：控制面板显示 RST / E07 / E08 等报码</em></p>
-<p>我又试了几次，结论基本一致：</p>
-<blockquote>
-<p><strong>这已经不是简单的卡顿，而是桌子明显进入了某种异常状态。</strong></p>
-</blockquote>
-<p>因为每次操作时，始终只有一边桌脚在动，另一边完全静止。整张桌子看起来就像一张“瘸腿桌”，别说升降了，连看着都让人难受。</p>
+<p>连续试了几次后，结论基本一致：</p>
+<p><strong>这不是简单卡顿，而是桌子已经进入了异常保护状态。</strong></p>
+<p>因为每次操作时，始终只有一边桌脚在动，另一边完全静止。桌面已经明显不平，继续强行升降反而可能让结构受力更糟。</p>
 <hr>
-<h2 id="二、先找客服，按标准流程走一遍"><a href="#二、先找客服，按标准流程走一遍" class="headerlink" title="二、先找客服，按标准流程走一遍"></a>二、先找客服，按标准流程走一遍</h2><p>遇到这种问题，第一反应当然还是联系客服。</p>
-<p>我联系了乐歌京东自营店，对方给出的排查思路很标准，也很符合这类设备常见的处理逻辑。</p>
-<h3 id="1-先重置"><a href="#1-先重置" class="headerlink" title="1. 先重置"></a>1. 先重置</h3><p>客服先让我把桌子尽量降到最低，然后：</p>
+<h2 id="二、先联系售后，按标准流程排查"><a href="#二、先联系售后，按标准流程排查" class="headerlink" title="二、先联系售后，按标准流程排查"></a>二、先联系售后，按标准流程排查</h2><p>遇到这类问题，第一步还是联系售后。</p>
+<p>乐歌京东自营店客服给出的排查流程比较标准，也符合电动升降桌常见处理方式。</p>
+<h3 id="1-先做系统重置"><a href="#1-先做系统重置" class="headerlink" title="1. 先做系统重置"></a>1. 先做系统重置</h3><p>客服先建议把桌子尽量降到最低，然后：</p>
 <blockquote>
 <p><strong>长按下降键约 7 秒，执行系统重置。</strong></p>
 </blockquote>
-<p>这是升降桌常见的初始化方式。很多时候，报码并不一定意味着零件损坏，也可能只是系统需要重新校准。</p>
-<p>可惜，对我这台桌子来说，这一步并没有起作用。</p>
-<h3 id="2-再交叉插线"><a href="#2-再交叉插线" class="headerlink" title="2. 再交叉插线"></a>2. 再交叉插线</h3><p>接下来，客服让我拆开桌腿挡板，把控制盒上的 <strong>M1 和 M2 电机线互换</strong>，再观察报码变化。</p>
-<p><img src="/images/20260302/8BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg" alt="客服建议拆开检查"></p>
+<p>这是升降桌常见的初始化方式。很多报码不一定代表零件损坏，也可能只是系统需要重新校准。</p>
+<p>不过这一步对这台桌子没有立即起作用。</p>
+<h3 id="2-再交叉插线"><a href="#2-再交叉插线" class="headerlink" title="2. 再交叉插线"></a>2. 再交叉插线</h3><p>接下来，客服建议拆开桌腿挡板，把控制盒上的 <strong>M1 和 M2 电机线互换</strong>，再观察报码变化。</p>
+<p><img src="/images/20260302/8BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg" alt="客服建议交叉插线排查问题位置"></p>
 <p><em>图 2：客服建议交叉插线排查问题位置</em></p>
-<p>我照着做完之后，面板上的报码确实变了，从 <strong>E07</strong> 变成了 <strong>E08</strong>。</p>
-<p><img src="/images/20260302/C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg" alt="错误代码变化反馈"></p>
+<p>照着操作后，控制面板上的报码确实发生了变化：从 <strong>E07</strong> 变成了 <strong>E08</strong>。</p>
+<p><img src="/images/20260302/C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg" alt="交叉插线后报码从 E07 变成 E08"></p>
 <p><em>图 3：交叉插线后，报码从 E07 变成 E08</em></p>
-<p>客服根据这个变化，初步判断可能是控制盒有问题，需要进一步反馈技术部门，再安排后续处理。问题是，当时已经临近假期，对方给出的答复大意是：</p>
-<blockquote>
-<p>年后再安排。</p>
-</blockquote>
-<p>说实话，听到这里，我看着眼前那张高低不平的桌子，第一反应不是失望，而是有点不甘心。</p>
-<p>都已经拆到这一步了，索性继续往下查。</p>
+<p>客服根据这个变化，初步判断可能和控制盒有关，需要继续反馈技术部门。由于当时临近假期，后续处理需要等到年后。</p>
+<p>但桌子已经拆到这一步，与其直接等待，不如继续确认几个更基础的问题。</p>
 <hr>
-<h2 id="三、自己动手：从“报码”转向“现象”"><a href="#三、自己动手：从“报码”转向“现象”" class="headerlink" title="三、自己动手：从“报码”转向“现象”"></a>三、自己动手：从“报码”转向“现象”</h2><p>很多时候，真正有用的线索，不在错误代码本身，而在设备到底表现出了什么异常。</p>
-<p>这次也是一样。</p>
-<h3 id="1-先理解报码，但不迷信报码"><a href="#1-先理解报码，但不迷信报码" class="headerlink" title="1. 先理解报码，但不迷信报码"></a>1. 先理解报码，但不迷信报码</h3><p>我先去查了 E07 / E08 相关说明，想弄清楚它们大概对应什么问题。</p>
-<p>网上能查到的说法不完全一致，但结合乐歌和同类升降桌常见的故障逻辑，大致能归纳到两个方向：</p>
+<h2 id="三、不要只盯报码，更要看现象"><a href="#三、不要只盯报码，更要看现象" class="headerlink" title="三、不要只盯报码，更要看现象"></a>三、不要只盯报码，更要看现象</h2><p>E07 / E08 这样的错误码有参考价值，但不能完全依赖报码判断。</p>
+<p>这次真正有用的线索，其实是设备表现出来的现象：</p>
+<p><strong>始终只有一边桌脚在动，另一边没有正常响应。</strong></p>
+<p>结合网上能查到的说明，以及同类升降桌的常见故障逻辑，E07 / E08 大致可能和两类问题有关：</p>
 <ul>
-<li>一类和<strong>左右桌脚高度不一致</strong>有关</li>
-<li>一类和<strong>电机连接、通信、同步异常</strong>有关</li>
+<li>左右桌脚高度不同步</li>
+<li>电机连接、通信或控制异常</li>
 </ul>
-<p>这至少说明一件事：</p>
-<blockquote>
-<p><strong>问题未必是硬件彻底坏了，也可能是双侧不同步之后触发了保护机制。</strong></p>
-</blockquote>
-<p>这个判断后来证明挺关键。</p>
-<hr>
-<h3 id="2-拆开桌脚，先确认电机到底坏没坏"><a href="#2-拆开桌脚，先确认电机到底坏没坏" class="headerlink" title="2. 拆开桌脚，先确认电机到底坏没坏"></a>2. 拆开桌脚，先确认电机到底坏没坏</h3><p>下一步就很直接了。</p>
-<p>既然客服已经让我拆开挡板，那不如继续往前一步，先把“是不是电机坏了”这件事弄清楚。</p>
-<p>我的操作过程不复杂：</p>
+<p>这说明问题未必是电机彻底损坏，也可能是左右不同步后触发了系统保护。</p>
+<p>所以排查重点从“报码是什么意思”转成了两个更具体的问题：</p>
 <ol>
-<li>拧开桌腿挡板螺丝  </li>
-<li>断开两侧电机连接线  </li>
-<li>分别测试每个电机能不能正常上下动作</li>
+<li>电机本身还能不能正常工作？</li>
+<li>左右桌脚是不是已经明显不平？</li>
 </ol>
-<p>测试结果出来的时候，我心里其实松了一口气：</p>
-<blockquote>
+<hr>
+<h2 id="四、拆开检查：先确认电机有没有坏"><a href="#四、拆开检查：先确认电机有没有坏" class="headerlink" title="四、拆开检查：先确认电机有没有坏"></a>四、拆开检查：先确认电机有没有坏</h2><p>既然已经拆开挡板，下一步就是确认电机本体是否正常。</p>
+<p>操作前先断电，确认连接位置，再分别测试两侧电机。整个过程大致是：</p>
+<ol>
+<li>拧开桌腿挡板螺丝</li>
+<li>断开两侧电机连接线</li>
+<li>分别测试每个电机是否能正常上下动作</li>
+</ol>
+<p>测试结果比较关键：</p>
 <p><strong>两个电机都能正常上下运动。</strong></p>
-</blockquote>
-<p>这意味着，问题大概率不在“电机彻底坏了”这一层。</p>
-<p>至少可以先排除掉最麻烦、也最容易让人头疼的那种情况。</p>
-<hr>
-<h3 id="3-真正的问题，可能是“两边已经不平了”"><a href="#3-真正的问题，可能是“两边已经不平了”" class="headerlink" title="3. 真正的问题，可能是“两边已经不平了”"></a>3. 真正的问题，可能是“两边已经不平了”</h3><p>接下来再回头看整个故障过程，很多细节就串起来了。</p>
-<p>在出问题之前，其实已经有一段时间是：</p>
+<p>这意味着问题大概率不在“电机彻底坏了”这一层。至少最麻烦的一种情况可以先排除。</p>
+<p>回头再看整个过程，问题开始变得清楚：</p>
 <ul>
-<li>只有一边桌脚在动</li>
+<li>出问题前，已经有一段时间只有一边桌脚在动</li>
 <li>另一边没有正常响应</li>
-<li>两边高度差被一点点拉大</li>
+<li>两边高度差被逐渐拉大</li>
+<li>高度差过大后，系统可能触发保护，阻止继续运行</li>
 </ul>
-<p>一旦意识到这一点，思路就变得清晰了。</p>
-<p>如果升降桌系统会持续检测左右桌脚的同步状态，那么当两边高度差大到一定程度时，系统为了保护结构而锁定，反而是很合理的。</p>
-<p>也就是说，真正的问题也许不是“它坏了”，而是：</p>
-<blockquote>
-<p><strong>它觉得现在这样继续动下去不安全。</strong></p>
-</blockquote>
-<p>想到这里，我决定换个思路，不再先盯着报码，而是先从最直观的问题下手：</p>
-<p><strong>先把两边桌脚重新找平。</strong></p>
+<p>也就是说，桌子不是完全坏了，而是可能已经处在一个“不适合继续升降”的状态。</p>
+<p>下一步就不再是继续反复按按钮，而是先把左右桌脚重新找平。</p>
 <hr>
-<h2 id="四、先把它“扶正”，再让系统重新认一次"><a href="#四、先把它“扶正”，再让系统重新认一次" class="headerlink" title="四、先把它“扶正”，再让系统重新认一次"></a>四、先把它“扶正”，再让系统重新认一次</h2><p>接下来的处理方法，反而没什么神秘感。</p>
-<p>既然桌子的问题可能出在两边高度已经失衡，那就先让它们在物理上回到同一个基准。</p>
-<p>我的做法是：</p>
+<h2 id="五、手动找平后，再重新初始化"><a href="#五、手动找平后，再重新初始化" class="headerlink" title="五、手动找平后，再重新初始化"></a>五、手动找平后，再重新初始化</h2><p>处理思路变成了：</p>
+<p><strong>先让左右桌脚回到同一个物理基准，再让系统重新校准。</strong></p>
+<p>实际操作如下：</p>
 <ol>
-<li>利用还能动作的那一边，把两边桌脚尽量都调整到最低位置  </li>
-<li>确保左右桌脚在肉眼可见的范围内回到同一高度  </li>
-<li>再把两个电机重新接回控制盒</li>
+<li>利用还能动作的那一边，把两边桌脚尽量调整到最低位置</li>
+<li>确保左右桌脚在肉眼可见范围内回到同一高度</li>
+<li>把两个电机重新接回控制盒</li>
+<li>再次长按下降键约 7 秒，执行系统重置</li>
 </ol>
-<p>做到这里时，我心里其实已经有一点底了。</p>
-<p>因为至少从机械状态来看，桌子已经不像之前那样一高一低。换句话说，<strong>“看起来不对”的部分，已经先被纠正了一次。</strong></p>
-<p>然后，我又重新执行了一遍最开始那套操作：</p>
-<blockquote>
-<p><strong>长按下降键约 7 秒，做系统重置。</strong></p>
-</blockquote>
-<p>这一次，结果立刻不一样了。</p>
+<p>这一次，结果明显不同：</p>
 <ul>
-<li>面板上的错误代码消失了</li>
-<li>显示重新变回正常的高度数字</li>
-<li>再测试升降时，左右两边终于恢复了同步运动</li>
+<li>面板上的错误代码消失</li>
+<li>显示重新变回正常高度数字</li>
+<li>再测试升降时，左右两边恢复同步运动</li>
 </ul>
 <p><img src="/images/20260302/379220D3-EF81-44D3-AFD3-1A9DA10B1F23.jpg" alt="问题解决后反馈客服"></p>
 <p><em>图 4：问题解决后，回头告知客服</em></p>
-<p>那一刻其实挺有成就感的。</p>
-<p>不是那种“我会修机器了”的成就感，而是你顺着现象一点点摸过去，最后真的把问题捋顺了。前面那种说不上来的烦躁，也一下子散掉了。</p>
+<p>最终，这次故障没有走到更换控制盒或更换电机的步骤，而是通过“找平 + 重置”恢复了。</p>
 <hr>
-<h2 id="五、回头看，这次排查真正有用的是什么"><a href="#五、回头看，这次排查真正有用的是什么" class="headerlink" title="五、回头看，这次排查真正有用的是什么"></a>五、回头看，这次排查真正有用的是什么</h2><p>现在回头想，这次能顺利解决，不是因为我多懂升降桌，而是因为排查顺序还算对。</p>
-<p>我把整个过程总结成一张很简单的表：</p>
+<h2 id="六、这次排查的关键步骤"><a href="#六、这次排查的关键步骤" class="headerlink" title="六、这次排查的关键步骤"></a>六、这次排查的关键步骤</h2><p>整个过程可以整理成下面这张表：</p>
 <table>
 <thead>
 <tr>
@@ -821,70 +781,79 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
 </tr>
 </thead>
 <tbody><tr>
-<td>1. 看报码</td>
-<td>记录 RST / E07 / E08 的变化</td>
+<td>1. 记录报码</td>
+<td>观察 RST / E07 / E08 的变化</td>
 <td>缩小问题范围</td>
 </tr>
 <tr>
-<td>2. 问客服</td>
-<td>按官方流程先 reset，再交叉插线</td>
+<td>2. 联系客服</td>
+<td>按官方建议先重置，再交叉插线</td>
 <td>建立基础排查路径</td>
 </tr>
 <tr>
-<td>3. 测电机</td>
-<td>单独测试两侧电机能否动作</td>
+<td>3. 测试电机</td>
+<td>分别确认两侧电机能否动作</td>
 <td>排除电机本体故障</td>
 </tr>
 <tr>
-<td>4. 找平</td>
-<td>让两边桌脚回到同一高度</td>
+<td>4. 手动找平</td>
+<td>让左右桌脚回到同一高度</td>
 <td>恢复物理基准</td>
 </tr>
 <tr>
-<td>5. 重置</td>
+<td>5. 系统重置</td>
 <td>长按下降键重新初始化</td>
-<td>让系统重新校准</td>
+<td>让控制系统重新校准</td>
 </tr>
 </tbody></table>
-<p>真正起作用的，不是某一个“神奇步骤”，而是你没有一上来就认定它一定坏了，而是把问题拆开来看：</p>
+<p>真正起作用的不是某个“神奇步骤”，而是排查顺序：</p>
 <ul>
-<li>是系统没校准？</li>
-<li>是连接异常？</li>
-<li>是左右不同步？</li>
-<li>还是零件真的损坏？</li>
+<li>先确认系统是否能重置</li>
+<li>再确认连接和报码变化</li>
+<li>再排除电机本体故障</li>
+<li>最后处理左右桌脚不同步</li>
 </ul>
-<p>当这些问题一个个被排掉之后，答案自然就浮出来了。</p>
+<p>当问题被拆成几个小问题后，排查难度就降低了很多。</p>
 <hr>
-<h2 id="六、这次小故障，给我的几个提醒"><a href="#六、这次小故障，给我的几个提醒" class="headerlink" title="六、这次小故障，给我的几个提醒"></a>六、这次小故障，给我的几个提醒</h2><h3 id="1-很多时候，设备是在“自我保护”，不是彻底损坏"><a href="#1-很多时候，设备是在“自我保护”，不是彻底损坏" class="headerlink" title="1. 很多时候，设备是在“自我保护”，不是彻底损坏"></a>1. 很多时候，设备是在“自我保护”，不是彻底损坏</h3><p>这是我这次最大的感受。</p>
-<p>报码看起来很吓人，但它很多时候只是系统在告诉你：<br><strong>现在的状态不正常，我先停下来。</strong></p>
-<p>停下来未必是坏了，也可能只是为了避免继续运行带来更大的问题。</p>
-<h3 id="2-现象往往比代码更重要"><a href="#2-现象往往比代码更重要" class="headerlink" title="2. 现象往往比代码更重要"></a>2. 现象往往比代码更重要</h3><p>如果只盯着 E07 / E08 这两个码，我未必能那么快想到“高度差”这个方向。</p>
-<p>但“始终只有一边桌脚在动”这个现象，却几乎把答案直接摆在了面前。</p>
-<p>所以很多时候，先观察设备“到底怎么不对”，比先背报码更有用。</p>
-<h3 id="3-客服不一定直接帮你解决问题，但能提供一个起点"><a href="#3-客服不一定直接帮你解决问题，但能提供一个起点" class="headerlink" title="3. 客服不一定直接帮你解决问题，但能提供一个起点"></a>3. 客服不一定直接帮你解决问题，但能提供一个起点</h3><p>这次虽然最后是我自己处理好的，但客服给的建议其实很关键。</p>
-<p>至少是他们先帮我把流程拉了出来：</p>
-<ul>
-<li>先重置</li>
-<li>再交叉插线</li>
-<li>再看报码变化</li>
-</ul>
-<p>这些步骤本身，就已经帮我少走了不少弯路。</p>
-<h3 id="4-一些低风险问题，真的可以先自己排一排"><a href="#4-一些低风险问题，真的可以先自己排一排" class="headerlink" title="4. 一些低风险问题，真的可以先自己排一排"></a>4. 一些低风险问题，真的可以先自己排一排</h3><p>当然，这不是鼓励所有人都去拆机器。</p>
-<p>但像这类：</p>
-<ul>
-<li>做一次 reset</li>
-<li>检查插线</li>
-<li>看两边是否明显不平</li>
-<li>在安全前提下做简单找平</li>
-</ul>
-<p>本身风险并不算高，很多时候比直接等售后更快，也更容易让你弄清楚问题到底出在哪。</p>
+<h2 id="七、遇到类似情况，可以先检查什么"><a href="#七、遇到类似情况，可以先检查什么" class="headerlink" title="七、遇到类似情况，可以先检查什么"></a>七、遇到类似情况，可以先检查什么</h2><p>如果你的升降桌也出现 <strong>报码 + 一边桌脚不动 + 重置无效</strong>，可以先按低风险顺序检查：</p>
+<ol>
+<li><p><strong>先停止强行升降</strong><br>如果桌面已经明显不平，继续操作可能让受力更糟。</p>
+</li>
+<li><p><strong>记录报码和现象</strong><br>记录是 E07、E08、RST，还是其他错误，同时观察哪一边能动、哪一边不动。</p>
+</li>
+<li><p><strong>先按说明书或客服建议重置</strong><br>很多升降桌都有长按下降键进行初始化的流程。</p>
+</li>
+<li><p><strong>检查电机线是否松动</strong><br>操作前务必断电，不要在不确定的情况下带电插拔。</p>
+</li>
+<li><p><strong>观察两边桌脚是否明显不平</strong><br>如果高度差已经很明显，单纯重置可能不会立即恢复，需要先让两边回到接近一致的高度。</p>
+</li>
+<li><p><strong>不确定时停止操作，联系售后</strong><br>如果出现异响、卡死、线材破损、控制盒异常发热等情况，不建议继续自行排查。</p>
+</li>
+</ol>
+<p>这类排查的重点不是“自己替代维修”，而是在安全前提下，把简单问题先确认清楚。</p>
 <hr>
-<h2 id="七、写在最后"><a href="#七、写在最后" class="headerlink" title="七、写在最后"></a>七、写在最后</h2><p>这次升降桌的小故障，最后并没有变成一次“换控制盒”或者“换电机”的麻烦事。</p>
-<p>它更像是一个很生活化的小插曲：<br>一个原本以为要拖很久的问题，在你愿意静下来观察、拆解、排查之后，慢慢露出了没那么复杂的本来面目。</p>
-<p>我一直觉得，生活里很多看上去很“专业”的问题，真正可怕的不是它本身，而是你在一开始就把它想得太大、太难、太不可碰。</p>
-<p>可一旦你愿意动手去摸一摸，很多事情就会从“完全不会”变成“原来也能搞明白一点”。</p>
-<p>这次也是一样。</p>
-<p>如果你刚好也遇到了类似情况，希望这篇记录能给你一点参考。<br>它未必适用于所有型号，也谈不上是什么维修教程，但至少对于“<strong>面板报码 + 一边桌脚不动 + 重置暂时无效</strong>”这种场景，也许能帮你少一点慌张，少走一点弯路。</p>
+<h2 id="八、这次故障带来的几个提醒"><a href="#八、这次故障带来的几个提醒" class="headerlink" title="八、这次故障带来的几个提醒"></a>八、这次故障带来的几个提醒</h2><h3 id="1-设备停止运行，不一定代表彻底损坏"><a href="#1-设备停止运行，不一定代表彻底损坏" class="headerlink" title="1. 设备停止运行，不一定代表彻底损坏"></a>1. 设备停止运行，不一定代表彻底损坏</h3><p>报码看起来很吓人，但它很多时候只是系统在提示：</p>
+<p><strong>当前状态不正常，需要先停止。</strong></p>
+<p>停止运行可能是保护机制，而不是硬件已经报废。</p>
+<h3 id="2-现象往往比报码更重要"><a href="#2-现象往往比报码更重要" class="headerlink" title="2. 现象往往比报码更重要"></a>2. 现象往往比报码更重要</h3><p>如果只盯着 E07 / E08，排查方向可能会被错误码带着走。</p>
+<p>但“只有一边桌脚在动”这个现象，直接指向了左右不同步的可能性。</p>
+<h3 id="3-客服流程仍然有价值"><a href="#3-客服流程仍然有价值" class="headerlink" title="3. 客服流程仍然有价值"></a>3. 客服流程仍然有价值</h3><p>这次虽然最后是自己处理好的，但客服给出的重置和交叉插线步骤提供了排查起点。</p>
+<p>标准流程的价值在于：先把常见问题按顺序排掉。</p>
+<h3 id="4-低风险问题可以先自己排查，但要有边界"><a href="#4-低风险问题可以先自己排查，但要有边界" class="headerlink" title="4. 低风险问题可以先自己排查，但要有边界"></a>4. 低风险问题可以先自己排查，但要有边界</h3><p>重置、观察报码、检查插线、确认是否明显不平，这些属于相对低风险的检查。</p>
+<p>但涉及电路、异常发热、结构卡死、零件更换时，还是应该交给售后或专业维修。</p>
+<hr>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>这次升降桌故障，最后没有变成一次复杂维修。</p>
+<p>它更像是一个生活里的小插曲：一开始看起来很麻烦，但只要愿意停下来观察现象、拆开问题、按顺序排查，就会发现它并没有想象中那么不可处理。</p>
+<p>对这次情况来说，最关键的判断是：</p>
+<p><strong>问题不一定出在电机损坏，而可能是左右桌脚不同步后触发了保护。</strong></p>
+<p>这篇记录不一定适用于所有型号，也不能替代官方维修建议。但如果你遇到的是类似场景：</p>
+<ul>
+<li>控制面板显示 RST / E07 / E08</li>
+<li>一边桌脚不动</li>
+<li>重置暂时无效</li>
+<li>桌面已经明显不平</li>
+</ul>
+<p>那么可以先从“记录报码、确认现象、检查连接、手动找平、重新初始化”这条路径排查，或许能少一点慌张，也少走一点弯路。</p>
 <hr>
 <p><em>本文记录于 2026 年 3 月</em></p>
 ]]></content>
@@ -893,38 +862,265 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
       </categories>
       <tags>
         <tag>随笔</tag>
+        <tag>升降桌</tag>
       </tags>
   </entry>
   <entry>
-    <title>remember VS rememberSaveable</title>
-    <url>/posts/2023/12/04/f68195/</url>
-    <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在 Jetpack Compose 中，我们常需要「记住」某个计算结果，避免在重组时重复计算以提升性能。Compose 提供了两种常用方式：<code>remember {}</code> 和 <code>rememberSaveable {}</code>。二者都能在重组时复用值，但<strong>持久化范围不同</strong>，选错会导致状态在特定场景下被重置。本文结合一次实际问题和文档/实验，说明两者的区别与使用场景。</p>
-<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>页面中有两个主要部分：<strong>Dashboard</strong>（根据滚动做缩放动画）和 <strong>Asset List</strong>（可滚动列表）。用 <code>remember {}</code> 保存 scale 状态时：</p>
+    <title>AI Agent 和 Skill 有什么区别？从执行任务到沉淀能力</title>
+    <url>/posts/2026/05/17/a1b2c3d4/</url>
+    <content><![CDATA[<p>在使用 Codex 这类开发型 AI 工具时，一个很常见的困惑是：</p>
+<p><strong>Agent、Skill、提示词和工具调用到底是什么关系？</strong></p>
+<p>这些概念都和 AI 能力增强有关，但解决的问题并不一样。如果不区分清楚，很容易把所有要求都塞进一个超长提示词里，或者误以为只要有 Agent，就不需要沉淀可复用的工作方式。</p>
+<p>更清晰的理解是：</p>
+<p><strong>Agent 负责执行任务，Skill 负责沉淀能力。</strong></p>
+<p>Agent 更像一个能围绕目标持续推进的执行者；Skill 更像一套可复用的专业流程、经验规则和上下文说明。两者结合起来，才更接近一个稳定的 AI 工作流。</p>
+<hr>
+<h2 id="一、什么是-Agent"><a href="#一、什么是-Agent" class="headerlink" title="一、什么是 Agent"></a>一、什么是 Agent</h2><p>Agent 可以理解为：</p>
+<p><strong>一个带有明确角色、目标、上下文、工具权限和执行流程的 AI 助手。</strong></p>
+<p>它和普通聊天助手最大的区别，不是回答更长，而是可以围绕一个目标持续行动。</p>
+<p>当用户给出一个任务后，Agent 通常会完成一组动作：</p>
+<ol>
+<li>读取上下文</li>
+<li>判断任务要解决的问题</li>
+<li>制定执行步骤</li>
+<li>调用可用工具</li>
+<li>修改文件或生成内容</li>
+<li>运行命令或做验证</li>
+<li>交付结果并说明改动</li>
+</ol>
+<p>比如这个任务：</p>
+<blockquote>
+<p>帮我优化这篇博客文章，让它适合发布到个人博客和公众号。</p>
+</blockquote>
+<p>普通聊天助手可能会直接返回一版改写文本。</p>
+<p>开发型 Agent 则会先读取文章文件，理解仓库结构和写作约定，再修改 Markdown、补齐 front matter、检查构建结果，最后说明改动内容和验证结果。</p>
+<p>所以 Agent 的重点不是“会聊天”，而是：</p>
+<p><strong>它能围绕目标推进任务，并对最终交付负责。</strong></p>
+<hr>
+<h2 id="二、Agent-的核心能力"><a href="#二、Agent-的核心能力" class="headerlink" title="二、Agent 的核心能力"></a>二、Agent 的核心能力</h2><p>一个有用的 Agent，通常不只是“大模型 + 一段提示词”。</p>
+<p>它至少需要四类能力。</p>
+<h3 id="1-明确角色和目标"><a href="#1-明确角色和目标" class="headerlink" title="1. 明确角色和目标"></a>1. 明确角色和目标</h3><p>Agent 需要知道自己是谁，以及这次任务要解决什么问题。</p>
+<p>不同角色会带来不同的优先级：</p>
 <ul>
-<li><strong>快速切换 Tab</strong>：表现正常，scale 保持。</li>
-<li><strong>在其他 Tab 停留一段时间再切回</strong>：scale 被重置，Dashboard 突然放大。</li>
+<li>代码审查 Agent：优先发现 bug、风险和缺失测试</li>
+<li>写作优化 Agent：优先优化结构、表达、标题和 SEO</li>
+<li>数据分析 Agent：优先整理数据、发现趋势、输出结论</li>
 </ul>
-<p><img src="/images/20231204/remember.gif" alt="Recording" title="remember"></p>
-<p>改为 <code>rememberSaveable {}</code> 后，无论如何切换 Tab，返回时 Dashboard 都能保持之前的 scale，符合预期。</p>
-<h3 id="相关代码片段"><a href="#相关代码片段" class="headerlink" title="相关代码片段"></a>相关代码片段</h3><pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 使用 rememberSaveable 保持 scale，避免离开屏幕后再进入时被重置</span>
-<span class="token keyword">var</span> scale <span class="token keyword">by</span> rememberSaveable <span class="token punctuation">{</span>
+<p>角色越清楚，输出越稳定。</p>
+<h3 id="2-理解上下文"><a href="#2-理解上下文" class="headerlink" title="2. 理解上下文"></a>2. 理解上下文</h3><p>Agent 需要读取和任务相关的信息。</p>
+<p>对代码任务来说，上下文可能是项目结构、已有实现、测试结果和依赖版本。对写作任务来说，上下文可能是文章草稿、历史文章风格、发布平台要求和 SEO 字段。</p>
+<p>没有上下文时，Agent 很容易给出看似合理但不贴合实际的结果。</p>
+<h3 id="3-调用工具"><a href="#3-调用工具" class="headerlink" title="3. 调用工具"></a>3. 调用工具</h3><p>工具调用是 Agent 区别于普通问答的重要能力。</p>
+<p>Agent 可以读文件、搜索代码、运行测试、调用 API、查询数据，甚至直接修改项目文件。</p>
+<p>工具让 Agent 从“只能给建议”变成“可以完成任务”。</p>
+<h3 id="4-执行和验证"><a href="#4-执行和验证" class="headerlink" title="4. 执行和验证"></a>4. 执行和验证</h3><p>Agent 不应该只停留在方案层面。</p>
+<p>如果任务是修改代码，应该尽量运行测试；如果任务是优化文章，应该检查 Markdown、front matter 和构建结果；如果任务是接入 API，应该验证调用是否真的成功。</p>
+<p>这也是 Agent 的核心价值：</p>
+<p><strong>不只生成答案，而是推进任务并验证结果。</strong></p>
+<hr>
+<h2 id="三、什么是-Skill"><a href="#三、什么是-Skill" class="headerlink" title="三、什么是 Skill"></a>三、什么是 Skill</h2><p>如果说 Agent 是执行者，那么 Skill 可以理解为：</p>
+<p><strong>一组可复用的专业能力、操作流程和上下文说明。</strong></p>
+<p>Skill 通常不会自己主动执行任务。它更像一份能力说明，告诉 Agent 遇到某类任务时应该怎么做。</p>
+<p>它可以包含：</p>
+<ul>
+<li>任务判断规则</li>
+<li>推荐读取的文件或资料</li>
+<li>需要遵守的风格和边界</li>
+<li>可复用脚本、模板或参考资料</li>
+<li>结果交付格式</li>
+</ul>
+<p>比如“博客内容优化 Skill”可以规定：</p>
+<ul>
+<li>先阅读草稿和历史文章风格</li>
+<li>保留作者核心观点，不编造事实</li>
+<li>优化标题、开头、逻辑主线和结尾</li>
+<li>补齐 <code>description</code>、<code>keywords</code>、<code>tags</code></li>
+<li>输出适合个人博客和公众号的版本</li>
+</ul>
+<p>这样下次再优化文章时，就不需要重新写一大段提示词。Agent 加载这个 Skill 后，就能继承这套相对稳定的工作方式。</p>
+<p>所以 Skill 的重点不是独立完成任务，而是：</p>
+<p><strong>把某类任务的经验沉淀下来，让 Agent 更稳定地执行。</strong></p>
+<hr>
+<h2 id="四、Agent-和-Skill-的核心区别"><a href="#四、Agent-和-Skill-的核心区别" class="headerlink" title="四、Agent 和 Skill 的核心区别"></a>四、Agent 和 Skill 的核心区别</h2><p>可以用一张表快速区分：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>Agent</th>
+<th>Skill</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>核心定位</td>
+<td>执行任务的主体</td>
+<td>可复用的能力包</td>
+</tr>
+<tr>
+<td>解决问题</td>
+<td>这次任务怎么完成</td>
+<td>这类任务应该怎么做</td>
+</tr>
+<tr>
+<td>关注点</td>
+<td>目标、上下文、工具、执行、验证</td>
+<td>流程、规范、模板、经验、约束</td>
+</tr>
+<tr>
+<td>是否主动执行</td>
+<td>会主动推进任务</td>
+<td>通常不主动执行</td>
+</tr>
+<tr>
+<td>典型形态</td>
+<td>具备工具权限的 AI 助手</td>
+<td>说明文档、脚本、模板或工作流</td>
+</tr>
+</tbody></table>
+<p>一句话概括：</p>
+<p><strong>Agent 是“谁来做”，Skill 是“怎么做得更专业”。</strong></p>
+<p>Agent 没有 Skill，也可以完成任务，但结果可能不够稳定，每次风格和判断标准都不一样。</p>
+<p>Skill 没有 Agent，也只是静态经验，需要被某个执行者调用后才会产生价值。</p>
+<p>两者结合起来，才能形成更稳定、可复用的 AI 工作流。</p>
+<hr>
+<h2 id="五、什么时候需要-Agent，什么时候需要-Skill"><a href="#五、什么时候需要-Agent，什么时候需要-Skill" class="headerlink" title="五、什么时候需要 Agent，什么时候需要 Skill"></a>五、什么时候需要 Agent，什么时候需要 Skill</h2><h3 id="适合使用-Agent-的场景"><a href="#适合使用-Agent-的场景" class="headerlink" title="适合使用 Agent 的场景"></a>适合使用 Agent 的场景</h3><p>如果任务需要连续判断、工具调用和结果验证，就适合交给 Agent。</p>
+<p>典型场景包括：</p>
+<ul>
+<li>修复一个代码 bug</li>
+<li>阅读项目并生成技术文档</li>
+<li>优化一篇博客文章并更新文件</li>
+<li>调用外部 API 获取数据后生成报告</li>
+<li>根据测试结果继续调整实现</li>
+</ul>
+<p>这些任务都有一个共同点：不是回答一句话就结束，而是需要持续推进。</p>
+<h3 id="适合沉淀成-Skill-的场景"><a href="#适合沉淀成-Skill-的场景" class="headerlink" title="适合沉淀成 Skill 的场景"></a>适合沉淀成 Skill 的场景</h3><p>如果某类任务会反复出现，而且希望结果保持稳定，就适合沉淀成 Skill。</p>
+<p>典型场景包括：</p>
+<ul>
+<li>博客文章优化规范</li>
+<li>代码审查流程</li>
+<li>前端设计规范</li>
+<li>API 文档生成流程</li>
+<li>项目初始化模板</li>
+<li>发布前检查清单</li>
+</ul>
+<p>这些任务的重点不是“今天完成一次”，而是“以后每次都按同样的标准完成”。</p>
+<hr>
+<h2 id="六、为什么不要把所有东西都写进提示词"><a href="#六、为什么不要把所有东西都写进提示词" class="headerlink" title="六、为什么不要把所有东西都写进提示词"></a>六、为什么不要把所有东西都写进提示词</h2><p>很多人在刚开始使用 AI 工具时，会不断加长提示词：</p>
+<blockquote>
+<p>你要这样做，不要那样做，遇到这种情况先检查这个文件，输出时按这个格式，风格要像之前那篇文章……</p>
+</blockquote>
+<p>短期看，这种方式有效。</p>
+<p>但提示词越长，维护成本越高，也越难复用。每次换任务、换项目、换上下文，都要重新组织一遍。</p>
+<p>更好的方式是分层：</p>
+<ul>
+<li>通用执行能力交给 Agent</li>
+<li>稳定经验沉淀成 Skill</li>
+<li>当前提示词只描述这一次的目标和材料</li>
+</ul>
+<p>这样提示词会变短，任务边界也更清楚。</p>
+<p>AI 的使用方式也会从“一次性问答”变成“可加载工作流的执行系统”。</p>
+<hr>
+<h2 id="七、用写作任务理解-Agent-和-Skill"><a href="#七、用写作任务理解-Agent-和-Skill" class="headerlink" title="七、用写作任务理解 Agent 和 Skill"></a>七、用写作任务理解 Agent 和 Skill</h2><p>以博客文章优化为例。</p>
+<p>Writer Agent 负责执行这次任务：</p>
+<ul>
+<li>读取文章草稿</li>
+<li>理解发布目标</li>
+<li>调整文章结构</li>
+<li>修改 Markdown 文件</li>
+<li>补齐发布字段</li>
+<li>检查构建结果</li>
+</ul>
+<p>博客内容优化 Skill 则负责提供稳定方法：</p>
+<ul>
+<li>不编造事实</li>
+<li>保留作者核心观点</li>
+<li>中文表达自然</li>
+<li>技术内容谨慎准确</li>
+<li>默认输出优化方向、完整文章、修改说明、标题候选和平台标签</li>
+</ul>
+<p>当用户提出：</p>
+<blockquote>
+<p>帮我把这篇草稿优化成适合个人博客和公众号发布的文章。</p>
+</blockquote>
+<p>Agent 负责完成这次交付，Skill 负责保证这类任务的执行方式稳定。</p>
+<p>这时得到的结果就不只是一次“文本改写”，而是更接近真实工作流的一次任务完成。</p>
+<hr>
+<h2 id="八、总结"><a href="#八、总结" class="headerlink" title="八、总结"></a>八、总结</h2><p>Agent 和 Skill 不是互相替代的关系。</p>
+<p>更准确地说：</p>
+<ul>
+<li><strong>Agent 是执行者</strong>：负责理解目标、读取上下文、调用工具、推进任务、验证结果。</li>
+<li><strong>Skill 是能力沉淀</strong>：负责把某类任务的经验、流程、规范和模板复用起来。</li>
+</ul>
+<p>如果只有 Agent，没有 Skill，任务也能做，但结果可能不够稳定。</p>
+<p>如果只有 Skill，没有 Agent，它只是静态说明，不能主动完成任务。</p>
+<p>更有价值的方式是：</p>
+<p><strong>用 Agent 执行任务，用 Skill 沉淀方法。</strong></p>
+<p>理解这层关系后，使用 AI 工具时就不只是思考“提示词怎么写”，而是会进一步思考：</p>
+<ul>
+<li>哪些任务应该交给 Agent？</li>
+<li>哪些经验应该沉淀成 Skill？</li>
+<li>哪些流程可以长期复用？</li>
+</ul>
+<p>这才是 AI 工作流真正变得稳定、可复制的开始。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>AI Agent</tag>
+        <tag>Skill</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Jetpack Compose 中 remember 和 rememberSaveable 的区别：一次 Tab 切换状态丢失排查</title>
+    <url>/posts/2023/12/04/f68195/</url>
+    <content><![CDATA[<p>在 Jetpack Compose 中，<code>remember {}</code> 和 <code>rememberSaveable {}</code> 都能“记住”状态。</p>
+<p>但它们的保存范围并不一样。</p>
+<p>这个差异在简单页面里不明显，一旦遇到 Tab 切换、页面离开后重新进入、Activity 重建等场景，就很容易出现状态被意外重置的问题。</p>
+<p>这篇文章结合一次真实排查，说明：</p>
+<p><strong><code>remember</code> 只保证当前组合生命周期内的状态复用；<code>rememberSaveable</code> 适合需要在离开页面后仍然恢复的可保存状态。</strong></p>
+<hr>
+<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>页面里有两个主要部分：</p>
+<ul>
+<li><strong>Dashboard</strong>：根据滚动做缩放动画</li>
+<li><strong>Asset List</strong>：可滚动列表</li>
+</ul>
+<p>最开始使用 <code>remember {}</code> 保存 <code>scale</code> 状态时，表现并不稳定：</p>
+<ul>
+<li>快速切换 Tab：看起来正常，<code>scale</code> 还能保持</li>
+<li>在其他 Tab 停留一段时间再切回：<code>scale</code> 被重置，Dashboard 突然放大</li>
+</ul>
+<p><img src="/images/20231204/remember.gif" alt="Tab 切换后 scale 状态变化" title="remember"></p>
+<p>改成 <code>rememberSaveable {}</code> 后，无论如何切换 Tab，返回时 Dashboard 都能保持之前的缩放状态。</p>
+<p>相关代码如下：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">var</span> scale <span class="token keyword">by</span> rememberSaveable <span class="token punctuation">{</span>
     <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
 <span class="token punctuation">}</span>
+
 <span class="token keyword">val</span> nestedScrollConnection <span class="token operator">=</span> remember <span class="token punctuation">{</span> <span class="token operator">..</span><span class="token punctuation">.</span> <span class="token punctuation">}</span>
+
 <span class="token function">Box</span><span class="token punctuation">(</span>modifier <span class="token operator">=</span> modifier<span class="token punctuation">.</span><span class="token function">nestedScroll</span><span class="token punctuation">(</span>nestedScrollConnection<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token function">DashboardView</span><span class="token punctuation">(</span>
         modifier <span class="token operator">=</span> Modifier
             <span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
             <span class="token punctuation">.</span><span class="token function">scale</span><span class="token punctuation">(</span>scale<span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarHeightRange<span class="token punctuation">.</span>last <span class="token operator">*</span> <span class="token punctuation">(</span>scale <span class="token operator">-</span> <span class="token number">1.0f</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
+                translationY <span class="token operator">=</span> toolbarHeightRange<span class="token punctuation">.</span>last <span class="token operator">*</span> <span class="token punctuation">(</span>scale <span class="token operator">-</span> <span class="token number">1.0f</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
         onEvent <span class="token operator">=</span> onEvent
     <span class="token punctuation">)</span>
+
     <span class="token function">LazyColumn</span><span class="token punctuation">(</span>
         modifier <span class="token operator">=</span> Modifier
             <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarState<span class="token punctuation">.</span>height <span class="token operator">+</span> toolbarState<span class="token punctuation">.</span>offset <span class="token punctuation">}</span>
+            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
+                translationY <span class="token operator">=</span> toolbarState<span class="token punctuation">.</span>height <span class="token operator">+</span> toolbarState<span class="token punctuation">.</span>offset
+            <span class="token punctuation">}</span>
             <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>MaterialTheme<span class="token punctuation">.</span>colorScheme<span class="token punctuation">.</span>background<span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">shadow</span><span class="token punctuation">(</span>elevation <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> shape <span class="token operator">=</span> <span class="token function">RoundedCornerShape</span><span class="token punctuation">(</span>topEnd <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> topStart <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">shadow</span><span class="token punctuation">(</span>
+                elevation <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span>
+                shape <span class="token operator">=</span> <span class="token function">RoundedCornerShape</span><span class="token punctuation">(</span>topEnd <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> topStart <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
+            <span class="token punctuation">)</span>
             <span class="token punctuation">.</span><span class="token function">pointerInput</span><span class="token punctuation">(</span>Unit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
                 <span class="token function">detectTapGestures</span><span class="token punctuation">(</span>onPress <span class="token operator">=</span> <span class="token punctuation">{</span> scope<span class="token punctuation">.</span>coroutineContext<span class="token punctuation">.</span><span class="token function">cancelChildren</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
             <span class="token punctuation">}</span><span class="token punctuation">,</span>
@@ -935,89 +1131,134 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
             <span class="token function">TokenItemView</span><span class="token punctuation">(</span>extraToken <span class="token operator">=</span> it<span class="token punctuation">,</span> onEvent <span class="token operator">=</span> onEvent<span class="token punctuation">)</span>
         <span class="token punctuation">}</span>
     <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h2 id="二、原理解析"><a href="#二、原理解析" class="headerlink" title="二、原理解析"></a>二、原理解析</h2><h3 id="2-1-可组合项的生命周期"><a href="#2-1-可组合项的生命周期" class="headerlink" title="2.1 可组合项的生命周期"></a>2.1 可组合项的生命周期</h3><p>根据官方文档 <a href="https://developer.android.com/jetpack/compose/lifecycle">Lifecycle of composables</a>，可组合项的生命周期可分为三阶段：</p>
+<hr>
+<h2 id="二、先理解组合生命周期"><a href="#二、先理解组合生命周期" class="headerlink" title="二、先理解组合生命周期"></a>二、先理解组合生命周期</h2><p>根据 Compose 官方文档，Composable 的生命周期可以简单分为三段：</p>
 <ul>
-<li><strong>进入组合（Enter Composition）</strong></li>
-<li><strong>重组（Recomposition）</strong></li>
-<li><strong>退出组合（Exit Composition）</strong></li>
+<li><strong>Enter Composition</strong>：进入组合</li>
+<li><strong>Recomposition</strong>：重组</li>
+<li><strong>Exit Composition</strong>：退出组合</li>
 </ul>
-<p>离开当前页面（如切换 Tab）时，该页面的可组合项会<strong>退出组合</strong>；再次进入时则会<strong>重新进入组合</strong>，相当于新一轮生命周期。</p>
-<h3 id="2-2-remember"><a href="#2-2-remember" class="headerlink" title="2.2 remember {}"></a>2.2 remember {}</h3><p>对 <code>remember {}</code> 的文档说明大致如下：</p>
-<blockquote>
-<p>Remember the value produced by calculation. calculation will only be evaluated during the composition. Recomposition will always return the value produced by composition.<br>即：值在<strong>进入组合时</strong>由 block 计算得到，<strong>重组时</strong>直接返回该值，不会重新计算。</p>
-</blockquote>
-<p>因此：</p>
+<p>当页面因为 Tab 切换、导航或列表滑出等原因离开当前 UI 树时，对应 Composable 可能会退出组合。</p>
+<p>再次回到页面时，它不是简单“继续刚才的状态”，而是重新进入组合。</p>
+<p>这正是 <code>remember</code> 和 <code>rememberSaveable</code> 差异出现的地方。</p>
+<hr>
+<h2 id="三、remember-保存的是什么"><a href="#三、remember-保存的是什么" class="headerlink" title="三、remember {} 保存的是什么"></a>三、<code>remember {}</code> 保存的是什么</h2><p><code>remember {}</code> 的核心行为是：</p>
+<p><strong>在当前组合中记住计算结果，重组时复用这个值。</strong></p>
+<p>也就是说：</p>
 <ul>
-<li><strong>初次进入组合</strong>：执行 block，计算并保存值。</li>
-<li><strong>重组</strong>：直接返回已保存的值，不执行 block。</li>
-<li><strong>退出组合后再次进入</strong>：视为新的组合，block <strong>会再次执行</strong>，状态会被重新初始化。</li>
+<li>初次进入组合：执行 block，计算并保存值</li>
+<li>普通重组：直接返回保存的值，不重新执行 block</li>
+<li>退出组合后再次进入：进入新的组合生命周期，block 会重新执行</li>
 </ul>
-<p>这就是「在其他 Tab 停留一段时间再切回」时 scale 被重置的原因：页面先退出组合，再进入时 <code>remember { mutableFloatStateOf(1.0f) }</code> 重新执行，scale 又变回 1.0。若切换很快，组合尚未被回收，就不会触发重新计算，看起来就「正常」。</p>
-<h3 id="2-3-rememberSaveable"><a href="#2-3-rememberSaveable" class="headerlink" title="2.3 rememberSaveable {}"></a>2.3 rememberSaveable {}</h3><p>官方对 <a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/saveable/package-summary#rememberSaveable(kotlin.Array,androidx.compose.runtime.saveable.Saver,kotlin.String,kotlin.Function0)">rememberSaveable</a> 的说明：</p>
-<blockquote>
-<p>与 <code>remember {}</code> 类似，但存储的值会在 <strong>Activity 或进程重建后</strong> 仍然保留，基于 Android 的 <code>SavedInstanceState</code> 机制。</p>
-</blockquote>
-<p>要点：</p>
+<p>所以在这次问题中，如果页面离开 Tab 后被移出组合，再回来时：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">remember <span class="token punctuation">{</span> <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>会重新执行，<code>scale</code> 自然回到 <code>1.0f</code>。</p>
+<p>快速切换时之所以“看起来正常”，只是因为组合可能还没有被回收，并不代表 <code>remember</code> 能跨页面稳定保存状态。</p>
+<hr>
+<h2 id="四、rememberSaveable-多做了什么"><a href="#四、rememberSaveable-多做了什么" class="headerlink" title="四、rememberSaveable {} 多做了什么"></a>四、<code>rememberSaveable {}</code> 多做了什么</h2><p><code>rememberSaveable {}</code> 和 <code>remember {}</code> 类似，也会在组合中保存状态。</p>
+<p>不同的是，它会把可保存的值接入 Compose 的保存机制，基于 <code>SaveableStateRegistry</code> / Android <code>SavedInstanceState</code> 进行恢复。</p>
+<p>它的要点是：</p>
 <ul>
-<li><p>默认使用 <code>autoSaver()</code> 将值写入 Bundle；也可自定义 <code>Saver</code>。</p>
-</li>
-<li><p>仅支持可放入 Bundle 的类型（如 Int、String、Float 等）。</p>
-</li>
-<li><p>若保存的是自定义类型（如 data class），必须提供 <code>Saver</code> 实现，否则会报错：</p>
-<pre class="line-numbers language-none"><code class="language-none">java.lang.IllegalArgumentException: MutableState containing ... cannot be saved using the current SaveableStateRegistry.
-The default implementation only supports types which can be stored inside the Bundle.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre></li>
+<li>默认使用 <code>autoSaver()</code> 保存 Bundle 支持的类型</li>
+<li>支持 <code>Int</code>、<code>String</code>、<code>Float</code> 等基础类型</li>
+<li>自定义类型需要提供 <code>Saver</code></li>
+<li>可以应对 Activity 重建、进程恢复，以及部分离开后重新进入的状态恢复场景</li>
 </ul>
-<p>因此，<strong>离开屏幕再进入</strong>时，只要没有发生 Activity/进程重建，<code>rememberSaveable</code> 仍会从 SaveableStateRegistry 里恢复之前保存的值，scale 得以保留。</p>
-<h2 id="三、验证实验"><a href="#三、验证实验" class="headerlink" title="三、验证实验"></a>三、验证实验</h2><p>用简单日志验证「退出组合后再进入会重新计算」：</p>
+<p>如果保存的是不支持自动保存的类型，通常会遇到类似错误：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">java.lang.IllegalArgumentException: MutableState containing ... cannot be saved using the current SaveableStateRegistry.
+The default implementation only supports types which can be stored inside the Bundle.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>在本文这个场景里，<code>scale</code> 是 <code>Float</code>，属于可保存类型，因此适合用 <code>rememberSaveable</code> 保存。</p>
+<hr>
+<h2 id="五、用日志验证"><a href="#五、用日志验证" class="headerlink" title="五、用日志验证"></a>五、用日志验证</h2><p>可以用下面这段代码验证 <code>remember</code> 在退出组合后会重新计算：</p>
 <pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">var</span> scale <span class="token keyword">by</span> remember <span class="token punctuation">{</span>
     <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== re-calculate"</span></span><span class="token punctuation">)</span>
     <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
 <span class="token punctuation">}</span>
+
 <span class="token function">DisposableEffect</span><span class="token punctuation">(</span>key1 <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     onDispose <span class="token punctuation">{</span> <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== onDispose"</span></span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p><code>DisposableEffect(key1 = null)</code> 保证只有在<strong>退出组合</strong>时才会执行 <code>onDispose</code>。</p>
+<p><code>DisposableEffect</code> 的 <code>onDispose</code> 会在退出组合时执行。</p>
+<p>使用 <code>remember {}</code> 时：</p>
 <ul>
-<li>**使用 <code>remember {}</code>**：第一次进入打印 <code>re-calculate</code>；切到其他 Tab 停留后，先打印 <code>onDispose</code>，再切回来会再次打印 <code>re-calculate</code>，scale 被重置。<br><img src="/images/20231204/remember_log.jpg" alt="Logger" title="remember_log"></li>
-<li>**改用 <code>rememberSaveable {}</code>**：只有第一次进入时打印一次 <code>re-calculate</code>，之后切 Tab 再回来也不会再打印，说明一直用的是已保存的值。<br><img src="/images/20231204/remember_log1.jpg" alt="Logger1" title="remember_log1"></li>
+<li>第一次进入页面：打印 <code>re-calculate</code></li>
+<li>切到其他 Tab 停留后：打印 <code>onDispose</code></li>
+<li>再切回来：再次打印 <code>re-calculate</code>，状态被重置</li>
 </ul>
-<h2 id="四、延伸：离开屏幕-≠-重建"><a href="#四、延伸：离开屏幕-≠-重建" class="headerlink" title="四、延伸：离开屏幕 ≠ 重建"></a>四、延伸：离开屏幕 ≠ 重建</h2><p><a href="https://jetc.dev/slack/2021-04-13-when-do-we-use-remembersaveable.html">Jetpack Compose 相关讨论</a> 里有一句：**”Composable leaving the screen is not recreation”**（可组合项离开屏幕并不等于重建）。</p>
+<p><img src="/images/20231204/remember_log.jpg" alt="remember 退出组合后重新计算" title="remember_log"></p>
+<p>改用 <code>rememberSaveable {}</code> 后：</p>
+<ul>
+<li>第一次进入页面时打印 <code>re-calculate</code></li>
+<li>再切 Tab 回来时不会重新计算</li>
+<li><code>scale</code> 会从保存状态中恢复</li>
+</ul>
+<p><img src="/images/20231204/remember_log1.jpg" alt="rememberSaveable 恢复已保存状态" title="remember_log1"></p>
+<hr>
+<h2 id="六、离开屏幕不等于-Activity-重建"><a href="#六、离开屏幕不等于-Activity-重建" class="headerlink" title="六、离开屏幕不等于 Activity 重建"></a>六、离开屏幕不等于 Activity 重建</h2><p>这里还有一个容易混淆的点：</p>
+<p><strong>Composable leaving the screen is not recreation.</strong></p>
+<p>可组合项离开屏幕，不等于 Activity 或进程重建。</p>
 <p>在 Compose 中：</p>
 <ul>
-<li>组件离开屏幕会触发 <code>onDispose</code>，生命周期结束。</li>
-<li>再次进入屏幕会重新组合，相当于新的生命周期，<code>remember {}</code> 会重新计算。</li>
+<li>离开屏幕：Composable 退出组合，<code>onDispose</code> 执行</li>
+<li>再进入屏幕：Composable 重新进入组合</li>
+<li>Activity 重建：触发 Android 保存 / 恢复流程</li>
 </ul>
-<p>所以「离开屏幕」和「Configuration 变化导致 Activity 重建」是两回事：前者不会触发 SavedInstanceState 流程，只会让可组合项退出组合；后者才会触发进程/Activity 重建，此时才用到 <code>rememberSaveable</code> 的持久化。</p>
-<p>常见「离开屏幕」场景包括：</p>
+<p>常见“离开屏幕”的场景包括：</p>
 <ol>
-<li><strong>Navigation 跳转 / Tab 切换</strong>（如本文案例）</li>
-<li><strong>列表滑动</strong>：Item 滑出视口时会退出组合，<code>onDispose</code> 会执行</li>
+<li>Navigation 跳转或 Tab 切换</li>
+<li>LazyColumn item 滑出视口</li>
+<li>条件渲染导致某段 UI 暂时不显示</li>
 </ol>
-<p>例如 LazyColumn 的 Item 配合 <code>DisposableEffect</code> 可以观察到滑出时打印；若需要<strong>跨页面或重新进入页面时恢复列表滚动位置</strong>，应使用基于 <code>rememberSaveable</code> 的 <code>rememberLazyListState</code> 等 API。</p>
-<h2 id="五、如何选择"><a href="#五、如何选择" class="headerlink" title="五、如何选择"></a>五、如何选择</h2><table>
+<p>因此，状态应该放在哪里，不能只看“会不会重组”，还要看它是否需要跨越组合生命周期。</p>
+<hr>
+<h2 id="七、如何选择"><a href="#七、如何选择" class="headerlink" title="七、如何选择"></a>七、如何选择</h2><p>可以按下面的规则判断：</p>
+<table>
 <thead>
 <tr>
-<th>需求</th>
+<th>场景</th>
 <th>推荐</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>状态只需在<strong>重组</strong>过程中保持</td>
+<td>只需要在普通重组中保持状态</td>
 <td><code>remember {}</code></td>
 </tr>
 <tr>
-<td>状态需要在 <strong>Activity/进程重建</strong>（如旋转、内存回收）后恢复</td>
-<td><code>rememberSaveable {}</code></td>
+<td>页面离开后再进入仍要恢复状态</td>
+<td><code>rememberSaveable {}</code> 或上层状态持有者</td>
 </tr>
 <tr>
-<td>状态需要<strong>跨页面</strong>或更复杂的作用域</td>
-<td>ViewModel 等；若仅在单页内且需应对「离开再进入」，<code>rememberSaveable {}</code> 仍适用</td>
+<td>Activity / 进程重建后要恢复状态</td>
+<td><code>rememberSaveable {}</code>，必要时自定义 <code>Saver</code></td>
+</tr>
+<tr>
+<td>状态属于业务数据或跨多个页面共享</td>
+<td>ViewModel / Repository / 状态管理层</td>
+</tr>
+<tr>
+<td>LazyList 滚动位置</td>
+<td><code>rememberLazyListState</code> 等可保存状态 API</td>
 </tr>
 </tbody></table>
-<p>理解「进入/重组/退出组合」与「SavedInstanceState 重建」的差异后，就能在开发中按场景选用 <code>remember</code> 或 <code>rememberSaveable</code>，避免状态被意外重置。</p>
+<p>对本文的 <code>scale</code> 来说，它是 UI 状态，类型简单，而且需要在离开页面后恢复，所以 <code>rememberSaveable</code> 是合理选择。</p>
+<hr>
+<h2 id="八、总结"><a href="#八、总结" class="headerlink" title="八、总结"></a>八、总结</h2><p><code>remember</code> 和 <code>rememberSaveable</code> 的区别，可以用一句话概括：</p>
+<blockquote>
+<p><strong><code>remember</code> 记住当前组合里的值，<code>rememberSaveable</code> 记住可以被保存和恢复的状态。</strong></p>
+</blockquote>
+<p>排查这类问题时，重点不要只看“有没有重组”，而要继续追问：</p>
+<ul>
+<li>这个 Composable 是否会退出组合？</li>
+<li>状态是否需要在再次进入页面时恢复？</li>
+<li>这个状态能不能被保存到 Bundle？</li>
+<li>它应该属于 UI 局部状态，还是应该上移到 ViewModel？</li>
+</ul>
+<p>理解这几个问题后，就能更稳定地选择 <code>remember</code>、<code>rememberSaveable</code> 或更上层的状态持有方式，避免页面切换后状态突然丢失。</p>
 ]]></content>
       <categories>
         <category>Technical</category>
@@ -1028,9 +1269,174 @@ The default implementation only supports types which can be stored inside the Bu
       </tags>
   </entry>
   <entry>
-    <title>深入理解 Jetpack Compose `key()` 方法</title>
+    <title>Jetpack Compose 性能优化：为什么 graphicsLayer 值得重点掌握</title>
+    <url>/posts/2026/02/27/4ae1fc92/</url>
+    <content><![CDATA[<p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
+<p>比如，想让一个组件半透明，你可以这样写：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">alpha</span><span class="token punctuation">(</span><span class="token number">0.5f</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>也可以这样写：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> alpha <span class="token operator">=</span> <span class="token number">0.5f</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>从界面效果来看，它们几乎一样。</p>
+<p>但在<strong>动画</strong>、<strong>滚动联动</strong>、<strong>高频状态变化</strong>这类场景里，两者背后的性能路径并不完全相同。</p>
+<p>真正的关键不是“哪个 API 更高级”，而是：</p>
+<blockquote>
+<p><strong>你在哪个阶段读取状态。</strong></p>
+</blockquote>
+<p>如果状态读取发生在 Composition 阶段，就可能触发更多重组工作。</p>
+<p>如果状态读取被延后到 Draw 阶段，Compose 就有机会跳过 Composition 和 Layout，只做更轻量的绘制更新。</p>
+<hr>
+<h2 id="Compose-UI-的三大阶段"><a href="#Compose-UI-的三大阶段" class="headerlink" title="Compose UI 的三大阶段"></a>Compose UI 的三大阶段</h2><p>理解这件事，先要知道 Compose 的渲染流程主要分为三个阶段：</p>
+<h3 id="1-Composition"><a href="#1-Composition" class="headerlink" title="1. Composition"></a>1. Composition</h3><p>决定“<strong>要显示什么</strong>”。<br>也就是执行 Composable，构建或更新 UI 树。</p>
+<h3 id="2-Layout"><a href="#2-Layout" class="headerlink" title="2. Layout"></a>2. Layout</h3><p>决定“<strong>显示在哪里、多大</strong>”。<br>也就是测量和摆放组件。</p>
+<h3 id="3-Draw"><a href="#3-Draw" class="headerlink" title="3. Draw"></a>3. Draw</h3><p>决定“<strong>最终画成什么样</strong>”。<br>包括透明度、缩放、旋转、裁剪等绘制相关操作。</p>
+<p>如果一个变化只影响 Draw 阶段，通常会比影响 Layout 阶段更高效，因为整体需要做的工作更少。</p>
+<hr>
+<h2 id="真正的性能差异，来自“状态读取时机”"><a href="#真正的性能差异，来自“状态读取时机”" class="headerlink" title="真正的性能差异，来自“状态读取时机”"></a>真正的性能差异，来自“状态读取时机”</h2><p>很多文章会把这件事简单总结成：</p>
+<ul>
+<li><code>.alpha()</code> 会触发重组</li>
+<li><code>.graphicsLayer {}</code> 不会触发重组</li>
+</ul>
+<p>这个说法<strong>不够准确</strong>。</p>
+<p>更准确的说法是：</p>
+<blockquote>
+<p><strong>是否发生重组，取决于状态是在 Composition、Layout 还是 Draw 阶段被读取。</strong></p>
+</blockquote>
+<p><code>graphicsLayer</code> 的优势并不只是“它能做透明度和缩放”，而是它提供了一个很适合承载<strong>绘制阶段状态读取</strong>的入口。</p>
+<p>也就是说，在适合的场景下，你可以把频繁变化的状态放到更靠后的阶段去处理，从而减少不必要的 Composition 和 Layout 开销。</p>
+<hr>
+<h2 id="为什么-graphicsLayer-常常更适合动画"><a href="#为什么-graphicsLayer-常常更适合动画" class="headerlink" title="为什么 graphicsLayer 常常更适合动画"></a>为什么 <code>graphicsLayer</code> 常常更适合动画</h2><p><code>Modifier.graphicsLayer</code> 主要影响的是绘制阶段，不会改变组件的测量尺寸和摆放位置。</p>
+<p>这意味着下面这些变化，通常更适合放进 <code>graphicsLayer</code>：</p>
+<ul>
+<li><code>alpha</code></li>
+<li><code>scaleX / scaleY</code></li>
+<li><code>translationX / translationY</code></li>
+<li><code>rotationZ</code></li>
+</ul>
+<p>对于高频更新的 UI，这通常更有利，比如：</p>
+<ul>
+<li>滚动时的视差效果</li>
+<li>列表项渐隐渐现</li>
+<li>卡片缩放</li>
+<li>图标呼吸动画</li>
+<li>拖拽过程中的位移或旋转</li>
+</ul>
+<p>因为这些效果本质上更多是在改变“怎么画”，而不是“怎么排版”。</p>
+<hr>
+<h2 id="graphicsLayer-还有一层意义：图形层隔离"><a href="#graphicsLayer-还有一层意义：图形层隔离" class="headerlink" title="graphicsLayer 还有一层意义：图形层隔离"></a><code>graphicsLayer</code> 还有一层意义：图形层隔离</h2><p><code>graphicsLayer</code> 不只是一个 modifier，它还会带来图形层的隔离效果。</p>
+<p>你可以把它理解成：</p>
+<ul>
+<li>组件内容先被组织成一个独立绘制层</li>
+<li>后续对这个层做透明度、缩放、旋转等操作</li>
+<li>不必每次都重新“重画里面的内容”</li>
+</ul>
+<p>这也是它特别适合动画场景的原因之一。</p>
+<p>不过要注意，<strong>有 layer 不代表一定更快</strong>。</p>
+<p>如果只是静态 UI，或者变化频率很低，没必要为了“性能优化”而到处套 <code>graphicsLayer</code>。真正值得优化的，是那些：</p>
+<ul>
+<li>高频变化</li>
+<li>容易掉帧的动画</li>
+<li>滚动联动效果</li>
+<li>明显存在性能瓶颈的界面</li>
+</ul>
+<hr>
+<h2 id="一个更准确的对比方式"><a href="#一个更准确的对比方式" class="headerlink" title="一个更准确的对比方式"></a>一个更准确的对比方式</h2><table>
+<thead>
+<tr>
+<th align="left">对比项</th>
+<th align="left">普通值传递写法</th>
+<th align="left"><code>graphicsLayer { ... }</code> / lambda-based 写法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">状态读取位置</td>
+<td align="left">常见于 Composition 阶段</td>
+<td align="left">可延后到 Draw 阶段</td>
+</tr>
+<tr>
+<td align="left">是否一定触发重组</td>
+<td align="left">不一定，但更容易发生</td>
+<td align="left">不一定完全没有，但更容易跳过 Composition</td>
+</tr>
+<tr>
+<td align="left">是否影响布局</td>
+<td align="left">取决于具体 modifier</td>
+<td align="left"><code>graphicsLayer</code> 本身只影响绘制</td>
+</tr>
+<tr>
+<td align="left">适合场景</td>
+<td align="left">静态 UI、低频变化</td>
+<td align="left">动画、滚动联动、高频视觉变化</td>
+</tr>
+</tbody></table>
+<p>这里最重要的是一句话：</p>
+<blockquote>
+<p><strong>不是 <code>graphicsLayer</code> 天生“无敌”，而是它更适合处理那些只需要改变视觉表现、不需要重新布局的更新。</strong></p>
+</blockquote>
+<hr>
+<h2 id="实战示例：把动画状态留到绘制阶段处理"><a href="#实战示例：把动画状态留到绘制阶段处理" class="headerlink" title="实战示例：把动画状态留到绘制阶段处理"></a>实战示例：把动画状态留到绘制阶段处理</h2><p>下面这个例子非常适合这个思路：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> animatedScale <span class="token keyword">by</span> <span class="token function">animateFloatAsState</span><span class="token punctuation">(</span>targetValue <span class="token operator">=</span> <span class="token number">1.2f</span><span class="token punctuation">)</span>
+
+<span class="token function">Box</span><span class="token punctuation">(</span>
+    Modifier
+        <span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>Magenta<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
+            scaleX <span class="token operator">=</span> animatedScale
+            scaleY <span class="token operator">=</span> animatedScale
+            alpha <span class="token operator">=</span> <span class="token number">0.9f</span>
+        <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这种写法的好处是，<code>scaleX</code> 和 <code>scaleY</code> 这类纯视觉变化，更适合放在 <code>graphicsLayer</code> 中处理。因为它们不需要改变组件本身的测量结果和摆放位置。</p>
+<p>如果你的动画只是让组件“看起来变大”，而不是让布局系统认为“它真的变大了”，这种方式通常更划算。</p>
+<hr>
+<h2 id="什么时候优先考虑-graphicsLayer"><a href="#什么时候优先考虑-graphicsLayer" class="headerlink" title="什么时候优先考虑 graphicsLayer"></a>什么时候优先考虑 <code>graphicsLayer</code></h2><p>你可以优先在下面这些场景考虑它：</p>
+<h3 id="1-高频动画"><a href="#1-高频动画" class="headerlink" title="1. 高频动画"></a>1. 高频动画</h3><p>例如透明度、缩放、旋转、位移持续变化。<br>这类变化通常只影响视觉呈现，不需要反复参与布局。</p>
+<h3 id="2-滚动驱动效果"><a href="#2-滚动驱动效果" class="headerlink" title="2. 滚动驱动效果"></a>2. 滚动驱动效果</h3><p>比如顶部标题渐隐、列表项视差、卡片缩放。<br>这类状态更新非常频繁，更适合尽量延后到 Draw 阶段处理。</p>
+<h3 id="3-不想因为视觉变化触发布局连锁反应"><a href="#3-不想因为视觉变化触发布局连锁反应" class="headerlink" title="3. 不想因为视觉变化触发布局连锁反应"></a>3. 不想因为视觉变化触发布局连锁反应</h3><p>如果变化不会影响组件大小和位置，就尽量别让它进入 Layout。</p>
+<hr>
+<h2 id="什么时候不要滥用"><a href="#什么时候不要滥用" class="headerlink" title="什么时候不要滥用"></a>什么时候不要滥用</h2><p><code>graphicsLayer</code> 不是“看到动画就全上”的银弹。</p>
+<p>下面这些情况要谨慎：</p>
+<h3 id="1-变化本身会影响布局"><a href="#1-变化本身会影响布局" class="headerlink" title="1. 变化本身会影响布局"></a>1. 变化本身会影响布局</h3><p>如果你需要的不是“看起来变大”，而是“真的占更多空间”，那就不能只靠 Draw 阶段处理。</p>
+<h3 id="2-页面本身没有性能问题"><a href="#2-页面本身没有性能问题" class="headerlink" title="2. 页面本身没有性能问题"></a>2. 页面本身没有性能问题</h3><p>优化应该服务于实际瓶颈。<br>如果页面没有掉帧、没有频繁重组、没有滚动抖动，过度使用 <code>graphicsLayer</code> 反而会增加理解成本。</p>
+<h3 id="3-为了“听起来高级”而替换所有-modifier"><a href="#3-为了“听起来高级”而替换所有-modifier" class="headerlink" title="3. 为了“听起来高级”而替换所有 modifier"></a>3. 为了“听起来高级”而替换所有 modifier</h3><p>性能优化不是 API 崇拜。<br>重点是识别哪些状态变化只是视觉层面的，哪些真的会影响布局和结构。</p>
+<hr>
+<h2 id="一句话总结"><a href="#一句话总结" class="headerlink" title="一句话总结"></a>一句话总结</h2><p><code>graphicsLayer</code> 的核心价值，不是“它比 <code>.alpha()</code> 更酷”，而是：</p>
+<blockquote>
+<p><strong>它很适合承载那些只影响绘制结果的高频状态变化，让 Compose 有机会跳过更重的 Composition 和 Layout。</strong></p>
+</blockquote>
+<p>所以，当你在做这些效果时：</p>
+<ul>
+<li>渐隐渐现</li>
+<li>缩放</li>
+<li>旋转</li>
+<li>平移</li>
+<li>滚动联动动画</li>
+</ul>
+<p>优先想一件事：</p>
+<p><strong>这次变化，是不是其实只需要改 Draw，而不必让整个 UI 重新参与组合和布局？</strong></p>
+<p>如果答案是“对”，那 <code>graphicsLayer</code> 往往就是非常值得尝试的方案。</p>
+<hr>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>写 Compose 性能优化时，最容易踩的坑就是把结论说得太绝对。<br>真正值得记住的不是“某个 modifier 一定更快”，而是这条原则：</p>
+<blockquote>
+<p><strong>把状态读取尽量放到更晚的阶段，尤其是 Draw 阶段。</strong></p>
+</blockquote>
+<p>这才是很多 Compose 性能优化技巧背后的共同思路。</p>
+]]></content>
+      <categories>
+        <category>Compose</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>Jetpack Compose</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>深入理解 Jetpack Compose key：为什么动态列表需要稳定身份</title>
     <url>/posts/2026/02/28/ec0aeab/</url>
-    <content><![CDATA[<h1 id="深入理解-Jetpack-Compose-key-方法"><a href="#深入理解-Jetpack-Compose-key-方法" class="headerlink" title="深入理解 Jetpack Compose key() 方法"></a>深入理解 Jetpack Compose <code>key()</code> 方法</h1><p>在 Jetpack Compose 里，<code>key()</code> 是一个很重要、但又很容易被轻视的 API。</p>
+    <content><![CDATA[<p>在 Jetpack Compose 里，<code>key()</code> 是一个很重要、但又很容易被轻视的 API。</p>
 <p>很多人只记得一句话：</p>
 <blockquote>
 <p>列表里最好加 key</p>
@@ -1284,306 +1690,9 @@ The default implementation only supports types which can be stored inside the Bu
         <category>Compose</category>
       </categories>
       <tags>
-        <tag>Compose</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Jetpack Compose Performance Tips Every Developer Should Know</title>
-    <url>/posts/2026/02/27/4ae1fc92/</url>
-    <content><![CDATA[<h1 id="Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握"><a href="#Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握" class="headerlink" title="Jetpack Compose 性能优化：为什么 graphicsLayer 值得你重点掌握"></a>Jetpack Compose 性能优化：为什么 <code>graphicsLayer</code> 值得你重点掌握</h1><p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
-<p>比如，想让一个组件半透明，你可以这样写：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">alpha</span><span class="token punctuation">(</span><span class="token number">0.5f</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>也可以这样写：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> alpha <span class="token operator">=</span> <span class="token number">0.5f</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>从界面效果来看，它们几乎一样。<br>但在<strong>动画</strong>、<strong>滚动联动</strong>、<strong>高频状态变化</strong>这类场景里，两者背后的性能路径并不完全相同。</p>
-<p>真正的关键不是“哪个 API 更高级”，而是：</p>
-<blockquote>
-<p><strong>你在哪个阶段读取状态。</strong></p>
-</blockquote>
-<p>如果状态读取发生在 Composition 阶段，就可能触发更多重组工作。<br>如果状态读取被延后到 Draw 阶段，Compose 就有机会跳过 Composition 和 Layout，只做更轻量的绘制更新。</p>
-<hr>
-<h2 id="Compose-UI-的三大阶段"><a href="#Compose-UI-的三大阶段" class="headerlink" title="Compose UI 的三大阶段"></a>Compose UI 的三大阶段</h2><p>理解这件事，先要知道 Compose 的渲染流程主要分为三个阶段：</p>
-<h3 id="1-Composition"><a href="#1-Composition" class="headerlink" title="1. Composition"></a>1. Composition</h3><p>决定“<strong>要显示什么</strong>”。<br>也就是执行 Composable，构建或更新 UI 树。</p>
-<h3 id="2-Layout"><a href="#2-Layout" class="headerlink" title="2. Layout"></a>2. Layout</h3><p>决定“<strong>显示在哪里、多大</strong>”。<br>也就是测量和摆放组件。</p>
-<h3 id="3-Draw"><a href="#3-Draw" class="headerlink" title="3. Draw"></a>3. Draw</h3><p>决定“<strong>最终画成什么样</strong>”。<br>包括透明度、缩放、旋转、裁剪等绘制相关操作。</p>
-<p>如果一个变化只影响 Draw 阶段，通常会比影响 Layout 阶段更高效，因为整体需要做的工作更少。</p>
-<hr>
-<h2 id="真正的性能差异，来自“状态读取时机”"><a href="#真正的性能差异，来自“状态读取时机”" class="headerlink" title="真正的性能差异，来自“状态读取时机”"></a>真正的性能差异，来自“状态读取时机”</h2><p>很多文章会把这件事简单总结成：</p>
-<ul>
-<li><code>.alpha()</code> 会触发重组</li>
-<li><code>.graphicsLayer {}</code> 不会触发重组</li>
-</ul>
-<p>这个说法<strong>不够准确</strong>。</p>
-<p>更准确的说法是：</p>
-<blockquote>
-<p><strong>是否发生重组，取决于状态是在 Composition、Layout 还是 Draw 阶段被读取。</strong></p>
-</blockquote>
-<p><code>graphicsLayer</code> 的优势并不只是“它能做透明度和缩放”，而是它提供了一个很适合承载<strong>绘制阶段状态读取</strong>的入口。</p>
-<p>也就是说，在适合的场景下，你可以把频繁变化的状态放到更靠后的阶段去处理，从而减少不必要的 Composition 和 Layout 开销。</p>
-<hr>
-<h2 id="为什么-graphicsLayer-常常更适合动画"><a href="#为什么-graphicsLayer-常常更适合动画" class="headerlink" title="为什么 graphicsLayer 常常更适合动画"></a>为什么 <code>graphicsLayer</code> 常常更适合动画</h2><p><code>Modifier.graphicsLayer</code> 主要影响的是绘制阶段，不会改变组件的测量尺寸和摆放位置。</p>
-<p>这意味着下面这些变化，通常更适合放进 <code>graphicsLayer</code>：</p>
-<ul>
-<li><code>alpha</code></li>
-<li><code>scaleX / scaleY</code></li>
-<li><code>translationX / translationY</code></li>
-<li><code>rotationZ</code></li>
-</ul>
-<p>对于高频更新的 UI，这通常更有利，比如：</p>
-<ul>
-<li>滚动时的视差效果</li>
-<li>列表项渐隐渐现</li>
-<li>卡片缩放</li>
-<li>图标呼吸动画</li>
-<li>拖拽过程中的位移或旋转</li>
-</ul>
-<p>因为这些效果本质上更多是在改变“怎么画”，而不是“怎么排版”。</p>
-<hr>
-<h2 id="graphicsLayer-还有一层意义：图形层隔离"><a href="#graphicsLayer-还有一层意义：图形层隔离" class="headerlink" title="graphicsLayer 还有一层意义：图形层隔离"></a><code>graphicsLayer</code> 还有一层意义：图形层隔离</h2><p><code>graphicsLayer</code> 不只是一个 modifier，它还会带来图形层的隔离效果。</p>
-<p>你可以把它理解成：</p>
-<ul>
-<li>组件内容先被组织成一个独立绘制层</li>
-<li>后续对这个层做透明度、缩放、旋转等操作</li>
-<li>不必每次都重新“重画里面的内容”</li>
-</ul>
-<p>这也是它特别适合动画场景的原因之一。</p>
-<p>不过要注意，<strong>有 layer 不代表一定更快</strong>。</p>
-<p>如果只是静态 UI，或者变化频率很低，没必要为了“性能优化”而到处套 <code>graphicsLayer</code>。真正值得优化的，是那些：</p>
-<ul>
-<li>高频变化</li>
-<li>容易掉帧的动画</li>
-<li>滚动联动效果</li>
-<li>明显存在性能瓶颈的界面</li>
-</ul>
-<hr>
-<h2 id="一个更准确的对比方式"><a href="#一个更准确的对比方式" class="headerlink" title="一个更准确的对比方式"></a>一个更准确的对比方式</h2><table>
-<thead>
-<tr>
-<th align="left">对比项</th>
-<th align="left">普通值传递写法</th>
-<th align="left"><code>graphicsLayer { ... }</code> / lambda-based 写法</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">状态读取位置</td>
-<td align="left">常见于 Composition 阶段</td>
-<td align="left">可延后到 Draw 阶段</td>
-</tr>
-<tr>
-<td align="left">是否一定触发重组</td>
-<td align="left">不一定，但更容易发生</td>
-<td align="left">不一定完全没有，但更容易跳过 Composition</td>
-</tr>
-<tr>
-<td align="left">是否影响布局</td>
-<td align="left">取决于具体 modifier</td>
-<td align="left"><code>graphicsLayer</code> 本身只影响绘制</td>
-</tr>
-<tr>
-<td align="left">适合场景</td>
-<td align="left">静态 UI、低频变化</td>
-<td align="left">动画、滚动联动、高频视觉变化</td>
-</tr>
-</tbody></table>
-<p>这里最重要的是一句话：</p>
-<blockquote>
-<p><strong>不是 <code>graphicsLayer</code> 天生“无敌”，而是它更适合处理那些只需要改变视觉表现、不需要重新布局的更新。</strong></p>
-</blockquote>
-<hr>
-<h2 id="实战示例：把动画状态留到绘制阶段处理"><a href="#实战示例：把动画状态留到绘制阶段处理" class="headerlink" title="实战示例：把动画状态留到绘制阶段处理"></a>实战示例：把动画状态留到绘制阶段处理</h2><p>下面这个例子非常适合这个思路：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> animatedScale <span class="token keyword">by</span> <span class="token function">animateFloatAsState</span><span class="token punctuation">(</span>targetValue <span class="token operator">=</span> <span class="token number">1.2f</span><span class="token punctuation">)</span>
-
-<span class="token function">Box</span><span class="token punctuation">(</span>
-    Modifier
-        <span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
-        <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>Magenta<span class="token punctuation">)</span>
-        <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
-            scaleX <span class="token operator">=</span> animatedScale
-            scaleY <span class="token operator">=</span> animatedScale
-            alpha <span class="token operator">=</span> <span class="token number">0.9f</span>
-        <span class="token punctuation">}</span>
-<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>这种写法的好处是，<code>scaleX</code> 和 <code>scaleY</code> 这类纯视觉变化，更适合放在 <code>graphicsLayer</code> 中处理。因为它们不需要改变组件本身的测量结果和摆放位置。</p>
-<p>如果你的动画只是让组件“看起来变大”，而不是让布局系统认为“它真的变大了”，这种方式通常更划算。</p>
-<hr>
-<h2 id="什么时候优先考虑-graphicsLayer"><a href="#什么时候优先考虑-graphicsLayer" class="headerlink" title="什么时候优先考虑 graphicsLayer"></a>什么时候优先考虑 <code>graphicsLayer</code></h2><p>你可以优先在下面这些场景考虑它：</p>
-<h3 id="1-高频动画"><a href="#1-高频动画" class="headerlink" title="1. 高频动画"></a>1. 高频动画</h3><p>例如透明度、缩放、旋转、位移持续变化。<br>这类变化通常只影响视觉呈现，不需要反复参与布局。</p>
-<h3 id="2-滚动驱动效果"><a href="#2-滚动驱动效果" class="headerlink" title="2. 滚动驱动效果"></a>2. 滚动驱动效果</h3><p>比如顶部标题渐隐、列表项视差、卡片缩放。<br>这类状态更新非常频繁，更适合尽量延后到 Draw 阶段处理。</p>
-<h3 id="3-不想因为视觉变化触发布局连锁反应"><a href="#3-不想因为视觉变化触发布局连锁反应" class="headerlink" title="3. 不想因为视觉变化触发布局连锁反应"></a>3. 不想因为视觉变化触发布局连锁反应</h3><p>如果变化不会影响组件大小和位置，就尽量别让它进入 Layout。</p>
-<hr>
-<h2 id="什么时候不要滥用"><a href="#什么时候不要滥用" class="headerlink" title="什么时候不要滥用"></a>什么时候不要滥用</h2><p><code>graphicsLayer</code> 不是“看到动画就全上”的银弹。</p>
-<p>下面这些情况要谨慎：</p>
-<h3 id="1-变化本身会影响布局"><a href="#1-变化本身会影响布局" class="headerlink" title="1. 变化本身会影响布局"></a>1. 变化本身会影响布局</h3><p>如果你需要的不是“看起来变大”，而是“真的占更多空间”，那就不能只靠 Draw 阶段处理。</p>
-<h3 id="2-页面本身没有性能问题"><a href="#2-页面本身没有性能问题" class="headerlink" title="2. 页面本身没有性能问题"></a>2. 页面本身没有性能问题</h3><p>优化应该服务于实际瓶颈。<br>如果页面没有掉帧、没有频繁重组、没有滚动抖动，过度使用 <code>graphicsLayer</code> 反而会增加理解成本。</p>
-<h3 id="3-为了“听起来高级”而替换所有-modifier"><a href="#3-为了“听起来高级”而替换所有-modifier" class="headerlink" title="3. 为了“听起来高级”而替换所有 modifier"></a>3. 为了“听起来高级”而替换所有 modifier</h3><p>性能优化不是 API 崇拜。<br>重点是识别哪些状态变化只是视觉层面的，哪些真的会影响布局和结构。</p>
-<hr>
-<h2 id="一句话总结"><a href="#一句话总结" class="headerlink" title="一句话总结"></a>一句话总结</h2><p><code>graphicsLayer</code> 的核心价值，不是“它比 <code>.alpha()</code> 更酷”，而是：</p>
-<blockquote>
-<p><strong>它很适合承载那些只影响绘制结果的高频状态变化，让 Compose 有机会跳过更重的 Composition 和 Layout。</strong></p>
-</blockquote>
-<p>所以，当你在做这些效果时：</p>
-<ul>
-<li>渐隐渐现</li>
-<li>缩放</li>
-<li>旋转</li>
-<li>平移</li>
-<li>滚动联动动画</li>
-</ul>
-<p>优先想一件事：</p>
-<p><strong>这次变化，是不是其实只需要改 Draw，而不必让整个 UI 重新参与组合和布局？</strong></p>
-<p>如果答案是“对”，那 <code>graphicsLayer</code> 往往就是非常值得尝试的方案。</p>
-<hr>
-<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>写 Compose 性能优化时，最容易踩的坑就是把结论说得太绝对。<br>真正值得记住的不是“某个 modifier 一定更快”，而是这条原则：</p>
-<blockquote>
-<p><strong>把状态读取尽量放到更晚的阶段，尤其是 Draw 阶段。</strong></p>
-</blockquote>
-<p>这才是很多 Compose 性能优化技巧背后的共同思路。</p>
-]]></content>
-      <categories>
-        <category>Compose</category>
-      </categories>
-      <tags>
+        <tag>Android</tag>
         <tag>Jetpack Compose</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>iOS通过Container读取文件问题笔录</title>
-    <url>/posts/2023/08/13/bb96b1c7/</url>
-    <content><![CDATA[<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：</p>
-<ul>
-<li><strong>现象</strong>：导出 <code>.xcappdata</code> 可以确认文件确实在 Documents 目录下，但用 <code>NSData.dataWithContentsOfFile</code> 读取时始终返回空。</li>
-<li><strong>报错</strong>：<code>No such File or Directory</code>（找不到该文件或目录）。</li>
-</ul>
-<p>当时使用的读取代码如下（为便于排查，增加了 <code>errorPtr</code> 输出错误信息）：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> errorPtr<span class="token operator">:</span> ObjCObjectVar<span class="token operator">&lt;</span>NSError<span class="token operator">?</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token function">alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
-    <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-    bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
-    <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
-<span class="token punctuation">}</span>
-<span class="token function">println</span><span class="token punctuation">(</span>errorPtr<span class="token punctuation">.</span>value<span class="token operator">?</span><span class="token punctuation">.</span>description<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">return</span><span class="token label symbol">@withContext</span> <span class="token keyword">null</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<span id="more"></span>
-
-<h2 id="二、问题定位"><a href="#二、问题定位" class="headerlink" title="二、问题定位"></a>二、问题定位</h2><h3 id="2-1-怀疑点：路径可能不对"><a href="#2-1-怀疑点：路径可能不对" class="headerlink" title="2.1 怀疑点：路径可能不对"></a>2.1 怀疑点：路径可能不对</h3><p>从错误日志看，传入的 <code>fullPath</code> 很可能并不是当前运行时的真实路径，所以即使文件实际存在，<code>NSData.dataWithContentsOfFile</code> 仍然找不到。</p>
-<h3 id="2-2-对比验证：Application-目录的-UUID-不一致"><a href="#2-2-对比验证：Application-目录的-UUID-不一致" class="headerlink" title="2.2 对比验证：Application 目录的 UUID 不一致"></a>2.2 对比验证：Application 目录的 UUID 不一致</h3><p>用 Swift 在运行时获取 Documents 目录并列出文件，与 Kotlin 里使用的 <code>fullPath</code> 对比：</p>
-<ul>
-<li><strong>Kotlin 中使用的 fullPath</strong>（可能是之前保存的完整路径）：<pre class="line-numbers language-none"><code class="language-none">/var/mobile/Containers/Data/Application/3FC1CCE9-A788-47AB-902A-FA133FAA3D30/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
-<li><strong>Swift 当前拿到的文件 URL</strong>：<pre class="line-numbers language-none"><code class="language-none">file:///private/var/mobile/Containers/Data/Application/C5AC5178-6887-40F4-9EE5-8D56CB830CB3/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
-</ul>
-<p>可见，<code>Application</code> 后面那一段 UUID 不一致：一个是 <code>3FC1CCE9-...</code>，一个是 <code>C5AC5178-...</code>。</p>
-<p>Swift 侧获取 Documents 的示例代码：</p>
-<pre class="line-numbers language-swift" data-language="swift"><code class="language-swift"><span class="token keyword">let</span> fileManager <span class="token operator">=</span> <span class="token class-name">FileManager</span><span class="token punctuation">.</span><span class="token keyword">default</span>
-<span class="token keyword">let</span> documentsURL <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">urls</span><span class="token punctuation">(</span><span class="token keyword">for</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>documentDirectory<span class="token punctuation">,</span> <span class="token keyword">in</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>userDomainMask<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
-<span class="token keyword">do</span> <span class="token punctuation">{</span>
-    <span class="token keyword">let</span> fileURLs <span class="token operator">=</span> <span class="token keyword">try</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectory</span><span class="token punctuation">(</span>at<span class="token punctuation">:</span> documentsURL<span class="token punctuation">,</span> includingPropertiesForKeys<span class="token punctuation">:</span> <span class="token nil constant">nil</span><span class="token punctuation">)</span>
-    <span class="token function">print</span><span class="token punctuation">(</span>fileURLs<span class="token punctuation">)</span>
-<span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">{</span>
-    <span class="token function">print</span><span class="token punctuation">(</span><span class="token string-literal"><span class="token string">"Error while enumerating files </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">documentsURL<span class="token punctuation">.</span>path</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">: </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">error<span class="token punctuation">.</span>localizedDescription</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">"</span></span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="2-3-根因结论"><a href="#2-3-根因结论" class="headerlink" title="2.3 根因结论"></a>2.3 根因结论</h3><p>自 <strong>iOS 8.0</strong> 起，应用沙盒里 <code>Application</code> 这一级目录的 <strong>UUID 会随安装/部署方式变化</strong>（例如卸载重装、Xcode 重新安装等）。若把「完整路径」存下来，下次启动或重装后 UUID 变了，旧路径就失效，导致「文件在，但按旧路径读不到」。</p>
-<p>因此：<strong>不能依赖存储的完整路径来读文件，只能依赖「相对位置 + 文件名」并在运行时重新解析。</strong></p>
-<h2 id="三、解决方案"><a href="#三、解决方案" class="headerlink" title="三、解决方案"></a>三、解决方案</h2><p>思路统一为：<strong>只存文件名（或相对路径），读的时候先拿到当前 Documents 目录，再拼出完整路径或 URL。</strong> 下面两种写法都符合这一思路。</p>
-<h3 id="方法一：遍历-Documents，按文件名匹配"><a href="#方法一：遍历-Documents，按文件名匹配" class="headerlink" title="方法一：遍历 Documents，按文件名匹配"></a>方法一：遍历 Documents，按文件名匹配</h3><p>不依赖完整路径，先取到 Documents 的 URL，再在目录下按文件名找到对应文件：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 拿到 Documents 目录的 url</span>
-<span class="token keyword">val</span> url <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">URLForDirectory</span><span class="token punctuation">(</span>
-    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
-    inDomain <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
-    appropriateForURL <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
-    create <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
-    error <span class="token operator">=</span> <span class="token keyword">null</span>
-<span class="token punctuation">)</span><span class="token operator">!!</span>
-<span class="token comment">// 列出目录下所有文件的 url</span>
-<span class="token keyword">val</span> fileUrls <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectoryAtURL</span><span class="token punctuation">(</span>url <span class="token operator">=</span> url<span class="token punctuation">,</span> includingPropertiesForKeys <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span>
-<span class="token comment">// 按文件名匹配得到目标文件的 url</span>
-<span class="token keyword">val</span> currentFileUrl <span class="token operator">=</span> fileUrls<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">first</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">contains</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span> <span class="token punctuation">}</span> <span class="token keyword">as</span><span class="token operator">?</span> NSURL
-<span class="token comment">// 用 URL 读取</span>
-currentFileUrl<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span>
-    NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfURL</span><span class="token punctuation">(</span>currentFileUrl<span class="token punctuation">)</span>
-        <span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
-            <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-            bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
-            <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
-        <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="方法二（推荐）：直接取-Documents-路径再拼接文件名"><a href="#方法二（推荐）：直接取-Documents-路径再拼接文件名" class="headerlink" title="方法二（推荐）：直接取 Documents 路径再拼接文件名"></a>方法二（推荐）：直接取 Documents 路径再拼接文件名</h3><p>遍历有额外开销，更稳妥且高效的方式是：<strong>每次读取时用系统 API 取当前 Documents 目录，再拼接文件名</strong>：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> documentDirectory <span class="token operator">=</span> <span class="token function">NSSearchPathForDirectoriesInDomains</span><span class="token punctuation">(</span>
-    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
-    domainMask <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
-    expandTilde <span class="token operator">=</span> <span class="token boolean">true</span>
-<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">first</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> NSString
-<span class="token keyword">val</span> fullPath <span class="token operator">=</span> documentDirectory<span class="token punctuation">.</span><span class="token function">stringByAppendingPathComponent</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span>
-<span class="token comment">// 此处 fullPath 一定是当前应用实例的真实路径</span>
-NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> <span class="token operator">..</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>这样得到的 <code>fullPath</code> 始终对应当前运行时的 Documents，不受 UUID 变化影响。</p>
-<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><table>
-<thead>
-<tr>
-<th>要点</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>不要存完整路径</td>
-<td>iOS 8+ 下 Application 目录 UUID 会变，存完整路径容易失效。</td>
-</tr>
-<tr>
-<td>推荐只存文件名</td>
-<td>使用时通过 API 获取当前 Documents 目录，再拼接文件名。</td>
-</tr>
-<tr>
-<td>优先用系统 API 取目录</td>
-<td>使用 <code>NSSearchPathForDirectoriesInDomains</code> 获取 Documents，比遍历目录更简单、高效。</td>
-</tr>
-</tbody></table>
-<p>按上述方式改造后，<code>NSData.dataWithContentsOfFile</code> 无法读取文件的问题即可解决。</p>
-<h2 id="附录：UUID-何时会变化"><a href="#附录：UUID-何时会变化" class="headerlink" title="附录：UUID 何时会变化"></a>附录：UUID 何时会变化</h2><p>不同安装/运行方式下，沙盒中 Application 目录的 UUID 是否变化可参考下表：</p>
-<table>
-<thead>
-<tr>
-<th>安装/运行方式</th>
-<th>UUID 是否变化</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>App 卸载后重新安装</td>
-<td>✅ 变化（iOS 8+ 的安全机制）</td>
-</tr>
-<tr>
-<td>通过 Xcode 重新安装</td>
-<td>✅ 变化（相当于卸载再安装）</td>
-</tr>
-<tr>
-<td>Xcode 直接运行（不卸载）</td>
-<td>❌ 不变（仅 Build &amp; Run 且未删除 App）</td>
-</tr>
-<tr>
-<td>模拟器上运行</td>
-<td>✅ 可能变化（视情况而定）</td>
-</tr>
-<tr>
-<td>TestFlight / App Store 安装</td>
-<td>✅ 变化（安装时生成新 UUID）</td>
-</tr>
-<tr>
-<td>iOS OTA 更新 App</td>
-<td>❌ 不变（更新不改变 UUID）</td>
-</tr>
-</tbody></table>
-]]></content>
-      <categories>
-        <category>Multiplatform</category>
-      </categories>
-      <tags>
-        <tag>SwiftUI</tag>
-        <tag>Kotlin Native</tag>
+        <tag>Compose</tag>
       </tags>
   </entry>
 </search>

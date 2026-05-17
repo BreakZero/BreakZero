@@ -22,16 +22,17 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"dejinlu.cn","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.22.0","exturl":false,"sidebar":{"position":"right","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12,"width":300},"copycode":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="理解 Compose 的 Composition、Layout、Draw 三个阶段，学会在动画场景中使用 graphicsLayer 延迟状态读取，减少不必要的重组与布局开销。">
+    <meta name="description" content="理解 Jetpack Compose 的 Composition、Layout、Draw 三个阶段，学会在动画、滚动联动和高频视觉变化场景中使用 graphicsLayer，把状态读取延后到绘制阶段，从而减少不必要的重组与布局开销。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Jetpack Compose Performance Tips Every Developer Should Know">
+<meta property="og:title" content="Jetpack Compose 性能优化：为什么 graphicsLayer 值得重点掌握">
 <meta property="og:url" content="https://dejinlu.cn/posts/2026/02/27/4ae1fc92/index.html">
 <meta property="og:site_name" content="D&amp;JのZONE">
-<meta property="og:description" content="理解 Compose 的 Composition、Layout、Draw 三个阶段，学会在动画场景中使用 graphicsLayer 延迟状态读取，减少不必要的重组与布局开销。">
+<meta property="og:description" content="理解 Jetpack Compose 的 Composition、Layout、Draw 三个阶段，学会在动画、滚动联动和高频视觉变化场景中使用 graphicsLayer，把状态读取延后到绘制阶段，从而减少不必要的重组与布局开销。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-02-27T09:04:17.000Z">
-<meta property="article:modified_time" content="2026-03-15T08:53:37.050Z">
+<meta property="article:modified_time" content="2026-05-17T08:47:00.008Z">
 <meta property="article:author" content="D&amp;J">
+<meta property="article:tag" content="Android">
 <meta property="article:tag" content="Jetpack Compose">
 <meta name="twitter:card" content="summary">
 
@@ -39,10 +40,10 @@
 <link rel="canonical" href="https://dejinlu.cn/posts/2026/02/27/4ae1fc92/">
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://dejinlu.cn/posts/2026/02/27/4ae1fc92/","path":"posts/2026/02/27/4ae1fc92/","title":"Jetpack Compose Performance Tips Every Developer Should Know"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://dejinlu.cn/posts/2026/02/27/4ae1fc92/","path":"posts/2026/02/27/4ae1fc92/","title":"Jetpack Compose 性能优化：为什么 graphicsLayer 值得重点掌握"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>Jetpack Compose Performance Tips Every Developer Should Know | D&JのZONE</title>
+<title>Jetpack Compose 性能优化：为什么 graphicsLayer 值得重点掌握 | D&JのZONE</title>
   
 
   <script src="/js/third-party/analytics/baidu-analytics.js"></script>
@@ -146,7 +147,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Jetpack-Compose-%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96%EF%BC%9A%E4%B8%BA%E4%BB%80%E4%B9%88-graphicsLayer-%E5%80%BC%E5%BE%97%E4%BD%A0%E9%87%8D%E7%82%B9%E6%8E%8C%E6%8F%A1"><span class="nav-number">1.</span> <span class="nav-text">Jetpack Compose 性能优化：为什么 graphicsLayer 值得你重点掌握</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Compose-UI-%E7%9A%84%E4%B8%89%E5%A4%A7%E9%98%B6%E6%AE%B5"><span class="nav-number">1.1.</span> <span class="nav-text">Compose UI 的三大阶段</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-Composition"><span class="nav-number">1.1.1.</span> <span class="nav-text">1. Composition</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Layout"><span class="nav-number">1.1.2.</span> <span class="nav-text">2. Layout</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-Draw"><span class="nav-number">1.1.3.</span> <span class="nav-text">3. Draw</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9C%9F%E6%AD%A3%E7%9A%84%E6%80%A7%E8%83%BD%E5%B7%AE%E5%BC%82%EF%BC%8C%E6%9D%A5%E8%87%AA%E2%80%9C%E7%8A%B6%E6%80%81%E8%AF%BB%E5%8F%96%E6%97%B6%E6%9C%BA%E2%80%9D"><span class="nav-number">1.2.</span> <span class="nav-text">真正的性能差异，来自“状态读取时机”</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-graphicsLayer-%E5%B8%B8%E5%B8%B8%E6%9B%B4%E9%80%82%E5%90%88%E5%8A%A8%E7%94%BB"><span class="nav-number">1.3.</span> <span class="nav-text">为什么 graphicsLayer 常常更适合动画</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#graphicsLayer-%E8%BF%98%E6%9C%89%E4%B8%80%E5%B1%82%E6%84%8F%E4%B9%89%EF%BC%9A%E5%9B%BE%E5%BD%A2%E5%B1%82%E9%9A%94%E7%A6%BB"><span class="nav-number">1.4.</span> <span class="nav-text">graphicsLayer 还有一层意义：图形层隔离</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E6%9B%B4%E5%87%86%E7%A1%AE%E7%9A%84%E5%AF%B9%E6%AF%94%E6%96%B9%E5%BC%8F"><span class="nav-number">1.5.</span> <span class="nav-text">一个更准确的对比方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E6%88%98%E7%A4%BA%E4%BE%8B%EF%BC%9A%E6%8A%8A%E5%8A%A8%E7%94%BB%E7%8A%B6%E6%80%81%E7%95%99%E5%88%B0%E7%BB%98%E5%88%B6%E9%98%B6%E6%AE%B5%E5%A4%84%E7%90%86"><span class="nav-number">1.6.</span> <span class="nav-text">实战示例：把动画状态留到绘制阶段处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BC%98%E5%85%88%E8%80%83%E8%99%91-graphicsLayer"><span class="nav-number">1.7.</span> <span class="nav-text">什么时候优先考虑 graphicsLayer</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E9%AB%98%E9%A2%91%E5%8A%A8%E7%94%BB"><span class="nav-number">1.7.1.</span> <span class="nav-text">1. 高频动画</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%BB%9A%E5%8A%A8%E9%A9%B1%E5%8A%A8%E6%95%88%E6%9E%9C"><span class="nav-number">1.7.2.</span> <span class="nav-text">2. 滚动驱动效果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E4%B8%8D%E6%83%B3%E5%9B%A0%E4%B8%BA%E8%A7%86%E8%A7%89%E5%8F%98%E5%8C%96%E8%A7%A6%E5%8F%91%E5%B8%83%E5%B1%80%E8%BF%9E%E9%94%81%E5%8F%8D%E5%BA%94"><span class="nav-number">1.7.3.</span> <span class="nav-text">3. 不想因为视觉变化触发布局连锁反应</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E8%A6%81%E6%BB%A5%E7%94%A8"><span class="nav-number">1.8.</span> <span class="nav-text">什么时候不要滥用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%8F%98%E5%8C%96%E6%9C%AC%E8%BA%AB%E4%BC%9A%E5%BD%B1%E5%93%8D%E5%B8%83%E5%B1%80"><span class="nav-number">1.8.1.</span> <span class="nav-text">1. 变化本身会影响布局</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E9%A1%B5%E9%9D%A2%E6%9C%AC%E8%BA%AB%E6%B2%A1%E6%9C%89%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98"><span class="nav-number">1.8.2.</span> <span class="nav-text">2. 页面本身没有性能问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E4%B8%BA%E4%BA%86%E2%80%9C%E5%90%AC%E8%B5%B7%E6%9D%A5%E9%AB%98%E7%BA%A7%E2%80%9D%E8%80%8C%E6%9B%BF%E6%8D%A2%E6%89%80%E6%9C%89-modifier"><span class="nav-number">1.8.3.</span> <span class="nav-text">3. 为了“听起来高级”而替换所有 modifier</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93"><span class="nav-number">1.9.</span> <span class="nav-text">一句话总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E5%B0%BE"><span class="nav-number">1.10.</span> <span class="nav-text">结尾</span></a></li></ol></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Compose-UI-%E7%9A%84%E4%B8%89%E5%A4%A7%E9%98%B6%E6%AE%B5"><span class="nav-number">1.</span> <span class="nav-text">Compose UI 的三大阶段</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-Composition"><span class="nav-number">1.1.</span> <span class="nav-text">1. Composition</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Layout"><span class="nav-number">1.2.</span> <span class="nav-text">2. Layout</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-Draw"><span class="nav-number">1.3.</span> <span class="nav-text">3. Draw</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9C%9F%E6%AD%A3%E7%9A%84%E6%80%A7%E8%83%BD%E5%B7%AE%E5%BC%82%EF%BC%8C%E6%9D%A5%E8%87%AA%E2%80%9C%E7%8A%B6%E6%80%81%E8%AF%BB%E5%8F%96%E6%97%B6%E6%9C%BA%E2%80%9D"><span class="nav-number">2.</span> <span class="nav-text">真正的性能差异，来自“状态读取时机”</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-graphicsLayer-%E5%B8%B8%E5%B8%B8%E6%9B%B4%E9%80%82%E5%90%88%E5%8A%A8%E7%94%BB"><span class="nav-number">3.</span> <span class="nav-text">为什么 graphicsLayer 常常更适合动画</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#graphicsLayer-%E8%BF%98%E6%9C%89%E4%B8%80%E5%B1%82%E6%84%8F%E4%B9%89%EF%BC%9A%E5%9B%BE%E5%BD%A2%E5%B1%82%E9%9A%94%E7%A6%BB"><span class="nav-number">4.</span> <span class="nav-text">graphicsLayer 还有一层意义：图形层隔离</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E6%9B%B4%E5%87%86%E7%A1%AE%E7%9A%84%E5%AF%B9%E6%AF%94%E6%96%B9%E5%BC%8F"><span class="nav-number">5.</span> <span class="nav-text">一个更准确的对比方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E6%88%98%E7%A4%BA%E4%BE%8B%EF%BC%9A%E6%8A%8A%E5%8A%A8%E7%94%BB%E7%8A%B6%E6%80%81%E7%95%99%E5%88%B0%E7%BB%98%E5%88%B6%E9%98%B6%E6%AE%B5%E5%A4%84%E7%90%86"><span class="nav-number">6.</span> <span class="nav-text">实战示例：把动画状态留到绘制阶段处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BC%98%E5%85%88%E8%80%83%E8%99%91-graphicsLayer"><span class="nav-number">7.</span> <span class="nav-text">什么时候优先考虑 graphicsLayer</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E9%AB%98%E9%A2%91%E5%8A%A8%E7%94%BB"><span class="nav-number">7.1.</span> <span class="nav-text">1. 高频动画</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%BB%9A%E5%8A%A8%E9%A9%B1%E5%8A%A8%E6%95%88%E6%9E%9C"><span class="nav-number">7.2.</span> <span class="nav-text">2. 滚动驱动效果</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E4%B8%8D%E6%83%B3%E5%9B%A0%E4%B8%BA%E8%A7%86%E8%A7%89%E5%8F%98%E5%8C%96%E8%A7%A6%E5%8F%91%E5%B8%83%E5%B1%80%E8%BF%9E%E9%94%81%E5%8F%8D%E5%BA%94"><span class="nav-number">7.3.</span> <span class="nav-text">3. 不想因为视觉变化触发布局连锁反应</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%B8%8D%E8%A6%81%E6%BB%A5%E7%94%A8"><span class="nav-number">8.</span> <span class="nav-text">什么时候不要滥用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%8F%98%E5%8C%96%E6%9C%AC%E8%BA%AB%E4%BC%9A%E5%BD%B1%E5%93%8D%E5%B8%83%E5%B1%80"><span class="nav-number">8.1.</span> <span class="nav-text">1. 变化本身会影响布局</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E9%A1%B5%E9%9D%A2%E6%9C%AC%E8%BA%AB%E6%B2%A1%E6%9C%89%E6%80%A7%E8%83%BD%E9%97%AE%E9%A2%98"><span class="nav-number">8.2.</span> <span class="nav-text">2. 页面本身没有性能问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E4%B8%BA%E4%BA%86%E2%80%9C%E5%90%AC%E8%B5%B7%E6%9D%A5%E9%AB%98%E7%BA%A7%E2%80%9D%E8%80%8C%E6%9B%BF%E6%8D%A2%E6%89%80%E6%9C%89-modifier"><span class="nav-number">8.3.</span> <span class="nav-text">3. 为了“听起来高级”而替换所有 modifier</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93"><span class="nav-number">9.</span> <span class="nav-text">一句话总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E5%B0%BE"><span class="nav-number">10.</span> <span class="nav-text">结尾</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -172,7 +173,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">13</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -223,12 +224,12 @@
     </span>
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="Jetpack Compose Performance Tips Every Developer Should Know | D&JのZONE">
-      <meta itemprop="description" content="理解 Compose 的 Composition、Layout、Draw 三个阶段，学会在动画场景中使用 graphicsLayer 延迟状态读取，减少不必要的重组与布局开销。">
+      <meta itemprop="name" content="Jetpack Compose 性能优化：为什么 graphicsLayer 值得重点掌握 | D&JのZONE">
+      <meta itemprop="description" content="理解 Jetpack Compose 的 Composition、Layout、Draw 三个阶段，学会在动画、滚动联动和高频视觉变化场景中使用 graphicsLayer，把状态读取延后到绘制阶段，从而减少不必要的重组与布局开销。">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Jetpack Compose Performance Tips Every Developer Should Know
+          Jetpack Compose 性能优化：为什么 graphicsLayer 值得重点掌握
         </h1>
 
         <div class="post-meta-container">
@@ -268,26 +269,28 @@
   
 </div>
 
-            <div class="post-description">理解 Compose 的 Composition、Layout、Draw 三个阶段，学会在动画场景中使用 graphicsLayer 延迟状态读取，减少不必要的重组与布局开销。</div>
+            <div class="post-description">理解 Jetpack Compose 的 Composition、Layout、Draw 三个阶段，学会在动画、滚动联动和高频视觉变化场景中使用 graphicsLayer，把状态读取延后到绘制阶段，从而减少不必要的重组与布局开销。</div>
         </div>
       </header>
 
     
     
     
-    <div class="post-body" itemprop="articleBody"><h1 id="Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握"><a href="#Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握" class="headerlink" title="Jetpack Compose 性能优化：为什么 graphicsLayer 值得你重点掌握"></a>Jetpack Compose 性能优化：为什么 <code>graphicsLayer</code> 值得你重点掌握</h1><p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
+    <div class="post-body" itemprop="articleBody"><p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
 <p>比如，想让一个组件半透明，你可以这样写：</p>
 <pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">alpha</span><span class="token punctuation">(</span><span class="token number">0.5f</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
 <p>也可以这样写：</p>
 <pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> alpha <span class="token operator">=</span> <span class="token number">0.5f</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<p>从界面效果来看，它们几乎一样。<br>但在<strong>动画</strong>、<strong>滚动联动</strong>、<strong>高频状态变化</strong>这类场景里，两者背后的性能路径并不完全相同。</p>
+<p>从界面效果来看，它们几乎一样。</p>
+<p>但在<strong>动画</strong>、<strong>滚动联动</strong>、<strong>高频状态变化</strong>这类场景里，两者背后的性能路径并不完全相同。</p>
 <p>真正的关键不是“哪个 API 更高级”，而是：</p>
 <blockquote>
 <p><strong>你在哪个阶段读取状态。</strong></p>
 </blockquote>
-<p>如果状态读取发生在 Composition 阶段，就可能触发更多重组工作。<br>如果状态读取被延后到 Draw 阶段，Compose 就有机会跳过 Composition 和 Layout，只做更轻量的绘制更新。</p>
+<p>如果状态读取发生在 Composition 阶段，就可能触发更多重组工作。</p>
+<p>如果状态读取被延后到 Draw 阶段，Compose 就有机会跳过 Composition 和 Layout，只做更轻量的绘制更新。</p>
 <hr>
 <h2 id="Compose-UI-的三大阶段"><a href="#Compose-UI-的三大阶段" class="headerlink" title="Compose UI 的三大阶段"></a>Compose UI 的三大阶段</h2><p>理解这件事，先要知道 Compose 的渲染流程主要分为三个阶段：</p>
 <h3 id="1-Composition"><a href="#1-Composition" class="headerlink" title="1. Composition"></a>1. Composition</h3><p>决定“<strong>要显示什么</strong>”。<br>也就是执行 Composable，构建或更新 UI 树。</p>
@@ -435,6 +438,7 @@
 
     <footer class="post-footer">
           <div class="post-tags">
+              <a href="/tags/Android/" rel="tag"># Android</a>
               <a href="/tags/Jetpack-Compose/" rel="tag"># Jetpack Compose</a>
           </div>
 
@@ -442,13 +446,13 @@
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/posts/2023/12/04/f68195/" rel="prev" title="remember VS rememberSaveable">
-                  <i class="fa fa-angle-left"></i> remember VS rememberSaveable
+                <a href="/posts/2023/12/04/f68195/" rel="prev" title="Jetpack Compose 中 remember 和 rememberSaveable 的区别：一次 Tab 切换状态丢失排查">
+                  <i class="fa fa-angle-left"></i> Jetpack Compose 中 remember 和 rememberSaveable 的区别：一次 Tab 切换状态丢失排查
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/posts/2026/02/28/ec0aeab/" rel="next" title="深入理解 Jetpack Compose `key()` 方法">
-                  深入理解 Jetpack Compose `key()` 方法 <i class="fa fa-angle-right"></i>
+                <a href="/posts/2026/02/28/ec0aeab/" rel="next" title="深入理解 Jetpack Compose key：为什么动态列表需要稳定身份">
+                  深入理解 Jetpack Compose key：为什么动态列表需要稳定身份 <i class="fa fa-angle-right"></i>
                 </a>
             </div>
           </div>

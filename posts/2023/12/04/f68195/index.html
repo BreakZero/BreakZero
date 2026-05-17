@@ -22,18 +22,18 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"dejinlu.cn","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.22.0","exturl":false,"sidebar":{"position":"right","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12,"width":300},"copycode":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="Jetpack Compose 中 remember 与 rememberSaveable 的差异：前者只在组合内保持状态，后者可跨进程&#x2F;Activity 重建恢复。结合 Tab 切换导致 scale 被重置的案例说明原理与选型。">
+    <meta name="description" content="本文结合一次 Jetpack Compose 中 Tab 切换后 Dashboard 缩放状态被重置的问题，解释 remember 和 rememberSaveable 的区别：remember 只在当前组合生命周期内保存状态，退出组合后再次进入会重新计算；rememberSaveable 基于 SaveableStateRegistry，可在离开页面再进入、Activity 重建等场景中恢复可保">
 <meta property="og:type" content="article">
-<meta property="og:title" content="remember VS rememberSaveable">
+<meta property="og:title" content="Jetpack Compose 中 remember 和 rememberSaveable 的区别：一次 Tab 切换状态丢失排查">
 <meta property="og:url" content="https://dejinlu.cn/posts/2023/12/04/f68195/index.html">
 <meta property="og:site_name" content="D&amp;JのZONE">
-<meta property="og:description" content="Jetpack Compose 中 remember 与 rememberSaveable 的差异：前者只在组合内保持状态，后者可跨进程&#x2F;Activity 重建恢复。结合 Tab 切换导致 scale 被重置的案例说明原理与选型。">
+<meta property="og:description" content="本文结合一次 Jetpack Compose 中 Tab 切换后 Dashboard 缩放状态被重置的问题，解释 remember 和 rememberSaveable 的区别：remember 只在当前组合生命周期内保存状态，退出组合后再次进入会重新计算；rememberSaveable 基于 SaveableStateRegistry，可在离开页面再进入、Activity 重建等场景中恢复可保">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dejinlu.cn/images/20231204/remember.gif">
 <meta property="og:image" content="https://dejinlu.cn/images/20231204/remember_log.jpg">
 <meta property="og:image" content="https://dejinlu.cn/images/20231204/remember_log1.jpg">
 <meta property="article:published_time" content="2023-12-04T03:14:00.000Z">
-<meta property="article:modified_time" content="2026-04-09T07:42:59.049Z">
+<meta property="article:modified_time" content="2026-05-17T08:46:43.870Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="Android">
 <meta property="article:tag" content="Jetpack Compose">
@@ -44,10 +44,10 @@
 <link rel="canonical" href="https://dejinlu.cn/posts/2023/12/04/f68195/">
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://dejinlu.cn/posts/2023/12/04/f68195/","path":"posts/2023/12/04/f68195/","title":"remember VS rememberSaveable"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://dejinlu.cn/posts/2023/12/04/f68195/","path":"posts/2023/12/04/f68195/","title":"Jetpack Compose 中 remember 和 rememberSaveable 的区别：一次 Tab 切换状态丢失排查"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>remember VS rememberSaveable | D&JのZONE</title>
+<title>Jetpack Compose 中 remember 和 rememberSaveable 的区别：一次 Tab 切换状态丢失排查 | D&JのZONE</title>
   
 
   <script src="/js/third-party/analytics/baidu-analytics.js"></script>
@@ -151,7 +151,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E7%8E%B0%E8%B1%A1"><span class="nav-number">2.</span> <span class="nav-text">一、问题现象</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9B%B8%E5%85%B3%E4%BB%A3%E7%A0%81%E7%89%87%E6%AE%B5"><span class="nav-number">2.1.</span> <span class="nav-text">相关代码片段</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90"><span class="nav-number">3.</span> <span class="nav-text">二、原理解析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#2-1-%E5%8F%AF%E7%BB%84%E5%90%88%E9%A1%B9%E7%9A%84%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="nav-number">3.1.</span> <span class="nav-text">2.1 可组合项的生命周期</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-2-remember"><span class="nav-number">3.2.</span> <span class="nav-text">2.2 remember {}</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-3-rememberSaveable"><span class="nav-number">3.3.</span> <span class="nav-text">2.3 rememberSaveable {}</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E9%AA%8C%E8%AF%81%E5%AE%9E%E9%AA%8C"><span class="nav-number">4.</span> <span class="nav-text">三、验证实验</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%BB%B6%E4%BC%B8%EF%BC%9A%E7%A6%BB%E5%BC%80%E5%B1%8F%E5%B9%95-%E2%89%A0-%E9%87%8D%E5%BB%BA"><span class="nav-number">5.</span> <span class="nav-text">四、延伸：离开屏幕 ≠ 重建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9"><span class="nav-number">6.</span> <span class="nav-text">五、如何选择</span></a></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E9%97%AE%E9%A2%98%E7%8E%B0%E8%B1%A1"><span class="nav-number">1.</span> <span class="nav-text">一、问题现象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%85%88%E7%90%86%E8%A7%A3%E7%BB%84%E5%90%88%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="nav-number">2.</span> <span class="nav-text">二、先理解组合生命周期</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81remember-%E4%BF%9D%E5%AD%98%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-number">3.</span> <span class="nav-text">三、remember {} 保存的是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81rememberSaveable-%E5%A4%9A%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-number">4.</span> <span class="nav-text">四、rememberSaveable {} 多做了什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E7%94%A8%E6%97%A5%E5%BF%97%E9%AA%8C%E8%AF%81"><span class="nav-number">5.</span> <span class="nav-text">五、用日志验证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AD%E3%80%81%E7%A6%BB%E5%BC%80%E5%B1%8F%E5%B9%95%E4%B8%8D%E7%AD%89%E4%BA%8E-Activity-%E9%87%8D%E5%BB%BA"><span class="nav-number">6.</span> <span class="nav-text">六、离开屏幕不等于 Activity 重建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%83%E3%80%81%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9"><span class="nav-number">7.</span> <span class="nav-text">七、如何选择</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%AB%E3%80%81%E6%80%BB%E7%BB%93"><span class="nav-number">8.</span> <span class="nav-text">八、总结</span></a></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -177,7 +177,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">13</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -228,12 +228,12 @@
     </span>
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="remember VS rememberSaveable | D&JのZONE">
-      <meta itemprop="description" content="Jetpack Compose 中 remember 与 rememberSaveable 的差异：前者只在组合内保持状态，后者可跨进程/Activity 重建恢复。结合 Tab 切换导致 scale 被重置的案例说明原理与选型。">
+      <meta itemprop="name" content="Jetpack Compose 中 remember 和 rememberSaveable 的区别：一次 Tab 切换状态丢失排查 | D&JのZONE">
+      <meta itemprop="description" content="本文结合一次 Jetpack Compose 中 Tab 切换后 Dashboard 缩放状态被重置的问题，解释 remember 和 rememberSaveable 的区别：remember 只在当前组合生命周期内保存状态，退出组合后再次进入会重新计算；rememberSaveable 基于 SaveableStateRegistry，可在离开页面再进入、Activity 重建等场景中恢复可保存状态。">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          remember VS rememberSaveable
+          Jetpack Compose 中 remember 和 rememberSaveable 的区别：一次 Tab 切换状态丢失排查
         </h1>
 
         <div class="post-meta-container">
@@ -273,40 +273,60 @@
   
 </div>
 
-            <div class="post-description">Jetpack Compose 中 remember 与 rememberSaveable 的差异：前者只在组合内保持状态，后者可跨进程/Activity 重建恢复。结合 Tab 切换导致 scale 被重置的案例说明原理与选型。</div>
+            <div class="post-description">本文结合一次 Jetpack Compose 中 Tab 切换后 Dashboard 缩放状态被重置的问题，解释 remember 和 rememberSaveable 的区别：remember 只在当前组合生命周期内保存状态，退出组合后再次进入会重新计算；rememberSaveable 基于 SaveableStateRegistry，可在离开页面再进入、Activity 重建等场景中恢复可保存状态。</div>
         </div>
       </header>
 
     
     
     
-    <div class="post-body" itemprop="articleBody"><h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在 Jetpack Compose 中，我们常需要「记住」某个计算结果，避免在重组时重复计算以提升性能。Compose 提供了两种常用方式：<code>remember {}</code> 和 <code>rememberSaveable {}</code>。二者都能在重组时复用值，但<strong>持久化范围不同</strong>，选错会导致状态在特定场景下被重置。本文结合一次实际问题和文档/实验，说明两者的区别与使用场景。</p>
-<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>页面中有两个主要部分：<strong>Dashboard</strong>（根据滚动做缩放动画）和 <strong>Asset List</strong>（可滚动列表）。用 <code>remember {}</code> 保存 scale 状态时：</p>
+    <div class="post-body" itemprop="articleBody"><p>在 Jetpack Compose 中，<code>remember {}</code> 和 <code>rememberSaveable {}</code> 都能“记住”状态。</p>
+<p>但它们的保存范围并不一样。</p>
+<p>这个差异在简单页面里不明显，一旦遇到 Tab 切换、页面离开后重新进入、Activity 重建等场景，就很容易出现状态被意外重置的问题。</p>
+<p>这篇文章结合一次真实排查，说明：</p>
+<p><strong><code>remember</code> 只保证当前组合生命周期内的状态复用；<code>rememberSaveable</code> 适合需要在离开页面后仍然恢复的可保存状态。</strong></p>
+<hr>
+<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>页面里有两个主要部分：</p>
 <ul>
-<li><strong>快速切换 Tab</strong>：表现正常，scale 保持。</li>
-<li><strong>在其他 Tab 停留一段时间再切回</strong>：scale 被重置，Dashboard 突然放大。</li>
+<li><strong>Dashboard</strong>：根据滚动做缩放动画</li>
+<li><strong>Asset List</strong>：可滚动列表</li>
 </ul>
-<p><img src="/images/20231204/remember.gif" alt="Recording" title="remember"></p>
-<p>改为 <code>rememberSaveable {}</code> 后，无论如何切换 Tab，返回时 Dashboard 都能保持之前的 scale，符合预期。</p>
-<h3 id="相关代码片段"><a href="#相关代码片段" class="headerlink" title="相关代码片段"></a>相关代码片段</h3><pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 使用 rememberSaveable 保持 scale，避免离开屏幕后再进入时被重置</span>
-<span class="token keyword">var</span> scale <span class="token keyword">by</span> rememberSaveable <span class="token punctuation">{</span>
+<p>最开始使用 <code>remember {}</code> 保存 <code>scale</code> 状态时，表现并不稳定：</p>
+<ul>
+<li>快速切换 Tab：看起来正常，<code>scale</code> 还能保持</li>
+<li>在其他 Tab 停留一段时间再切回：<code>scale</code> 被重置，Dashboard 突然放大</li>
+</ul>
+<p><img src="/images/20231204/remember.gif" alt="Tab 切换后 scale 状态变化" title="remember"></p>
+<p>改成 <code>rememberSaveable {}</code> 后，无论如何切换 Tab，返回时 Dashboard 都能保持之前的缩放状态。</p>
+<p>相关代码如下：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">var</span> scale <span class="token keyword">by</span> rememberSaveable <span class="token punctuation">{</span>
     <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
 <span class="token punctuation">}</span>
+
 <span class="token keyword">val</span> nestedScrollConnection <span class="token operator">=</span> remember <span class="token punctuation">{</span> <span class="token operator">..</span><span class="token punctuation">.</span> <span class="token punctuation">}</span>
+
 <span class="token function">Box</span><span class="token punctuation">(</span>modifier <span class="token operator">=</span> modifier<span class="token punctuation">.</span><span class="token function">nestedScroll</span><span class="token punctuation">(</span>nestedScrollConnection<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     <span class="token function">DashboardView</span><span class="token punctuation">(</span>
         modifier <span class="token operator">=</span> Modifier
             <span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
             <span class="token punctuation">.</span><span class="token function">scale</span><span class="token punctuation">(</span>scale<span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarHeightRange<span class="token punctuation">.</span>last <span class="token operator">*</span> <span class="token punctuation">(</span>scale <span class="token operator">-</span> <span class="token number">1.0f</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
+                translationY <span class="token operator">=</span> toolbarHeightRange<span class="token punctuation">.</span>last <span class="token operator">*</span> <span class="token punctuation">(</span>scale <span class="token operator">-</span> <span class="token number">1.0f</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
         onEvent <span class="token operator">=</span> onEvent
     <span class="token punctuation">)</span>
+
     <span class="token function">LazyColumn</span><span class="token punctuation">(</span>
         modifier <span class="token operator">=</span> Modifier
             <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarState<span class="token punctuation">.</span>height <span class="token operator">+</span> toolbarState<span class="token punctuation">.</span>offset <span class="token punctuation">}</span>
+            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
+                translationY <span class="token operator">=</span> toolbarState<span class="token punctuation">.</span>height <span class="token operator">+</span> toolbarState<span class="token punctuation">.</span>offset
+            <span class="token punctuation">}</span>
             <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>MaterialTheme<span class="token punctuation">.</span>colorScheme<span class="token punctuation">.</span>background<span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">shadow</span><span class="token punctuation">(</span>elevation <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> shape <span class="token operator">=</span> <span class="token function">RoundedCornerShape</span><span class="token punctuation">(</span>topEnd <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> topStart <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">shadow</span><span class="token punctuation">(</span>
+                elevation <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span>
+                shape <span class="token operator">=</span> <span class="token function">RoundedCornerShape</span><span class="token punctuation">(</span>topEnd <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> topStart <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
+            <span class="token punctuation">)</span>
             <span class="token punctuation">.</span><span class="token function">pointerInput</span><span class="token punctuation">(</span>Unit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
                 <span class="token function">detectTapGestures</span><span class="token punctuation">(</span>onPress <span class="token operator">=</span> <span class="token punctuation">{</span> scope<span class="token punctuation">.</span>coroutineContext<span class="token punctuation">.</span><span class="token function">cancelChildren</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
             <span class="token punctuation">}</span><span class="token punctuation">,</span>
@@ -317,89 +337,134 @@
             <span class="token function">TokenItemView</span><span class="token punctuation">(</span>extraToken <span class="token operator">=</span> it<span class="token punctuation">,</span> onEvent <span class="token operator">=</span> onEvent<span class="token punctuation">)</span>
         <span class="token punctuation">}</span>
     <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h2 id="二、原理解析"><a href="#二、原理解析" class="headerlink" title="二、原理解析"></a>二、原理解析</h2><h3 id="2-1-可组合项的生命周期"><a href="#2-1-可组合项的生命周期" class="headerlink" title="2.1 可组合项的生命周期"></a>2.1 可组合项的生命周期</h3><p>根据官方文档 <a target="_blank" rel="noopener" href="https://developer.android.com/jetpack/compose/lifecycle">Lifecycle of composables</a>，可组合项的生命周期可分为三阶段：</p>
+<hr>
+<h2 id="二、先理解组合生命周期"><a href="#二、先理解组合生命周期" class="headerlink" title="二、先理解组合生命周期"></a>二、先理解组合生命周期</h2><p>根据 Compose 官方文档，Composable 的生命周期可以简单分为三段：</p>
 <ul>
-<li><strong>进入组合（Enter Composition）</strong></li>
-<li><strong>重组（Recomposition）</strong></li>
-<li><strong>退出组合（Exit Composition）</strong></li>
+<li><strong>Enter Composition</strong>：进入组合</li>
+<li><strong>Recomposition</strong>：重组</li>
+<li><strong>Exit Composition</strong>：退出组合</li>
 </ul>
-<p>离开当前页面（如切换 Tab）时，该页面的可组合项会<strong>退出组合</strong>；再次进入时则会<strong>重新进入组合</strong>，相当于新一轮生命周期。</p>
-<h3 id="2-2-remember"><a href="#2-2-remember" class="headerlink" title="2.2 remember {}"></a>2.2 remember {}</h3><p>对 <code>remember {}</code> 的文档说明大致如下：</p>
-<blockquote>
-<p>Remember the value produced by calculation. calculation will only be evaluated during the composition. Recomposition will always return the value produced by composition.<br>即：值在<strong>进入组合时</strong>由 block 计算得到，<strong>重组时</strong>直接返回该值，不会重新计算。</p>
-</blockquote>
-<p>因此：</p>
+<p>当页面因为 Tab 切换、导航或列表滑出等原因离开当前 UI 树时，对应 Composable 可能会退出组合。</p>
+<p>再次回到页面时，它不是简单“继续刚才的状态”，而是重新进入组合。</p>
+<p>这正是 <code>remember</code> 和 <code>rememberSaveable</code> 差异出现的地方。</p>
+<hr>
+<h2 id="三、remember-保存的是什么"><a href="#三、remember-保存的是什么" class="headerlink" title="三、remember {} 保存的是什么"></a>三、<code>remember {}</code> 保存的是什么</h2><p><code>remember {}</code> 的核心行为是：</p>
+<p><strong>在当前组合中记住计算结果，重组时复用这个值。</strong></p>
+<p>也就是说：</p>
 <ul>
-<li><strong>初次进入组合</strong>：执行 block，计算并保存值。</li>
-<li><strong>重组</strong>：直接返回已保存的值，不执行 block。</li>
-<li><strong>退出组合后再次进入</strong>：视为新的组合，block <strong>会再次执行</strong>，状态会被重新初始化。</li>
+<li>初次进入组合：执行 block，计算并保存值</li>
+<li>普通重组：直接返回保存的值，不重新执行 block</li>
+<li>退出组合后再次进入：进入新的组合生命周期，block 会重新执行</li>
 </ul>
-<p>这就是「在其他 Tab 停留一段时间再切回」时 scale 被重置的原因：页面先退出组合，再进入时 <code>remember { mutableFloatStateOf(1.0f) }</code> 重新执行，scale 又变回 1.0。若切换很快，组合尚未被回收，就不会触发重新计算，看起来就「正常」。</p>
-<h3 id="2-3-rememberSaveable"><a href="#2-3-rememberSaveable" class="headerlink" title="2.3 rememberSaveable {}"></a>2.3 rememberSaveable {}</h3><p>官方对 <a target="_blank" rel="noopener" href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/saveable/package-summary#rememberSaveable(kotlin.Array,androidx.compose.runtime.saveable.Saver,kotlin.String,kotlin.Function0)">rememberSaveable</a> 的说明：</p>
-<blockquote>
-<p>与 <code>remember {}</code> 类似，但存储的值会在 <strong>Activity 或进程重建后</strong> 仍然保留，基于 Android 的 <code>SavedInstanceState</code> 机制。</p>
-</blockquote>
-<p>要点：</p>
+<p>所以在这次问题中，如果页面离开 Tab 后被移出组合，再回来时：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">remember <span class="token punctuation">{</span> <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>会重新执行，<code>scale</code> 自然回到 <code>1.0f</code>。</p>
+<p>快速切换时之所以“看起来正常”，只是因为组合可能还没有被回收，并不代表 <code>remember</code> 能跨页面稳定保存状态。</p>
+<hr>
+<h2 id="四、rememberSaveable-多做了什么"><a href="#四、rememberSaveable-多做了什么" class="headerlink" title="四、rememberSaveable {} 多做了什么"></a>四、<code>rememberSaveable {}</code> 多做了什么</h2><p><code>rememberSaveable {}</code> 和 <code>remember {}</code> 类似，也会在组合中保存状态。</p>
+<p>不同的是，它会把可保存的值接入 Compose 的保存机制，基于 <code>SaveableStateRegistry</code> / Android <code>SavedInstanceState</code> 进行恢复。</p>
+<p>它的要点是：</p>
 <ul>
-<li><p>默认使用 <code>autoSaver()</code> 将值写入 Bundle；也可自定义 <code>Saver</code>。</p>
-</li>
-<li><p>仅支持可放入 Bundle 的类型（如 Int、String、Float 等）。</p>
-</li>
-<li><p>若保存的是自定义类型（如 data class），必须提供 <code>Saver</code> 实现，否则会报错：</p>
-<pre class="line-numbers language-none"><code class="language-none">java.lang.IllegalArgumentException: MutableState containing ... cannot be saved using the current SaveableStateRegistry.
-The default implementation only supports types which can be stored inside the Bundle.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre></li>
+<li>默认使用 <code>autoSaver()</code> 保存 Bundle 支持的类型</li>
+<li>支持 <code>Int</code>、<code>String</code>、<code>Float</code> 等基础类型</li>
+<li>自定义类型需要提供 <code>Saver</code></li>
+<li>可以应对 Activity 重建、进程恢复，以及部分离开后重新进入的状态恢复场景</li>
 </ul>
-<p>因此，<strong>离开屏幕再进入</strong>时，只要没有发生 Activity/进程重建，<code>rememberSaveable</code> 仍会从 SaveableStateRegistry 里恢复之前保存的值，scale 得以保留。</p>
-<h2 id="三、验证实验"><a href="#三、验证实验" class="headerlink" title="三、验证实验"></a>三、验证实验</h2><p>用简单日志验证「退出组合后再进入会重新计算」：</p>
+<p>如果保存的是不支持自动保存的类型，通常会遇到类似错误：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">java.lang.IllegalArgumentException: MutableState containing ... cannot be saved using the current SaveableStateRegistry.
+The default implementation only supports types which can be stored inside the Bundle.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>在本文这个场景里，<code>scale</code> 是 <code>Float</code>，属于可保存类型，因此适合用 <code>rememberSaveable</code> 保存。</p>
+<hr>
+<h2 id="五、用日志验证"><a href="#五、用日志验证" class="headerlink" title="五、用日志验证"></a>五、用日志验证</h2><p>可以用下面这段代码验证 <code>remember</code> 在退出组合后会重新计算：</p>
 <pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">var</span> scale <span class="token keyword">by</span> remember <span class="token punctuation">{</span>
     <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== re-calculate"</span></span><span class="token punctuation">)</span>
     <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
 <span class="token punctuation">}</span>
+
 <span class="token function">DisposableEffect</span><span class="token punctuation">(</span>key1 <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
     onDispose <span class="token punctuation">{</span> <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== onDispose"</span></span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p><code>DisposableEffect(key1 = null)</code> 保证只有在<strong>退出组合</strong>时才会执行 <code>onDispose</code>。</p>
+<p><code>DisposableEffect</code> 的 <code>onDispose</code> 会在退出组合时执行。</p>
+<p>使用 <code>remember {}</code> 时：</p>
 <ul>
-<li>**使用 <code>remember {}</code>**：第一次进入打印 <code>re-calculate</code>；切到其他 Tab 停留后，先打印 <code>onDispose</code>，再切回来会再次打印 <code>re-calculate</code>，scale 被重置。<br><img src="/images/20231204/remember_log.jpg" alt="Logger" title="remember_log"></li>
-<li>**改用 <code>rememberSaveable {}</code>**：只有第一次进入时打印一次 <code>re-calculate</code>，之后切 Tab 再回来也不会再打印，说明一直用的是已保存的值。<br><img src="/images/20231204/remember_log1.jpg" alt="Logger1" title="remember_log1"></li>
+<li>第一次进入页面：打印 <code>re-calculate</code></li>
+<li>切到其他 Tab 停留后：打印 <code>onDispose</code></li>
+<li>再切回来：再次打印 <code>re-calculate</code>，状态被重置</li>
 </ul>
-<h2 id="四、延伸：离开屏幕-≠-重建"><a href="#四、延伸：离开屏幕-≠-重建" class="headerlink" title="四、延伸：离开屏幕 ≠ 重建"></a>四、延伸：离开屏幕 ≠ 重建</h2><p><a target="_blank" rel="noopener" href="https://jetc.dev/slack/2021-04-13-when-do-we-use-remembersaveable.html">Jetpack Compose 相关讨论</a> 里有一句：**”Composable leaving the screen is not recreation”**（可组合项离开屏幕并不等于重建）。</p>
+<p><img src="/images/20231204/remember_log.jpg" alt="remember 退出组合后重新计算" title="remember_log"></p>
+<p>改用 <code>rememberSaveable {}</code> 后：</p>
+<ul>
+<li>第一次进入页面时打印 <code>re-calculate</code></li>
+<li>再切 Tab 回来时不会重新计算</li>
+<li><code>scale</code> 会从保存状态中恢复</li>
+</ul>
+<p><img src="/images/20231204/remember_log1.jpg" alt="rememberSaveable 恢复已保存状态" title="remember_log1"></p>
+<hr>
+<h2 id="六、离开屏幕不等于-Activity-重建"><a href="#六、离开屏幕不等于-Activity-重建" class="headerlink" title="六、离开屏幕不等于 Activity 重建"></a>六、离开屏幕不等于 Activity 重建</h2><p>这里还有一个容易混淆的点：</p>
+<p><strong>Composable leaving the screen is not recreation.</strong></p>
+<p>可组合项离开屏幕，不等于 Activity 或进程重建。</p>
 <p>在 Compose 中：</p>
 <ul>
-<li>组件离开屏幕会触发 <code>onDispose</code>，生命周期结束。</li>
-<li>再次进入屏幕会重新组合，相当于新的生命周期，<code>remember {}</code> 会重新计算。</li>
+<li>离开屏幕：Composable 退出组合，<code>onDispose</code> 执行</li>
+<li>再进入屏幕：Composable 重新进入组合</li>
+<li>Activity 重建：触发 Android 保存 / 恢复流程</li>
 </ul>
-<p>所以「离开屏幕」和「Configuration 变化导致 Activity 重建」是两回事：前者不会触发 SavedInstanceState 流程，只会让可组合项退出组合；后者才会触发进程/Activity 重建，此时才用到 <code>rememberSaveable</code> 的持久化。</p>
-<p>常见「离开屏幕」场景包括：</p>
+<p>常见“离开屏幕”的场景包括：</p>
 <ol>
-<li><strong>Navigation 跳转 / Tab 切换</strong>（如本文案例）</li>
-<li><strong>列表滑动</strong>：Item 滑出视口时会退出组合，<code>onDispose</code> 会执行</li>
+<li>Navigation 跳转或 Tab 切换</li>
+<li>LazyColumn item 滑出视口</li>
+<li>条件渲染导致某段 UI 暂时不显示</li>
 </ol>
-<p>例如 LazyColumn 的 Item 配合 <code>DisposableEffect</code> 可以观察到滑出时打印；若需要<strong>跨页面或重新进入页面时恢复列表滚动位置</strong>，应使用基于 <code>rememberSaveable</code> 的 <code>rememberLazyListState</code> 等 API。</p>
-<h2 id="五、如何选择"><a href="#五、如何选择" class="headerlink" title="五、如何选择"></a>五、如何选择</h2><table>
+<p>因此，状态应该放在哪里，不能只看“会不会重组”，还要看它是否需要跨越组合生命周期。</p>
+<hr>
+<h2 id="七、如何选择"><a href="#七、如何选择" class="headerlink" title="七、如何选择"></a>七、如何选择</h2><p>可以按下面的规则判断：</p>
+<table>
 <thead>
 <tr>
-<th>需求</th>
+<th>场景</th>
 <th>推荐</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>状态只需在<strong>重组</strong>过程中保持</td>
+<td>只需要在普通重组中保持状态</td>
 <td><code>remember {}</code></td>
 </tr>
 <tr>
-<td>状态需要在 <strong>Activity/进程重建</strong>（如旋转、内存回收）后恢复</td>
-<td><code>rememberSaveable {}</code></td>
+<td>页面离开后再进入仍要恢复状态</td>
+<td><code>rememberSaveable {}</code> 或上层状态持有者</td>
 </tr>
 <tr>
-<td>状态需要<strong>跨页面</strong>或更复杂的作用域</td>
-<td>ViewModel 等；若仅在单页内且需应对「离开再进入」，<code>rememberSaveable {}</code> 仍适用</td>
+<td>Activity / 进程重建后要恢复状态</td>
+<td><code>rememberSaveable {}</code>，必要时自定义 <code>Saver</code></td>
+</tr>
+<tr>
+<td>状态属于业务数据或跨多个页面共享</td>
+<td>ViewModel / Repository / 状态管理层</td>
+</tr>
+<tr>
+<td>LazyList 滚动位置</td>
+<td><code>rememberLazyListState</code> 等可保存状态 API</td>
 </tr>
 </tbody></table>
-<p>理解「进入/重组/退出组合」与「SavedInstanceState 重建」的差异后，就能在开发中按场景选用 <code>remember</code> 或 <code>rememberSaveable</code>，避免状态被意外重置。</p>
+<p>对本文的 <code>scale</code> 来说，它是 UI 状态，类型简单，而且需要在离开页面后恢复，所以 <code>rememberSaveable</code> 是合理选择。</p>
+<hr>
+<h2 id="八、总结"><a href="#八、总结" class="headerlink" title="八、总结"></a>八、总结</h2><p><code>remember</code> 和 <code>rememberSaveable</code> 的区别，可以用一句话概括：</p>
+<blockquote>
+<p><strong><code>remember</code> 记住当前组合里的值，<code>rememberSaveable</code> 记住可以被保存和恢复的状态。</strong></p>
+</blockquote>
+<p>排查这类问题时，重点不要只看“有没有重组”，而要继续追问：</p>
+<ul>
+<li>这个 Composable 是否会退出组合？</li>
+<li>状态是否需要在再次进入页面时恢复？</li>
+<li>这个状态能不能被保存到 Bundle？</li>
+<li>它应该属于 UI 局部状态，还是应该上移到 ViewModel？</li>
+</ul>
+<p>理解这几个问题后，就能更稳定地选择 <code>remember</code>、<code>rememberSaveable</code> 或更上层的状态持有方式，避免页面切换后状态突然丢失。</p>
 
     </div>
 
@@ -417,13 +482,13 @@ The default implementation only supports types which can be stored inside the Bu
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/posts/2023/08/13/bb96b1c7/" rel="prev" title="iOS通过Container读取文件问题笔录">
-                  <i class="fa fa-angle-left"></i> iOS通过Container读取文件问题笔录
+                <a href="/posts/2023/08/13/bb96b1c7/" rel="prev" title="iOS 沙盒路径踩坑：KMP 读取 Documents 文件为什么会报 No such file">
+                  <i class="fa fa-angle-left"></i> iOS 沙盒路径踩坑：KMP 读取 Documents 文件为什么会报 No such file
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/posts/2026/02/27/4ae1fc92/" rel="next" title="Jetpack Compose Performance Tips Every Developer Should Know">
-                  Jetpack Compose Performance Tips Every Developer Should Know <i class="fa fa-angle-right"></i>
+                <a href="/posts/2026/02/27/4ae1fc92/" rel="next" title="Jetpack Compose 性能优化：为什么 graphicsLayer 值得重点掌握">
+                  Jetpack Compose 性能优化：为什么 graphicsLayer 值得重点掌握 <i class="fa fa-angle-right"></i>
                 </a>
             </div>
           </div>

@@ -167,7 +167,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">11</span>
+        <span class="site-state-item-count">13</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -396,7 +396,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/posts/2026/03/02/fbb9923f/" class="post-title-link" itemprop="url">升降桌故障排查记</a>
+          <a href="/posts/2026/03/02/fbb9923f/" class="post-title-link" itemprop="url">乐歌升降桌 E07 / E08 故障排查：一边桌脚不动时，我是怎么修好的</a>
         </h2>
 
         <div class="post-meta-container">
@@ -431,7 +431,7 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>乐歌升降桌突然显示 RST/E07 错误，升降时一边桌脚不动。客服建议年后再处理，我决定先自己动手排查。从报码变化到拆开桌脚测试电机，最终通过手动找平和系统重置，让桌子恢复正常。把这次折腾过程记下来，也给遇到类似问题的人留个参考。</p>
+          <p>乐歌升降桌突然显示 RST、E07、E08，升降时一边桌脚不动，重置也没有立即恢复。本文记录一次完整排查过程：从联系客服、交叉插线、测试电机，到手动找平并重新初始化，最终让桌子恢复同步升降。适合遇到类似报码和左右桌脚不同步问题时参考。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/posts/2026/03/02/fbb9923f/">
@@ -483,7 +483,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/posts/2026/02/28/ec0aeab/" class="post-title-link" itemprop="url">深入理解 Jetpack Compose `key()` 方法</a>
+          <a href="/posts/2026/02/28/ec0aeab/" class="post-title-link" itemprop="url">深入理解 Jetpack Compose key：为什么动态列表需要稳定身份</a>
         </h2>
 
         <div class="post-meta-container">
@@ -518,7 +518,7 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>理解 Compose 中 key() 的真正作用：为一段组合内容提供稳定身份，避免列表重排时状态错位，并帮助 Compose 在插入、删除、移动元素时正确复用节点与状态。</p>
+          <p>理解 Jetpack Compose 中 key() 的真正作用：为组合内容和动态列表项提供稳定身份，避免列表重排、插入、删除时 remember 状态错位，并帮助 Compose 更准确地复用节点、动画和副作用。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/posts/2026/02/28/ec0aeab/">
@@ -570,7 +570,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/posts/2026/02/27/4ae1fc92/" class="post-title-link" itemprop="url">Jetpack Compose Performance Tips Every Developer Should Know</a>
+          <a href="/posts/2026/02/27/4ae1fc92/" class="post-title-link" itemprop="url">Jetpack Compose 性能优化：为什么 graphicsLayer 值得重点掌握</a>
         </h2>
 
         <div class="post-meta-container">
@@ -605,7 +605,7 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>理解 Compose 的 Composition、Layout、Draw 三个阶段，学会在动画场景中使用 graphicsLayer 延迟状态读取，减少不必要的重组与布局开销。</p>
+          <p>理解 Jetpack Compose 的 Composition、Layout、Draw 三个阶段，学会在动画、滚动联动和高频视觉变化场景中使用 graphicsLayer，把状态读取延后到绘制阶段，从而减少不必要的重组与布局开销。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/posts/2026/02/27/4ae1fc92/">
@@ -657,7 +657,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/posts/2023/12/04/f68195/" class="post-title-link" itemprop="url">remember VS rememberSaveable</a>
+          <a href="/posts/2023/12/04/f68195/" class="post-title-link" itemprop="url">Jetpack Compose 中 remember 和 rememberSaveable 的区别：一次 Tab 切换状态丢失排查</a>
         </h2>
 
         <div class="post-meta-container">
@@ -692,7 +692,7 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>Jetpack Compose 中 remember 与 rememberSaveable 的差异：前者只在组合内保持状态，后者可跨进程/Activity 重建恢复。结合 Tab 切换导致 scale 被重置的案例说明原理与选型。</p>
+          <p>本文结合一次 Jetpack Compose 中 Tab 切换后 Dashboard 缩放状态被重置的问题，解释 remember 和 rememberSaveable 的区别：remember 只在当前组合生命周期内保存状态，退出组合后再次进入会重新计算；rememberSaveable 基于 SaveableStateRegistry，可在离开页面再进入、Activity 重建等场景中恢复可保存状态。</p>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/posts/2023/12/04/f68195/">
@@ -744,7 +744,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/posts/2023/08/13/bb96b1c7/" class="post-title-link" itemprop="url">iOS通过Container读取文件问题笔录</a>
+          <a href="/posts/2023/08/13/bb96b1c7/" class="post-title-link" itemprop="url">iOS 沙盒路径踩坑：KMP 读取 Documents 文件为什么会报 No such file</a>
         </h2>
 
         <div class="post-meta-container">
@@ -779,23 +779,10 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：</p>
-<ul>
-<li><strong>现象</strong>：导出 <code>.xcappdata</code> 可以确认文件确实在 Documents 目录下，但用 <code>NSData.dataWithContentsOfFile</code> 读取时始终返回空。</li>
-<li><strong>报错</strong>：<code>No such File or Directory</code>（找不到该文件或目录）。</li>
-</ul>
-<p>当时使用的读取代码如下（为便于排查，增加了 <code>errorPtr</code> 输出错误信息）：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> errorPtr<span class="token operator">:</span> ObjCObjectVar<span class="token operator">&lt;</span>NSError<span class="token operator">?</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token function">alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
-    <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-    bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
-    <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
-<span class="token punctuation">}</span>
-<span class="token function">println</span><span class="token punctuation">(</span>errorPtr<span class="token punctuation">.</span>value<span class="token operator">?</span><span class="token punctuation">.</span>description<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">return</span><span class="token label symbol">@withContext</span> <span class="token keyword">null</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+          <p>在 Kotlin Multiplatform 项目中，iOS 侧文件明明存在于 Documents 目录，使用 NSData.dataWithContentsOfFile 却一直报 No such file or directory。根因是 iOS 沙盒 Application 目录 UUID 会随安装方式变化，不能持久化完整路径。正确做法是只保存文件名或相对路径，读取时动态获取当前 Documents 目录。</p>
           <!--noindex-->
             <div class="post-button">
-              <a class="btn" href="/posts/2023/08/13/bb96b1c7/#more" rel="contents">
+              <a class="btn" href="/posts/2023/08/13/bb96b1c7/">
                 阅读全文 &raquo;
               </a>
             </div>
