@@ -1,90 +1,292 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证</title>
-    <url>/posts/2026/04/09/4dc832d4/</url>
-    <content><![CDATA[<h1 id="从-0-开始实操-MCP：用-TypeScript-接入-CoinGecko，并在-Inspector-Codex-中验证"><a href="#从-0-开始实操-MCP：用-TypeScript-接入-CoinGecko，并在-Inspector-Codex-中验证" class="headerlink" title="从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"></a>从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证</h1><p>如果你已经看过不少 MCP 介绍，却始终没有真正跑通过一个完整例子，那么这篇文章会更适合你。</p>
-<p>这篇文章不讲太多抽象概念，也不一开始堆很多工具，而是只做一件事：</p>
-<p><strong>从零写一个最小的 TypeScript MCP Server，接入 CoinGecko 的真实市场数据接口，并在 Inspector 和 Codex 中完成验证。</strong></p>
-<p>整个过程只围绕一个工具展开：<code>fetch_market_data</code>。</p>
-<p>你可以把它理解成一条完整的入门链路：</p>
+    <title>AI Agent 和 Skill 有什么区别？从执行任务到沉淀能力</title>
+    <url>/posts/2026/05/17/a1b2c3d4/</url>
+    <content><![CDATA[<p>在使用 Codex 这类开发型 AI 工具时，一个很常见的困惑是：</p>
+<p><strong>Agent、Skill、提示词和工具调用到底是什么关系？</strong></p>
+<p>这些概念都和 AI 能力增强有关，但解决的问题并不一样。如果不区分清楚，很容易把所有要求都塞进一个超长提示词里，或者误以为只要有 Agent，就不需要沉淀可复用的工作方式。</p>
+<p>更清晰的理解是：</p>
+<p><strong>Agent 负责执行任务，Skill 负责沉淀能力。</strong></p>
+<p>Agent 更像一个能围绕目标持续推进的执行者；Skill 更像一套可复用的专业流程、经验规则和上下文说明。两者结合起来，才更接近一个稳定的 AI 工作流。</p>
+<hr>
+<h2 id="一、什么是-Agent"><a href="#一、什么是-Agent" class="headerlink" title="一、什么是 Agent"></a>一、什么是 Agent</h2><p>Agent 可以理解为：</p>
+<p><strong>一个带有明确角色、目标、上下文、工具权限和执行流程的 AI 助手。</strong></p>
+<p>它和普通聊天助手最大的区别，不是回答更长，而是可以围绕一个目标持续行动。</p>
+<p>当用户给出一个任务后，Agent 通常会完成一组动作：</p>
+<ol>
+<li>读取上下文</li>
+<li>判断任务要解决的问题</li>
+<li>制定执行步骤</li>
+<li>调用可用工具</li>
+<li>修改文件或生成内容</li>
+<li>运行命令或做验证</li>
+<li>交付结果并说明改动</li>
+</ol>
+<p>比如这个任务：</p>
+<blockquote>
+<p>帮我优化这篇博客文章，让它适合发布到个人博客和公众号。</p>
+</blockquote>
+<p>普通聊天助手可能会直接返回一版改写文本。</p>
+<p>开发型 Agent 则会先读取文章文件，理解仓库结构和写作约定，再修改 Markdown、补齐 front matter、检查构建结果，最后说明改动内容和验证结果。</p>
+<p>所以 Agent 的重点不是“会聊天”，而是：</p>
+<p><strong>它能围绕目标推进任务，并对最终交付负责。</strong></p>
+<hr>
+<h2 id="二、Agent-的核心能力"><a href="#二、Agent-的核心能力" class="headerlink" title="二、Agent 的核心能力"></a>二、Agent 的核心能力</h2><p>一个有用的 Agent，通常不只是“大模型 + 一段提示词”。</p>
+<p>它至少需要四类能力。</p>
+<h3 id="1-明确角色和目标"><a href="#1-明确角色和目标" class="headerlink" title="1. 明确角色和目标"></a>1. 明确角色和目标</h3><p>Agent 需要知道自己是谁，以及这次任务要解决什么问题。</p>
+<p>不同角色会带来不同的优先级：</p>
 <ul>
-<li>先理解 MCP 在这个案例里到底是什么</li>
-<li>再动手写一个最小可运行的 MCP Server</li>
-<li>然后接入真实 API</li>
-<li>最后验证这个工具确实能被宿主发现和调用</li>
+<li>代码审查 Agent：优先发现 bug、风险和缺失测试</li>
+<li>写作优化 Agent：优先优化结构、表达、标题和 SEO</li>
+<li>数据分析 Agent：优先整理数据、发现趋势、输出结论</li>
 </ul>
-<p>这样学的好处是，你不会停留在“知道 MCP 是什么”，而是能真正完成一次从开发到验证的闭环。</p>
-<p>本文配套示例代码已上传 GitHub，方便你边看边对照实践：</p>
+<p>角色越清楚，输出越稳定。</p>
+<h3 id="2-理解上下文"><a href="#2-理解上下文" class="headerlink" title="2. 理解上下文"></a>2. 理解上下文</h3><p>Agent 需要读取和任务相关的信息。</p>
+<p>对代码任务来说，上下文可能是项目结构、已有实现、测试结果和依赖版本。对写作任务来说，上下文可能是文章草稿、历史文章风格、发布平台要求和 SEO 字段。</p>
+<p>没有上下文时，Agent 很容易给出看似合理但不贴合实际的结果。</p>
+<h3 id="3-调用工具"><a href="#3-调用工具" class="headerlink" title="3. 调用工具"></a>3. 调用工具</h3><p>工具调用是 Agent 区别于普通问答的重要能力。</p>
+<p>Agent 可以读文件、搜索代码、运行测试、调用 API、查询数据，甚至直接修改项目文件。</p>
+<p>工具让 Agent 从“只能给建议”变成“可以完成任务”。</p>
+<h3 id="4-执行和验证"><a href="#4-执行和验证" class="headerlink" title="4. 执行和验证"></a>4. 执行和验证</h3><p>Agent 不应该只停留在方案层面。</p>
+<p>如果任务是修改代码，应该尽量运行测试；如果任务是优化文章，应该检查 Markdown、front matter 和构建结果；如果任务是接入 API，应该验证调用是否真的成功。</p>
+<p>这也是 Agent 的核心价值：</p>
+<p><strong>不只生成答案，而是推进任务并验证结果。</strong></p>
+<hr>
+<h2 id="三、什么是-Skill"><a href="#三、什么是-Skill" class="headerlink" title="三、什么是 Skill"></a>三、什么是 Skill</h2><p>如果说 Agent 是执行者，那么 Skill 可以理解为：</p>
+<p><strong>一组可复用的专业能力、操作流程和上下文说明。</strong></p>
+<p>Skill 通常不会自己主动执行任务。它更像一份能力说明，告诉 Agent 遇到某类任务时应该怎么做。</p>
+<p>它可以包含：</p>
+<ul>
+<li>任务判断规则</li>
+<li>推荐读取的文件或资料</li>
+<li>需要遵守的风格和边界</li>
+<li>可复用脚本、模板或参考资料</li>
+<li>结果交付格式</li>
+</ul>
+<p>比如“博客内容优化 Skill”可以规定：</p>
+<ul>
+<li>先阅读草稿和历史文章风格</li>
+<li>保留作者核心观点，不编造事实</li>
+<li>优化标题、开头、逻辑主线和结尾</li>
+<li>补齐 <code>description</code>、<code>keywords</code>、<code>tags</code></li>
+<li>输出适合个人博客和公众号的版本</li>
+</ul>
+<p>这样下次再优化文章时，就不需要重新写一大段提示词。Agent 加载这个 Skill 后，就能继承这套相对稳定的工作方式。</p>
+<p>所以 Skill 的重点不是独立完成任务，而是：</p>
+<p><strong>把某类任务的经验沉淀下来，让 Agent 更稳定地执行。</strong></p>
+<hr>
+<h2 id="四、Agent-和-Skill-的核心区别"><a href="#四、Agent-和-Skill-的核心区别" class="headerlink" title="四、Agent 和 Skill 的核心区别"></a>四、Agent 和 Skill 的核心区别</h2><p>可以用一张表快速区分：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>Agent</th>
+<th>Skill</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>核心定位</td>
+<td>执行任务的主体</td>
+<td>可复用的能力包</td>
+</tr>
+<tr>
+<td>解决问题</td>
+<td>这次任务怎么完成</td>
+<td>这类任务应该怎么做</td>
+</tr>
+<tr>
+<td>关注点</td>
+<td>目标、上下文、工具、执行、验证</td>
+<td>流程、规范、模板、经验、约束</td>
+</tr>
+<tr>
+<td>是否主动执行</td>
+<td>会主动推进任务</td>
+<td>通常不主动执行</td>
+</tr>
+<tr>
+<td>典型形态</td>
+<td>具备工具权限的 AI 助手</td>
+<td>说明文档、脚本、模板或工作流</td>
+</tr>
+</tbody></table>
+<p>一句话概括：</p>
+<p><strong>Agent 是“谁来做”，Skill 是“怎么做得更专业”。</strong></p>
+<p>Agent 没有 Skill，也可以完成任务，但结果可能不够稳定，每次风格和判断标准都不一样。</p>
+<p>Skill 没有 Agent，也只是静态经验，需要被某个执行者调用后才会产生价值。</p>
+<p>两者结合起来，才能形成更稳定、可复用的 AI 工作流。</p>
+<hr>
+<h2 id="五、什么时候需要-Agent，什么时候需要-Skill"><a href="#五、什么时候需要-Agent，什么时候需要-Skill" class="headerlink" title="五、什么时候需要 Agent，什么时候需要 Skill"></a>五、什么时候需要 Agent，什么时候需要 Skill</h2><h3 id="适合使用-Agent-的场景"><a href="#适合使用-Agent-的场景" class="headerlink" title="适合使用 Agent 的场景"></a>适合使用 Agent 的场景</h3><p>如果任务需要连续判断、工具调用和结果验证，就适合交给 Agent。</p>
+<p>典型场景包括：</p>
+<ul>
+<li>修复一个代码 bug</li>
+<li>阅读项目并生成技术文档</li>
+<li>优化一篇博客文章并更新文件</li>
+<li>调用外部 API 获取数据后生成报告</li>
+<li>根据测试结果继续调整实现</li>
+</ul>
+<p>这些任务都有一个共同点：不是回答一句话就结束，而是需要持续推进。</p>
+<h3 id="适合沉淀成-Skill-的场景"><a href="#适合沉淀成-Skill-的场景" class="headerlink" title="适合沉淀成 Skill 的场景"></a>适合沉淀成 Skill 的场景</h3><p>如果某类任务会反复出现，而且希望结果保持稳定，就适合沉淀成 Skill。</p>
+<p>典型场景包括：</p>
+<ul>
+<li>博客文章优化规范</li>
+<li>代码审查流程</li>
+<li>前端设计规范</li>
+<li>API 文档生成流程</li>
+<li>项目初始化模板</li>
+<li>发布前检查清单</li>
+</ul>
+<p>这些任务的重点不是“今天完成一次”，而是“以后每次都按同样的标准完成”。</p>
+<hr>
+<h2 id="六、为什么不要把所有东西都写进提示词"><a href="#六、为什么不要把所有东西都写进提示词" class="headerlink" title="六、为什么不要把所有东西都写进提示词"></a>六、为什么不要把所有东西都写进提示词</h2><p>很多人在刚开始使用 AI 工具时，会不断加长提示词：</p>
+<blockquote>
+<p>你要这样做，不要那样做，遇到这种情况先检查这个文件，输出时按这个格式，风格要像之前那篇文章……</p>
+</blockquote>
+<p>短期看，这种方式有效。</p>
+<p>但提示词越长，维护成本越高，也越难复用。每次换任务、换项目、换上下文，都要重新组织一遍。</p>
+<p>更好的方式是分层：</p>
+<ul>
+<li>通用执行能力交给 Agent</li>
+<li>稳定经验沉淀成 Skill</li>
+<li>当前提示词只描述这一次的目标和材料</li>
+</ul>
+<p>这样提示词会变短，任务边界也更清楚。</p>
+<p>AI 的使用方式也会从“一次性问答”变成“可加载工作流的执行系统”。</p>
+<hr>
+<h2 id="七、用写作任务理解-Agent-和-Skill"><a href="#七、用写作任务理解-Agent-和-Skill" class="headerlink" title="七、用写作任务理解 Agent 和 Skill"></a>七、用写作任务理解 Agent 和 Skill</h2><p>以博客文章优化为例。</p>
+<p>Writer Agent 负责执行这次任务：</p>
+<ul>
+<li>读取文章草稿</li>
+<li>理解发布目标</li>
+<li>调整文章结构</li>
+<li>修改 Markdown 文件</li>
+<li>补齐发布字段</li>
+<li>检查构建结果</li>
+</ul>
+<p>博客内容优化 Skill 则负责提供稳定方法：</p>
+<ul>
+<li>不编造事实</li>
+<li>保留作者核心观点</li>
+<li>中文表达自然</li>
+<li>技术内容谨慎准确</li>
+<li>默认输出优化方向、完整文章、修改说明、标题候选和平台标签</li>
+</ul>
+<p>当用户提出：</p>
+<blockquote>
+<p>帮我把这篇草稿优化成适合个人博客和公众号发布的文章。</p>
+</blockquote>
+<p>Agent 负责完成这次交付，Skill 负责保证这类任务的执行方式稳定。</p>
+<p>这时得到的结果就不只是一次“文本改写”，而是更接近真实工作流的一次任务完成。</p>
+<hr>
+<h2 id="八、总结"><a href="#八、总结" class="headerlink" title="八、总结"></a>八、总结</h2><p>Agent 和 Skill 不是互相替代的关系。</p>
+<p>更准确地说：</p>
+<ul>
+<li><strong>Agent 是执行者</strong>：负责理解目标、读取上下文、调用工具、推进任务、验证结果。</li>
+<li><strong>Skill 是能力沉淀</strong>：负责把某类任务的经验、流程、规范和模板复用起来。</li>
+</ul>
+<p>如果只有 Agent，没有 Skill，任务也能做，但结果可能不够稳定。</p>
+<p>如果只有 Skill，没有 Agent，它只是静态说明，不能主动完成任务。</p>
+<p>更有价值的方式是：</p>
+<p><strong>用 Agent 执行任务，用 Skill 沉淀方法。</strong></p>
+<p>理解这层关系后，使用 AI 工具时就不只是思考“提示词怎么写”，而是会进一步思考：</p>
+<ul>
+<li>哪些任务应该交给 Agent？</li>
+<li>哪些经验应该沉淀成 Skill？</li>
+<li>哪些流程可以长期复用？</li>
+</ul>
+<p>这才是 AI 工作流真正变得稳定、可复制的开始。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>AI Agent</tag>
+        <tag>Skill</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>从 0 跑通 MCP：用 TypeScript 写一个 CoinGecko 工具，并接入 Inspector / Codex</title>
+    <url>/posts/2026/04/09/4dc832d4/</url>
+    <content><![CDATA[<p>如果你已经看过不少 MCP 介绍，但还没有亲手跑通过一个完整例子，这篇文章就是为你准备的。</p>
+<p>本文不先展开复杂概念，也不一开始讨论远程部署，而是只做一件事：</p>
+<p><strong>从零写一个最小的 TypeScript MCP Server，接入 CoinGecko 的真实市场数据接口，并在 MCP Inspector 和 Codex 中完成验证。</strong></p>
+<p>这个示例最终只暴露一个工具：<code>fetch_market_data</code>。</p>
+<p>它的功能很简单：输入 <code>BTC</code>、<code>ETH</code> 或 <code>SOL</code>，返回来自 CoinGecko 的实时市场价格、24 小时涨跌幅和更新时间。</p>
+<p>但这个小工具会把 MCP 入门最关键的链路完整跑通：</p>
+<ul>
+<li>写一个本地 MCP Server</li>
+<li>注册一个可被宿主发现的工具</li>
+<li>接入真实第三方 API</li>
+<li>用 Inspector 做工具级调试</li>
+<li>用 Codex 验证宿主是否真的调用了工具</li>
+</ul>
+<p>配套示例代码已放在 GitHub，建议边看边对照实践：</p>
 <ul>
 <li>GitHub 仓库：<a href="https://github.com/BreakZero/mcp-tooling-example">mcp-tooling-example</a></li>
 </ul>
 <hr>
-<h2 id="一、这篇文章要解决什么问题"><a href="#一、这篇文章要解决什么问题" class="headerlink" title="一、这篇文章要解决什么问题"></a>一、这篇文章要解决什么问题</h2><p>学 MCP 时，很多人最容易卡住的地方，不是概念看不懂，而是<strong>不知道一个最小可运行项目到底长什么样</strong>。</p>
-<p>所以先把本文的目标说清楚。读完并跑通后，你会完成下面几件事：</p>
+<h2 id="一、这篇文章解决什么问题"><a href="#一、这篇文章解决什么问题" class="headerlink" title="一、这篇文章解决什么问题"></a>一、这篇文章解决什么问题</h2><p>学 MCP 时，新手最容易卡住的通常不是“概念完全看不懂”，而是：</p>
+<p><strong>不知道一个最小可运行项目到底应该长什么样。</strong></p>
+<p>所以本文的目标很明确。读完并跑通后，你应该能完成下面几件事：</p>
 <ol>
 <li>理解 MCP 在这个例子里的定位</li>
 <li>用 TypeScript 写一个最小 MCP Server</li>
-<li>注册一个可调用的工具：<code>fetch_market_data</code></li>
-<li>让这个工具真正调用 CoinGecko API 获取市场价格</li>
+<li>注册一个可调用工具：<code>fetch_market_data</code></li>
+<li>让工具真实调用 CoinGecko API</li>
 <li>用 MCP Inspector 验证工具是否可用</li>
-<li>把它接入 Codex CLI，验证宿主确实能够调用它</li>
+<li>把它接入 Codex CLI，验证宿主是否能调用它</li>
 </ol>
-<p>也就是说，这不是一个只打印 <code>hello world</code> 的示例，而是一个<strong>真正有外部数据输入、有工具注册、有调试验证的完整入门项目</strong>。</p>
+<p>这不是一个只返回 <code>hello world</code> 的演示，而是一个有输入、有外部数据、有工具注册、有调试验证的完整入门项目。</p>
 <hr>
-<h2 id="二、先建立一个最小认知：MCP-在这个例子里是什么"><a href="#二、先建立一个最小认知：MCP-在这个例子里是什么" class="headerlink" title="二、先建立一个最小认知：MCP 在这个例子里是什么"></a>二、先建立一个最小认知：MCP 在这个例子里是什么</h2><p>在开始搭项目之前，先把最关键的问题讲清楚：</p>
-<p><strong>MCP 在这里不是业务逻辑本身，而是一层标准化的工具协议。</strong></p>
-<p>你可以先看这条链路：</p>
+<h2 id="二、先建立一个最小认知：MCP-在这里是什么"><a href="#二、先建立一个最小认知：MCP-在这里是什么" class="headerlink" title="二、先建立一个最小认知：MCP 在这里是什么"></a>二、先建立一个最小认知：MCP 在这里是什么</h2><p>在开始写代码前，先把最关键的一点说清楚：</p>
+<p><strong>MCP 不是业务逻辑本身，而是一层标准化的工具协议。</strong></p>
+<p>在本文这个例子里，调用链路大概是这样：</p>
 <pre class="line-numbers language-text" data-language="text"><code class="language-text">Codex / ChatGPT / Inspector
     -&gt; MCP Client
     -&gt; 你的 MCP Server
     -&gt; 你的 TypeScript 逻辑
     -&gt; CoinGecko API<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>这里面每一层的职责都不一样：</p>
+<p>每一层职责不同：</p>
 <ul>
-<li><p><strong>宿主（Host）</strong>：比如 Codex、Inspector、ChatGPT<br>它们负责发现工具、调用工具、消费结果</p>
-</li>
-<li><p><strong>MCP Client</strong>：负责按 MCP 协议和 Server 通信</p>
-</li>
-<li><p><strong>你的 MCP Server</strong>：负责把你的能力暴露成标准工具</p>
-</li>
-<li><p><strong>你的业务逻辑</strong>：真正做事的部分，比如“根据 symbol 拉取市场价格”</p>
-</li>
-<li><p><strong>第三方 API</strong>：比如 CoinGecko，提供真实数据来源</p>
-</li>
+<li><strong>宿主（Host）</strong>：例如 Codex、Inspector、ChatGPT，负责发现工具、调用工具、消费结果。</li>
+<li><strong>MCP Client</strong>：按 MCP 协议与 Server 通信。</li>
+<li><strong>MCP Server</strong>：把你的能力暴露成标准工具。</li>
+<li><strong>业务逻辑</strong>：真正做事的代码，例如根据 symbol 拉取市场价格。</li>
+<li><strong>第三方 API</strong>：例如 CoinGecko，提供真实数据来源。</li>
 </ul>
-<p>所以，本文里你真正要实现的核心能力，其实是：</p>
+<p>所以，本文真正要实现的能力是：</p>
 <p><strong>输入一个币种 symbol，比如 BTC，返回对应的实时市场数据。</strong></p>
-<p>而 MCP 做的事，是让这个能力能够被宿主以标准方式调用。</p>
-<p>这点对新手非常重要。因为很多人一开始会把 MCP 和 Agent、业务逻辑、应用框架混在一起。其实更准确的理解应该是：</p>
+<p>MCP 负责的是让这个能力能被宿主以标准方式发现和调用。</p>
+<p>这点很重要。很多人刚接触 MCP 时，会把 MCP、Agent、业务逻辑、应用框架混在一起。更准确的理解是：</p>
 <p><strong>MCP 解决的是“能力如何暴露和被调用”，不是“业务本身如何实现”。</strong></p>
-<h3 id="为什么这篇文章先从-STDIO-开始，而不是-HTTP"><a href="#为什么这篇文章先从-STDIO-开始，而不是-HTTP" class="headerlink" title="为什么这篇文章先从 STDIO 开始，而不是 HTTP"></a>为什么这篇文章先从 STDIO 开始，而不是 HTTP</h3><p>MCP 支持不同传输方式，但对新手来说，最适合入门的通常不是远程 HTTP，而是本地 <strong>STDIO</strong>。</p>
-<p>原因很简单，STDIO 足够直接：</p>
+<h3 id="为什么先用-STDIO，而不是-HTTP"><a href="#为什么先用-STDIO，而不是-HTTP" class="headerlink" title="为什么先用 STDIO，而不是 HTTP"></a>为什么先用 STDIO，而不是 HTTP</h3><p>MCP 支持不同传输方式，但入门阶段我建议先用本地 <strong>STDIO</strong>。</p>
+<p>原因很直接：</p>
 <ul>
 <li>不需要先搭 Web 服务</li>
 <li>不需要处理端口和路由</li>
 <li>不需要 HTTPS 或公网暴露</li>
-<li>本地调试链路更短，更容易定位问题</li>
+<li>本地调试链路更短，问题更容易定位</li>
 </ul>
-<p>也就是说，你现在最需要的是<strong>先把一个工具从“写出来”到“被调用成功”跑通</strong>，而不是一上来解决部署问题。</p>
-<p>所以这篇文章的策略是：</p>
-<p><strong>先用 STDIO 完成最小闭环，再考虑远程服务化。</strong></p>
-<p>这个顺序对初学者更稳，也更容易建立对 MCP 的直觉。</p>
+<p>入门阶段最重要的是先完成一个闭环：<strong>工具写出来，并且真的能被宿主调用。</strong></p>
+<p>所以本文的策略是：</p>
+<p><strong>先用 STDIO 跑通最小闭环，再考虑远程服务化。</strong></p>
 <hr>
-<h2 id="三、开始动手：从-0-搭一个最小可运行的-MCP-Server"><a href="#三、开始动手：从-0-搭一个最小可运行的-MCP-Server" class="headerlink" title="三、开始动手：从 0 搭一个最小可运行的 MCP Server"></a>三、开始动手：从 0 搭一个最小可运行的 MCP Server</h2><h3 id="1-准备工作"><a href="#1-准备工作" class="headerlink" title="1. 准备工作"></a>1. 准备工作</h3><p>开始之前，先准备好本地环境：</p>
+<h2 id="三、从-0-搭一个最小-MCP-Server"><a href="#三、从-0-搭一个最小-MCP-Server" class="headerlink" title="三、从 0 搭一个最小 MCP Server"></a>三、从 0 搭一个最小 MCP Server</h2><h3 id="1-准备工作"><a href="#1-准备工作" class="headerlink" title="1. 准备工作"></a>1. 准备工作</h3><p>你需要准备：</p>
 <ul>
 <li>Node.js 18 或更高版本</li>
 <li>npm</li>
 <li>一个 CoinGecko API Key</li>
-<li>已安装 Codex CLI（后文用于扩展验证，可选）</li>
+<li>Codex CLI（后文用于扩展验证，可选）</li>
 </ul>
-<h4 id="获取-CoinGecko-API-Key"><a href="#获取-CoinGecko-API-Key" class="headerlink" title="获取 CoinGecko API Key"></a>获取 CoinGecko API Key</h4><p>CoinGecko 提供 API Key 认证。常见方式是通过请求头传递：</p>
+<h4 id="获取-CoinGecko-API-Key"><a href="#获取-CoinGecko-API-Key" class="headerlink" title="获取 CoinGecko API Key"></a>获取 CoinGecko API Key</h4><p>CoinGecko 支持通过请求头传递 API Key：</p>
 <ul>
 <li>Demo Key：<code>x-cg-demo-api-key</code></li>
 <li>Pro Key：<code>x-cg-pro-api-key</code></li>
 </ul>
-<p>本文先使用 Demo Key 即可。因为我们的目标是跑通 MCP 链路，不是做高并发或生产级接入。</p>
+<p>本文用 Demo Key 即可。我们的目标是跑通 MCP 链路，不是做生产级行情服务。</p>
 <h3 id="2-创建项目"><a href="#2-创建项目" class="headerlink" title="2. 创建项目"></a>2. 创建项目</h3><p>先初始化一个最小项目：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> mcp-coingecko-demo
 <span class="token builtin class-name">cd</span> mcp-coingecko-demo
@@ -97,8 +299,8 @@
 <p>初始化 TypeScript 配置：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">npx tsc <span class="token parameter variable">--init</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<p>到这里，你就有了一个可以写 MCP Server 的基础项目。</p>
-<h3 id="3-设计项目结构"><a href="#3-设计项目结构" class="headerlink" title="3. 设计项目结构"></a>3. 设计项目结构</h3><p>为了让示例保持简单，同时又不过度把所有逻辑塞进一个文件，这里建议先用下面这套结构：</p>
+<p>到这里，一个可以编写 MCP Server 的基础项目就准备好了。</p>
+<h3 id="3-设计项目结构"><a href="#3-设计项目结构" class="headerlink" title="3. 设计项目结构"></a>3. 设计项目结构</h3><p>为了让示例足够简单，同时避免把所有逻辑塞进一个文件，建议使用下面的结构：</p>
 <pre class="line-numbers language-text" data-language="text"><code class="language-text">mcp-coingecko-demo/
   package.json
   .env
@@ -107,34 +309,24 @@
     domain/
       market.ts<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>各文件职责如下：</p>
+<p>两个核心文件的职责：</p>
 <ul>
-<li><p><code>src/server.ts</code><br>MCP Server 入口，负责注册工具、定义输入输出、连接传输层</p>
-</li>
-<li><p><code>src/domain/market.ts</code><br>业务逻辑层，负责调用 CoinGecko API，处理市场数据</p>
-</li>
+<li><code>src/server.ts</code>：MCP Server 入口，负责注册工具、定义输入、连接传输层。</li>
+<li><code>src/domain/market.ts</code>：业务逻辑层，负责调用 CoinGecko API 并整理市场数据。</li>
 </ul>
-<p>这样拆的好处很明显：</p>
-<ol>
-<li><p><strong>协议层和业务层分开</strong><br>你能更清楚地理解：什么是 MCP，什么是业务逻辑</p>
-</li>
-<li><p><strong>后续更容易扩展</strong><br>将来无论接 CLI、HTTP、ChatGPT，甚至测试脚本，都可以复用 <code>domain</code> 层</p>
-</li>
-<li><p><strong>更符合真实项目演进方式</strong><br>哪怕这是一个入门项目，也最好从一开始建立基本的分层意识</p>
-</li>
-</ol>
-<p>对新手来说，这种拆分不是“为了架构而架构”，而是为了以后少踩坑。</p>
-<h3 id="4-配置环境变量"><a href="#4-配置环境变量" class="headerlink" title="4. 配置环境变量"></a>4. 配置环境变量</h3><p>在项目根目录创建 <code>.env</code> 文件：</p>
+<p>这样拆分有一个好处：你可以清楚地区分 <strong>MCP 协议层</strong> 和 <strong>业务逻辑层</strong>。</p>
+<p>对入门项目来说，这不是为了“架构感”，而是为了减少理解成本。后面要增加第二个工具、替换数据源，或者写测试，都会更容易。</p>
+<h3 id="4-配置环境变量"><a href="#4-配置环境变量" class="headerlink" title="4. 配置环境变量"></a>4. 配置环境变量</h3><p>在项目根目录创建 <code>.env</code>：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token assign-left variable">COINGECKO_API_KEY</span><span class="token operator">=</span>your_demo_key_here
 <span class="token assign-left variable">COINGECKO_API_PLAN</span><span class="token operator">=</span>demo<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
-<p>这两个环境变量分别表示：</p>
+<p>两个变量分别表示：</p>
 <ul>
 <li><code>COINGECKO_API_KEY</code>：你的 CoinGecko API Key</li>
-<li><code>COINGECKO_API_PLAN</code>：当前使用的套餐类型，本文先填 <code>demo</code></li>
+<li><code>COINGECKO_API_PLAN</code>：当前使用的套餐类型，本文使用 <code>demo</code></li>
 </ul>
-<p>这样做的意义是把配置和代码分开。以后如果你切换到 Pro Key，或者在不同环境使用不同配置，就不用改业务代码。</p>
-<h3 id="5-先写业务逻辑：获取市场数据"><a href="#5-先写业务逻辑：获取市场数据" class="headerlink" title="5. 先写业务逻辑：获取市场数据"></a>5. 先写业务逻辑：获取市场数据</h3><p>先新建 <code>src/domain/market.ts</code>：</p>
+<p>配置放进环境变量后，后续切换 Pro Key 或不同环境时，就不需要改业务代码。</p>
+<h3 id="5-先写业务逻辑：获取市场数据"><a href="#5-先写业务逻辑：获取市场数据" class="headerlink" title="5. 先写业务逻辑：获取市场数据"></a>5. 先写业务逻辑：获取市场数据</h3><p>新建 <code>src/domain/market.ts</code>：</p>
 <pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">import</span> <span class="token string">"dotenv/config"</span><span class="token punctuation">;</span>
 
 <span class="token keyword">export</span> <span class="token keyword">type</span> <span class="token class-name">MarketData</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
@@ -244,35 +436,27 @@
   <span class="token punctuation">}</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h4 id="这段业务代码到底做了什么"><a href="#这段业务代码到底做了什么" class="headerlink" title="这段业务代码到底做了什么"></a>这段业务代码到底做了什么</h4><p>这段代码看起来不长，但已经覆盖了一个真实工具最关键的几个环节。</p>
-<p>它主要做了 5 件事：</p>
+<p>这段代码主要做了 5 件事：</p>
 <ol>
-<li>读取环境变量，确定用 Demo 还是 Pro 配置</li>
-<li>把输入的 symbol 映射成 CoinGecko 识别的 coin id</li>
+<li>读取环境变量，判断使用 Demo 还是 Pro 配置</li>
+<li>把用户输入的 symbol 映射成 CoinGecko 识别的 coin id</li>
 <li>调用 CoinGecko 的 <code>/simple/price</code> 接口</li>
-<li>从响应里提取价格、24 小时涨跌幅、更新时间</li>
-<li>把结果整理成统一的数据结构返回</li>
+<li>提取价格、24 小时涨跌幅和更新时间</li>
+<li>整理成统一的 <code>MarketData</code> 结构返回</li>
 </ol>
-<p>换句话说，这一层解决的是：</p>
-<p><strong>“怎么把一个用户能理解的输入，变成第三方 API 能理解的请求，再把返回值整理成自己可控的输出格式。”</strong></p>
-<p>这就是典型的业务逻辑层职责。</p>
-<h4 id="为什么这里先手写-symbol-映射，而不是自动支持所有币种"><a href="#为什么这里先手写-symbol-映射，而不是自动支持所有币种" class="headerlink" title="为什么这里先手写 symbol 映射，而不是自动支持所有币种"></a>为什么这里先手写 symbol 映射，而不是自动支持所有币种</h4><p>你会发现这里没有一开始就去拉 <code>/coins/list</code>，而是先手写了几个映射：</p>
+<p>也就是说，这一层解决的是：</p>
+<p><strong>如何把用户能理解的输入，转换成第三方 API 能理解的请求，再把返回值整理成自己可控的输出。</strong></p>
+<h4 id="为什么先手写-symbol-映射"><a href="#为什么先手写-symbol-映射" class="headerlink" title="为什么先手写 symbol 映射"></a>为什么先手写 symbol 映射</h4><p>这里没有一开始就支持所有币种，而是先手写了几个映射：</p>
 <ul>
 <li><code>BTC -&gt; bitcoin</code></li>
 <li><code>ETH -&gt; ethereum</code></li>
 <li><code>SOL -&gt; solana</code></li>
 </ul>
-<p>这样做不是因为它更高级，而是因为它更适合入门阶段。</p>
-<p>原因有两个：</p>
-<ol>
-<li><p>先降低复杂度，优先跑通链路<br>新手最重要的不是“支持所有币种”，而是先确认整条链路能正常工作。如果一开始就引入动态映射、缓存、搜索、容错等问题，排错成本会明显升高。</p>
-</li>
-<li><p>把问题拆小，更容易理解<br>在这一阶段，你只需要先理解工具如何注册、请求如何发出、数据如何返回、宿主如何调用。至于“如何支持所有 symbol”，那是下一阶段的问题。</p>
-</li>
-</ol>
-<p>技术学习里，一个很重要的原则就是：</p>
+<p>这不是最完整的方案，但很适合入门。</p>
+<p>原因很简单：先降低复杂度，把工具注册、API 调用、数据返回、宿主调用这条主链路跑通。至于自动支持所有 symbol、缓存 <code>/coins/list</code>、模糊搜索、错误纠正，都可以放到下一阶段。</p>
+<p>技术学习里，一个很实用的原则是：</p>
 <p><strong>先完成最小可运行版本，再逐步扩展能力。</strong></p>
-<h3 id="6-再写-MCP-Server：把业务能力暴露成工具"><a href="#6-再写-MCP-Server：把业务能力暴露成工具" class="headerlink" title="6. 再写 MCP Server：把业务能力暴露成工具"></a>6. 再写 MCP Server：把业务能力暴露成工具</h3><p>当业务逻辑已经能独立工作后，再来写 <code>src/server.ts</code>：</p>
+<h3 id="6-再写-MCP-Server：把能力暴露成工具"><a href="#6-再写-MCP-Server：把能力暴露成工具" class="headerlink" title="6. 再写 MCP Server：把能力暴露成工具"></a>6. 再写 MCP Server：把能力暴露成工具</h3><p>业务逻辑已经独立可用后，再写 <code>src/server.ts</code>：</p>
 <pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">import</span> <span class="token punctuation">{</span> McpServer <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@modelcontextprotocol/sdk/server/mcp.js"</span><span class="token punctuation">;</span>
 <span class="token keyword">import</span> <span class="token punctuation">{</span> StdioServerTransport <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@modelcontextprotocol/sdk/server/stdio.js"</span><span class="token punctuation">;</span>
 <span class="token keyword">import</span> <span class="token punctuation">{</span> z <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"zod"</span><span class="token punctuation">;</span>
@@ -335,62 +519,55 @@ server<span class="token punctuation">.</span><span class="token function">regis
   process<span class="token punctuation">.</span><span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
 <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h4 id="这段-MCP-Server-代码应该怎么看"><a href="#这段-MCP-Server-代码应该怎么看" class="headerlink" title="这段 MCP Server 代码应该怎么看"></a>这段 MCP Server 代码应该怎么看</h4><p>到这里，文章最关键的一层连接出现了：</p>
-<p><strong>业务逻辑已经有了，现在我们要把它变成一个标准工具。</strong></p>
-<p>上面这段代码主要做了 4 件事：</p>
+<p>这段 MCP Server 代码可以拆成 4 步理解：</p>
 <ol>
-<li><p>创建一个 MCP Server<br>这一步是在声明你的服务身份。宿主连接时，会把它当成一个 MCP Server 来识别。</p>
-</li>
-<li><p>注册一个工具<br>这里注册了一个名为 <code>fetch_market_data</code> 的工具。从宿主视角看，它不关心你内部怎么实现，它只关心工具叫什么、接收什么参数、返回什么结果。</p>
-</li>
-<li><p>用 Zod 描述输入参数<br>这一步不是为了“写得更正式”，而是为了让工具输入更可验证、更清晰。这样在 Inspector 或其他宿主里，也更容易看到工具需要什么参数。</p>
-</li>
-<li><p>把业务逻辑接进来<br>MCP 层只负责协议和工具暴露，真正的业务仍然交给 <code>domain/market.ts</code>。</p>
-</li>
+<li>创建一个 MCP Server，声明服务名称和版本。</li>
+<li>注册 <code>fetch_market_data</code> 工具。</li>
+<li>用 Zod 描述输入参数，让宿主知道工具需要什么。</li>
+<li>在工具处理函数中调用 <code>fetchMarketData</code>，并把结果按 MCP 工具返回格式输出。</li>
 </ol>
-<p>这就是为什么前面要先拆文件。如果你把所有代码都写在一个地方，新手很容易分不清“协议代码”和“业务代码”分别在干什么。</p>
-<h3 id="7-启动服务并理解运行细节"><a href="#7-启动服务并理解运行细节" class="headerlink" title="7. 启动服务并理解运行细节"></a>7. 启动服务并理解运行细节</h3><p>接下来给 <code>package.json</code> 增加脚本：</p>
+<p>这里最重要的不是 API 细节，而是分层关系：</p>
+<p><strong>MCP 层只负责“暴露工具”，真正的业务仍然在 <code>domain/market.ts</code> 里。</strong></p>
+<p>如果一开始把协议代码和业务代码都写在一个文件里，新手很容易分不清“工具注册”和“行情获取”分别在解决什么问题。</p>
+<h3 id="7-启动服务，并注意-STDIO-日志"><a href="#7-启动服务，并注意-STDIO-日志" class="headerlink" title="7. 启动服务，并注意 STDIO 日志"></a>7. 启动服务，并注意 STDIO 日志</h3><p>给 <code>package.json</code> 增加脚本：</p>
 <pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
   <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"commonjs"</span><span class="token punctuation">,</span>
   <span class="token property">"scripts"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
     <span class="token property">"dev"</span><span class="token operator">:</span> <span class="token string">"tsx watch src/server.ts"</span><span class="token punctuation">,</span>
-    <span class="token property">"build"</span><span class="token operator">:</span> <span class="token string">"tsc src/server.ts --outDir dist --module commonjs --target es2020 --esModuleInterop"</span><span class="token punctuation">,</span>
+    <span class="token property">"build"</span><span class="token operator">:</span> <span class="token string">"tsc src/server.ts --outDir dist --module commonjs --target es2020 --esModuleInterop"</span>
   <span class="token punctuation">}</span>
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>然后启动：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> run dev<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<p>如果没有报错，而且进程保持运行、等待输入，那么通常说明你的 MCP Server 已经启动成功了。</p>
-<p>这里要注意一点：</p>
+<p>如果进程没有退出，而是保持运行、等待输入，通常说明 MCP Server 已经启动成功。</p>
+<p>这里有一个入门时很容易忽略的细节：</p>
 <p><strong>对 STDIO Server 来说，“启动后挂起等待输入”是正常现象，不是程序卡死。</strong></p>
-<p>因为它本来就是在等宿主通过标准输入和它通信。</p>
-<h4 id="为什么日志要写到-stderr，而不是-stdout"><a href="#为什么日志要写到-stderr，而不是-stdout" class="headerlink" title="为什么日志要写到 stderr，而不是 stdout"></a>为什么日志要写到 stderr，而不是 stdout</h4><p>如果你使用的是 <strong>STDIO</strong> 传输，那么：</p>
-<p><strong>stdout 是 MCP 协议消息通道，不能随便输出普通日志。</strong></p>
-<p>也就是说，下面这种做法是有风险的：</p>
+<p>因为它本来就在等待宿主通过标准输入和它通信。</p>
+<h4 id="日志为什么要写到-stderr"><a href="#日志为什么要写到-stderr" class="headerlink" title="日志为什么要写到 stderr"></a>日志为什么要写到 stderr</h4><p>如果使用 STDIO 传输，<code>stdout</code> 是 MCP 协议消息通道，不能随便输出普通日志。</p>
+<p>下面这种写法有风险：</p>
 <pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">"server started"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<p>因为这类普通日志会混进协议输出，可能直接破坏通信。</p>
-<p>所以在 STDIO 模式下，普通日志应该写到：</p>
-<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>普通日志一旦混进协议输出，可能会破坏 MCP 通信。</p>
+<p>所以在 STDIO 模式下，日志应该写到 <code>stderr</code>：</p>
+<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token string">"MCP server is running..."</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<p>也就是 stderr。</p>
-<p>这类细节很适合在入门文章里强调一下。因为很多人第一次跑不通，不是 MCP 本身有问题，而是被日志输出干扰了。</p>
+<p>很多人第一次跑不通，不是 MCP 概念理解错了，而是被这类运行细节卡住了。</p>
 <hr>
-<h2 id="四、验证这个-MCP-工具是否真的可用"><a href="#四、验证这个-MCP-工具是否真的可用" class="headerlink" title="四、验证这个 MCP 工具是否真的可用"></a>四、验证这个 MCP 工具是否真的可用</h2><h3 id="1-用-MCP-Inspector-验证"><a href="#1-用-MCP-Inspector-验证" class="headerlink" title="1. 用 MCP Inspector 验证"></a>1. 用 MCP Inspector 验证</h3><p>在真正接入 Codex 前，最好的做法是先用 MCP Inspector 验证。因为 Inspector 更适合做“工具级调试”。</p>
-<h4 id="启动-Inspector"><a href="#启动-Inspector" class="headerlink" title="启动 Inspector"></a>启动 Inspector</h4><p>如果你已经编译成 JS，可以这样启动：</p>
+<h2 id="四、验证工具是否真的可用"><a href="#四、验证工具是否真的可用" class="headerlink" title="四、验证工具是否真的可用"></a>四、验证工具是否真的可用</h2><h3 id="1-用-MCP-Inspector-验证"><a href="#1-用-MCP-Inspector-验证" class="headerlink" title="1. 用 MCP Inspector 验证"></a>1. 用 MCP Inspector 验证</h3><p>在接入 Codex 前，建议先用 MCP Inspector 验证。Inspector 更适合做工具级调试，可以先排除 Server 本身的问题。</p>
+<p>如果已经编译成 JS，可以这样启动：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> run build
 npx @modelcontextprotocol/inspector <span class="token function">node</span> dist/server.js<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
-<p>如果你更习惯直接用 <code>tsx</code> 跑，也可以按自己的本地执行方式配置。</p>
-<h4 id="在-Inspector-里重点验证什么"><a href="#在-Inspector-里重点验证什么" class="headerlink" title="在 Inspector 里重点验证什么"></a>在 Inspector 里重点验证什么</h4><p>你不需要一上来测试很多场景，先抓住 3 个核心问题：</p>
+<p>如果你习惯直接用 <code>tsx</code> 跑，也可以按自己的本地方式配置。</p>
+<p>在 Inspector 阶段，重点看 3 件事：</p>
 <ul>
 <li>Server 是否连接成功</li>
 <li>是否能看到 <code>fetch_market_data</code></li>
-<li>这个工具是否真的可以被调用</li>
+<li>工具是否真的可以被调用</li>
 </ul>
-<p>也就是说，Inspector 阶段的重点不是“功能多强”，而是“工具链路是否成立”。</p>
-<h4 id="测试正常输入"><a href="#测试正常输入" class="headerlink" title="测试正常输入"></a>测试正常输入</h4><p>输入：</p>
+<p>先测试正常输入：</p>
 <pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
   <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"BTC"</span>
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
@@ -406,35 +583,35 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
   <span class="token property">"lastUpdatedAt"</span><span class="token operator">:</span> <span class="token number">1712345678</span>
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>其中价格会变化，这正说明你拿到的是实时数据，而不是写死的 mock 数据。</p>
-<h4 id="测试异常输入"><a href="#测试异常输入" class="headerlink" title="测试异常输入"></a>测试异常输入</h4><p>除了成功场景，建议至少测下面几种失败输入。</p>
-<h5 id="空字符串"><a href="#空字符串" class="headerlink" title="空字符串"></a>空字符串</h5><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+<p>价格会变化，这也说明你拿到的是实时数据，而不是写死的 mock。</p>
+<p>再测试几个异常输入：</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
   <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">""</span>
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
-<h5 id="不支持的-symbol"><a href="#不支持的-symbol" class="headerlink" title="不支持的 symbol"></a>不支持的 symbol</h5><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
   <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"DOGE"</span>
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
-<h5 id="缺少字段"><a href="#缺少字段" class="headerlink" title="缺少字段"></a>缺少字段</h5><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span><span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span><span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<p>这一步的目的不是追求“所有输入都成功”，而是确认下面三件事：</p>
+<p>这一步不是为了让所有输入都成功，而是确认：</p>
 <ul>
 <li>合法输入能正常返回</li>
 <li>非法输入不会把 Server 打崩</li>
 <li>错误信息对人来说是可理解的</li>
 </ul>
-<p>一个入门项目做到这里，其实已经比很多纯演示性质的示例更接近真实开发了。</p>
-<h4 id="执行结果证明图"><a href="#执行结果证明图" class="headerlink" title="执行结果证明图"></a>执行结果证明图</h4><p>下面这张图是 <code>fetch_market_data</code> 在 MCP Inspector 中连接成功并调用成功的结果。可以看到：</p>
+<p>一个入门项目能做到这里，已经比纯演示性质的示例更接近真实开发。</p>
+<h4 id="Inspector-验证截图"><a href="#Inspector-验证截图" class="headerlink" title="Inspector 验证截图"></a>Inspector 验证截图</h4><p>下面这张图是 <code>fetch_market_data</code> 在 MCP Inspector 中连接成功并调用成功的结果。可以看到：</p>
 <ul>
 <li>左侧已成功连接本地 <code>market-data-server</code></li>
-<li>工具列表中已经出现 <code>fetch_market_data</code></li>
+<li>工具列表中出现了 <code>fetch_market_data</code></li>
 <li>右侧输入 <code>ETH</code> 后，工具返回了来自 CoinGecko 的真实市场数据</li>
 <li><code>Tool Result: Success</code> 说明这条本地 MCP 调用链路已经跑通</li>
 </ul>
 <p><img src="/images/20260409/inspector-validation-success.png" alt="Inspector 连接验证成功结果"></p>
-<h3 id="2-接入-Codex-CLI-验证"><a href="#2-接入-Codex-CLI-验证" class="headerlink" title="2. 接入 Codex CLI 验证"></a>2. 接入 Codex CLI 验证</h3><p>当 Inspector 验证通过后，再接入 Codex 才更稳。因为这时候你已经知道问题不在工具本身，而只可能在宿主配置或调用方式上。</p>
-<h4 id="准备-Codex-配置文件"><a href="#准备-Codex-配置文件" class="headerlink" title="准备 Codex 配置文件"></a>准备 Codex 配置文件</h4><p>创建或编辑：</p>
+<h3 id="2-接入-Codex-CLI-验证"><a href="#2-接入-Codex-CLI-验证" class="headerlink" title="2. 接入 Codex CLI 验证"></a>2. 接入 Codex CLI 验证</h3><p>Inspector 验证通过后，再接入 Codex 会更稳。因为这时你已经知道工具本身可用，剩下的问题只可能出在宿主配置或调用方式上。</p>
+<p>创建或编辑 Codex 配置文件：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">~/.codex/config.toml<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
 <p>加入 MCP Server 配置：</p>
@@ -449,24 +626,26 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
 <span class="token key property">COINGECKO_API_PLAN</span> <span class="token punctuation">=</span> <span class="token string">"demo"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <p>注意把路径替换成你自己的绝对路径。</p>
-<h4 id="启动-Codex"><a href="#启动-Codex" class="headerlink" title="启动 Codex"></a>启动 Codex</h4><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">codex<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<p>启动 Codex：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">codex<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<h4 id="第一次测试时，尽量显式要求调用工具"><a href="#第一次测试时，尽量显式要求调用工具" class="headerlink" title="第一次测试时，尽量显式要求调用工具"></a>第一次测试时，尽量显式要求调用工具</h4><p>建议用比较明确的提示词，例如：</p>
+<p>第一次测试时，建议明确要求它调用工具：</p>
 <pre class="line-numbers language-text" data-language="text"><code class="language-text">Use the MCP tool fetch_market_data with symbol BTC. Return the raw result first, then explain it.<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<p>为什么要写得这么明确？因为在验证阶段，你的目标不是“写一个自然对话提示词”，而是先确认宿主是否真的触发了工具调用。</p>
-<h4 id="如何判断-Codex-不是在“猜答案”"><a href="#如何判断-Codex-不是在“猜答案”" class="headerlink" title="如何判断 Codex 不是在“猜答案”"></a>如何判断 Codex 不是在“猜答案”</h4><p>你可以重点看返回结果里是否出现你自己定义过的字段，比如：</p>
+<p>验证阶段不需要追求提示词自然，目标是确认宿主是否真的触发了工具调用。</p>
+<h3 id="如何判断-Codex-不是在“猜答案”"><a href="#如何判断-Codex-不是在“猜答案”" class="headerlink" title="如何判断 Codex 不是在“猜答案”"></a>如何判断 Codex 不是在“猜答案”</h3><p>重点看返回结果里是否出现你在工具中定义过的字段，例如：</p>
 <ul>
 <li><code>source: coingecko-demo</code></li>
 <li><code>id: bitcoin</code></li>
 <li><code>change24h</code></li>
 <li><code>lastUpdatedAt</code></li>
 </ul>
-<p>这些字段如果都出现了，通常就可以比较确定：</p>
-<p><strong>它不是在凭语言模型常识回答，而是真的通过 MCP 调用了你的工具。</strong></p>
-<h4 id="执行结果证明图-1"><a href="#执行结果证明图-1" class="headerlink" title="执行结果证明图"></a>执行结果证明图</h4><p>下面这张图展示的是把 MCP Server 接入 Codex 后的调用结果。可以看到 Codex 明确调用了：</p>
-<p><code>market_data.fetch_market_data({"symbol":"BTC"})</code></p>
-<p>并返回了你在工具中定义的字段，例如：</p>
+<p>如果这些字段都出现了，通常就可以判断：</p>
+<p><strong>Codex 不是在凭语言模型常识回答，而是真的通过 MCP 调用了你的工具。</strong></p>
+<h4 id="Codex-调用截图"><a href="#Codex-调用截图" class="headerlink" title="Codex 调用截图"></a>Codex 调用截图</h4><p>下面这张图展示的是把 MCP Server 接入 Codex 后的调用结果。可以看到 Codex 明确调用了：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">market_data.fetch_market_data({"symbol":"BTC"})<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>并返回了你在工具中定义的字段：</p>
 <ul>
 <li><code>id: bitcoin</code></li>
 <li><code>symbol: BTC</code></li>
@@ -475,31 +654,36 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
 <li><code>change24h</code></li>
 <li><code>lastUpdatedAt</code></li>
 </ul>
-<p>这说明 Codex 并不是在“猜答案”，而是真的通过 MCP 工具拿到了返回结果。</p>
+<p>这说明 Codex 已经通过 MCP 工具拿到了真实返回结果。</p>
 <p><img src="/images/20260409/codex-execution-success.png" alt="Codex 配置执行结果"></p>
 <hr>
-<h2 id="五、总结：跑通这条链路后，你真正掌握了什么"><a href="#五、总结：跑通这条链路后，你真正掌握了什么" class="headerlink" title="五、总结：跑通这条链路后，你真正掌握了什么"></a>五、总结：跑通这条链路后，你真正掌握了什么</h2><p>如果前面的步骤都已经跑通，那么你完成的其实不是一个简单 demo，而是一个完整的入门闭环：</p>
+<h2 id="五、跑通之后，你真正掌握了什么"><a href="#五、跑通之后，你真正掌握了什么" class="headerlink" title="五、跑通之后，你真正掌握了什么"></a>五、跑通之后，你真正掌握了什么</h2><p>如果前面的步骤都已经跑通，那么你完成的不是一个简单 demo，而是一个完整的 MCP 入门闭环：</p>
 <ol>
-<li>你写了一个 TypeScript MCP Server</li>
-<li>你注册了一个真实可用的工具 <code>fetch_market_data</code></li>
-<li>你接入了第三方 API，而不是只返回静态内容</li>
-<li>你用 Inspector 验证了工具层是否正常</li>
-<li>你用 Codex 验证了宿主能否真正调用工具</li>
+<li>写了一个 TypeScript MCP Server</li>
+<li>注册了一个真实可用的工具 <code>fetch_market_data</code></li>
+<li>接入了第三方 API，而不是只返回静态内容</li>
+<li>用 Inspector 验证了工具层是否正常</li>
+<li>用 Codex 验证了宿主能否调用工具</li>
 </ol>
-<p>这一步很重要，因为它意味着你已经跨过了 MCP 入门最难的那道坎：</p>
-<p><strong>从“知道概念”进入“能做出一个可验证的工具”。</strong></p>
-<p>很多人学到这里，后面再增加第二个工具、替换数据源、接入更多宿主，都会顺很多。</p>
-<p>这篇文章本质上只做了一件事：</p>
+<p>这一步很关键，因为它意味着你已经从“知道 MCP 概念”进入了“能做出一个可验证工具”的阶段。</p>
+<p>本文本质上只做了一件事：</p>
 <p><strong>用一个真实的 CoinGecko 市场数据工具，把 MCP 的完整入门流程跑通。</strong></p>
-<p>如果你刚接触 MCP，其实不需要一开始就把所有协议细节都啃透。更重要的是先建立这几个直觉：</p>
+<p>刚接触 MCP 时，不需要一开始就把所有协议细节都啃透。更重要的是先建立几个直觉：</p>
 <ul>
 <li>MCP 是一层工具协议</li>
 <li>业务逻辑仍然是你自己写</li>
-<li>宿主通过 MCP 发现并调用你的工具</li>
+<li>宿主通过 MCP 发现并调用工具</li>
 <li>Inspector 适合做调试验证</li>
-<li>Codex 可以作为真实宿主来消费你的工具能力</li>
+<li>Codex 可以作为真实宿主消费你的工具能力</li>
 </ul>
-<p>只要这条链路你亲手跑通过一次，后面再去扩展更多工具、更多数据源，甚至更完整的 agent 体系，理解都会快很多。</p>
+<p>只要这条链路亲手跑通过一次，后面再扩展第二个工具、替换数据源、接入更多宿主，理解都会快很多。</p>
+<p>下一步可以继续做三件事：</p>
+<ol>
+<li>增加更多 symbol，并把映射改成可配置</li>
+<li>给 CoinGecko 请求增加缓存和限流处理</li>
+<li>再注册一个工具，例如 <code>compare_market_data</code>，比较多个币种的价格和涨跌幅</li>
+</ol>
+<p>这时你就不只是“会跑一个 MCP 示例”，而是开始真正把 MCP 当成可扩展的工具协议来使用。</p>
 ]]></content>
       <categories>
         <category>AI</category>
@@ -507,6 +691,7 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
       <tags>
         <tag>AI</tag>
         <tag>MCP</tag>
+        <tag>TypeScript</tag>
       </tags>
   </entry>
   <entry>
@@ -711,305 +896,6 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
       </tags>
   </entry>
   <entry>
-    <title>iOS通过Container读取文件问题笔录</title>
-    <url>/posts/2023/08/13/bb96b1c7/</url>
-    <content><![CDATA[<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：</p>
-<ul>
-<li><strong>现象</strong>：导出 <code>.xcappdata</code> 可以确认文件确实在 Documents 目录下，但用 <code>NSData.dataWithContentsOfFile</code> 读取时始终返回空。</li>
-<li><strong>报错</strong>：<code>No such File or Directory</code>（找不到该文件或目录）。</li>
-</ul>
-<p>当时使用的读取代码如下（为便于排查，增加了 <code>errorPtr</code> 输出错误信息）：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> errorPtr<span class="token operator">:</span> ObjCObjectVar<span class="token operator">&lt;</span>NSError<span class="token operator">?</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token function">alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
-    <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-    bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
-    <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
-<span class="token punctuation">}</span>
-<span class="token function">println</span><span class="token punctuation">(</span>errorPtr<span class="token punctuation">.</span>value<span class="token operator">?</span><span class="token punctuation">.</span>description<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">return</span><span class="token label symbol">@withContext</span> <span class="token keyword">null</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<span id="more"></span>
-
-<h2 id="二、问题定位"><a href="#二、问题定位" class="headerlink" title="二、问题定位"></a>二、问题定位</h2><h3 id="2-1-怀疑点：路径可能不对"><a href="#2-1-怀疑点：路径可能不对" class="headerlink" title="2.1 怀疑点：路径可能不对"></a>2.1 怀疑点：路径可能不对</h3><p>从错误日志看，传入的 <code>fullPath</code> 很可能并不是当前运行时的真实路径，所以即使文件实际存在，<code>NSData.dataWithContentsOfFile</code> 仍然找不到。</p>
-<h3 id="2-2-对比验证：Application-目录的-UUID-不一致"><a href="#2-2-对比验证：Application-目录的-UUID-不一致" class="headerlink" title="2.2 对比验证：Application 目录的 UUID 不一致"></a>2.2 对比验证：Application 目录的 UUID 不一致</h3><p>用 Swift 在运行时获取 Documents 目录并列出文件，与 Kotlin 里使用的 <code>fullPath</code> 对比：</p>
-<ul>
-<li><strong>Kotlin 中使用的 fullPath</strong>（可能是之前保存的完整路径）：<pre class="line-numbers language-none"><code class="language-none">/var/mobile/Containers/Data/Application/3FC1CCE9-A788-47AB-902A-FA133FAA3D30/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
-<li><strong>Swift 当前拿到的文件 URL</strong>：<pre class="line-numbers language-none"><code class="language-none">file:///private/var/mobile/Containers/Data/Application/C5AC5178-6887-40F4-9EE5-8D56CB830CB3/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
-</ul>
-<p>可见，<code>Application</code> 后面那一段 UUID 不一致：一个是 <code>3FC1CCE9-...</code>，一个是 <code>C5AC5178-...</code>。</p>
-<p>Swift 侧获取 Documents 的示例代码：</p>
-<pre class="line-numbers language-swift" data-language="swift"><code class="language-swift"><span class="token keyword">let</span> fileManager <span class="token operator">=</span> <span class="token class-name">FileManager</span><span class="token punctuation">.</span><span class="token keyword">default</span>
-<span class="token keyword">let</span> documentsURL <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">urls</span><span class="token punctuation">(</span><span class="token keyword">for</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>documentDirectory<span class="token punctuation">,</span> <span class="token keyword">in</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>userDomainMask<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
-<span class="token keyword">do</span> <span class="token punctuation">{</span>
-    <span class="token keyword">let</span> fileURLs <span class="token operator">=</span> <span class="token keyword">try</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectory</span><span class="token punctuation">(</span>at<span class="token punctuation">:</span> documentsURL<span class="token punctuation">,</span> includingPropertiesForKeys<span class="token punctuation">:</span> <span class="token nil constant">nil</span><span class="token punctuation">)</span>
-    <span class="token function">print</span><span class="token punctuation">(</span>fileURLs<span class="token punctuation">)</span>
-<span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">{</span>
-    <span class="token function">print</span><span class="token punctuation">(</span><span class="token string-literal"><span class="token string">"Error while enumerating files </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">documentsURL<span class="token punctuation">.</span>path</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">: </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">error<span class="token punctuation">.</span>localizedDescription</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">"</span></span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="2-3-根因结论"><a href="#2-3-根因结论" class="headerlink" title="2.3 根因结论"></a>2.3 根因结论</h3><p>自 <strong>iOS 8.0</strong> 起，应用沙盒里 <code>Application</code> 这一级目录的 <strong>UUID 会随安装/部署方式变化</strong>（例如卸载重装、Xcode 重新安装等）。若把「完整路径」存下来，下次启动或重装后 UUID 变了，旧路径就失效，导致「文件在，但按旧路径读不到」。</p>
-<p>因此：<strong>不能依赖存储的完整路径来读文件，只能依赖「相对位置 + 文件名」并在运行时重新解析。</strong></p>
-<h2 id="三、解决方案"><a href="#三、解决方案" class="headerlink" title="三、解决方案"></a>三、解决方案</h2><p>思路统一为：<strong>只存文件名（或相对路径），读的时候先拿到当前 Documents 目录，再拼出完整路径或 URL。</strong> 下面两种写法都符合这一思路。</p>
-<h3 id="方法一：遍历-Documents，按文件名匹配"><a href="#方法一：遍历-Documents，按文件名匹配" class="headerlink" title="方法一：遍历 Documents，按文件名匹配"></a>方法一：遍历 Documents，按文件名匹配</h3><p>不依赖完整路径，先取到 Documents 的 URL，再在目录下按文件名找到对应文件：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 拿到 Documents 目录的 url</span>
-<span class="token keyword">val</span> url <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">URLForDirectory</span><span class="token punctuation">(</span>
-    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
-    inDomain <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
-    appropriateForURL <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
-    create <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
-    error <span class="token operator">=</span> <span class="token keyword">null</span>
-<span class="token punctuation">)</span><span class="token operator">!!</span>
-<span class="token comment">// 列出目录下所有文件的 url</span>
-<span class="token keyword">val</span> fileUrls <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectoryAtURL</span><span class="token punctuation">(</span>url <span class="token operator">=</span> url<span class="token punctuation">,</span> includingPropertiesForKeys <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span>
-<span class="token comment">// 按文件名匹配得到目标文件的 url</span>
-<span class="token keyword">val</span> currentFileUrl <span class="token operator">=</span> fileUrls<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">first</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">contains</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span> <span class="token punctuation">}</span> <span class="token keyword">as</span><span class="token operator">?</span> NSURL
-<span class="token comment">// 用 URL 读取</span>
-currentFileUrl<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span>
-    NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfURL</span><span class="token punctuation">(</span>currentFileUrl<span class="token punctuation">)</span>
-        <span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
-            <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-            bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
-            <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
-        <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="方法二（推荐）：直接取-Documents-路径再拼接文件名"><a href="#方法二（推荐）：直接取-Documents-路径再拼接文件名" class="headerlink" title="方法二（推荐）：直接取 Documents 路径再拼接文件名"></a>方法二（推荐）：直接取 Documents 路径再拼接文件名</h3><p>遍历有额外开销，更稳妥且高效的方式是：<strong>每次读取时用系统 API 取当前 Documents 目录，再拼接文件名</strong>：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> documentDirectory <span class="token operator">=</span> <span class="token function">NSSearchPathForDirectoriesInDomains</span><span class="token punctuation">(</span>
-    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
-    domainMask <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
-    expandTilde <span class="token operator">=</span> <span class="token boolean">true</span>
-<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">first</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> NSString
-<span class="token keyword">val</span> fullPath <span class="token operator">=</span> documentDirectory<span class="token punctuation">.</span><span class="token function">stringByAppendingPathComponent</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span>
-<span class="token comment">// 此处 fullPath 一定是当前应用实例的真实路径</span>
-NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> <span class="token operator">..</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>这样得到的 <code>fullPath</code> 始终对应当前运行时的 Documents，不受 UUID 变化影响。</p>
-<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><table>
-<thead>
-<tr>
-<th>要点</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>不要存完整路径</td>
-<td>iOS 8+ 下 Application 目录 UUID 会变，存完整路径容易失效。</td>
-</tr>
-<tr>
-<td>推荐只存文件名</td>
-<td>使用时通过 API 获取当前 Documents 目录，再拼接文件名。</td>
-</tr>
-<tr>
-<td>优先用系统 API 取目录</td>
-<td>使用 <code>NSSearchPathForDirectoriesInDomains</code> 获取 Documents，比遍历目录更简单、高效。</td>
-</tr>
-</tbody></table>
-<p>按上述方式改造后，<code>NSData.dataWithContentsOfFile</code> 无法读取文件的问题即可解决。</p>
-<h2 id="附录：UUID-何时会变化"><a href="#附录：UUID-何时会变化" class="headerlink" title="附录：UUID 何时会变化"></a>附录：UUID 何时会变化</h2><p>不同安装/运行方式下，沙盒中 Application 目录的 UUID 是否变化可参考下表：</p>
-<table>
-<thead>
-<tr>
-<th>安装/运行方式</th>
-<th>UUID 是否变化</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>App 卸载后重新安装</td>
-<td>✅ 变化（iOS 8+ 的安全机制）</td>
-</tr>
-<tr>
-<td>通过 Xcode 重新安装</td>
-<td>✅ 变化（相当于卸载再安装）</td>
-</tr>
-<tr>
-<td>Xcode 直接运行（不卸载）</td>
-<td>❌ 不变（仅 Build &amp; Run 且未删除 App）</td>
-</tr>
-<tr>
-<td>模拟器上运行</td>
-<td>✅ 可能变化（视情况而定）</td>
-</tr>
-<tr>
-<td>TestFlight / App Store 安装</td>
-<td>✅ 变化（安装时生成新 UUID）</td>
-</tr>
-<tr>
-<td>iOS OTA 更新 App</td>
-<td>❌ 不变（更新不改变 UUID）</td>
-</tr>
-</tbody></table>
-]]></content>
-      <categories>
-        <category>Multiplatform</category>
-      </categories>
-      <tags>
-        <tag>SwiftUI</tag>
-        <tag>Kotlin Native</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Jetpack Compose Performance Tips Every Developer Should Know</title>
-    <url>/posts/2026/02/27/4ae1fc92/</url>
-    <content><![CDATA[<h1 id="Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握"><a href="#Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握" class="headerlink" title="Jetpack Compose 性能优化：为什么 graphicsLayer 值得你重点掌握"></a>Jetpack Compose 性能优化：为什么 <code>graphicsLayer</code> 值得你重点掌握</h1><p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
-<p>比如，想让一个组件半透明，你可以这样写：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">alpha</span><span class="token punctuation">(</span><span class="token number">0.5f</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>也可以这样写：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> alpha <span class="token operator">=</span> <span class="token number">0.5f</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>从界面效果来看，它们几乎一样。<br>但在<strong>动画</strong>、<strong>滚动联动</strong>、<strong>高频状态变化</strong>这类场景里，两者背后的性能路径并不完全相同。</p>
-<p>真正的关键不是“哪个 API 更高级”，而是：</p>
-<blockquote>
-<p><strong>你在哪个阶段读取状态。</strong></p>
-</blockquote>
-<p>如果状态读取发生在 Composition 阶段，就可能触发更多重组工作。<br>如果状态读取被延后到 Draw 阶段，Compose 就有机会跳过 Composition 和 Layout，只做更轻量的绘制更新。</p>
-<hr>
-<h2 id="Compose-UI-的三大阶段"><a href="#Compose-UI-的三大阶段" class="headerlink" title="Compose UI 的三大阶段"></a>Compose UI 的三大阶段</h2><p>理解这件事，先要知道 Compose 的渲染流程主要分为三个阶段：</p>
-<h3 id="1-Composition"><a href="#1-Composition" class="headerlink" title="1. Composition"></a>1. Composition</h3><p>决定“<strong>要显示什么</strong>”。<br>也就是执行 Composable，构建或更新 UI 树。</p>
-<h3 id="2-Layout"><a href="#2-Layout" class="headerlink" title="2. Layout"></a>2. Layout</h3><p>决定“<strong>显示在哪里、多大</strong>”。<br>也就是测量和摆放组件。</p>
-<h3 id="3-Draw"><a href="#3-Draw" class="headerlink" title="3. Draw"></a>3. Draw</h3><p>决定“<strong>最终画成什么样</strong>”。<br>包括透明度、缩放、旋转、裁剪等绘制相关操作。</p>
-<p>如果一个变化只影响 Draw 阶段，通常会比影响 Layout 阶段更高效，因为整体需要做的工作更少。</p>
-<hr>
-<h2 id="真正的性能差异，来自“状态读取时机”"><a href="#真正的性能差异，来自“状态读取时机”" class="headerlink" title="真正的性能差异，来自“状态读取时机”"></a>真正的性能差异，来自“状态读取时机”</h2><p>很多文章会把这件事简单总结成：</p>
-<ul>
-<li><code>.alpha()</code> 会触发重组</li>
-<li><code>.graphicsLayer {}</code> 不会触发重组</li>
-</ul>
-<p>这个说法<strong>不够准确</strong>。</p>
-<p>更准确的说法是：</p>
-<blockquote>
-<p><strong>是否发生重组，取决于状态是在 Composition、Layout 还是 Draw 阶段被读取。</strong></p>
-</blockquote>
-<p><code>graphicsLayer</code> 的优势并不只是“它能做透明度和缩放”，而是它提供了一个很适合承载<strong>绘制阶段状态读取</strong>的入口。</p>
-<p>也就是说，在适合的场景下，你可以把频繁变化的状态放到更靠后的阶段去处理，从而减少不必要的 Composition 和 Layout 开销。</p>
-<hr>
-<h2 id="为什么-graphicsLayer-常常更适合动画"><a href="#为什么-graphicsLayer-常常更适合动画" class="headerlink" title="为什么 graphicsLayer 常常更适合动画"></a>为什么 <code>graphicsLayer</code> 常常更适合动画</h2><p><code>Modifier.graphicsLayer</code> 主要影响的是绘制阶段，不会改变组件的测量尺寸和摆放位置。</p>
-<p>这意味着下面这些变化，通常更适合放进 <code>graphicsLayer</code>：</p>
-<ul>
-<li><code>alpha</code></li>
-<li><code>scaleX / scaleY</code></li>
-<li><code>translationX / translationY</code></li>
-<li><code>rotationZ</code></li>
-</ul>
-<p>对于高频更新的 UI，这通常更有利，比如：</p>
-<ul>
-<li>滚动时的视差效果</li>
-<li>列表项渐隐渐现</li>
-<li>卡片缩放</li>
-<li>图标呼吸动画</li>
-<li>拖拽过程中的位移或旋转</li>
-</ul>
-<p>因为这些效果本质上更多是在改变“怎么画”，而不是“怎么排版”。</p>
-<hr>
-<h2 id="graphicsLayer-还有一层意义：图形层隔离"><a href="#graphicsLayer-还有一层意义：图形层隔离" class="headerlink" title="graphicsLayer 还有一层意义：图形层隔离"></a><code>graphicsLayer</code> 还有一层意义：图形层隔离</h2><p><code>graphicsLayer</code> 不只是一个 modifier，它还会带来图形层的隔离效果。</p>
-<p>你可以把它理解成：</p>
-<ul>
-<li>组件内容先被组织成一个独立绘制层</li>
-<li>后续对这个层做透明度、缩放、旋转等操作</li>
-<li>不必每次都重新“重画里面的内容”</li>
-</ul>
-<p>这也是它特别适合动画场景的原因之一。</p>
-<p>不过要注意，<strong>有 layer 不代表一定更快</strong>。</p>
-<p>如果只是静态 UI，或者变化频率很低，没必要为了“性能优化”而到处套 <code>graphicsLayer</code>。真正值得优化的，是那些：</p>
-<ul>
-<li>高频变化</li>
-<li>容易掉帧的动画</li>
-<li>滚动联动效果</li>
-<li>明显存在性能瓶颈的界面</li>
-</ul>
-<hr>
-<h2 id="一个更准确的对比方式"><a href="#一个更准确的对比方式" class="headerlink" title="一个更准确的对比方式"></a>一个更准确的对比方式</h2><table>
-<thead>
-<tr>
-<th align="left">对比项</th>
-<th align="left">普通值传递写法</th>
-<th align="left"><code>graphicsLayer { ... }</code> / lambda-based 写法</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">状态读取位置</td>
-<td align="left">常见于 Composition 阶段</td>
-<td align="left">可延后到 Draw 阶段</td>
-</tr>
-<tr>
-<td align="left">是否一定触发重组</td>
-<td align="left">不一定，但更容易发生</td>
-<td align="left">不一定完全没有，但更容易跳过 Composition</td>
-</tr>
-<tr>
-<td align="left">是否影响布局</td>
-<td align="left">取决于具体 modifier</td>
-<td align="left"><code>graphicsLayer</code> 本身只影响绘制</td>
-</tr>
-<tr>
-<td align="left">适合场景</td>
-<td align="left">静态 UI、低频变化</td>
-<td align="left">动画、滚动联动、高频视觉变化</td>
-</tr>
-</tbody></table>
-<p>这里最重要的是一句话：</p>
-<blockquote>
-<p><strong>不是 <code>graphicsLayer</code> 天生“无敌”，而是它更适合处理那些只需要改变视觉表现、不需要重新布局的更新。</strong></p>
-</blockquote>
-<hr>
-<h2 id="实战示例：把动画状态留到绘制阶段处理"><a href="#实战示例：把动画状态留到绘制阶段处理" class="headerlink" title="实战示例：把动画状态留到绘制阶段处理"></a>实战示例：把动画状态留到绘制阶段处理</h2><p>下面这个例子非常适合这个思路：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> animatedScale <span class="token keyword">by</span> <span class="token function">animateFloatAsState</span><span class="token punctuation">(</span>targetValue <span class="token operator">=</span> <span class="token number">1.2f</span><span class="token punctuation">)</span>
-
-<span class="token function">Box</span><span class="token punctuation">(</span>
-    Modifier
-        <span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
-        <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>Magenta<span class="token punctuation">)</span>
-        <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
-            scaleX <span class="token operator">=</span> animatedScale
-            scaleY <span class="token operator">=</span> animatedScale
-            alpha <span class="token operator">=</span> <span class="token number">0.9f</span>
-        <span class="token punctuation">}</span>
-<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>这种写法的好处是，<code>scaleX</code> 和 <code>scaleY</code> 这类纯视觉变化，更适合放在 <code>graphicsLayer</code> 中处理。因为它们不需要改变组件本身的测量结果和摆放位置。</p>
-<p>如果你的动画只是让组件“看起来变大”，而不是让布局系统认为“它真的变大了”，这种方式通常更划算。</p>
-<hr>
-<h2 id="什么时候优先考虑-graphicsLayer"><a href="#什么时候优先考虑-graphicsLayer" class="headerlink" title="什么时候优先考虑 graphicsLayer"></a>什么时候优先考虑 <code>graphicsLayer</code></h2><p>你可以优先在下面这些场景考虑它：</p>
-<h3 id="1-高频动画"><a href="#1-高频动画" class="headerlink" title="1. 高频动画"></a>1. 高频动画</h3><p>例如透明度、缩放、旋转、位移持续变化。<br>这类变化通常只影响视觉呈现，不需要反复参与布局。</p>
-<h3 id="2-滚动驱动效果"><a href="#2-滚动驱动效果" class="headerlink" title="2. 滚动驱动效果"></a>2. 滚动驱动效果</h3><p>比如顶部标题渐隐、列表项视差、卡片缩放。<br>这类状态更新非常频繁，更适合尽量延后到 Draw 阶段处理。</p>
-<h3 id="3-不想因为视觉变化触发布局连锁反应"><a href="#3-不想因为视觉变化触发布局连锁反应" class="headerlink" title="3. 不想因为视觉变化触发布局连锁反应"></a>3. 不想因为视觉变化触发布局连锁反应</h3><p>如果变化不会影响组件大小和位置，就尽量别让它进入 Layout。</p>
-<hr>
-<h2 id="什么时候不要滥用"><a href="#什么时候不要滥用" class="headerlink" title="什么时候不要滥用"></a>什么时候不要滥用</h2><p><code>graphicsLayer</code> 不是“看到动画就全上”的银弹。</p>
-<p>下面这些情况要谨慎：</p>
-<h3 id="1-变化本身会影响布局"><a href="#1-变化本身会影响布局" class="headerlink" title="1. 变化本身会影响布局"></a>1. 变化本身会影响布局</h3><p>如果你需要的不是“看起来变大”，而是“真的占更多空间”，那就不能只靠 Draw 阶段处理。</p>
-<h3 id="2-页面本身没有性能问题"><a href="#2-页面本身没有性能问题" class="headerlink" title="2. 页面本身没有性能问题"></a>2. 页面本身没有性能问题</h3><p>优化应该服务于实际瓶颈。<br>如果页面没有掉帧、没有频繁重组、没有滚动抖动，过度使用 <code>graphicsLayer</code> 反而会增加理解成本。</p>
-<h3 id="3-为了“听起来高级”而替换所有-modifier"><a href="#3-为了“听起来高级”而替换所有-modifier" class="headerlink" title="3. 为了“听起来高级”而替换所有 modifier"></a>3. 为了“听起来高级”而替换所有 modifier</h3><p>性能优化不是 API 崇拜。<br>重点是识别哪些状态变化只是视觉层面的，哪些真的会影响布局和结构。</p>
-<hr>
-<h2 id="一句话总结"><a href="#一句话总结" class="headerlink" title="一句话总结"></a>一句话总结</h2><p><code>graphicsLayer</code> 的核心价值，不是“它比 <code>.alpha()</code> 更酷”，而是：</p>
-<blockquote>
-<p><strong>它很适合承载那些只影响绘制结果的高频状态变化，让 Compose 有机会跳过更重的 Composition 和 Layout。</strong></p>
-</blockquote>
-<p>所以，当你在做这些效果时：</p>
-<ul>
-<li>渐隐渐现</li>
-<li>缩放</li>
-<li>旋转</li>
-<li>平移</li>
-<li>滚动联动动画</li>
-</ul>
-<p>优先想一件事：</p>
-<p><strong>这次变化，是不是其实只需要改 Draw，而不必让整个 UI 重新参与组合和布局？</strong></p>
-<p>如果答案是“对”，那 <code>graphicsLayer</code> 往往就是非常值得尝试的方案。</p>
-<hr>
-<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>写 Compose 性能优化时，最容易踩的坑就是把结论说得太绝对。<br>真正值得记住的不是“某个 modifier 一定更快”，而是这条原则：</p>
-<blockquote>
-<p><strong>把状态读取尽量放到更晚的阶段，尤其是 Draw 阶段。</strong></p>
-</blockquote>
-<p>这才是很多 Compose 性能优化技巧背后的共同思路。</p>
-]]></content>
-      <categories>
-        <category>Compose</category>
-      </categories>
-      <tags>
-        <tag>Jetpack Compose</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>remember VS rememberSaveable</title>
     <url>/posts/2023/12/04/f68195/</url>
     <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在 Jetpack Compose 中，我们常需要「记住」某个计算结果，避免在重组时重复计算以提升性能。Compose 提供了两种常用方式：<code>remember {}</code> 和 <code>rememberSaveable {}</code>。二者都能在重组时复用值，但<strong>持久化范围不同</strong>，选错会导致状态在特定场景下被重置。本文结合一次实际问题和文档/实验，说明两者的区别与使用场景。</p>
@@ -1137,8 +1023,8 @@ The default implementation only supports types which can be stored inside the Bu
         <category>Technical</category>
       </categories>
       <tags>
-        <tag>Jetpack Compose</tag>
         <tag>Android</tag>
+        <tag>Jetpack Compose</tag>
       </tags>
   </entry>
   <entry>
@@ -1399,6 +1285,305 @@ The default implementation only supports types which can be stored inside the Bu
       </categories>
       <tags>
         <tag>Compose</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Jetpack Compose Performance Tips Every Developer Should Know</title>
+    <url>/posts/2026/02/27/4ae1fc92/</url>
+    <content><![CDATA[<h1 id="Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握"><a href="#Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握" class="headerlink" title="Jetpack Compose 性能优化：为什么 graphicsLayer 值得你重点掌握"></a>Jetpack Compose 性能优化：为什么 <code>graphicsLayer</code> 值得你重点掌握</h1><p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
+<p>比如，想让一个组件半透明，你可以这样写：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">alpha</span><span class="token punctuation">(</span><span class="token number">0.5f</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>也可以这样写：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> alpha <span class="token operator">=</span> <span class="token number">0.5f</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>从界面效果来看，它们几乎一样。<br>但在<strong>动画</strong>、<strong>滚动联动</strong>、<strong>高频状态变化</strong>这类场景里，两者背后的性能路径并不完全相同。</p>
+<p>真正的关键不是“哪个 API 更高级”，而是：</p>
+<blockquote>
+<p><strong>你在哪个阶段读取状态。</strong></p>
+</blockquote>
+<p>如果状态读取发生在 Composition 阶段，就可能触发更多重组工作。<br>如果状态读取被延后到 Draw 阶段，Compose 就有机会跳过 Composition 和 Layout，只做更轻量的绘制更新。</p>
+<hr>
+<h2 id="Compose-UI-的三大阶段"><a href="#Compose-UI-的三大阶段" class="headerlink" title="Compose UI 的三大阶段"></a>Compose UI 的三大阶段</h2><p>理解这件事，先要知道 Compose 的渲染流程主要分为三个阶段：</p>
+<h3 id="1-Composition"><a href="#1-Composition" class="headerlink" title="1. Composition"></a>1. Composition</h3><p>决定“<strong>要显示什么</strong>”。<br>也就是执行 Composable，构建或更新 UI 树。</p>
+<h3 id="2-Layout"><a href="#2-Layout" class="headerlink" title="2. Layout"></a>2. Layout</h3><p>决定“<strong>显示在哪里、多大</strong>”。<br>也就是测量和摆放组件。</p>
+<h3 id="3-Draw"><a href="#3-Draw" class="headerlink" title="3. Draw"></a>3. Draw</h3><p>决定“<strong>最终画成什么样</strong>”。<br>包括透明度、缩放、旋转、裁剪等绘制相关操作。</p>
+<p>如果一个变化只影响 Draw 阶段，通常会比影响 Layout 阶段更高效，因为整体需要做的工作更少。</p>
+<hr>
+<h2 id="真正的性能差异，来自“状态读取时机”"><a href="#真正的性能差异，来自“状态读取时机”" class="headerlink" title="真正的性能差异，来自“状态读取时机”"></a>真正的性能差异，来自“状态读取时机”</h2><p>很多文章会把这件事简单总结成：</p>
+<ul>
+<li><code>.alpha()</code> 会触发重组</li>
+<li><code>.graphicsLayer {}</code> 不会触发重组</li>
+</ul>
+<p>这个说法<strong>不够准确</strong>。</p>
+<p>更准确的说法是：</p>
+<blockquote>
+<p><strong>是否发生重组，取决于状态是在 Composition、Layout 还是 Draw 阶段被读取。</strong></p>
+</blockquote>
+<p><code>graphicsLayer</code> 的优势并不只是“它能做透明度和缩放”，而是它提供了一个很适合承载<strong>绘制阶段状态读取</strong>的入口。</p>
+<p>也就是说，在适合的场景下，你可以把频繁变化的状态放到更靠后的阶段去处理，从而减少不必要的 Composition 和 Layout 开销。</p>
+<hr>
+<h2 id="为什么-graphicsLayer-常常更适合动画"><a href="#为什么-graphicsLayer-常常更适合动画" class="headerlink" title="为什么 graphicsLayer 常常更适合动画"></a>为什么 <code>graphicsLayer</code> 常常更适合动画</h2><p><code>Modifier.graphicsLayer</code> 主要影响的是绘制阶段，不会改变组件的测量尺寸和摆放位置。</p>
+<p>这意味着下面这些变化，通常更适合放进 <code>graphicsLayer</code>：</p>
+<ul>
+<li><code>alpha</code></li>
+<li><code>scaleX / scaleY</code></li>
+<li><code>translationX / translationY</code></li>
+<li><code>rotationZ</code></li>
+</ul>
+<p>对于高频更新的 UI，这通常更有利，比如：</p>
+<ul>
+<li>滚动时的视差效果</li>
+<li>列表项渐隐渐现</li>
+<li>卡片缩放</li>
+<li>图标呼吸动画</li>
+<li>拖拽过程中的位移或旋转</li>
+</ul>
+<p>因为这些效果本质上更多是在改变“怎么画”，而不是“怎么排版”。</p>
+<hr>
+<h2 id="graphicsLayer-还有一层意义：图形层隔离"><a href="#graphicsLayer-还有一层意义：图形层隔离" class="headerlink" title="graphicsLayer 还有一层意义：图形层隔离"></a><code>graphicsLayer</code> 还有一层意义：图形层隔离</h2><p><code>graphicsLayer</code> 不只是一个 modifier，它还会带来图形层的隔离效果。</p>
+<p>你可以把它理解成：</p>
+<ul>
+<li>组件内容先被组织成一个独立绘制层</li>
+<li>后续对这个层做透明度、缩放、旋转等操作</li>
+<li>不必每次都重新“重画里面的内容”</li>
+</ul>
+<p>这也是它特别适合动画场景的原因之一。</p>
+<p>不过要注意，<strong>有 layer 不代表一定更快</strong>。</p>
+<p>如果只是静态 UI，或者变化频率很低，没必要为了“性能优化”而到处套 <code>graphicsLayer</code>。真正值得优化的，是那些：</p>
+<ul>
+<li>高频变化</li>
+<li>容易掉帧的动画</li>
+<li>滚动联动效果</li>
+<li>明显存在性能瓶颈的界面</li>
+</ul>
+<hr>
+<h2 id="一个更准确的对比方式"><a href="#一个更准确的对比方式" class="headerlink" title="一个更准确的对比方式"></a>一个更准确的对比方式</h2><table>
+<thead>
+<tr>
+<th align="left">对比项</th>
+<th align="left">普通值传递写法</th>
+<th align="left"><code>graphicsLayer { ... }</code> / lambda-based 写法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">状态读取位置</td>
+<td align="left">常见于 Composition 阶段</td>
+<td align="left">可延后到 Draw 阶段</td>
+</tr>
+<tr>
+<td align="left">是否一定触发重组</td>
+<td align="left">不一定，但更容易发生</td>
+<td align="left">不一定完全没有，但更容易跳过 Composition</td>
+</tr>
+<tr>
+<td align="left">是否影响布局</td>
+<td align="left">取决于具体 modifier</td>
+<td align="left"><code>graphicsLayer</code> 本身只影响绘制</td>
+</tr>
+<tr>
+<td align="left">适合场景</td>
+<td align="left">静态 UI、低频变化</td>
+<td align="left">动画、滚动联动、高频视觉变化</td>
+</tr>
+</tbody></table>
+<p>这里最重要的是一句话：</p>
+<blockquote>
+<p><strong>不是 <code>graphicsLayer</code> 天生“无敌”，而是它更适合处理那些只需要改变视觉表现、不需要重新布局的更新。</strong></p>
+</blockquote>
+<hr>
+<h2 id="实战示例：把动画状态留到绘制阶段处理"><a href="#实战示例：把动画状态留到绘制阶段处理" class="headerlink" title="实战示例：把动画状态留到绘制阶段处理"></a>实战示例：把动画状态留到绘制阶段处理</h2><p>下面这个例子非常适合这个思路：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> animatedScale <span class="token keyword">by</span> <span class="token function">animateFloatAsState</span><span class="token punctuation">(</span>targetValue <span class="token operator">=</span> <span class="token number">1.2f</span><span class="token punctuation">)</span>
+
+<span class="token function">Box</span><span class="token punctuation">(</span>
+    Modifier
+        <span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>Magenta<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
+            scaleX <span class="token operator">=</span> animatedScale
+            scaleY <span class="token operator">=</span> animatedScale
+            alpha <span class="token operator">=</span> <span class="token number">0.9f</span>
+        <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这种写法的好处是，<code>scaleX</code> 和 <code>scaleY</code> 这类纯视觉变化，更适合放在 <code>graphicsLayer</code> 中处理。因为它们不需要改变组件本身的测量结果和摆放位置。</p>
+<p>如果你的动画只是让组件“看起来变大”，而不是让布局系统认为“它真的变大了”，这种方式通常更划算。</p>
+<hr>
+<h2 id="什么时候优先考虑-graphicsLayer"><a href="#什么时候优先考虑-graphicsLayer" class="headerlink" title="什么时候优先考虑 graphicsLayer"></a>什么时候优先考虑 <code>graphicsLayer</code></h2><p>你可以优先在下面这些场景考虑它：</p>
+<h3 id="1-高频动画"><a href="#1-高频动画" class="headerlink" title="1. 高频动画"></a>1. 高频动画</h3><p>例如透明度、缩放、旋转、位移持续变化。<br>这类变化通常只影响视觉呈现，不需要反复参与布局。</p>
+<h3 id="2-滚动驱动效果"><a href="#2-滚动驱动效果" class="headerlink" title="2. 滚动驱动效果"></a>2. 滚动驱动效果</h3><p>比如顶部标题渐隐、列表项视差、卡片缩放。<br>这类状态更新非常频繁，更适合尽量延后到 Draw 阶段处理。</p>
+<h3 id="3-不想因为视觉变化触发布局连锁反应"><a href="#3-不想因为视觉变化触发布局连锁反应" class="headerlink" title="3. 不想因为视觉变化触发布局连锁反应"></a>3. 不想因为视觉变化触发布局连锁反应</h3><p>如果变化不会影响组件大小和位置，就尽量别让它进入 Layout。</p>
+<hr>
+<h2 id="什么时候不要滥用"><a href="#什么时候不要滥用" class="headerlink" title="什么时候不要滥用"></a>什么时候不要滥用</h2><p><code>graphicsLayer</code> 不是“看到动画就全上”的银弹。</p>
+<p>下面这些情况要谨慎：</p>
+<h3 id="1-变化本身会影响布局"><a href="#1-变化本身会影响布局" class="headerlink" title="1. 变化本身会影响布局"></a>1. 变化本身会影响布局</h3><p>如果你需要的不是“看起来变大”，而是“真的占更多空间”，那就不能只靠 Draw 阶段处理。</p>
+<h3 id="2-页面本身没有性能问题"><a href="#2-页面本身没有性能问题" class="headerlink" title="2. 页面本身没有性能问题"></a>2. 页面本身没有性能问题</h3><p>优化应该服务于实际瓶颈。<br>如果页面没有掉帧、没有频繁重组、没有滚动抖动，过度使用 <code>graphicsLayer</code> 反而会增加理解成本。</p>
+<h3 id="3-为了“听起来高级”而替换所有-modifier"><a href="#3-为了“听起来高级”而替换所有-modifier" class="headerlink" title="3. 为了“听起来高级”而替换所有 modifier"></a>3. 为了“听起来高级”而替换所有 modifier</h3><p>性能优化不是 API 崇拜。<br>重点是识别哪些状态变化只是视觉层面的，哪些真的会影响布局和结构。</p>
+<hr>
+<h2 id="一句话总结"><a href="#一句话总结" class="headerlink" title="一句话总结"></a>一句话总结</h2><p><code>graphicsLayer</code> 的核心价值，不是“它比 <code>.alpha()</code> 更酷”，而是：</p>
+<blockquote>
+<p><strong>它很适合承载那些只影响绘制结果的高频状态变化，让 Compose 有机会跳过更重的 Composition 和 Layout。</strong></p>
+</blockquote>
+<p>所以，当你在做这些效果时：</p>
+<ul>
+<li>渐隐渐现</li>
+<li>缩放</li>
+<li>旋转</li>
+<li>平移</li>
+<li>滚动联动动画</li>
+</ul>
+<p>优先想一件事：</p>
+<p><strong>这次变化，是不是其实只需要改 Draw，而不必让整个 UI 重新参与组合和布局？</strong></p>
+<p>如果答案是“对”，那 <code>graphicsLayer</code> 往往就是非常值得尝试的方案。</p>
+<hr>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>写 Compose 性能优化时，最容易踩的坑就是把结论说得太绝对。<br>真正值得记住的不是“某个 modifier 一定更快”，而是这条原则：</p>
+<blockquote>
+<p><strong>把状态读取尽量放到更晚的阶段，尤其是 Draw 阶段。</strong></p>
+</blockquote>
+<p>这才是很多 Compose 性能优化技巧背后的共同思路。</p>
+]]></content>
+      <categories>
+        <category>Compose</category>
+      </categories>
+      <tags>
+        <tag>Jetpack Compose</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>iOS通过Container读取文件问题笔录</title>
+    <url>/posts/2023/08/13/bb96b1c7/</url>
+    <content><![CDATA[<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：</p>
+<ul>
+<li><strong>现象</strong>：导出 <code>.xcappdata</code> 可以确认文件确实在 Documents 目录下，但用 <code>NSData.dataWithContentsOfFile</code> 读取时始终返回空。</li>
+<li><strong>报错</strong>：<code>No such File or Directory</code>（找不到该文件或目录）。</li>
+</ul>
+<p>当时使用的读取代码如下（为便于排查，增加了 <code>errorPtr</code> 输出错误信息）：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> errorPtr<span class="token operator">:</span> ObjCObjectVar<span class="token operator">&lt;</span>NSError<span class="token operator">?</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token function">alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
+    <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+    <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
+<span class="token punctuation">}</span>
+<span class="token function">println</span><span class="token punctuation">(</span>errorPtr<span class="token punctuation">.</span>value<span class="token operator">?</span><span class="token punctuation">.</span>description<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">return</span><span class="token label symbol">@withContext</span> <span class="token keyword">null</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<span id="more"></span>
+
+<h2 id="二、问题定位"><a href="#二、问题定位" class="headerlink" title="二、问题定位"></a>二、问题定位</h2><h3 id="2-1-怀疑点：路径可能不对"><a href="#2-1-怀疑点：路径可能不对" class="headerlink" title="2.1 怀疑点：路径可能不对"></a>2.1 怀疑点：路径可能不对</h3><p>从错误日志看，传入的 <code>fullPath</code> 很可能并不是当前运行时的真实路径，所以即使文件实际存在，<code>NSData.dataWithContentsOfFile</code> 仍然找不到。</p>
+<h3 id="2-2-对比验证：Application-目录的-UUID-不一致"><a href="#2-2-对比验证：Application-目录的-UUID-不一致" class="headerlink" title="2.2 对比验证：Application 目录的 UUID 不一致"></a>2.2 对比验证：Application 目录的 UUID 不一致</h3><p>用 Swift 在运行时获取 Documents 目录并列出文件，与 Kotlin 里使用的 <code>fullPath</code> 对比：</p>
+<ul>
+<li><strong>Kotlin 中使用的 fullPath</strong>（可能是之前保存的完整路径）：<pre class="line-numbers language-none"><code class="language-none">/var/mobile/Containers/Data/Application/3FC1CCE9-A788-47AB-902A-FA133FAA3D30/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
+<li><strong>Swift 当前拿到的文件 URL</strong>：<pre class="line-numbers language-none"><code class="language-none">file:///private/var/mobile/Containers/Data/Application/C5AC5178-6887-40F4-9EE5-8D56CB830CB3/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
+</ul>
+<p>可见，<code>Application</code> 后面那一段 UUID 不一致：一个是 <code>3FC1CCE9-...</code>，一个是 <code>C5AC5178-...</code>。</p>
+<p>Swift 侧获取 Documents 的示例代码：</p>
+<pre class="line-numbers language-swift" data-language="swift"><code class="language-swift"><span class="token keyword">let</span> fileManager <span class="token operator">=</span> <span class="token class-name">FileManager</span><span class="token punctuation">.</span><span class="token keyword">default</span>
+<span class="token keyword">let</span> documentsURL <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">urls</span><span class="token punctuation">(</span><span class="token keyword">for</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>documentDirectory<span class="token punctuation">,</span> <span class="token keyword">in</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>userDomainMask<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+<span class="token keyword">do</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> fileURLs <span class="token operator">=</span> <span class="token keyword">try</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectory</span><span class="token punctuation">(</span>at<span class="token punctuation">:</span> documentsURL<span class="token punctuation">,</span> includingPropertiesForKeys<span class="token punctuation">:</span> <span class="token nil constant">nil</span><span class="token punctuation">)</span>
+    <span class="token function">print</span><span class="token punctuation">(</span>fileURLs<span class="token punctuation">)</span>
+<span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">{</span>
+    <span class="token function">print</span><span class="token punctuation">(</span><span class="token string-literal"><span class="token string">"Error while enumerating files </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">documentsURL<span class="token punctuation">.</span>path</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">: </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">error<span class="token punctuation">.</span>localizedDescription</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">"</span></span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="2-3-根因结论"><a href="#2-3-根因结论" class="headerlink" title="2.3 根因结论"></a>2.3 根因结论</h3><p>自 <strong>iOS 8.0</strong> 起，应用沙盒里 <code>Application</code> 这一级目录的 <strong>UUID 会随安装/部署方式变化</strong>（例如卸载重装、Xcode 重新安装等）。若把「完整路径」存下来，下次启动或重装后 UUID 变了，旧路径就失效，导致「文件在，但按旧路径读不到」。</p>
+<p>因此：<strong>不能依赖存储的完整路径来读文件，只能依赖「相对位置 + 文件名」并在运行时重新解析。</strong></p>
+<h2 id="三、解决方案"><a href="#三、解决方案" class="headerlink" title="三、解决方案"></a>三、解决方案</h2><p>思路统一为：<strong>只存文件名（或相对路径），读的时候先拿到当前 Documents 目录，再拼出完整路径或 URL。</strong> 下面两种写法都符合这一思路。</p>
+<h3 id="方法一：遍历-Documents，按文件名匹配"><a href="#方法一：遍历-Documents，按文件名匹配" class="headerlink" title="方法一：遍历 Documents，按文件名匹配"></a>方法一：遍历 Documents，按文件名匹配</h3><p>不依赖完整路径，先取到 Documents 的 URL，再在目录下按文件名找到对应文件：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 拿到 Documents 目录的 url</span>
+<span class="token keyword">val</span> url <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">URLForDirectory</span><span class="token punctuation">(</span>
+    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
+    inDomain <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
+    appropriateForURL <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
+    create <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+    error <span class="token operator">=</span> <span class="token keyword">null</span>
+<span class="token punctuation">)</span><span class="token operator">!!</span>
+<span class="token comment">// 列出目录下所有文件的 url</span>
+<span class="token keyword">val</span> fileUrls <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectoryAtURL</span><span class="token punctuation">(</span>url <span class="token operator">=</span> url<span class="token punctuation">,</span> includingPropertiesForKeys <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span>
+<span class="token comment">// 按文件名匹配得到目标文件的 url</span>
+<span class="token keyword">val</span> currentFileUrl <span class="token operator">=</span> fileUrls<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">first</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">contains</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span> <span class="token punctuation">}</span> <span class="token keyword">as</span><span class="token operator">?</span> NSURL
+<span class="token comment">// 用 URL 读取</span>
+currentFileUrl<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span>
+    NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfURL</span><span class="token punctuation">(</span>currentFileUrl<span class="token punctuation">)</span>
+        <span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
+            <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+            <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
+        <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="方法二（推荐）：直接取-Documents-路径再拼接文件名"><a href="#方法二（推荐）：直接取-Documents-路径再拼接文件名" class="headerlink" title="方法二（推荐）：直接取 Documents 路径再拼接文件名"></a>方法二（推荐）：直接取 Documents 路径再拼接文件名</h3><p>遍历有额外开销，更稳妥且高效的方式是：<strong>每次读取时用系统 API 取当前 Documents 目录，再拼接文件名</strong>：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> documentDirectory <span class="token operator">=</span> <span class="token function">NSSearchPathForDirectoriesInDomains</span><span class="token punctuation">(</span>
+    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
+    domainMask <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
+    expandTilde <span class="token operator">=</span> <span class="token boolean">true</span>
+<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">first</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> NSString
+<span class="token keyword">val</span> fullPath <span class="token operator">=</span> documentDirectory<span class="token punctuation">.</span><span class="token function">stringByAppendingPathComponent</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span>
+<span class="token comment">// 此处 fullPath 一定是当前应用实例的真实路径</span>
+NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> <span class="token operator">..</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这样得到的 <code>fullPath</code> 始终对应当前运行时的 Documents，不受 UUID 变化影响。</p>
+<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><table>
+<thead>
+<tr>
+<th>要点</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>不要存完整路径</td>
+<td>iOS 8+ 下 Application 目录 UUID 会变，存完整路径容易失效。</td>
+</tr>
+<tr>
+<td>推荐只存文件名</td>
+<td>使用时通过 API 获取当前 Documents 目录，再拼接文件名。</td>
+</tr>
+<tr>
+<td>优先用系统 API 取目录</td>
+<td>使用 <code>NSSearchPathForDirectoriesInDomains</code> 获取 Documents，比遍历目录更简单、高效。</td>
+</tr>
+</tbody></table>
+<p>按上述方式改造后，<code>NSData.dataWithContentsOfFile</code> 无法读取文件的问题即可解决。</p>
+<h2 id="附录：UUID-何时会变化"><a href="#附录：UUID-何时会变化" class="headerlink" title="附录：UUID 何时会变化"></a>附录：UUID 何时会变化</h2><p>不同安装/运行方式下，沙盒中 Application 目录的 UUID 是否变化可参考下表：</p>
+<table>
+<thead>
+<tr>
+<th>安装/运行方式</th>
+<th>UUID 是否变化</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>App 卸载后重新安装</td>
+<td>✅ 变化（iOS 8+ 的安全机制）</td>
+</tr>
+<tr>
+<td>通过 Xcode 重新安装</td>
+<td>✅ 变化（相当于卸载再安装）</td>
+</tr>
+<tr>
+<td>Xcode 直接运行（不卸载）</td>
+<td>❌ 不变（仅 Build &amp; Run 且未删除 App）</td>
+</tr>
+<tr>
+<td>模拟器上运行</td>
+<td>✅ 可能变化（视情况而定）</td>
+</tr>
+<tr>
+<td>TestFlight / App Store 安装</td>
+<td>✅ 变化（安装时生成新 UUID）</td>
+</tr>
+<tr>
+<td>iOS OTA 更新 App</td>
+<td>❌ 不变（更新不改变 UUID）</td>
+</tr>
+</tbody></table>
+]]></content>
+      <categories>
+        <category>Multiplatform</category>
+      </categories>
+      <tags>
+        <tag>SwiftUI</tag>
+        <tag>Kotlin Native</tag>
       </tags>
   </entry>
 </search>
