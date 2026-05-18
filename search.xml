@@ -1,6 +1,202 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>乐歌升降桌 E07 / E08 故障排查：一边桌脚不动时，我是怎么修好的</title>
+    <url>/posts/2026/03/02/fbb9923f/</url>
+    <content><![CDATA[<p>家里的小故障有时候最磨人。</p>
+<p>它不至于让人立刻崩溃，但足够影响日常使用。尤其是当升降桌突然一边能动、一边完全没反应，桌面变得一高一低时，工作状态也会被一起打断。</p>
+<p>这次出问题的是家里的乐歌升降桌。</p>
+<p>原本只是一次普通的升降操作，按下上升键后，桌子没有正常升起来，反而进入了异常状态：</p>
+<ul>
+<li>一边桌脚还在动</li>
+<li>另一边桌脚完全没反应</li>
+<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
+</ul>
+<p>售后当时无法马上处理，于是只能先自己排查。最后发现，问题并不是电机彻底损坏，而更像是左右桌脚高度不同步后触发了保护机制。</p>
+<p>这篇文章记录完整过程，也给遇到类似情况的人一个参考。</p>
+<blockquote>
+<p>说明：本文只是一次个人排查记录，不是官方维修教程。涉及拆卸、插线或通电测试时，务必先断电，确认安全后再操作；如果不确定，优先联系售后。</p>
+</blockquote>
+<hr>
+<h2 id="一、故障现象：一边能动，一边不动"><a href="#一、故障现象：一边能动，一边不动" class="headerlink" title="一、故障现象：一边能动，一边不动"></a>一、故障现象：一边能动，一边不动</h2><p>那天晚上，按下升降桌的上升按钮后，很快发现状态不对。</p>
+<p>桌子的表现大概是：</p>
+<ul>
+<li>左边桌脚还有反应，但<strong>只能往下，不能上升</strong></li>
+<li>右边桌脚无论上升还是下降都<strong>完全没反应</strong></li>
+<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
+</ul>
+<p><img src="/images/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg" alt="控制面板显示 RST / E07 / E08 等报码"></p>
+<p><em>图 1：控制面板显示 RST / E07 / E08 等报码</em></p>
+<p>连续试了几次后，结论基本一致：</p>
+<p><strong>这不是简单卡顿，而是桌子已经进入了异常保护状态。</strong></p>
+<p>因为每次操作时，始终只有一边桌脚在动，另一边完全静止。桌面已经明显不平，继续强行升降反而可能让结构受力更糟。</p>
+<hr>
+<h2 id="二、先联系售后，按标准流程排查"><a href="#二、先联系售后，按标准流程排查" class="headerlink" title="二、先联系售后，按标准流程排查"></a>二、先联系售后，按标准流程排查</h2><p>遇到这类问题，第一步还是联系售后。</p>
+<p>乐歌京东自营店客服给出的排查流程比较标准，也符合电动升降桌常见处理方式。</p>
+<h3 id="1-先做系统重置"><a href="#1-先做系统重置" class="headerlink" title="1. 先做系统重置"></a>1. 先做系统重置</h3><p>客服先建议把桌子尽量降到最低，然后：</p>
+<blockquote>
+<p><strong>长按下降键约 7 秒，执行系统重置。</strong></p>
+</blockquote>
+<p>这是升降桌常见的初始化方式。很多报码不一定代表零件损坏，也可能只是系统需要重新校准。</p>
+<p>不过这一步对这台桌子没有立即起作用。</p>
+<h3 id="2-再交叉插线"><a href="#2-再交叉插线" class="headerlink" title="2. 再交叉插线"></a>2. 再交叉插线</h3><p>接下来，客服建议拆开桌腿挡板，把控制盒上的 <strong>M1 和 M2 电机线互换</strong>，再观察报码变化。</p>
+<p><img src="/images/20260302/8BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg" alt="客服建议交叉插线排查问题位置"></p>
+<p><em>图 2：客服建议交叉插线排查问题位置</em></p>
+<p>照着操作后，控制面板上的报码确实发生了变化：从 <strong>E07</strong> 变成了 <strong>E08</strong>。</p>
+<p><img src="/images/20260302/C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg" alt="交叉插线后报码从 E07 变成 E08"></p>
+<p><em>图 3：交叉插线后，报码从 E07 变成 E08</em></p>
+<p>客服根据这个变化，初步判断可能和控制盒有关，需要继续反馈技术部门。由于当时临近假期，后续处理需要等到年后。</p>
+<p>但桌子已经拆到这一步，与其直接等待，不如继续确认几个更基础的问题。</p>
+<hr>
+<h2 id="三、不要只盯报码，更要看现象"><a href="#三、不要只盯报码，更要看现象" class="headerlink" title="三、不要只盯报码，更要看现象"></a>三、不要只盯报码，更要看现象</h2><p>E07 / E08 这样的错误码有参考价值，但不能完全依赖报码判断。</p>
+<p>这次真正有用的线索，其实是设备表现出来的现象：</p>
+<p><strong>始终只有一边桌脚在动，另一边没有正常响应。</strong></p>
+<p>结合网上能查到的说明，以及同类升降桌的常见故障逻辑，E07 / E08 大致可能和两类问题有关：</p>
+<ul>
+<li>左右桌脚高度不同步</li>
+<li>电机连接、通信或控制异常</li>
+</ul>
+<p>这说明问题未必是电机彻底损坏，也可能是左右不同步后触发了系统保护。</p>
+<p>所以排查重点从“报码是什么意思”转成了两个更具体的问题：</p>
+<ol>
+<li>电机本身还能不能正常工作？</li>
+<li>左右桌脚是不是已经明显不平？</li>
+</ol>
+<hr>
+<h2 id="四、拆开检查：先确认电机有没有坏"><a href="#四、拆开检查：先确认电机有没有坏" class="headerlink" title="四、拆开检查：先确认电机有没有坏"></a>四、拆开检查：先确认电机有没有坏</h2><p>既然已经拆开挡板，下一步就是确认电机本体是否正常。</p>
+<p>操作前先断电，确认连接位置，再分别测试两侧电机。整个过程大致是：</p>
+<ol>
+<li>拧开桌腿挡板螺丝</li>
+<li>断开两侧电机连接线</li>
+<li>分别测试每个电机是否能正常上下动作</li>
+</ol>
+<p>测试结果比较关键：</p>
+<p><strong>两个电机都能正常上下运动。</strong></p>
+<p>这意味着问题大概率不在“电机彻底坏了”这一层。至少最麻烦的一种情况可以先排除。</p>
+<p>回头再看整个过程，问题开始变得清楚：</p>
+<ul>
+<li>出问题前，已经有一段时间只有一边桌脚在动</li>
+<li>另一边没有正常响应</li>
+<li>两边高度差被逐渐拉大</li>
+<li>高度差过大后，系统可能触发保护，阻止继续运行</li>
+</ul>
+<p>也就是说，桌子不是完全坏了，而是可能已经处在一个“不适合继续升降”的状态。</p>
+<p>下一步就不再是继续反复按按钮，而是先把左右桌脚重新找平。</p>
+<hr>
+<h2 id="五、手动找平后，再重新初始化"><a href="#五、手动找平后，再重新初始化" class="headerlink" title="五、手动找平后，再重新初始化"></a>五、手动找平后，再重新初始化</h2><p>处理思路变成了：</p>
+<p><strong>先让左右桌脚回到同一个物理基准，再让系统重新校准。</strong></p>
+<p>实际操作如下：</p>
+<ol>
+<li>利用还能动作的那一边，把两边桌脚尽量调整到最低位置</li>
+<li>确保左右桌脚在肉眼可见范围内回到同一高度</li>
+<li>把两个电机重新接回控制盒</li>
+<li>再次长按下降键约 7 秒，执行系统重置</li>
+</ol>
+<p>这一次，结果明显不同：</p>
+<ul>
+<li>面板上的错误代码消失</li>
+<li>显示重新变回正常高度数字</li>
+<li>再测试升降时，左右两边恢复同步运动</li>
+</ul>
+<p><img src="/images/20260302/379220D3-EF81-44D3-AFD3-1A9DA10B1F23.jpg" alt="问题解决后反馈客服"></p>
+<p><em>图 4：问题解决后，回头告知客服</em></p>
+<p>最终，这次故障没有走到更换控制盒或更换电机的步骤，而是通过“找平 + 重置”恢复了。</p>
+<hr>
+<h2 id="六、这次排查的关键步骤"><a href="#六、这次排查的关键步骤" class="headerlink" title="六、这次排查的关键步骤"></a>六、这次排查的关键步骤</h2><p>整个过程可以整理成下面这张表：</p>
+<table>
+<thead>
+<tr>
+<th>排查步骤</th>
+<th>关键操作</th>
+<th>目的</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1. 记录报码</td>
+<td>观察 RST / E07 / E08 的变化</td>
+<td>缩小问题范围</td>
+</tr>
+<tr>
+<td>2. 联系客服</td>
+<td>按官方建议先重置，再交叉插线</td>
+<td>建立基础排查路径</td>
+</tr>
+<tr>
+<td>3. 测试电机</td>
+<td>分别确认两侧电机能否动作</td>
+<td>排除电机本体故障</td>
+</tr>
+<tr>
+<td>4. 手动找平</td>
+<td>让左右桌脚回到同一高度</td>
+<td>恢复物理基准</td>
+</tr>
+<tr>
+<td>5. 系统重置</td>
+<td>长按下降键重新初始化</td>
+<td>让控制系统重新校准</td>
+</tr>
+</tbody></table>
+<p>真正起作用的不是某个“神奇步骤”，而是排查顺序：</p>
+<ul>
+<li>先确认系统是否能重置</li>
+<li>再确认连接和报码变化</li>
+<li>再排除电机本体故障</li>
+<li>最后处理左右桌脚不同步</li>
+</ul>
+<p>当问题被拆成几个小问题后，排查难度就降低了很多。</p>
+<hr>
+<h2 id="七、遇到类似情况，可以先检查什么"><a href="#七、遇到类似情况，可以先检查什么" class="headerlink" title="七、遇到类似情况，可以先检查什么"></a>七、遇到类似情况，可以先检查什么</h2><p>如果你的升降桌也出现 <strong>报码 + 一边桌脚不动 + 重置无效</strong>，可以先按低风险顺序检查：</p>
+<ol>
+<li><p><strong>先停止强行升降</strong><br>如果桌面已经明显不平，继续操作可能让受力更糟。</p>
+</li>
+<li><p><strong>记录报码和现象</strong><br>记录是 E07、E08、RST，还是其他错误，同时观察哪一边能动、哪一边不动。</p>
+</li>
+<li><p><strong>先按说明书或客服建议重置</strong><br>很多升降桌都有长按下降键进行初始化的流程。</p>
+</li>
+<li><p><strong>检查电机线是否松动</strong><br>操作前务必断电，不要在不确定的情况下带电插拔。</p>
+</li>
+<li><p><strong>观察两边桌脚是否明显不平</strong><br>如果高度差已经很明显，单纯重置可能不会立即恢复，需要先让两边回到接近一致的高度。</p>
+</li>
+<li><p><strong>不确定时停止操作，联系售后</strong><br>如果出现异响、卡死、线材破损、控制盒异常发热等情况，不建议继续自行排查。</p>
+</li>
+</ol>
+<p>这类排查的重点不是“自己替代维修”，而是在安全前提下，把简单问题先确认清楚。</p>
+<hr>
+<h2 id="八、这次故障带来的几个提醒"><a href="#八、这次故障带来的几个提醒" class="headerlink" title="八、这次故障带来的几个提醒"></a>八、这次故障带来的几个提醒</h2><h3 id="1-设备停止运行，不一定代表彻底损坏"><a href="#1-设备停止运行，不一定代表彻底损坏" class="headerlink" title="1. 设备停止运行，不一定代表彻底损坏"></a>1. 设备停止运行，不一定代表彻底损坏</h3><p>报码看起来很吓人，但它很多时候只是系统在提示：</p>
+<p><strong>当前状态不正常，需要先停止。</strong></p>
+<p>停止运行可能是保护机制，而不是硬件已经报废。</p>
+<h3 id="2-现象往往比报码更重要"><a href="#2-现象往往比报码更重要" class="headerlink" title="2. 现象往往比报码更重要"></a>2. 现象往往比报码更重要</h3><p>如果只盯着 E07 / E08，排查方向可能会被错误码带着走。</p>
+<p>但“只有一边桌脚在动”这个现象，直接指向了左右不同步的可能性。</p>
+<h3 id="3-客服流程仍然有价值"><a href="#3-客服流程仍然有价值" class="headerlink" title="3. 客服流程仍然有价值"></a>3. 客服流程仍然有价值</h3><p>这次虽然最后是自己处理好的，但客服给出的重置和交叉插线步骤提供了排查起点。</p>
+<p>标准流程的价值在于：先把常见问题按顺序排掉。</p>
+<h3 id="4-低风险问题可以先自己排查，但要有边界"><a href="#4-低风险问题可以先自己排查，但要有边界" class="headerlink" title="4. 低风险问题可以先自己排查，但要有边界"></a>4. 低风险问题可以先自己排查，但要有边界</h3><p>重置、观察报码、检查插线、确认是否明显不平，这些属于相对低风险的检查。</p>
+<p>但涉及电路、异常发热、结构卡死、零件更换时，还是应该交给售后或专业维修。</p>
+<hr>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>这次升降桌故障，最后没有变成一次复杂维修。</p>
+<p>它更像是一个生活里的小插曲：一开始看起来很麻烦，但只要愿意停下来观察现象、拆开问题、按顺序排查，就会发现它并没有想象中那么不可处理。</p>
+<p>对这次情况来说，最关键的判断是：</p>
+<p><strong>问题不一定出在电机损坏，而可能是左右桌脚不同步后触发了保护。</strong></p>
+<p>这篇记录不一定适用于所有型号，也不能替代官方维修建议。但如果你遇到的是类似场景：</p>
+<ul>
+<li>控制面板显示 RST / E07 / E08</li>
+<li>一边桌脚不动</li>
+<li>重置暂时无效</li>
+<li>桌面已经明显不平</li>
+</ul>
+<p>那么可以先从“记录报码、确认现象、检查连接、手动找平、重新初始化”这条路径排查，或许能少一点慌张，也少走一点弯路。</p>
+<hr>
+<p><em>本文记录于 2026 年 3 月</em></p>
+]]></content>
+      <categories>
+        <category>随笔</category>
+      </categories>
+      <tags>
+        <tag>随笔</tag>
+        <tag>升降桌</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>AI Agent 和 Skill 有什么区别？从执行任务到沉淀能力</title>
     <url>/posts/2026/05/17/a1b2c3d4/</url>
     <content><![CDATA[<p>在使用 Codex 这类开发型 AI 工具时，一个很常见的困惑是：</p>
@@ -876,367 +1072,6 @@ NSData<span class="token punctuation">.</span><span class="token function">dataW
       </tags>
   </entry>
   <entry>
-    <title>乐歌升降桌 E07 / E08 故障排查：一边桌脚不动时，我是怎么修好的</title>
-    <url>/posts/2026/03/02/fbb9923f/</url>
-    <content><![CDATA[<p>家里的小故障有时候最磨人。</p>
-<p>它不至于让人立刻崩溃，但足够影响日常使用。尤其是当升降桌突然一边能动、一边完全没反应，桌面变得一高一低时，工作状态也会被一起打断。</p>
-<p>这次出问题的是家里的乐歌升降桌。</p>
-<p>原本只是一次普通的升降操作，按下上升键后，桌子没有正常升起来，反而进入了异常状态：</p>
-<ul>
-<li>一边桌脚还在动</li>
-<li>另一边桌脚完全没反应</li>
-<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
-</ul>
-<p>售后当时无法马上处理，于是只能先自己排查。最后发现，问题并不是电机彻底损坏，而更像是左右桌脚高度不同步后触发了保护机制。</p>
-<p>这篇文章记录完整过程，也给遇到类似情况的人一个参考。</p>
-<blockquote>
-<p>说明：本文只是一次个人排查记录，不是官方维修教程。涉及拆卸、插线或通电测试时，务必先断电，确认安全后再操作；如果不确定，优先联系售后。</p>
-</blockquote>
-<hr>
-<h2 id="一、故障现象：一边能动，一边不动"><a href="#一、故障现象：一边能动，一边不动" class="headerlink" title="一、故障现象：一边能动，一边不动"></a>一、故障现象：一边能动，一边不动</h2><p>那天晚上，按下升降桌的上升按钮后，很快发现状态不对。</p>
-<p>桌子的表现大概是：</p>
-<ul>
-<li>左边桌脚还有反应，但<strong>只能往下，不能上升</strong></li>
-<li>右边桌脚无论上升还是下降都<strong>完全没反应</strong></li>
-<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
-</ul>
-<p><img src="/images/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg" alt="控制面板显示 RST / E07 / E08 等报码"></p>
-<p><em>图 1：控制面板显示 RST / E07 / E08 等报码</em></p>
-<p>连续试了几次后，结论基本一致：</p>
-<p><strong>这不是简单卡顿，而是桌子已经进入了异常保护状态。</strong></p>
-<p>因为每次操作时，始终只有一边桌脚在动，另一边完全静止。桌面已经明显不平，继续强行升降反而可能让结构受力更糟。</p>
-<hr>
-<h2 id="二、先联系售后，按标准流程排查"><a href="#二、先联系售后，按标准流程排查" class="headerlink" title="二、先联系售后，按标准流程排查"></a>二、先联系售后，按标准流程排查</h2><p>遇到这类问题，第一步还是联系售后。</p>
-<p>乐歌京东自营店客服给出的排查流程比较标准，也符合电动升降桌常见处理方式。</p>
-<h3 id="1-先做系统重置"><a href="#1-先做系统重置" class="headerlink" title="1. 先做系统重置"></a>1. 先做系统重置</h3><p>客服先建议把桌子尽量降到最低，然后：</p>
-<blockquote>
-<p><strong>长按下降键约 7 秒，执行系统重置。</strong></p>
-</blockquote>
-<p>这是升降桌常见的初始化方式。很多报码不一定代表零件损坏，也可能只是系统需要重新校准。</p>
-<p>不过这一步对这台桌子没有立即起作用。</p>
-<h3 id="2-再交叉插线"><a href="#2-再交叉插线" class="headerlink" title="2. 再交叉插线"></a>2. 再交叉插线</h3><p>接下来，客服建议拆开桌腿挡板，把控制盒上的 <strong>M1 和 M2 电机线互换</strong>，再观察报码变化。</p>
-<p><img src="/images/20260302/8BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg" alt="客服建议交叉插线排查问题位置"></p>
-<p><em>图 2：客服建议交叉插线排查问题位置</em></p>
-<p>照着操作后，控制面板上的报码确实发生了变化：从 <strong>E07</strong> 变成了 <strong>E08</strong>。</p>
-<p><img src="/images/20260302/C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg" alt="交叉插线后报码从 E07 变成 E08"></p>
-<p><em>图 3：交叉插线后，报码从 E07 变成 E08</em></p>
-<p>客服根据这个变化，初步判断可能和控制盒有关，需要继续反馈技术部门。由于当时临近假期，后续处理需要等到年后。</p>
-<p>但桌子已经拆到这一步，与其直接等待，不如继续确认几个更基础的问题。</p>
-<hr>
-<h2 id="三、不要只盯报码，更要看现象"><a href="#三、不要只盯报码，更要看现象" class="headerlink" title="三、不要只盯报码，更要看现象"></a>三、不要只盯报码，更要看现象</h2><p>E07 / E08 这样的错误码有参考价值，但不能完全依赖报码判断。</p>
-<p>这次真正有用的线索，其实是设备表现出来的现象：</p>
-<p><strong>始终只有一边桌脚在动，另一边没有正常响应。</strong></p>
-<p>结合网上能查到的说明，以及同类升降桌的常见故障逻辑，E07 / E08 大致可能和两类问题有关：</p>
-<ul>
-<li>左右桌脚高度不同步</li>
-<li>电机连接、通信或控制异常</li>
-</ul>
-<p>这说明问题未必是电机彻底损坏，也可能是左右不同步后触发了系统保护。</p>
-<p>所以排查重点从“报码是什么意思”转成了两个更具体的问题：</p>
-<ol>
-<li>电机本身还能不能正常工作？</li>
-<li>左右桌脚是不是已经明显不平？</li>
-</ol>
-<hr>
-<h2 id="四、拆开检查：先确认电机有没有坏"><a href="#四、拆开检查：先确认电机有没有坏" class="headerlink" title="四、拆开检查：先确认电机有没有坏"></a>四、拆开检查：先确认电机有没有坏</h2><p>既然已经拆开挡板，下一步就是确认电机本体是否正常。</p>
-<p>操作前先断电，确认连接位置，再分别测试两侧电机。整个过程大致是：</p>
-<ol>
-<li>拧开桌腿挡板螺丝</li>
-<li>断开两侧电机连接线</li>
-<li>分别测试每个电机是否能正常上下动作</li>
-</ol>
-<p>测试结果比较关键：</p>
-<p><strong>两个电机都能正常上下运动。</strong></p>
-<p>这意味着问题大概率不在“电机彻底坏了”这一层。至少最麻烦的一种情况可以先排除。</p>
-<p>回头再看整个过程，问题开始变得清楚：</p>
-<ul>
-<li>出问题前，已经有一段时间只有一边桌脚在动</li>
-<li>另一边没有正常响应</li>
-<li>两边高度差被逐渐拉大</li>
-<li>高度差过大后，系统可能触发保护，阻止继续运行</li>
-</ul>
-<p>也就是说，桌子不是完全坏了，而是可能已经处在一个“不适合继续升降”的状态。</p>
-<p>下一步就不再是继续反复按按钮，而是先把左右桌脚重新找平。</p>
-<hr>
-<h2 id="五、手动找平后，再重新初始化"><a href="#五、手动找平后，再重新初始化" class="headerlink" title="五、手动找平后，再重新初始化"></a>五、手动找平后，再重新初始化</h2><p>处理思路变成了：</p>
-<p><strong>先让左右桌脚回到同一个物理基准，再让系统重新校准。</strong></p>
-<p>实际操作如下：</p>
-<ol>
-<li>利用还能动作的那一边，把两边桌脚尽量调整到最低位置</li>
-<li>确保左右桌脚在肉眼可见范围内回到同一高度</li>
-<li>把两个电机重新接回控制盒</li>
-<li>再次长按下降键约 7 秒，执行系统重置</li>
-</ol>
-<p>这一次，结果明显不同：</p>
-<ul>
-<li>面板上的错误代码消失</li>
-<li>显示重新变回正常高度数字</li>
-<li>再测试升降时，左右两边恢复同步运动</li>
-</ul>
-<p><img src="/images/20260302/379220D3-EF81-44D3-AFD3-1A9DA10B1F23.jpg" alt="问题解决后反馈客服"></p>
-<p><em>图 4：问题解决后，回头告知客服</em></p>
-<p>最终，这次故障没有走到更换控制盒或更换电机的步骤，而是通过“找平 + 重置”恢复了。</p>
-<hr>
-<h2 id="六、这次排查的关键步骤"><a href="#六、这次排查的关键步骤" class="headerlink" title="六、这次排查的关键步骤"></a>六、这次排查的关键步骤</h2><p>整个过程可以整理成下面这张表：</p>
-<table>
-<thead>
-<tr>
-<th>排查步骤</th>
-<th>关键操作</th>
-<th>目的</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>1. 记录报码</td>
-<td>观察 RST / E07 / E08 的变化</td>
-<td>缩小问题范围</td>
-</tr>
-<tr>
-<td>2. 联系客服</td>
-<td>按官方建议先重置，再交叉插线</td>
-<td>建立基础排查路径</td>
-</tr>
-<tr>
-<td>3. 测试电机</td>
-<td>分别确认两侧电机能否动作</td>
-<td>排除电机本体故障</td>
-</tr>
-<tr>
-<td>4. 手动找平</td>
-<td>让左右桌脚回到同一高度</td>
-<td>恢复物理基准</td>
-</tr>
-<tr>
-<td>5. 系统重置</td>
-<td>长按下降键重新初始化</td>
-<td>让控制系统重新校准</td>
-</tr>
-</tbody></table>
-<p>真正起作用的不是某个“神奇步骤”，而是排查顺序：</p>
-<ul>
-<li>先确认系统是否能重置</li>
-<li>再确认连接和报码变化</li>
-<li>再排除电机本体故障</li>
-<li>最后处理左右桌脚不同步</li>
-</ul>
-<p>当问题被拆成几个小问题后，排查难度就降低了很多。</p>
-<hr>
-<h2 id="七、遇到类似情况，可以先检查什么"><a href="#七、遇到类似情况，可以先检查什么" class="headerlink" title="七、遇到类似情况，可以先检查什么"></a>七、遇到类似情况，可以先检查什么</h2><p>如果你的升降桌也出现 <strong>报码 + 一边桌脚不动 + 重置无效</strong>，可以先按低风险顺序检查：</p>
-<ol>
-<li><p><strong>先停止强行升降</strong><br>如果桌面已经明显不平，继续操作可能让受力更糟。</p>
-</li>
-<li><p><strong>记录报码和现象</strong><br>记录是 E07、E08、RST，还是其他错误，同时观察哪一边能动、哪一边不动。</p>
-</li>
-<li><p><strong>先按说明书或客服建议重置</strong><br>很多升降桌都有长按下降键进行初始化的流程。</p>
-</li>
-<li><p><strong>检查电机线是否松动</strong><br>操作前务必断电，不要在不确定的情况下带电插拔。</p>
-</li>
-<li><p><strong>观察两边桌脚是否明显不平</strong><br>如果高度差已经很明显，单纯重置可能不会立即恢复，需要先让两边回到接近一致的高度。</p>
-</li>
-<li><p><strong>不确定时停止操作，联系售后</strong><br>如果出现异响、卡死、线材破损、控制盒异常发热等情况，不建议继续自行排查。</p>
-</li>
-</ol>
-<p>这类排查的重点不是“自己替代维修”，而是在安全前提下，把简单问题先确认清楚。</p>
-<hr>
-<h2 id="八、这次故障带来的几个提醒"><a href="#八、这次故障带来的几个提醒" class="headerlink" title="八、这次故障带来的几个提醒"></a>八、这次故障带来的几个提醒</h2><h3 id="1-设备停止运行，不一定代表彻底损坏"><a href="#1-设备停止运行，不一定代表彻底损坏" class="headerlink" title="1. 设备停止运行，不一定代表彻底损坏"></a>1. 设备停止运行，不一定代表彻底损坏</h3><p>报码看起来很吓人，但它很多时候只是系统在提示：</p>
-<p><strong>当前状态不正常，需要先停止。</strong></p>
-<p>停止运行可能是保护机制，而不是硬件已经报废。</p>
-<h3 id="2-现象往往比报码更重要"><a href="#2-现象往往比报码更重要" class="headerlink" title="2. 现象往往比报码更重要"></a>2. 现象往往比报码更重要</h3><p>如果只盯着 E07 / E08，排查方向可能会被错误码带着走。</p>
-<p>但“只有一边桌脚在动”这个现象，直接指向了左右不同步的可能性。</p>
-<h3 id="3-客服流程仍然有价值"><a href="#3-客服流程仍然有价值" class="headerlink" title="3. 客服流程仍然有价值"></a>3. 客服流程仍然有价值</h3><p>这次虽然最后是自己处理好的，但客服给出的重置和交叉插线步骤提供了排查起点。</p>
-<p>标准流程的价值在于：先把常见问题按顺序排掉。</p>
-<h3 id="4-低风险问题可以先自己排查，但要有边界"><a href="#4-低风险问题可以先自己排查，但要有边界" class="headerlink" title="4. 低风险问题可以先自己排查，但要有边界"></a>4. 低风险问题可以先自己排查，但要有边界</h3><p>重置、观察报码、检查插线、确认是否明显不平，这些属于相对低风险的检查。</p>
-<p>但涉及电路、异常发热、结构卡死、零件更换时，还是应该交给售后或专业维修。</p>
-<hr>
-<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>这次升降桌故障，最后没有变成一次复杂维修。</p>
-<p>它更像是一个生活里的小插曲：一开始看起来很麻烦，但只要愿意停下来观察现象、拆开问题、按顺序排查，就会发现它并没有想象中那么不可处理。</p>
-<p>对这次情况来说，最关键的判断是：</p>
-<p><strong>问题不一定出在电机损坏，而可能是左右桌脚不同步后触发了保护。</strong></p>
-<p>这篇记录不一定适用于所有型号，也不能替代官方维修建议。但如果你遇到的是类似场景：</p>
-<ul>
-<li>控制面板显示 RST / E07 / E08</li>
-<li>一边桌脚不动</li>
-<li>重置暂时无效</li>
-<li>桌面已经明显不平</li>
-</ul>
-<p>那么可以先从“记录报码、确认现象、检查连接、手动找平、重新初始化”这条路径排查，或许能少一点慌张，也少走一点弯路。</p>
-<hr>
-<p><em>本文记录于 2026 年 3 月</em></p>
-]]></content>
-      <categories>
-        <category>随笔</category>
-      </categories>
-      <tags>
-        <tag>随笔</tag>
-        <tag>升降桌</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Jetpack Compose 性能优化：为什么 graphicsLayer 值得重点掌握</title>
-    <url>/posts/2026/02/27/4ae1fc92/</url>
-    <content><![CDATA[<p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
-<p>比如，想让一个组件半透明，你可以这样写：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">alpha</span><span class="token punctuation">(</span><span class="token number">0.5f</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>也可以这样写：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> alpha <span class="token operator">=</span> <span class="token number">0.5f</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>从界面效果来看，它们几乎一样。</p>
-<p>但在<strong>动画</strong>、<strong>滚动联动</strong>、<strong>高频状态变化</strong>这类场景里，两者背后的性能路径并不完全相同。</p>
-<p>真正的关键不是“哪个 API 更高级”，而是：</p>
-<blockquote>
-<p><strong>你在哪个阶段读取状态。</strong></p>
-</blockquote>
-<p>如果状态读取发生在 Composition 阶段，就可能触发更多重组工作。</p>
-<p>如果状态读取被延后到 Draw 阶段，Compose 就有机会跳过 Composition 和 Layout，只做更轻量的绘制更新。</p>
-<hr>
-<h2 id="Compose-UI-的三大阶段"><a href="#Compose-UI-的三大阶段" class="headerlink" title="Compose UI 的三大阶段"></a>Compose UI 的三大阶段</h2><p>理解这件事，先要知道 Compose 的渲染流程主要分为三个阶段：</p>
-<h3 id="1-Composition"><a href="#1-Composition" class="headerlink" title="1. Composition"></a>1. Composition</h3><p>决定“<strong>要显示什么</strong>”。<br>也就是执行 Composable，构建或更新 UI 树。</p>
-<h3 id="2-Layout"><a href="#2-Layout" class="headerlink" title="2. Layout"></a>2. Layout</h3><p>决定“<strong>显示在哪里、多大</strong>”。<br>也就是测量和摆放组件。</p>
-<h3 id="3-Draw"><a href="#3-Draw" class="headerlink" title="3. Draw"></a>3. Draw</h3><p>决定“<strong>最终画成什么样</strong>”。<br>包括透明度、缩放、旋转、裁剪等绘制相关操作。</p>
-<p>如果一个变化只影响 Draw 阶段，通常会比影响 Layout 阶段更高效，因为整体需要做的工作更少。</p>
-<hr>
-<h2 id="真正的性能差异，来自“状态读取时机”"><a href="#真正的性能差异，来自“状态读取时机”" class="headerlink" title="真正的性能差异，来自“状态读取时机”"></a>真正的性能差异，来自“状态读取时机”</h2><p>很多文章会把这件事简单总结成：</p>
-<ul>
-<li><code>.alpha()</code> 会触发重组</li>
-<li><code>.graphicsLayer {}</code> 不会触发重组</li>
-</ul>
-<p>这个说法<strong>不够准确</strong>。</p>
-<p>更准确的说法是：</p>
-<blockquote>
-<p><strong>是否发生重组，取决于状态是在 Composition、Layout 还是 Draw 阶段被读取。</strong></p>
-</blockquote>
-<p><code>graphicsLayer</code> 的优势并不只是“它能做透明度和缩放”，而是它提供了一个很适合承载<strong>绘制阶段状态读取</strong>的入口。</p>
-<p>也就是说，在适合的场景下，你可以把频繁变化的状态放到更靠后的阶段去处理，从而减少不必要的 Composition 和 Layout 开销。</p>
-<hr>
-<h2 id="为什么-graphicsLayer-常常更适合动画"><a href="#为什么-graphicsLayer-常常更适合动画" class="headerlink" title="为什么 graphicsLayer 常常更适合动画"></a>为什么 <code>graphicsLayer</code> 常常更适合动画</h2><p><code>Modifier.graphicsLayer</code> 主要影响的是绘制阶段，不会改变组件的测量尺寸和摆放位置。</p>
-<p>这意味着下面这些变化，通常更适合放进 <code>graphicsLayer</code>：</p>
-<ul>
-<li><code>alpha</code></li>
-<li><code>scaleX / scaleY</code></li>
-<li><code>translationX / translationY</code></li>
-<li><code>rotationZ</code></li>
-</ul>
-<p>对于高频更新的 UI，这通常更有利，比如：</p>
-<ul>
-<li>滚动时的视差效果</li>
-<li>列表项渐隐渐现</li>
-<li>卡片缩放</li>
-<li>图标呼吸动画</li>
-<li>拖拽过程中的位移或旋转</li>
-</ul>
-<p>因为这些效果本质上更多是在改变“怎么画”，而不是“怎么排版”。</p>
-<hr>
-<h2 id="graphicsLayer-还有一层意义：图形层隔离"><a href="#graphicsLayer-还有一层意义：图形层隔离" class="headerlink" title="graphicsLayer 还有一层意义：图形层隔离"></a><code>graphicsLayer</code> 还有一层意义：图形层隔离</h2><p><code>graphicsLayer</code> 不只是一个 modifier，它还会带来图形层的隔离效果。</p>
-<p>你可以把它理解成：</p>
-<ul>
-<li>组件内容先被组织成一个独立绘制层</li>
-<li>后续对这个层做透明度、缩放、旋转等操作</li>
-<li>不必每次都重新“重画里面的内容”</li>
-</ul>
-<p>这也是它特别适合动画场景的原因之一。</p>
-<p>不过要注意，<strong>有 layer 不代表一定更快</strong>。</p>
-<p>如果只是静态 UI，或者变化频率很低，没必要为了“性能优化”而到处套 <code>graphicsLayer</code>。真正值得优化的，是那些：</p>
-<ul>
-<li>高频变化</li>
-<li>容易掉帧的动画</li>
-<li>滚动联动效果</li>
-<li>明显存在性能瓶颈的界面</li>
-</ul>
-<hr>
-<h2 id="一个更准确的对比方式"><a href="#一个更准确的对比方式" class="headerlink" title="一个更准确的对比方式"></a>一个更准确的对比方式</h2><table>
-<thead>
-<tr>
-<th align="left">对比项</th>
-<th align="left">普通值传递写法</th>
-<th align="left"><code>graphicsLayer { ... }</code> / lambda-based 写法</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">状态读取位置</td>
-<td align="left">常见于 Composition 阶段</td>
-<td align="left">可延后到 Draw 阶段</td>
-</tr>
-<tr>
-<td align="left">是否一定触发重组</td>
-<td align="left">不一定，但更容易发生</td>
-<td align="left">不一定完全没有，但更容易跳过 Composition</td>
-</tr>
-<tr>
-<td align="left">是否影响布局</td>
-<td align="left">取决于具体 modifier</td>
-<td align="left"><code>graphicsLayer</code> 本身只影响绘制</td>
-</tr>
-<tr>
-<td align="left">适合场景</td>
-<td align="left">静态 UI、低频变化</td>
-<td align="left">动画、滚动联动、高频视觉变化</td>
-</tr>
-</tbody></table>
-<p>这里最重要的是一句话：</p>
-<blockquote>
-<p><strong>不是 <code>graphicsLayer</code> 天生“无敌”，而是它更适合处理那些只需要改变视觉表现、不需要重新布局的更新。</strong></p>
-</blockquote>
-<hr>
-<h2 id="实战示例：把动画状态留到绘制阶段处理"><a href="#实战示例：把动画状态留到绘制阶段处理" class="headerlink" title="实战示例：把动画状态留到绘制阶段处理"></a>实战示例：把动画状态留到绘制阶段处理</h2><p>下面这个例子非常适合这个思路：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> animatedScale <span class="token keyword">by</span> <span class="token function">animateFloatAsState</span><span class="token punctuation">(</span>targetValue <span class="token operator">=</span> <span class="token number">1.2f</span><span class="token punctuation">)</span>
-
-<span class="token function">Box</span><span class="token punctuation">(</span>
-    Modifier
-        <span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
-        <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>Magenta<span class="token punctuation">)</span>
-        <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
-            scaleX <span class="token operator">=</span> animatedScale
-            scaleY <span class="token operator">=</span> animatedScale
-            alpha <span class="token operator">=</span> <span class="token number">0.9f</span>
-        <span class="token punctuation">}</span>
-<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>这种写法的好处是，<code>scaleX</code> 和 <code>scaleY</code> 这类纯视觉变化，更适合放在 <code>graphicsLayer</code> 中处理。因为它们不需要改变组件本身的测量结果和摆放位置。</p>
-<p>如果你的动画只是让组件“看起来变大”，而不是让布局系统认为“它真的变大了”，这种方式通常更划算。</p>
-<hr>
-<h2 id="什么时候优先考虑-graphicsLayer"><a href="#什么时候优先考虑-graphicsLayer" class="headerlink" title="什么时候优先考虑 graphicsLayer"></a>什么时候优先考虑 <code>graphicsLayer</code></h2><p>你可以优先在下面这些场景考虑它：</p>
-<h3 id="1-高频动画"><a href="#1-高频动画" class="headerlink" title="1. 高频动画"></a>1. 高频动画</h3><p>例如透明度、缩放、旋转、位移持续变化。<br>这类变化通常只影响视觉呈现，不需要反复参与布局。</p>
-<h3 id="2-滚动驱动效果"><a href="#2-滚动驱动效果" class="headerlink" title="2. 滚动驱动效果"></a>2. 滚动驱动效果</h3><p>比如顶部标题渐隐、列表项视差、卡片缩放。<br>这类状态更新非常频繁，更适合尽量延后到 Draw 阶段处理。</p>
-<h3 id="3-不想因为视觉变化触发布局连锁反应"><a href="#3-不想因为视觉变化触发布局连锁反应" class="headerlink" title="3. 不想因为视觉变化触发布局连锁反应"></a>3. 不想因为视觉变化触发布局连锁反应</h3><p>如果变化不会影响组件大小和位置，就尽量别让它进入 Layout。</p>
-<hr>
-<h2 id="什么时候不要滥用"><a href="#什么时候不要滥用" class="headerlink" title="什么时候不要滥用"></a>什么时候不要滥用</h2><p><code>graphicsLayer</code> 不是“看到动画就全上”的银弹。</p>
-<p>下面这些情况要谨慎：</p>
-<h3 id="1-变化本身会影响布局"><a href="#1-变化本身会影响布局" class="headerlink" title="1. 变化本身会影响布局"></a>1. 变化本身会影响布局</h3><p>如果你需要的不是“看起来变大”，而是“真的占更多空间”，那就不能只靠 Draw 阶段处理。</p>
-<h3 id="2-页面本身没有性能问题"><a href="#2-页面本身没有性能问题" class="headerlink" title="2. 页面本身没有性能问题"></a>2. 页面本身没有性能问题</h3><p>优化应该服务于实际瓶颈。<br>如果页面没有掉帧、没有频繁重组、没有滚动抖动，过度使用 <code>graphicsLayer</code> 反而会增加理解成本。</p>
-<h3 id="3-为了“听起来高级”而替换所有-modifier"><a href="#3-为了“听起来高级”而替换所有-modifier" class="headerlink" title="3. 为了“听起来高级”而替换所有 modifier"></a>3. 为了“听起来高级”而替换所有 modifier</h3><p>性能优化不是 API 崇拜。<br>重点是识别哪些状态变化只是视觉层面的，哪些真的会影响布局和结构。</p>
-<hr>
-<h2 id="一句话总结"><a href="#一句话总结" class="headerlink" title="一句话总结"></a>一句话总结</h2><p><code>graphicsLayer</code> 的核心价值，不是“它比 <code>.alpha()</code> 更酷”，而是：</p>
-<blockquote>
-<p><strong>它很适合承载那些只影响绘制结果的高频状态变化，让 Compose 有机会跳过更重的 Composition 和 Layout。</strong></p>
-</blockquote>
-<p>所以，当你在做这些效果时：</p>
-<ul>
-<li>渐隐渐现</li>
-<li>缩放</li>
-<li>旋转</li>
-<li>平移</li>
-<li>滚动联动动画</li>
-</ul>
-<p>优先想一件事：</p>
-<p><strong>这次变化，是不是其实只需要改 Draw，而不必让整个 UI 重新参与组合和布局？</strong></p>
-<p>如果答案是“对”，那 <code>graphicsLayer</code> 往往就是非常值得尝试的方案。</p>
-<hr>
-<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>写 Compose 性能优化时，最容易踩的坑就是把结论说得太绝对。<br>真正值得记住的不是“某个 modifier 一定更快”，而是这条原则：</p>
-<blockquote>
-<p><strong>把状态读取尽量放到更晚的阶段，尤其是 Draw 阶段。</strong></p>
-</blockquote>
-<p>这才是很多 Compose 性能优化技巧背后的共同思路。</p>
-]]></content>
-      <categories>
-        <category>Compose</category>
-      </categories>
-      <tags>
-        <tag>Jetpack Compose</tag>
-        <tag>Android</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Jetpack Compose 中 remember 和 rememberSaveable 的区别：一次 Tab 切换状态丢失排查</title>
     <url>/posts/2023/12/04/f68195/</url>
     <content><![CDATA[<p>在 Jetpack Compose 中，<code>remember {}</code> 和 <code>rememberSaveable {}</code> 都能“记住”状态。</p>
@@ -1429,8 +1264,173 @@ The default implementation only supports types which can be stored inside the Bu
         <category>Technical</category>
       </categories>
       <tags>
-        <tag>Jetpack Compose</tag>
         <tag>Android</tag>
+        <tag>Jetpack Compose</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Jetpack Compose 性能优化：为什么 graphicsLayer 值得重点掌握</title>
+    <url>/posts/2026/02/27/4ae1fc92/</url>
+    <content><![CDATA[<p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
+<p>比如，想让一个组件半透明，你可以这样写：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">alpha</span><span class="token punctuation">(</span><span class="token number">0.5f</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>也可以这样写：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> alpha <span class="token operator">=</span> <span class="token number">0.5f</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>从界面效果来看，它们几乎一样。</p>
+<p>但在<strong>动画</strong>、<strong>滚动联动</strong>、<strong>高频状态变化</strong>这类场景里，两者背后的性能路径并不完全相同。</p>
+<p>真正的关键不是“哪个 API 更高级”，而是：</p>
+<blockquote>
+<p><strong>你在哪个阶段读取状态。</strong></p>
+</blockquote>
+<p>如果状态读取发生在 Composition 阶段，就可能触发更多重组工作。</p>
+<p>如果状态读取被延后到 Draw 阶段，Compose 就有机会跳过 Composition 和 Layout，只做更轻量的绘制更新。</p>
+<hr>
+<h2 id="Compose-UI-的三大阶段"><a href="#Compose-UI-的三大阶段" class="headerlink" title="Compose UI 的三大阶段"></a>Compose UI 的三大阶段</h2><p>理解这件事，先要知道 Compose 的渲染流程主要分为三个阶段：</p>
+<h3 id="1-Composition"><a href="#1-Composition" class="headerlink" title="1. Composition"></a>1. Composition</h3><p>决定“<strong>要显示什么</strong>”。<br>也就是执行 Composable，构建或更新 UI 树。</p>
+<h3 id="2-Layout"><a href="#2-Layout" class="headerlink" title="2. Layout"></a>2. Layout</h3><p>决定“<strong>显示在哪里、多大</strong>”。<br>也就是测量和摆放组件。</p>
+<h3 id="3-Draw"><a href="#3-Draw" class="headerlink" title="3. Draw"></a>3. Draw</h3><p>决定“<strong>最终画成什么样</strong>”。<br>包括透明度、缩放、旋转、裁剪等绘制相关操作。</p>
+<p>如果一个变化只影响 Draw 阶段，通常会比影响 Layout 阶段更高效，因为整体需要做的工作更少。</p>
+<hr>
+<h2 id="真正的性能差异，来自“状态读取时机”"><a href="#真正的性能差异，来自“状态读取时机”" class="headerlink" title="真正的性能差异，来自“状态读取时机”"></a>真正的性能差异，来自“状态读取时机”</h2><p>很多文章会把这件事简单总结成：</p>
+<ul>
+<li><code>.alpha()</code> 会触发重组</li>
+<li><code>.graphicsLayer {}</code> 不会触发重组</li>
+</ul>
+<p>这个说法<strong>不够准确</strong>。</p>
+<p>更准确的说法是：</p>
+<blockquote>
+<p><strong>是否发生重组，取决于状态是在 Composition、Layout 还是 Draw 阶段被读取。</strong></p>
+</blockquote>
+<p><code>graphicsLayer</code> 的优势并不只是“它能做透明度和缩放”，而是它提供了一个很适合承载<strong>绘制阶段状态读取</strong>的入口。</p>
+<p>也就是说，在适合的场景下，你可以把频繁变化的状态放到更靠后的阶段去处理，从而减少不必要的 Composition 和 Layout 开销。</p>
+<hr>
+<h2 id="为什么-graphicsLayer-常常更适合动画"><a href="#为什么-graphicsLayer-常常更适合动画" class="headerlink" title="为什么 graphicsLayer 常常更适合动画"></a>为什么 <code>graphicsLayer</code> 常常更适合动画</h2><p><code>Modifier.graphicsLayer</code> 主要影响的是绘制阶段，不会改变组件的测量尺寸和摆放位置。</p>
+<p>这意味着下面这些变化，通常更适合放进 <code>graphicsLayer</code>：</p>
+<ul>
+<li><code>alpha</code></li>
+<li><code>scaleX / scaleY</code></li>
+<li><code>translationX / translationY</code></li>
+<li><code>rotationZ</code></li>
+</ul>
+<p>对于高频更新的 UI，这通常更有利，比如：</p>
+<ul>
+<li>滚动时的视差效果</li>
+<li>列表项渐隐渐现</li>
+<li>卡片缩放</li>
+<li>图标呼吸动画</li>
+<li>拖拽过程中的位移或旋转</li>
+</ul>
+<p>因为这些效果本质上更多是在改变“怎么画”，而不是“怎么排版”。</p>
+<hr>
+<h2 id="graphicsLayer-还有一层意义：图形层隔离"><a href="#graphicsLayer-还有一层意义：图形层隔离" class="headerlink" title="graphicsLayer 还有一层意义：图形层隔离"></a><code>graphicsLayer</code> 还有一层意义：图形层隔离</h2><p><code>graphicsLayer</code> 不只是一个 modifier，它还会带来图形层的隔离效果。</p>
+<p>你可以把它理解成：</p>
+<ul>
+<li>组件内容先被组织成一个独立绘制层</li>
+<li>后续对这个层做透明度、缩放、旋转等操作</li>
+<li>不必每次都重新“重画里面的内容”</li>
+</ul>
+<p>这也是它特别适合动画场景的原因之一。</p>
+<p>不过要注意，<strong>有 layer 不代表一定更快</strong>。</p>
+<p>如果只是静态 UI，或者变化频率很低，没必要为了“性能优化”而到处套 <code>graphicsLayer</code>。真正值得优化的，是那些：</p>
+<ul>
+<li>高频变化</li>
+<li>容易掉帧的动画</li>
+<li>滚动联动效果</li>
+<li>明显存在性能瓶颈的界面</li>
+</ul>
+<hr>
+<h2 id="一个更准确的对比方式"><a href="#一个更准确的对比方式" class="headerlink" title="一个更准确的对比方式"></a>一个更准确的对比方式</h2><table>
+<thead>
+<tr>
+<th align="left">对比项</th>
+<th align="left">普通值传递写法</th>
+<th align="left"><code>graphicsLayer { ... }</code> / lambda-based 写法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">状态读取位置</td>
+<td align="left">常见于 Composition 阶段</td>
+<td align="left">可延后到 Draw 阶段</td>
+</tr>
+<tr>
+<td align="left">是否一定触发重组</td>
+<td align="left">不一定，但更容易发生</td>
+<td align="left">不一定完全没有，但更容易跳过 Composition</td>
+</tr>
+<tr>
+<td align="left">是否影响布局</td>
+<td align="left">取决于具体 modifier</td>
+<td align="left"><code>graphicsLayer</code> 本身只影响绘制</td>
+</tr>
+<tr>
+<td align="left">适合场景</td>
+<td align="left">静态 UI、低频变化</td>
+<td align="left">动画、滚动联动、高频视觉变化</td>
+</tr>
+</tbody></table>
+<p>这里最重要的是一句话：</p>
+<blockquote>
+<p><strong>不是 <code>graphicsLayer</code> 天生“无敌”，而是它更适合处理那些只需要改变视觉表现、不需要重新布局的更新。</strong></p>
+</blockquote>
+<hr>
+<h2 id="实战示例：把动画状态留到绘制阶段处理"><a href="#实战示例：把动画状态留到绘制阶段处理" class="headerlink" title="实战示例：把动画状态留到绘制阶段处理"></a>实战示例：把动画状态留到绘制阶段处理</h2><p>下面这个例子非常适合这个思路：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> animatedScale <span class="token keyword">by</span> <span class="token function">animateFloatAsState</span><span class="token punctuation">(</span>targetValue <span class="token operator">=</span> <span class="token number">1.2f</span><span class="token punctuation">)</span>
+
+<span class="token function">Box</span><span class="token punctuation">(</span>
+    Modifier
+        <span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>Magenta<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
+            scaleX <span class="token operator">=</span> animatedScale
+            scaleY <span class="token operator">=</span> animatedScale
+            alpha <span class="token operator">=</span> <span class="token number">0.9f</span>
+        <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这种写法的好处是，<code>scaleX</code> 和 <code>scaleY</code> 这类纯视觉变化，更适合放在 <code>graphicsLayer</code> 中处理。因为它们不需要改变组件本身的测量结果和摆放位置。</p>
+<p>如果你的动画只是让组件“看起来变大”，而不是让布局系统认为“它真的变大了”，这种方式通常更划算。</p>
+<hr>
+<h2 id="什么时候优先考虑-graphicsLayer"><a href="#什么时候优先考虑-graphicsLayer" class="headerlink" title="什么时候优先考虑 graphicsLayer"></a>什么时候优先考虑 <code>graphicsLayer</code></h2><p>你可以优先在下面这些场景考虑它：</p>
+<h3 id="1-高频动画"><a href="#1-高频动画" class="headerlink" title="1. 高频动画"></a>1. 高频动画</h3><p>例如透明度、缩放、旋转、位移持续变化。<br>这类变化通常只影响视觉呈现，不需要反复参与布局。</p>
+<h3 id="2-滚动驱动效果"><a href="#2-滚动驱动效果" class="headerlink" title="2. 滚动驱动效果"></a>2. 滚动驱动效果</h3><p>比如顶部标题渐隐、列表项视差、卡片缩放。<br>这类状态更新非常频繁，更适合尽量延后到 Draw 阶段处理。</p>
+<h3 id="3-不想因为视觉变化触发布局连锁反应"><a href="#3-不想因为视觉变化触发布局连锁反应" class="headerlink" title="3. 不想因为视觉变化触发布局连锁反应"></a>3. 不想因为视觉变化触发布局连锁反应</h3><p>如果变化不会影响组件大小和位置，就尽量别让它进入 Layout。</p>
+<hr>
+<h2 id="什么时候不要滥用"><a href="#什么时候不要滥用" class="headerlink" title="什么时候不要滥用"></a>什么时候不要滥用</h2><p><code>graphicsLayer</code> 不是“看到动画就全上”的银弹。</p>
+<p>下面这些情况要谨慎：</p>
+<h3 id="1-变化本身会影响布局"><a href="#1-变化本身会影响布局" class="headerlink" title="1. 变化本身会影响布局"></a>1. 变化本身会影响布局</h3><p>如果你需要的不是“看起来变大”，而是“真的占更多空间”，那就不能只靠 Draw 阶段处理。</p>
+<h3 id="2-页面本身没有性能问题"><a href="#2-页面本身没有性能问题" class="headerlink" title="2. 页面本身没有性能问题"></a>2. 页面本身没有性能问题</h3><p>优化应该服务于实际瓶颈。<br>如果页面没有掉帧、没有频繁重组、没有滚动抖动，过度使用 <code>graphicsLayer</code> 反而会增加理解成本。</p>
+<h3 id="3-为了“听起来高级”而替换所有-modifier"><a href="#3-为了“听起来高级”而替换所有-modifier" class="headerlink" title="3. 为了“听起来高级”而替换所有 modifier"></a>3. 为了“听起来高级”而替换所有 modifier</h3><p>性能优化不是 API 崇拜。<br>重点是识别哪些状态变化只是视觉层面的，哪些真的会影响布局和结构。</p>
+<hr>
+<h2 id="一句话总结"><a href="#一句话总结" class="headerlink" title="一句话总结"></a>一句话总结</h2><p><code>graphicsLayer</code> 的核心价值，不是“它比 <code>.alpha()</code> 更酷”，而是：</p>
+<blockquote>
+<p><strong>它很适合承载那些只影响绘制结果的高频状态变化，让 Compose 有机会跳过更重的 Composition 和 Layout。</strong></p>
+</blockquote>
+<p>所以，当你在做这些效果时：</p>
+<ul>
+<li>渐隐渐现</li>
+<li>缩放</li>
+<li>旋转</li>
+<li>平移</li>
+<li>滚动联动动画</li>
+</ul>
+<p>优先想一件事：</p>
+<p><strong>这次变化，是不是其实只需要改 Draw，而不必让整个 UI 重新参与组合和布局？</strong></p>
+<p>如果答案是“对”，那 <code>graphicsLayer</code> 往往就是非常值得尝试的方案。</p>
+<hr>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>写 Compose 性能优化时，最容易踩的坑就是把结论说得太绝对。<br>真正值得记住的不是“某个 modifier 一定更快”，而是这条原则：</p>
+<blockquote>
+<p><strong>把状态读取尽量放到更晚的阶段，尤其是 Draw 阶段。</strong></p>
+</blockquote>
+<p>这才是很多 Compose 性能优化技巧背后的共同思路。</p>
+]]></content>
+      <categories>
+        <category>Compose</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>Jetpack Compose</tag>
       </tags>
   </entry>
   <entry>
@@ -1690,8 +1690,8 @@ The default implementation only supports types which can be stored inside the Bu
         <category>Compose</category>
       </categories>
       <tags>
-        <tag>Jetpack Compose</tag>
         <tag>Android</tag>
+        <tag>Jetpack Compose</tag>
         <tag>Compose</tag>
       </tags>
   </entry>
