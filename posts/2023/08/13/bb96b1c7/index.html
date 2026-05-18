@@ -30,7 +30,7 @@
 <meta property="og:description" content="在 Kotlin Multiplatform 项目中，iOS 侧文件明明存在于 Documents 目录，使用 NSData.dataWithContentsOfFile 却一直报 No such file or directory。根因是 iOS 沙盒 Application 目录 UUID 会随安装方式变化，不能持久化完整路径。正确做法是只保存文件名或相对路径，读取时动态获取当前 Docume">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2023-08-13T04:24:44.000Z">
-<meta property="article:modified_time" content="2026-05-17T08:45:57.408Z">
+<meta property="article:modified_time" content="2026-05-17T09:03:59.149Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="SwiftUI">
 <meta property="article:tag" content="Kotlin Native">
@@ -55,7 +55,7 @@
 
 
 
-<link rel="dns-prefetch" href="https://blog-waline-git-main-breakzeros-projects.vercel.app">
+<link rel="dns-prefetch" href="https://blog-comment-mp41x2eix-breakzeros-projects.vercel.app">
   <noscript>
     <link rel="stylesheet" href="/css/noscript.css">
   </noscript>
@@ -540,8 +540,8 @@ NSData<span class="token punctuation">.</span><span class="token function">dataW
 
 
 
-<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-CN","enable":true,"serverURL":"https://blog-waline-git-main-breakzeros-projects.vercel.app","cssUrl":"https://unpkg.com/@waline/client@v2/dist/waline.css","commentCount":false,"pageview":false,"dark":"auto","imageUploader":false,"copyright":false,"search":false,"meta":["nick","mail"],"requiredMeta":["nick"],"el":"#waline","comment":true,"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","path":"/posts/2023/08/13/bb96b1c7/"}</script>
-<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css">
+<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-CN","enable":true,"serverURL":"https://blog-comment-mp41x2eix-breakzeros-projects.vercel.app","cssUrl":"https://unpkg.com/@waline/client@v3/dist/waline.css","commentCount":true,"pageview":false,"dark":"auto","imageUploader":false,"copyright":false,"search":false,"meta":["nick","mail"],"requiredMeta":["nick"],"el":"#waline","comment":true,"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","path":"/posts/2023/08/13/bb96b1c7/"}</script>
+<link rel="stylesheet" href="https://unpkg.com/@waline/client@v3/dist/waline.css">
 <script>
 document.addEventListener('page:loaded', () => {
   NexT.utils.loadComments(CONFIG.waline.el).then(() =>
