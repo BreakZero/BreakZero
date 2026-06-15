@@ -1,202 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>乐歌升降桌 E07 / E08 故障排查：一边桌脚不动时，我是怎么修好的</title>
-    <url>/posts/2026/03/02/fbb9923f/</url>
-    <content><![CDATA[<p>家里的小故障有时候最磨人。</p>
-<p>它不至于让人立刻崩溃，但足够影响日常使用。尤其是当升降桌突然一边能动、一边完全没反应，桌面变得一高一低时，工作状态也会被一起打断。</p>
-<p>这次出问题的是家里的乐歌升降桌。</p>
-<p>原本只是一次普通的升降操作，按下上升键后，桌子没有正常升起来，反而进入了异常状态：</p>
-<ul>
-<li>一边桌脚还在动</li>
-<li>另一边桌脚完全没反应</li>
-<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
-</ul>
-<p>售后当时无法马上处理，于是只能先自己排查。最后发现，问题并不是电机彻底损坏，而更像是左右桌脚高度不同步后触发了保护机制。</p>
-<p>这篇文章记录完整过程，也给遇到类似情况的人一个参考。</p>
-<blockquote>
-<p>说明：本文只是一次个人排查记录，不是官方维修教程。涉及拆卸、插线或通电测试时，务必先断电，确认安全后再操作；如果不确定，优先联系售后。</p>
-</blockquote>
-<hr>
-<h2 id="一、故障现象：一边能动，一边不动"><a href="#一、故障现象：一边能动，一边不动" class="headerlink" title="一、故障现象：一边能动，一边不动"></a>一、故障现象：一边能动，一边不动</h2><p>那天晚上，按下升降桌的上升按钮后，很快发现状态不对。</p>
-<p>桌子的表现大概是：</p>
-<ul>
-<li>左边桌脚还有反应，但<strong>只能往下，不能上升</strong></li>
-<li>右边桌脚无论上升还是下降都<strong>完全没反应</strong></li>
-<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
-</ul>
-<p><img src="/images/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg" alt="控制面板显示 RST / E07 / E08 等报码"></p>
-<p><em>图 1：控制面板显示 RST / E07 / E08 等报码</em></p>
-<p>连续试了几次后，结论基本一致：</p>
-<p><strong>这不是简单卡顿，而是桌子已经进入了异常保护状态。</strong></p>
-<p>因为每次操作时，始终只有一边桌脚在动，另一边完全静止。桌面已经明显不平，继续强行升降反而可能让结构受力更糟。</p>
-<hr>
-<h2 id="二、先联系售后，按标准流程排查"><a href="#二、先联系售后，按标准流程排查" class="headerlink" title="二、先联系售后，按标准流程排查"></a>二、先联系售后，按标准流程排查</h2><p>遇到这类问题，第一步还是联系售后。</p>
-<p>乐歌京东自营店客服给出的排查流程比较标准，也符合电动升降桌常见处理方式。</p>
-<h3 id="1-先做系统重置"><a href="#1-先做系统重置" class="headerlink" title="1. 先做系统重置"></a>1. 先做系统重置</h3><p>客服先建议把桌子尽量降到最低，然后：</p>
-<blockquote>
-<p><strong>长按下降键约 7 秒，执行系统重置。</strong></p>
-</blockquote>
-<p>这是升降桌常见的初始化方式。很多报码不一定代表零件损坏，也可能只是系统需要重新校准。</p>
-<p>不过这一步对这台桌子没有立即起作用。</p>
-<h3 id="2-再交叉插线"><a href="#2-再交叉插线" class="headerlink" title="2. 再交叉插线"></a>2. 再交叉插线</h3><p>接下来，客服建议拆开桌腿挡板，把控制盒上的 <strong>M1 和 M2 电机线互换</strong>，再观察报码变化。</p>
-<p><img src="/images/20260302/8BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg" alt="客服建议交叉插线排查问题位置"></p>
-<p><em>图 2：客服建议交叉插线排查问题位置</em></p>
-<p>照着操作后，控制面板上的报码确实发生了变化：从 <strong>E07</strong> 变成了 <strong>E08</strong>。</p>
-<p><img src="/images/20260302/C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg" alt="交叉插线后报码从 E07 变成 E08"></p>
-<p><em>图 3：交叉插线后，报码从 E07 变成 E08</em></p>
-<p>客服根据这个变化，初步判断可能和控制盒有关，需要继续反馈技术部门。由于当时临近假期，后续处理需要等到年后。</p>
-<p>但桌子已经拆到这一步，与其直接等待，不如继续确认几个更基础的问题。</p>
-<hr>
-<h2 id="三、不要只盯报码，更要看现象"><a href="#三、不要只盯报码，更要看现象" class="headerlink" title="三、不要只盯报码，更要看现象"></a>三、不要只盯报码，更要看现象</h2><p>E07 / E08 这样的错误码有参考价值，但不能完全依赖报码判断。</p>
-<p>这次真正有用的线索，其实是设备表现出来的现象：</p>
-<p><strong>始终只有一边桌脚在动，另一边没有正常响应。</strong></p>
-<p>结合网上能查到的说明，以及同类升降桌的常见故障逻辑，E07 / E08 大致可能和两类问题有关：</p>
-<ul>
-<li>左右桌脚高度不同步</li>
-<li>电机连接、通信或控制异常</li>
-</ul>
-<p>这说明问题未必是电机彻底损坏，也可能是左右不同步后触发了系统保护。</p>
-<p>所以排查重点从“报码是什么意思”转成了两个更具体的问题：</p>
-<ol>
-<li>电机本身还能不能正常工作？</li>
-<li>左右桌脚是不是已经明显不平？</li>
-</ol>
-<hr>
-<h2 id="四、拆开检查：先确认电机有没有坏"><a href="#四、拆开检查：先确认电机有没有坏" class="headerlink" title="四、拆开检查：先确认电机有没有坏"></a>四、拆开检查：先确认电机有没有坏</h2><p>既然已经拆开挡板，下一步就是确认电机本体是否正常。</p>
-<p>操作前先断电，确认连接位置，再分别测试两侧电机。整个过程大致是：</p>
-<ol>
-<li>拧开桌腿挡板螺丝</li>
-<li>断开两侧电机连接线</li>
-<li>分别测试每个电机是否能正常上下动作</li>
-</ol>
-<p>测试结果比较关键：</p>
-<p><strong>两个电机都能正常上下运动。</strong></p>
-<p>这意味着问题大概率不在“电机彻底坏了”这一层。至少最麻烦的一种情况可以先排除。</p>
-<p>回头再看整个过程，问题开始变得清楚：</p>
-<ul>
-<li>出问题前，已经有一段时间只有一边桌脚在动</li>
-<li>另一边没有正常响应</li>
-<li>两边高度差被逐渐拉大</li>
-<li>高度差过大后，系统可能触发保护，阻止继续运行</li>
-</ul>
-<p>也就是说，桌子不是完全坏了，而是可能已经处在一个“不适合继续升降”的状态。</p>
-<p>下一步就不再是继续反复按按钮，而是先把左右桌脚重新找平。</p>
-<hr>
-<h2 id="五、手动找平后，再重新初始化"><a href="#五、手动找平后，再重新初始化" class="headerlink" title="五、手动找平后，再重新初始化"></a>五、手动找平后，再重新初始化</h2><p>处理思路变成了：</p>
-<p><strong>先让左右桌脚回到同一个物理基准，再让系统重新校准。</strong></p>
-<p>实际操作如下：</p>
-<ol>
-<li>利用还能动作的那一边，把两边桌脚尽量调整到最低位置</li>
-<li>确保左右桌脚在肉眼可见范围内回到同一高度</li>
-<li>把两个电机重新接回控制盒</li>
-<li>再次长按下降键约 7 秒，执行系统重置</li>
-</ol>
-<p>这一次，结果明显不同：</p>
-<ul>
-<li>面板上的错误代码消失</li>
-<li>显示重新变回正常高度数字</li>
-<li>再测试升降时，左右两边恢复同步运动</li>
-</ul>
-<p><img src="/images/20260302/379220D3-EF81-44D3-AFD3-1A9DA10B1F23.jpg" alt="问题解决后反馈客服"></p>
-<p><em>图 4：问题解决后，回头告知客服</em></p>
-<p>最终，这次故障没有走到更换控制盒或更换电机的步骤，而是通过“找平 + 重置”恢复了。</p>
-<hr>
-<h2 id="六、这次排查的关键步骤"><a href="#六、这次排查的关键步骤" class="headerlink" title="六、这次排查的关键步骤"></a>六、这次排查的关键步骤</h2><p>整个过程可以整理成下面这张表：</p>
-<table>
-<thead>
-<tr>
-<th>排查步骤</th>
-<th>关键操作</th>
-<th>目的</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>1. 记录报码</td>
-<td>观察 RST / E07 / E08 的变化</td>
-<td>缩小问题范围</td>
-</tr>
-<tr>
-<td>2. 联系客服</td>
-<td>按官方建议先重置，再交叉插线</td>
-<td>建立基础排查路径</td>
-</tr>
-<tr>
-<td>3. 测试电机</td>
-<td>分别确认两侧电机能否动作</td>
-<td>排除电机本体故障</td>
-</tr>
-<tr>
-<td>4. 手动找平</td>
-<td>让左右桌脚回到同一高度</td>
-<td>恢复物理基准</td>
-</tr>
-<tr>
-<td>5. 系统重置</td>
-<td>长按下降键重新初始化</td>
-<td>让控制系统重新校准</td>
-</tr>
-</tbody></table>
-<p>真正起作用的不是某个“神奇步骤”，而是排查顺序：</p>
-<ul>
-<li>先确认系统是否能重置</li>
-<li>再确认连接和报码变化</li>
-<li>再排除电机本体故障</li>
-<li>最后处理左右桌脚不同步</li>
-</ul>
-<p>当问题被拆成几个小问题后，排查难度就降低了很多。</p>
-<hr>
-<h2 id="七、遇到类似情况，可以先检查什么"><a href="#七、遇到类似情况，可以先检查什么" class="headerlink" title="七、遇到类似情况，可以先检查什么"></a>七、遇到类似情况，可以先检查什么</h2><p>如果你的升降桌也出现 <strong>报码 + 一边桌脚不动 + 重置无效</strong>，可以先按低风险顺序检查：</p>
-<ol>
-<li><p><strong>先停止强行升降</strong><br>如果桌面已经明显不平，继续操作可能让受力更糟。</p>
-</li>
-<li><p><strong>记录报码和现象</strong><br>记录是 E07、E08、RST，还是其他错误，同时观察哪一边能动、哪一边不动。</p>
-</li>
-<li><p><strong>先按说明书或客服建议重置</strong><br>很多升降桌都有长按下降键进行初始化的流程。</p>
-</li>
-<li><p><strong>检查电机线是否松动</strong><br>操作前务必断电，不要在不确定的情况下带电插拔。</p>
-</li>
-<li><p><strong>观察两边桌脚是否明显不平</strong><br>如果高度差已经很明显，单纯重置可能不会立即恢复，需要先让两边回到接近一致的高度。</p>
-</li>
-<li><p><strong>不确定时停止操作，联系售后</strong><br>如果出现异响、卡死、线材破损、控制盒异常发热等情况，不建议继续自行排查。</p>
-</li>
-</ol>
-<p>这类排查的重点不是“自己替代维修”，而是在安全前提下，把简单问题先确认清楚。</p>
-<hr>
-<h2 id="八、这次故障带来的几个提醒"><a href="#八、这次故障带来的几个提醒" class="headerlink" title="八、这次故障带来的几个提醒"></a>八、这次故障带来的几个提醒</h2><h3 id="1-设备停止运行，不一定代表彻底损坏"><a href="#1-设备停止运行，不一定代表彻底损坏" class="headerlink" title="1. 设备停止运行，不一定代表彻底损坏"></a>1. 设备停止运行，不一定代表彻底损坏</h3><p>报码看起来很吓人，但它很多时候只是系统在提示：</p>
-<p><strong>当前状态不正常，需要先停止。</strong></p>
-<p>停止运行可能是保护机制，而不是硬件已经报废。</p>
-<h3 id="2-现象往往比报码更重要"><a href="#2-现象往往比报码更重要" class="headerlink" title="2. 现象往往比报码更重要"></a>2. 现象往往比报码更重要</h3><p>如果只盯着 E07 / E08，排查方向可能会被错误码带着走。</p>
-<p>但“只有一边桌脚在动”这个现象，直接指向了左右不同步的可能性。</p>
-<h3 id="3-客服流程仍然有价值"><a href="#3-客服流程仍然有价值" class="headerlink" title="3. 客服流程仍然有价值"></a>3. 客服流程仍然有价值</h3><p>这次虽然最后是自己处理好的，但客服给出的重置和交叉插线步骤提供了排查起点。</p>
-<p>标准流程的价值在于：先把常见问题按顺序排掉。</p>
-<h3 id="4-低风险问题可以先自己排查，但要有边界"><a href="#4-低风险问题可以先自己排查，但要有边界" class="headerlink" title="4. 低风险问题可以先自己排查，但要有边界"></a>4. 低风险问题可以先自己排查，但要有边界</h3><p>重置、观察报码、检查插线、确认是否明显不平，这些属于相对低风险的检查。</p>
-<p>但涉及电路、异常发热、结构卡死、零件更换时，还是应该交给售后或专业维修。</p>
-<hr>
-<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>这次升降桌故障，最后没有变成一次复杂维修。</p>
-<p>它更像是一个生活里的小插曲：一开始看起来很麻烦，但只要愿意停下来观察现象、拆开问题、按顺序排查，就会发现它并没有想象中那么不可处理。</p>
-<p>对这次情况来说，最关键的判断是：</p>
-<p><strong>问题不一定出在电机损坏，而可能是左右桌脚不同步后触发了保护。</strong></p>
-<p>这篇记录不一定适用于所有型号，也不能替代官方维修建议。但如果你遇到的是类似场景：</p>
-<ul>
-<li>控制面板显示 RST / E07 / E08</li>
-<li>一边桌脚不动</li>
-<li>重置暂时无效</li>
-<li>桌面已经明显不平</li>
-</ul>
-<p>那么可以先从“记录报码、确认现象、检查连接、手动找平、重新初始化”这条路径排查，或许能少一点慌张，也少走一点弯路。</p>
-<hr>
-<p><em>本文记录于 2026 年 3 月</em></p>
-]]></content>
-      <categories>
-        <category>随笔</category>
-      </categories>
-      <tags>
-        <tag>随笔</tag>
-        <tag>升降桌</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>AI Agent 和 Skill 有什么区别？从执行任务到沉淀能力</title>
     <url>/posts/2026/05/17/a1b2c3d4/</url>
     <content><![CDATA[<p>在使用 Codex 这类开发型 AI 工具时，一个很常见的困惑是：</p>
@@ -891,6 +695,202 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
       </tags>
   </entry>
   <entry>
+    <title>乐歌升降桌 E07 / E08 故障排查：一边桌脚不动时，我是怎么修好的</title>
+    <url>/posts/2026/03/02/fbb9923f/</url>
+    <content><![CDATA[<p>家里的小故障有时候最磨人。</p>
+<p>它不至于让人立刻崩溃，但足够影响日常使用。尤其是当升降桌突然一边能动、一边完全没反应，桌面变得一高一低时，工作状态也会被一起打断。</p>
+<p>这次出问题的是家里的乐歌升降桌。</p>
+<p>原本只是一次普通的升降操作，按下上升键后，桌子没有正常升起来，反而进入了异常状态：</p>
+<ul>
+<li>一边桌脚还在动</li>
+<li>另一边桌脚完全没反应</li>
+<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
+</ul>
+<p>售后当时无法马上处理，于是只能先自己排查。最后发现，问题并不是电机彻底损坏，而更像是左右桌脚高度不同步后触发了保护机制。</p>
+<p>这篇文章记录完整过程，也给遇到类似情况的人一个参考。</p>
+<blockquote>
+<p>说明：本文只是一次个人排查记录，不是官方维修教程。涉及拆卸、插线或通电测试时，务必先断电，确认安全后再操作；如果不确定，优先联系售后。</p>
+</blockquote>
+<hr>
+<h2 id="一、故障现象：一边能动，一边不动"><a href="#一、故障现象：一边能动，一边不动" class="headerlink" title="一、故障现象：一边能动，一边不动"></a>一、故障现象：一边能动，一边不动</h2><p>那天晚上，按下升降桌的上升按钮后，很快发现状态不对。</p>
+<p>桌子的表现大概是：</p>
+<ul>
+<li>左边桌脚还有反应，但<strong>只能往下，不能上升</strong></li>
+<li>右边桌脚无论上升还是下降都<strong>完全没反应</strong></li>
+<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
+</ul>
+<p><img src="/images/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg" alt="控制面板显示 RST / E07 / E08 等报码"></p>
+<p><em>图 1：控制面板显示 RST / E07 / E08 等报码</em></p>
+<p>连续试了几次后，结论基本一致：</p>
+<p><strong>这不是简单卡顿，而是桌子已经进入了异常保护状态。</strong></p>
+<p>因为每次操作时，始终只有一边桌脚在动，另一边完全静止。桌面已经明显不平，继续强行升降反而可能让结构受力更糟。</p>
+<hr>
+<h2 id="二、先联系售后，按标准流程排查"><a href="#二、先联系售后，按标准流程排查" class="headerlink" title="二、先联系售后，按标准流程排查"></a>二、先联系售后，按标准流程排查</h2><p>遇到这类问题，第一步还是联系售后。</p>
+<p>乐歌京东自营店客服给出的排查流程比较标准，也符合电动升降桌常见处理方式。</p>
+<h3 id="1-先做系统重置"><a href="#1-先做系统重置" class="headerlink" title="1. 先做系统重置"></a>1. 先做系统重置</h3><p>客服先建议把桌子尽量降到最低，然后：</p>
+<blockquote>
+<p><strong>长按下降键约 7 秒，执行系统重置。</strong></p>
+</blockquote>
+<p>这是升降桌常见的初始化方式。很多报码不一定代表零件损坏，也可能只是系统需要重新校准。</p>
+<p>不过这一步对这台桌子没有立即起作用。</p>
+<h3 id="2-再交叉插线"><a href="#2-再交叉插线" class="headerlink" title="2. 再交叉插线"></a>2. 再交叉插线</h3><p>接下来，客服建议拆开桌腿挡板，把控制盒上的 <strong>M1 和 M2 电机线互换</strong>，再观察报码变化。</p>
+<p><img src="/images/20260302/8BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg" alt="客服建议交叉插线排查问题位置"></p>
+<p><em>图 2：客服建议交叉插线排查问题位置</em></p>
+<p>照着操作后，控制面板上的报码确实发生了变化：从 <strong>E07</strong> 变成了 <strong>E08</strong>。</p>
+<p><img src="/images/20260302/C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg" alt="交叉插线后报码从 E07 变成 E08"></p>
+<p><em>图 3：交叉插线后，报码从 E07 变成 E08</em></p>
+<p>客服根据这个变化，初步判断可能和控制盒有关，需要继续反馈技术部门。由于当时临近假期，后续处理需要等到年后。</p>
+<p>但桌子已经拆到这一步，与其直接等待，不如继续确认几个更基础的问题。</p>
+<hr>
+<h2 id="三、不要只盯报码，更要看现象"><a href="#三、不要只盯报码，更要看现象" class="headerlink" title="三、不要只盯报码，更要看现象"></a>三、不要只盯报码，更要看现象</h2><p>E07 / E08 这样的错误码有参考价值，但不能完全依赖报码判断。</p>
+<p>这次真正有用的线索，其实是设备表现出来的现象：</p>
+<p><strong>始终只有一边桌脚在动，另一边没有正常响应。</strong></p>
+<p>结合网上能查到的说明，以及同类升降桌的常见故障逻辑，E07 / E08 大致可能和两类问题有关：</p>
+<ul>
+<li>左右桌脚高度不同步</li>
+<li>电机连接、通信或控制异常</li>
+</ul>
+<p>这说明问题未必是电机彻底损坏，也可能是左右不同步后触发了系统保护。</p>
+<p>所以排查重点从“报码是什么意思”转成了两个更具体的问题：</p>
+<ol>
+<li>电机本身还能不能正常工作？</li>
+<li>左右桌脚是不是已经明显不平？</li>
+</ol>
+<hr>
+<h2 id="四、拆开检查：先确认电机有没有坏"><a href="#四、拆开检查：先确认电机有没有坏" class="headerlink" title="四、拆开检查：先确认电机有没有坏"></a>四、拆开检查：先确认电机有没有坏</h2><p>既然已经拆开挡板，下一步就是确认电机本体是否正常。</p>
+<p>操作前先断电，确认连接位置，再分别测试两侧电机。整个过程大致是：</p>
+<ol>
+<li>拧开桌腿挡板螺丝</li>
+<li>断开两侧电机连接线</li>
+<li>分别测试每个电机是否能正常上下动作</li>
+</ol>
+<p>测试结果比较关键：</p>
+<p><strong>两个电机都能正常上下运动。</strong></p>
+<p>这意味着问题大概率不在“电机彻底坏了”这一层。至少最麻烦的一种情况可以先排除。</p>
+<p>回头再看整个过程，问题开始变得清楚：</p>
+<ul>
+<li>出问题前，已经有一段时间只有一边桌脚在动</li>
+<li>另一边没有正常响应</li>
+<li>两边高度差被逐渐拉大</li>
+<li>高度差过大后，系统可能触发保护，阻止继续运行</li>
+</ul>
+<p>也就是说，桌子不是完全坏了，而是可能已经处在一个“不适合继续升降”的状态。</p>
+<p>下一步就不再是继续反复按按钮，而是先把左右桌脚重新找平。</p>
+<hr>
+<h2 id="五、手动找平后，再重新初始化"><a href="#五、手动找平后，再重新初始化" class="headerlink" title="五、手动找平后，再重新初始化"></a>五、手动找平后，再重新初始化</h2><p>处理思路变成了：</p>
+<p><strong>先让左右桌脚回到同一个物理基准，再让系统重新校准。</strong></p>
+<p>实际操作如下：</p>
+<ol>
+<li>利用还能动作的那一边，把两边桌脚尽量调整到最低位置</li>
+<li>确保左右桌脚在肉眼可见范围内回到同一高度</li>
+<li>把两个电机重新接回控制盒</li>
+<li>再次长按下降键约 7 秒，执行系统重置</li>
+</ol>
+<p>这一次，结果明显不同：</p>
+<ul>
+<li>面板上的错误代码消失</li>
+<li>显示重新变回正常高度数字</li>
+<li>再测试升降时，左右两边恢复同步运动</li>
+</ul>
+<p><img src="/images/20260302/379220D3-EF81-44D3-AFD3-1A9DA10B1F23.jpg" alt="问题解决后反馈客服"></p>
+<p><em>图 4：问题解决后，回头告知客服</em></p>
+<p>最终，这次故障没有走到更换控制盒或更换电机的步骤，而是通过“找平 + 重置”恢复了。</p>
+<hr>
+<h2 id="六、这次排查的关键步骤"><a href="#六、这次排查的关键步骤" class="headerlink" title="六、这次排查的关键步骤"></a>六、这次排查的关键步骤</h2><p>整个过程可以整理成下面这张表：</p>
+<table>
+<thead>
+<tr>
+<th>排查步骤</th>
+<th>关键操作</th>
+<th>目的</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1. 记录报码</td>
+<td>观察 RST / E07 / E08 的变化</td>
+<td>缩小问题范围</td>
+</tr>
+<tr>
+<td>2. 联系客服</td>
+<td>按官方建议先重置，再交叉插线</td>
+<td>建立基础排查路径</td>
+</tr>
+<tr>
+<td>3. 测试电机</td>
+<td>分别确认两侧电机能否动作</td>
+<td>排除电机本体故障</td>
+</tr>
+<tr>
+<td>4. 手动找平</td>
+<td>让左右桌脚回到同一高度</td>
+<td>恢复物理基准</td>
+</tr>
+<tr>
+<td>5. 系统重置</td>
+<td>长按下降键重新初始化</td>
+<td>让控制系统重新校准</td>
+</tr>
+</tbody></table>
+<p>真正起作用的不是某个“神奇步骤”，而是排查顺序：</p>
+<ul>
+<li>先确认系统是否能重置</li>
+<li>再确认连接和报码变化</li>
+<li>再排除电机本体故障</li>
+<li>最后处理左右桌脚不同步</li>
+</ul>
+<p>当问题被拆成几个小问题后，排查难度就降低了很多。</p>
+<hr>
+<h2 id="七、遇到类似情况，可以先检查什么"><a href="#七、遇到类似情况，可以先检查什么" class="headerlink" title="七、遇到类似情况，可以先检查什么"></a>七、遇到类似情况，可以先检查什么</h2><p>如果你的升降桌也出现 <strong>报码 + 一边桌脚不动 + 重置无效</strong>，可以先按低风险顺序检查：</p>
+<ol>
+<li><p><strong>先停止强行升降</strong><br>如果桌面已经明显不平，继续操作可能让受力更糟。</p>
+</li>
+<li><p><strong>记录报码和现象</strong><br>记录是 E07、E08、RST，还是其他错误，同时观察哪一边能动、哪一边不动。</p>
+</li>
+<li><p><strong>先按说明书或客服建议重置</strong><br>很多升降桌都有长按下降键进行初始化的流程。</p>
+</li>
+<li><p><strong>检查电机线是否松动</strong><br>操作前务必断电，不要在不确定的情况下带电插拔。</p>
+</li>
+<li><p><strong>观察两边桌脚是否明显不平</strong><br>如果高度差已经很明显，单纯重置可能不会立即恢复，需要先让两边回到接近一致的高度。</p>
+</li>
+<li><p><strong>不确定时停止操作，联系售后</strong><br>如果出现异响、卡死、线材破损、控制盒异常发热等情况，不建议继续自行排查。</p>
+</li>
+</ol>
+<p>这类排查的重点不是“自己替代维修”，而是在安全前提下，把简单问题先确认清楚。</p>
+<hr>
+<h2 id="八、这次故障带来的几个提醒"><a href="#八、这次故障带来的几个提醒" class="headerlink" title="八、这次故障带来的几个提醒"></a>八、这次故障带来的几个提醒</h2><h3 id="1-设备停止运行，不一定代表彻底损坏"><a href="#1-设备停止运行，不一定代表彻底损坏" class="headerlink" title="1. 设备停止运行，不一定代表彻底损坏"></a>1. 设备停止运行，不一定代表彻底损坏</h3><p>报码看起来很吓人，但它很多时候只是系统在提示：</p>
+<p><strong>当前状态不正常，需要先停止。</strong></p>
+<p>停止运行可能是保护机制，而不是硬件已经报废。</p>
+<h3 id="2-现象往往比报码更重要"><a href="#2-现象往往比报码更重要" class="headerlink" title="2. 现象往往比报码更重要"></a>2. 现象往往比报码更重要</h3><p>如果只盯着 E07 / E08，排查方向可能会被错误码带着走。</p>
+<p>但“只有一边桌脚在动”这个现象，直接指向了左右不同步的可能性。</p>
+<h3 id="3-客服流程仍然有价值"><a href="#3-客服流程仍然有价值" class="headerlink" title="3. 客服流程仍然有价值"></a>3. 客服流程仍然有价值</h3><p>这次虽然最后是自己处理好的，但客服给出的重置和交叉插线步骤提供了排查起点。</p>
+<p>标准流程的价值在于：先把常见问题按顺序排掉。</p>
+<h3 id="4-低风险问题可以先自己排查，但要有边界"><a href="#4-低风险问题可以先自己排查，但要有边界" class="headerlink" title="4. 低风险问题可以先自己排查，但要有边界"></a>4. 低风险问题可以先自己排查，但要有边界</h3><p>重置、观察报码、检查插线、确认是否明显不平，这些属于相对低风险的检查。</p>
+<p>但涉及电路、异常发热、结构卡死、零件更换时，还是应该交给售后或专业维修。</p>
+<hr>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>这次升降桌故障，最后没有变成一次复杂维修。</p>
+<p>它更像是一个生活里的小插曲：一开始看起来很麻烦，但只要愿意停下来观察现象、拆开问题、按顺序排查，就会发现它并没有想象中那么不可处理。</p>
+<p>对这次情况来说，最关键的判断是：</p>
+<p><strong>问题不一定出在电机损坏，而可能是左右桌脚不同步后触发了保护。</strong></p>
+<p>这篇记录不一定适用于所有型号，也不能替代官方维修建议。但如果你遇到的是类似场景：</p>
+<ul>
+<li>控制面板显示 RST / E07 / E08</li>
+<li>一边桌脚不动</li>
+<li>重置暂时无效</li>
+<li>桌面已经明显不平</li>
+</ul>
+<p>那么可以先从“记录报码、确认现象、检查连接、手动找平、重新初始化”这条路径排查，或许能少一点慌张，也少走一点弯路。</p>
+<hr>
+<p><em>本文记录于 2026 年 3 月</em></p>
+]]></content>
+      <categories>
+        <category>随笔</category>
+      </categories>
+      <tags>
+        <tag>随笔</tag>
+        <tag>升降桌</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>iOS 沙盒路径踩坑：KMP 读取 Documents 文件为什么会报 No such file</title>
     <url>/posts/2023/08/13/bb96b1c7/</url>
     <content><![CDATA[<p>在 Kotlin Multiplatform 项目里做 iOS 文件存储时，遇到过一个很典型的问题：</p>
@@ -1269,171 +1269,6 @@ The default implementation only supports types which can be stored inside the Bu
       </tags>
   </entry>
   <entry>
-    <title>Jetpack Compose 性能优化：为什么 graphicsLayer 值得重点掌握</title>
-    <url>/posts/2026/02/27/4ae1fc92/</url>
-    <content><![CDATA[<p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
-<p>比如，想让一个组件半透明，你可以这样写：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">alpha</span><span class="token punctuation">(</span><span class="token number">0.5f</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>也可以这样写：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> alpha <span class="token operator">=</span> <span class="token number">0.5f</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>从界面效果来看，它们几乎一样。</p>
-<p>但在<strong>动画</strong>、<strong>滚动联动</strong>、<strong>高频状态变化</strong>这类场景里，两者背后的性能路径并不完全相同。</p>
-<p>真正的关键不是“哪个 API 更高级”，而是：</p>
-<blockquote>
-<p><strong>你在哪个阶段读取状态。</strong></p>
-</blockquote>
-<p>如果状态读取发生在 Composition 阶段，就可能触发更多重组工作。</p>
-<p>如果状态读取被延后到 Draw 阶段，Compose 就有机会跳过 Composition 和 Layout，只做更轻量的绘制更新。</p>
-<hr>
-<h2 id="Compose-UI-的三大阶段"><a href="#Compose-UI-的三大阶段" class="headerlink" title="Compose UI 的三大阶段"></a>Compose UI 的三大阶段</h2><p>理解这件事，先要知道 Compose 的渲染流程主要分为三个阶段：</p>
-<h3 id="1-Composition"><a href="#1-Composition" class="headerlink" title="1. Composition"></a>1. Composition</h3><p>决定“<strong>要显示什么</strong>”。<br>也就是执行 Composable，构建或更新 UI 树。</p>
-<h3 id="2-Layout"><a href="#2-Layout" class="headerlink" title="2. Layout"></a>2. Layout</h3><p>决定“<strong>显示在哪里、多大</strong>”。<br>也就是测量和摆放组件。</p>
-<h3 id="3-Draw"><a href="#3-Draw" class="headerlink" title="3. Draw"></a>3. Draw</h3><p>决定“<strong>最终画成什么样</strong>”。<br>包括透明度、缩放、旋转、裁剪等绘制相关操作。</p>
-<p>如果一个变化只影响 Draw 阶段，通常会比影响 Layout 阶段更高效，因为整体需要做的工作更少。</p>
-<hr>
-<h2 id="真正的性能差异，来自“状态读取时机”"><a href="#真正的性能差异，来自“状态读取时机”" class="headerlink" title="真正的性能差异，来自“状态读取时机”"></a>真正的性能差异，来自“状态读取时机”</h2><p>很多文章会把这件事简单总结成：</p>
-<ul>
-<li><code>.alpha()</code> 会触发重组</li>
-<li><code>.graphicsLayer {}</code> 不会触发重组</li>
-</ul>
-<p>这个说法<strong>不够准确</strong>。</p>
-<p>更准确的说法是：</p>
-<blockquote>
-<p><strong>是否发生重组，取决于状态是在 Composition、Layout 还是 Draw 阶段被读取。</strong></p>
-</blockquote>
-<p><code>graphicsLayer</code> 的优势并不只是“它能做透明度和缩放”，而是它提供了一个很适合承载<strong>绘制阶段状态读取</strong>的入口。</p>
-<p>也就是说，在适合的场景下，你可以把频繁变化的状态放到更靠后的阶段去处理，从而减少不必要的 Composition 和 Layout 开销。</p>
-<hr>
-<h2 id="为什么-graphicsLayer-常常更适合动画"><a href="#为什么-graphicsLayer-常常更适合动画" class="headerlink" title="为什么 graphicsLayer 常常更适合动画"></a>为什么 <code>graphicsLayer</code> 常常更适合动画</h2><p><code>Modifier.graphicsLayer</code> 主要影响的是绘制阶段，不会改变组件的测量尺寸和摆放位置。</p>
-<p>这意味着下面这些变化，通常更适合放进 <code>graphicsLayer</code>：</p>
-<ul>
-<li><code>alpha</code></li>
-<li><code>scaleX / scaleY</code></li>
-<li><code>translationX / translationY</code></li>
-<li><code>rotationZ</code></li>
-</ul>
-<p>对于高频更新的 UI，这通常更有利，比如：</p>
-<ul>
-<li>滚动时的视差效果</li>
-<li>列表项渐隐渐现</li>
-<li>卡片缩放</li>
-<li>图标呼吸动画</li>
-<li>拖拽过程中的位移或旋转</li>
-</ul>
-<p>因为这些效果本质上更多是在改变“怎么画”，而不是“怎么排版”。</p>
-<hr>
-<h2 id="graphicsLayer-还有一层意义：图形层隔离"><a href="#graphicsLayer-还有一层意义：图形层隔离" class="headerlink" title="graphicsLayer 还有一层意义：图形层隔离"></a><code>graphicsLayer</code> 还有一层意义：图形层隔离</h2><p><code>graphicsLayer</code> 不只是一个 modifier，它还会带来图形层的隔离效果。</p>
-<p>你可以把它理解成：</p>
-<ul>
-<li>组件内容先被组织成一个独立绘制层</li>
-<li>后续对这个层做透明度、缩放、旋转等操作</li>
-<li>不必每次都重新“重画里面的内容”</li>
-</ul>
-<p>这也是它特别适合动画场景的原因之一。</p>
-<p>不过要注意，<strong>有 layer 不代表一定更快</strong>。</p>
-<p>如果只是静态 UI，或者变化频率很低，没必要为了“性能优化”而到处套 <code>graphicsLayer</code>。真正值得优化的，是那些：</p>
-<ul>
-<li>高频变化</li>
-<li>容易掉帧的动画</li>
-<li>滚动联动效果</li>
-<li>明显存在性能瓶颈的界面</li>
-</ul>
-<hr>
-<h2 id="一个更准确的对比方式"><a href="#一个更准确的对比方式" class="headerlink" title="一个更准确的对比方式"></a>一个更准确的对比方式</h2><table>
-<thead>
-<tr>
-<th align="left">对比项</th>
-<th align="left">普通值传递写法</th>
-<th align="left"><code>graphicsLayer { ... }</code> / lambda-based 写法</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">状态读取位置</td>
-<td align="left">常见于 Composition 阶段</td>
-<td align="left">可延后到 Draw 阶段</td>
-</tr>
-<tr>
-<td align="left">是否一定触发重组</td>
-<td align="left">不一定，但更容易发生</td>
-<td align="left">不一定完全没有，但更容易跳过 Composition</td>
-</tr>
-<tr>
-<td align="left">是否影响布局</td>
-<td align="left">取决于具体 modifier</td>
-<td align="left"><code>graphicsLayer</code> 本身只影响绘制</td>
-</tr>
-<tr>
-<td align="left">适合场景</td>
-<td align="left">静态 UI、低频变化</td>
-<td align="left">动画、滚动联动、高频视觉变化</td>
-</tr>
-</tbody></table>
-<p>这里最重要的是一句话：</p>
-<blockquote>
-<p><strong>不是 <code>graphicsLayer</code> 天生“无敌”，而是它更适合处理那些只需要改变视觉表现、不需要重新布局的更新。</strong></p>
-</blockquote>
-<hr>
-<h2 id="实战示例：把动画状态留到绘制阶段处理"><a href="#实战示例：把动画状态留到绘制阶段处理" class="headerlink" title="实战示例：把动画状态留到绘制阶段处理"></a>实战示例：把动画状态留到绘制阶段处理</h2><p>下面这个例子非常适合这个思路：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> animatedScale <span class="token keyword">by</span> <span class="token function">animateFloatAsState</span><span class="token punctuation">(</span>targetValue <span class="token operator">=</span> <span class="token number">1.2f</span><span class="token punctuation">)</span>
-
-<span class="token function">Box</span><span class="token punctuation">(</span>
-    Modifier
-        <span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
-        <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>Magenta<span class="token punctuation">)</span>
-        <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
-            scaleX <span class="token operator">=</span> animatedScale
-            scaleY <span class="token operator">=</span> animatedScale
-            alpha <span class="token operator">=</span> <span class="token number">0.9f</span>
-        <span class="token punctuation">}</span>
-<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>这种写法的好处是，<code>scaleX</code> 和 <code>scaleY</code> 这类纯视觉变化，更适合放在 <code>graphicsLayer</code> 中处理。因为它们不需要改变组件本身的测量结果和摆放位置。</p>
-<p>如果你的动画只是让组件“看起来变大”，而不是让布局系统认为“它真的变大了”，这种方式通常更划算。</p>
-<hr>
-<h2 id="什么时候优先考虑-graphicsLayer"><a href="#什么时候优先考虑-graphicsLayer" class="headerlink" title="什么时候优先考虑 graphicsLayer"></a>什么时候优先考虑 <code>graphicsLayer</code></h2><p>你可以优先在下面这些场景考虑它：</p>
-<h3 id="1-高频动画"><a href="#1-高频动画" class="headerlink" title="1. 高频动画"></a>1. 高频动画</h3><p>例如透明度、缩放、旋转、位移持续变化。<br>这类变化通常只影响视觉呈现，不需要反复参与布局。</p>
-<h3 id="2-滚动驱动效果"><a href="#2-滚动驱动效果" class="headerlink" title="2. 滚动驱动效果"></a>2. 滚动驱动效果</h3><p>比如顶部标题渐隐、列表项视差、卡片缩放。<br>这类状态更新非常频繁，更适合尽量延后到 Draw 阶段处理。</p>
-<h3 id="3-不想因为视觉变化触发布局连锁反应"><a href="#3-不想因为视觉变化触发布局连锁反应" class="headerlink" title="3. 不想因为视觉变化触发布局连锁反应"></a>3. 不想因为视觉变化触发布局连锁反应</h3><p>如果变化不会影响组件大小和位置，就尽量别让它进入 Layout。</p>
-<hr>
-<h2 id="什么时候不要滥用"><a href="#什么时候不要滥用" class="headerlink" title="什么时候不要滥用"></a>什么时候不要滥用</h2><p><code>graphicsLayer</code> 不是“看到动画就全上”的银弹。</p>
-<p>下面这些情况要谨慎：</p>
-<h3 id="1-变化本身会影响布局"><a href="#1-变化本身会影响布局" class="headerlink" title="1. 变化本身会影响布局"></a>1. 变化本身会影响布局</h3><p>如果你需要的不是“看起来变大”，而是“真的占更多空间”，那就不能只靠 Draw 阶段处理。</p>
-<h3 id="2-页面本身没有性能问题"><a href="#2-页面本身没有性能问题" class="headerlink" title="2. 页面本身没有性能问题"></a>2. 页面本身没有性能问题</h3><p>优化应该服务于实际瓶颈。<br>如果页面没有掉帧、没有频繁重组、没有滚动抖动，过度使用 <code>graphicsLayer</code> 反而会增加理解成本。</p>
-<h3 id="3-为了“听起来高级”而替换所有-modifier"><a href="#3-为了“听起来高级”而替换所有-modifier" class="headerlink" title="3. 为了“听起来高级”而替换所有 modifier"></a>3. 为了“听起来高级”而替换所有 modifier</h3><p>性能优化不是 API 崇拜。<br>重点是识别哪些状态变化只是视觉层面的，哪些真的会影响布局和结构。</p>
-<hr>
-<h2 id="一句话总结"><a href="#一句话总结" class="headerlink" title="一句话总结"></a>一句话总结</h2><p><code>graphicsLayer</code> 的核心价值，不是“它比 <code>.alpha()</code> 更酷”，而是：</p>
-<blockquote>
-<p><strong>它很适合承载那些只影响绘制结果的高频状态变化，让 Compose 有机会跳过更重的 Composition 和 Layout。</strong></p>
-</blockquote>
-<p>所以，当你在做这些效果时：</p>
-<ul>
-<li>渐隐渐现</li>
-<li>缩放</li>
-<li>旋转</li>
-<li>平移</li>
-<li>滚动联动动画</li>
-</ul>
-<p>优先想一件事：</p>
-<p><strong>这次变化，是不是其实只需要改 Draw，而不必让整个 UI 重新参与组合和布局？</strong></p>
-<p>如果答案是“对”，那 <code>graphicsLayer</code> 往往就是非常值得尝试的方案。</p>
-<hr>
-<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>写 Compose 性能优化时，最容易踩的坑就是把结论说得太绝对。<br>真正值得记住的不是“某个 modifier 一定更快”，而是这条原则：</p>
-<blockquote>
-<p><strong>把状态读取尽量放到更晚的阶段，尤其是 Draw 阶段。</strong></p>
-</blockquote>
-<p>这才是很多 Compose 性能优化技巧背后的共同思路。</p>
-]]></content>
-      <categories>
-        <category>Compose</category>
-      </categories>
-      <tags>
-        <tag>Android</tag>
-        <tag>Jetpack Compose</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>深入理解 Jetpack Compose key：为什么动态列表需要稳定身份</title>
     <url>/posts/2026/02/28/ec0aeab/</url>
     <content><![CDATA[<p>在 Jetpack Compose 里，<code>key()</code> 是一个很重要、但又很容易被轻视的 API。</p>
@@ -1693,6 +1528,634 @@ The default implementation only supports types which can be stored inside the Bu
         <tag>Android</tag>
         <tag>Jetpack Compose</tag>
         <tag>Compose</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>在 AWS EC2 上搭建 Xray + VLESS + REALITY：个人节点部署记录</title>
+    <url>/posts/2026/06/15/f98e2e3f/</url>
+    <content><![CDATA[<p>在 AWS EC2 上搭建个人代理节点，最容易踩坑的地方并不是安装 Xray-core，而是几个参数之间的对应关系：</p>
+<ul>
+<li>服务端使用 <code>privateKey</code>，客户端使用 <code>publicKey</code></li>
+<li>服务端 <code>serverNames</code> 要和客户端 <code>SNI/serverName</code> 一致</li>
+<li><code>UUID</code>、<code>flow</code>、<code>shortId</code> 两端都要对应</li>
+<li>AWS Security Group 要真正放行 <code>443/tcp</code></li>
+</ul>
+<p>这篇文章记录一套相对简单的部署方式：在 Ubuntu Server 上安装 Xray-core，使用 <code>VLESS + REALITY + Vision</code> 监听 <code>443/tcp</code>，客户端通过 REALITY 参数连接。</p>
+<p>本文面向个人学习、远程访问自有资源、保护公共网络下连接安全等合法场景。部署和使用前，请确认符合所在地法律法规、AWS 服务条款以及相关网络服务条款。</p>
+<hr>
+<h2 id="一、为什么选择-Xray-VLESS-REALITY"><a href="#一、为什么选择-Xray-VLESS-REALITY" class="headerlink" title="一、为什么选择 Xray + VLESS + REALITY"></a>一、为什么选择 Xray + VLESS + REALITY</h2><p>如果只是访问家里的 NAS、开发机或内网服务，Tailscale、WireGuard 这类组网方案通常更省心，也更适合长期维护。</p>
+<p>但如果目标是在一台云服务器上搭建个人代理出口，并希望连接入口尽量收敛在标准 HTTPS 端口，<code>Xray-core + VLESS + REALITY + Vision</code> 是一个常见组合。</p>
+<p>整体链路可以这样理解：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">客户端 App
+  -&gt; VLESS + REALITY + Vision
+  -&gt; AWS EC2 公网 443/TCP
+  -&gt; Xray-core
+  -&gt; freedom outbound
+  -&gt; Internet<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>几个关键词先简单说明：</p>
+<table>
+<thead>
+<tr>
+<th align="left">名称</th>
+<th align="left">作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>Xray-core</code></td>
+<td align="left">服务端和客户端都可使用的代理核心</td>
+</tr>
+<tr>
+<td align="left"><code>VLESS</code></td>
+<td align="left">轻量代理协议，使用 UUID 做用户身份识别</td>
+</tr>
+<tr>
+<td align="left"><code>REALITY</code></td>
+<td align="left">Xray 的传输安全方案，用于处理连接握手和目标站点伪装参数</td>
+</tr>
+<tr>
+<td align="left"><code>Vision</code></td>
+<td align="left">常见 flow 参数为 <code>xtls-rprx-vision</code>，经常和 VLESS + REALITY 搭配</td>
+</tr>
+<tr>
+<td align="left"><code>AWS EC2</code></td>
+<td align="left">本文使用的云服务器平台</td>
+</tr>
+</tbody></table>
+<p>这套方案的优势是组件少、配置清晰、只需要开放一个对外端口。缺点也很明确：你需要自己维护服务器、安全组、系统更新和客户端参数。</p>
+<h2 id="二、准备工作"><a href="#二、准备工作" class="headerlink" title="二、准备工作"></a>二、准备工作</h2><p>开始前需要准备：</p>
+<table>
+<thead>
+<tr>
+<th align="left">项目</th>
+<th align="left">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">AWS 账号</td>
+<td align="left">用于创建 EC2 实例</td>
+</tr>
+<tr>
+<td align="left">SSH key pair</td>
+<td align="left">登录服务器使用</td>
+</tr>
+<tr>
+<td align="left">本地 SSH 环境</td>
+<td align="left">macOS / Linux 终端，或 Windows Terminal + OpenSSH</td>
+</tr>
+<tr>
+<td align="left">客户端 App</td>
+<td align="left">需要支持 VLESS + REALITY，例如 v2rayN、NekoBox、Shadowrocket、Stash、Mihomo 兼容客户端等</td>
+</tr>
+<tr>
+<td align="left">时间</td>
+<td align="left">第一次配置建议预留 60 到 90 分钟</td>
+</tr>
+</tbody></table>
+<p>本文以 Ubuntu Server 24.04 LTS 为例。Ubuntu 22.04 LTS 的步骤基本一致。</p>
+<h2 id="三、创建-AWS-EC2-实例"><a href="#三、创建-AWS-EC2-实例" class="headerlink" title="三、创建 AWS EC2 实例"></a>三、创建 AWS EC2 实例</h2><p>进入 AWS 控制台，打开 EC2，选择 <code>Launch instance</code>。</p>
+<p>推荐配置如下：</p>
+<table>
+<thead>
+<tr>
+<th align="left">配置项</th>
+<th align="left">建议</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">Region</td>
+<td align="left">优先选择离你网络更近、线路质量更好的区域，例如东京、新加坡、俄勒冈等</td>
+</tr>
+<tr>
+<td align="left">AMI</td>
+<td align="left">Ubuntu Server 24.04 LTS</td>
+</tr>
+<tr>
+<td align="left">Instance type</td>
+<td align="left">个人轻量使用可选 <code>t3.micro</code> 或 <code>t4g.micro</code></td>
+</tr>
+<tr>
+<td align="left">Storage</td>
+<td align="left">8GB 到 20GB gp3 通常够用</td>
+</tr>
+<tr>
+<td align="left">Key pair</td>
+<td align="left">新建或选择已有 SSH key</td>
+</tr>
+</tbody></table>
+<p>如果选择 ARM 架构的 <code>t4g.micro</code>，后续安装软件时要注意架构兼容性。Xray-core 本身支持多架构，但排查问题时需要知道实例是 <code>x86_64</code> 还是 <code>arm64</code>。</p>
+<p>安全组入站规则建议只保留必要端口：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">TCP 22   仅允许你的当前公网 IP
+TCP 443  允许 0.0.0.0/0 和 ::/0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>这里有两个原则：</p>
+<ul>
+<li>SSH 不要对全网开放，至少限制到自己的公网 IP。</li>
+<li>不要开放面板端口。个人节点越少暴露管理入口，越容易维护。</li>
+</ul>
+<p>如果希望 EC2 重启后公网 IP 不变，可以分配并绑定 Elastic IP。否则实例停止再启动后，公网 IP 可能变化。</p>
+<h2 id="四、登录服务器并更新系统"><a href="#四、登录服务器并更新系统" class="headerlink" title="四、登录服务器并更新系统"></a>四、登录服务器并更新系统</h2><p>假设 key 文件是 <code>your-key.pem</code>，EC2 公网 IP 是 <code>1.2.3.4</code>：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">ssh</span> <span class="token parameter variable">-i</span> your-key.pem ubuntu@1.2.3.4<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>登录后更新系统，并安装基础工具：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt</span> update
+<span class="token function">sudo</span> <span class="token function">apt</span> upgrade <span class="token parameter variable">-y</span>
+<span class="token function">sudo</span> <span class="token function">apt</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> <span class="token function">curl</span> <span class="token function">unzip</span> jq openssl chrony<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>启用时间同步：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> systemctl <span class="token builtin class-name">enable</span> <span class="token parameter variable">--now</span> chrony
+timedatectl<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>VLESS 不像 VMess 那样强依赖系统时间，但服务器时间正确仍然是基础要求。时间漂移过大时，排查 TLS、日志和证书相关问题都会更麻烦。</p>
+<h2 id="五、安装-Xray-core"><a href="#五、安装-Xray-core" class="headerlink" title="五、安装 Xray-core"></a>五、安装 Xray-core</h2><p>使用 XTLS 官方安装脚本：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">bash</span> <span class="token parameter variable">-c</span> <span class="token string">"<span class="token variable"><span class="token variable">$(</span><span class="token function">curl</span> <span class="token parameter variable">-L</span> https://github.com/XTLS/Xray-install/raw/main/install-release.sh<span class="token variable">)</span></span>"</span> @ <span class="token function">install</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>检查安装结果：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">xray version
+systemctl status xray --no-pager<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>如果 <code>xray version</code> 能输出版本号，说明核心已经安装完成。</p>
+<h2 id="六、生成-UUID、REALITY-密钥和-shortId"><a href="#六、生成-UUID、REALITY-密钥和-shortId" class="headerlink" title="六、生成 UUID、REALITY 密钥和 shortId"></a>六、生成 UUID、REALITY 密钥和 shortId</h2><p>服务端和客户端需要共用一组身份和握手参数。建议先生成并保存好，后面配置时逐个替换。</p>
+<p>生成 UUID：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">xray uuid<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>生成 REALITY 使用的 X25519 密钥对：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">xray x25519<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>输出类似这样：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">Private key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Public key:  yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>生成 <code>shortId</code>：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">openssl rand <span class="token parameter variable">-hex</span> <span class="token number">8</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>这些值的使用位置如下：</p>
+<table>
+<thead>
+<tr>
+<th align="left">参数</th>
+<th align="left">放在哪里</th>
+<th align="left">说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>UUID</code></td>
+<td align="left">服务端和客户端</td>
+<td align="left">用户身份标识</td>
+</tr>
+<tr>
+<td align="left"><code>Private key</code></td>
+<td align="left">只放服务端</td>
+<td align="left">REALITY 私钥，不要暴露给客户端之外的地方</td>
+</tr>
+<tr>
+<td align="left"><code>Public key</code></td>
+<td align="left">只放客户端</td>
+<td align="left">由客户端连接时使用</td>
+</tr>
+<tr>
+<td align="left"><code>shortId</code></td>
+<td align="left">服务端和客户端</td>
+<td align="left">两端必须一致</td>
+</tr>
+</tbody></table>
+<p>这一步最常见的问题是把 <code>privateKey</code> 和 <code>publicKey</code> 放反。服务端配置里只能放 <code>privateKey</code>，客户端参数里使用 <code>publicKey</code>。</p>
+<h2 id="七、写入-Xray-服务端配置"><a href="#七、写入-Xray-服务端配置" class="headerlink" title="七、写入 Xray 服务端配置"></a>七、写入 Xray 服务端配置</h2><p>编辑配置文件：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">nano</span> /usr/local/etc/xray/config.json<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>写入下面配置，并替换三个占位符：</p>
+<ul>
+<li><code>UUID_HERE</code></li>
+<li><code>PRIVATE_KEY_HERE</code></li>
+<li><code>SHORT_ID_HERE</code></li>
+</ul>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"log"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"loglevel"</span><span class="token operator">:</span> <span class="token string">"warning"</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token property">"inbounds"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"tag"</span><span class="token operator">:</span> <span class="token string">"vless-reality"</span><span class="token punctuation">,</span>
+      <span class="token property">"listen"</span><span class="token operator">:</span> <span class="token string">"0.0.0.0"</span><span class="token punctuation">,</span>
+      <span class="token property">"port"</span><span class="token operator">:</span> <span class="token number">443</span><span class="token punctuation">,</span>
+      <span class="token property">"protocol"</span><span class="token operator">:</span> <span class="token string">"vless"</span><span class="token punctuation">,</span>
+      <span class="token property">"settings"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">"clients"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token punctuation">{</span>
+            <span class="token property">"id"</span><span class="token operator">:</span> <span class="token string">"UUID_HERE"</span><span class="token punctuation">,</span>
+            <span class="token property">"flow"</span><span class="token operator">:</span> <span class="token string">"xtls-rprx-vision"</span><span class="token punctuation">,</span>
+            <span class="token property">"email"</span><span class="token operator">:</span> <span class="token string">"me"</span>
+          <span class="token punctuation">}</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">"decryption"</span><span class="token operator">:</span> <span class="token string">"none"</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">"streamSettings"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">"network"</span><span class="token operator">:</span> <span class="token string">"raw"</span><span class="token punctuation">,</span>
+        <span class="token property">"security"</span><span class="token operator">:</span> <span class="token string">"reality"</span><span class="token punctuation">,</span>
+        <span class="token property">"realitySettings"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token property">"show"</span><span class="token operator">:</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+          <span class="token property">"dest"</span><span class="token operator">:</span> <span class="token string">"www.microsoft.com:443"</span><span class="token punctuation">,</span>
+          <span class="token property">"serverNames"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+            <span class="token string">"www.microsoft.com"</span>
+          <span class="token punctuation">]</span><span class="token punctuation">,</span>
+          <span class="token property">"privateKey"</span><span class="token operator">:</span> <span class="token string">"PRIVATE_KEY_HERE"</span><span class="token punctuation">,</span>
+          <span class="token property">"shortIds"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+            <span class="token string">"SHORT_ID_HERE"</span>
+          <span class="token punctuation">]</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">"sniffing"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">"enabled"</span><span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+        <span class="token property">"destOverride"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token string">"http"</span><span class="token punctuation">,</span>
+          <span class="token string">"tls"</span><span class="token punctuation">,</span>
+          <span class="token string">"quic"</span>
+        <span class="token punctuation">]</span>
+      <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">"outbounds"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"protocol"</span><span class="token operator">:</span> <span class="token string">"freedom"</span><span class="token punctuation">,</span>
+      <span class="token property">"tag"</span><span class="token operator">:</span> <span class="token string">"direct"</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"protocol"</span><span class="token operator">:</span> <span class="token string">"blackhole"</span><span class="token punctuation">,</span>
+      <span class="token property">"tag"</span><span class="token operator">:</span> <span class="token string">"block"</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>关于 <code>dest</code> 和 <code>serverNames</code> 需要单独说明：</p>
+<ul>
+<li>它们需要指向一个真实可访问的 HTTPS 站点。</li>
+<li>客户端的 <code>SNI/serverName</code> 必须和服务端 <code>serverNames</code> 中的值一致。</li>
+<li>很多教程会使用大型网站作为 REALITY 目标，但这不等于对方授权你这样使用。</li>
+<li>更稳妥的方式是使用你自己控制、且符合服务条款的 HTTPS 域名。</li>
+</ul>
+<p>如果后续把 <code>www.microsoft.com</code> 改成自己的域名，服务端 <code>dest</code>、<code>serverNames</code> 和客户端 <code>sni</code> 都要一起改。</p>
+<h2 id="八、检查配置并启动服务"><a href="#八、检查配置并启动服务" class="headerlink" title="八、检查配置并启动服务"></a>八、检查配置并启动服务</h2><p>先测试配置语法：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> xray run <span class="token parameter variable">-test</span> <span class="token parameter variable">-config</span> /usr/local/etc/xray/config.json<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>如果没有报错，重启并启用 Xray：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> systemctl restart xray
+<span class="token function">sudo</span> systemctl <span class="token builtin class-name">enable</span> xray<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>查看日志：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> journalctl <span class="token parameter variable">-u</span> xray <span class="token parameter variable">-n</span> <span class="token number">50</span> --no-pager<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>确认 <code>443</code> 端口已经监听：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> ss <span class="token parameter variable">-lntp</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token string">':443'</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>如果能看到 Xray 监听 <code>0.0.0.0:443</code>，说明服务端基本就绪。此时如果客户端仍然无法连接，优先检查 AWS Security Group，而不是先改 Xray 配置。</p>
+<h2 id="九、配置客户端"><a href="#九、配置客户端" class="headerlink" title="九、配置客户端"></a>九、配置客户端</h2><p>客户端参数如下：</p>
+<table>
+<thead>
+<tr>
+<th align="left">参数</th>
+<th align="left">值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">协议</td>
+<td align="left"><code>VLESS</code></td>
+</tr>
+<tr>
+<td align="left">地址</td>
+<td align="left">EC2 公网 IP 或你的域名</td>
+</tr>
+<tr>
+<td align="left">端口</td>
+<td align="left"><code>443</code></td>
+</tr>
+<tr>
+<td align="left">UUID</td>
+<td align="left"><code>UUID_HERE</code></td>
+</tr>
+<tr>
+<td align="left">加密</td>
+<td align="left"><code>none</code></td>
+</tr>
+<tr>
+<td align="left">流控 / flow</td>
+<td align="left"><code>xtls-rprx-vision</code></td>
+</tr>
+<tr>
+<td align="left">传输 / network</td>
+<td align="left"><code>tcp</code> 或 <code>raw</code>，按客户端实际选项填写</td>
+</tr>
+<tr>
+<td align="left">安全 / security</td>
+<td align="left"><code>reality</code></td>
+</tr>
+<tr>
+<td align="left">SNI / serverName</td>
+<td align="left"><code>www.microsoft.com</code></td>
+</tr>
+<tr>
+<td align="left">Fingerprint</td>
+<td align="left"><code>chrome</code></td>
+</tr>
+<tr>
+<td align="left">Public Key</td>
+<td align="left"><code>PUBLIC_KEY_HERE</code></td>
+</tr>
+<tr>
+<td align="left">Short ID</td>
+<td align="left"><code>SHORT_ID_HERE</code></td>
+</tr>
+<tr>
+<td align="left">SpiderX</td>
+<td align="left"><code>/</code></td>
+</tr>
+</tbody></table>
+<p>如果客户端支持导入分享链接，可以使用这个模板：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">vless://UUID_HERE@EC2_IP_OR_DOMAIN:443?encryption=none&amp;flow=xtls-rprx-vision&amp;security=reality&amp;sni=www.microsoft.com&amp;fp=chrome&amp;pbk=PUBLIC_KEY_HERE&amp;sid=SHORT_ID_HERE&amp;type=tcp&amp;headerType=none#aws-reality<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>需要替换：</p>
+<ul>
+<li><code>UUID_HERE</code></li>
+<li><code>EC2_IP_OR_DOMAIN</code></li>
+<li><code>PUBLIC_KEY_HERE</code></li>
+<li><code>SHORT_ID_HERE</code></li>
+<li><code>sni</code>，如果服务端 <code>serverNames</code> 改了，这里也要一致</li>
+</ul>
+<p>不同客户端对字段名称的叫法略有差异。比如有的叫 <code>serverName</code>，有的叫 <code>SNI</code>；有的把 <code>tcp</code> 显示成 <code>raw</code>。重点是参数值要和服务端对应。</p>
+<h2 id="十、基础加固"><a href="#十、基础加固" class="headerlink" title="十、基础加固"></a>十、基础加固</h2><p>AWS Security Group 是第一道边界，服务器上的防火墙可以作为第二层保护。</p>
+<p>启用 UFW：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> ufw allow OpenSSH
+<span class="token function">sudo</span> ufw allow <span class="token number">443</span>/tcp
+<span class="token function">sudo</span> ufw <span class="token builtin class-name">enable</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>再次确认安全组策略：</p>
+<ul>
+<li><code>22/tcp</code> 只允许你的公网 IP。</li>
+<li><code>443/tcp</code> 对外开放。</li>
+<li>不开放额外管理端口。</li>
+</ul>
+<p>启用自动安全更新：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> unattended-upgrades
+<span class="token function">sudo</span> dpkg-reconfigure unattended-upgrades<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>后续可以定期执行：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt</span> update
+<span class="token function">sudo</span> <span class="token function">apt</span> upgrade <span class="token parameter variable">-y</span>
+xray version<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>如需升级 Xray-core，可重新运行安装脚本：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">bash</span> <span class="token parameter variable">-c</span> <span class="token string">"<span class="token variable"><span class="token variable">$(</span><span class="token function">curl</span> <span class="token parameter variable">-L</span> https://github.com/XTLS/Xray-install/raw/main/install-release.sh<span class="token variable">)</span></span>"</span> @ <span class="token function">install</span>
+<span class="token function">sudo</span> systemctl restart xray<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<h2 id="十一、常见问题排查"><a href="#十一、常见问题排查" class="headerlink" title="十一、常见问题排查"></a>十一、常见问题排查</h2><h3 id="1-客户端完全连不上"><a href="#1-客户端完全连不上" class="headerlink" title="1. 客户端完全连不上"></a>1. 客户端完全连不上</h3><p>优先检查 AWS Security Group：</p>
+<ul>
+<li>是否开放了 <code>443/tcp</code>。</li>
+<li>安全组是否绑定到了正确的 EC2 实例。</li>
+<li>客户端填写的是不是当前 EC2 公网 IP 或 Elastic IP。</li>
+</ul>
+<p>然后检查服务器端口：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> ss <span class="token parameter variable">-lntp</span> <span class="token operator">|</span> <span class="token function">grep</span> <span class="token string">':443'</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>如果服务端没有监听 <code>443</code>，继续看 Xray 服务状态：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">systemctl status xray --no-pager
+<span class="token function">sudo</span> journalctl <span class="token parameter variable">-u</span> xray <span class="token parameter variable">-n</span> <span class="token number">100</span> --no-pager<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<h3 id="2-Xray-服务启动失败"><a href="#2-Xray-服务启动失败" class="headerlink" title="2. Xray 服务启动失败"></a>2. Xray 服务启动失败</h3><p>先测试配置文件：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> xray run <span class="token parameter variable">-test</span> <span class="token parameter variable">-config</span> /usr/local/etc/xray/config.json<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>JSON 配置最常见的问题包括：</p>
+<ul>
+<li>漏逗号</li>
+<li>引号错误</li>
+<li>占位符没有替换</li>
+<li><code>privateKey</code> 填成了 <code>publicKey</code></li>
+<li><code>shortIds</code> 没有写成数组</li>
+</ul>
+<h3 id="3-REALITY-握手失败"><a href="#3-REALITY-握手失败" class="headerlink" title="3. REALITY 握手失败"></a>3. REALITY 握手失败</h3><p>重点检查这几项：</p>
+<ul>
+<li>服务端使用的是 <code>privateKey</code>。</li>
+<li>客户端使用的是 <code>publicKey</code>。</li>
+<li><code>shortId</code> 两端一致。</li>
+<li>客户端 <code>serverName/SNI</code> 和服务端 <code>serverNames</code> 一致。</li>
+<li>客户端 <code>flow</code> 是 <code>xtls-rprx-vision</code>。</li>
+<li>客户端 <code>fingerprint</code> 使用了常见值，例如 <code>chrome</code>。</li>
+</ul>
+<p>如果只改了其中一个端的 SNI、shortId 或 key，连接通常会直接失败。</p>
+<h3 id="4-速度不好"><a href="#4-速度不好" class="headerlink" title="4. 速度不好"></a>4. 速度不好</h3><p>速度问题不一定来自 Xray 配置。个人节点体验很大程度取决于：</p>
+<ul>
+<li>AWS 区域</li>
+<li>本地运营商路由</li>
+<li>晚高峰拥塞</li>
+<li>实例规格和 CPU credit</li>
+<li>目标站点所在地区</li>
+</ul>
+<p>更有效的排查方式通常是横向测试不同区域，例如东京、新加坡、首尔、洛杉矶、俄勒冈等，而不是反复调整 Xray 参数。</p>
+<h3 id="5-EC2-重启后-IP-变了"><a href="#5-EC2-重启后-IP-变了" class="headerlink" title="5. EC2 重启后 IP 变了"></a>5. EC2 重启后 IP 变了</h3><p>如果没有绑定 Elastic IP，EC2 停止再启动后公网 IP 可能变化。</p>
+<p>解决方式有两种：</p>
+<ul>
+<li>给实例绑定 Elastic IP。</li>
+<li>使用域名解析到 Elastic IP。</li>
+</ul>
+<p>如果只使用普通公网 IP，每次 IP 变化后都要同步修改客户端地址。</p>
+<h2 id="十二、推荐的最终配置策略"><a href="#十二、推荐的最终配置策略" class="headerlink" title="十二、推荐的最终配置策略"></a>十二、推荐的最终配置策略</h2><p>个人使用建议从最小方案开始：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">单用户
+无管理面板
+443/TCP
+VLESS + REALITY + Vision
+AWS Security Group 限制 SSH 来源
+Elastic IP 固定地址<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>不建议一开始部署面板。面板确实方便管理多用户和订阅链接，但它也会引入额外端口、Web 登录面、数据库和权限问题。个人节点越简单，越容易维护，也越容易排查。</p>
+<p>这套配置的核心不是追求复杂，而是把暴露面控制住，把参数关系理清楚。真正需要记住的是：</p>
+<ul>
+<li>AWS 放行 <code>443/tcp</code></li>
+<li>Xray 监听 <code>443</code></li>
+<li>服务端放 <code>privateKey</code></li>
+<li>客户端放 <code>publicKey</code></li>
+<li><code>UUID</code>、<code>shortId</code>、<code>serverName</code> 两端一致</li>
+</ul>
+<p>只要这几项对应正确，大多数连接问题都能很快定位。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>Xray Transport / REALITY 文档：<a href="https://xtls.github.io/en/config/transport.html">https://xtls.github.io/en/config/transport.html</a></li>
+<li>Xray VLESS 文档：<a href="https://xtls.github.io/en/config/inbounds/vless.html">https://xtls.github.io/en/config/inbounds/vless.html</a></li>
+<li>Xray-core Releases：<a href="https://github.com/XTLS/Xray-core/releases">https://github.com/XTLS/Xray-core/releases</a></li>
+<li>AWS EC2 入门文档：<a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html">https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html</a></li>
+<li>AWS Elastic IP 文档：<a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html">https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html</a></li>
+</ul>
+]]></content>
+      <categories>
+        <category>Technical</category>
+      </categories>
+      <tags>
+        <tag>AWS</tag>
+        <tag>EC2</tag>
+        <tag>Xray</tag>
+        <tag>VLESS</tag>
+        <tag>REALITY</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Jetpack Compose 性能优化：为什么 graphicsLayer 值得重点掌握</title>
+    <url>/posts/2026/02/27/4ae1fc92/</url>
+    <content><![CDATA[<p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
+<p>比如，想让一个组件半透明，你可以这样写：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">alpha</span><span class="token punctuation">(</span><span class="token number">0.5f</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>也可以这样写：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> alpha <span class="token operator">=</span> <span class="token number">0.5f</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>从界面效果来看，它们几乎一样。</p>
+<p>但在<strong>动画</strong>、<strong>滚动联动</strong>、<strong>高频状态变化</strong>这类场景里，两者背后的性能路径并不完全相同。</p>
+<p>真正的关键不是“哪个 API 更高级”，而是：</p>
+<blockquote>
+<p><strong>你在哪个阶段读取状态。</strong></p>
+</blockquote>
+<p>如果状态读取发生在 Composition 阶段，就可能触发更多重组工作。</p>
+<p>如果状态读取被延后到 Draw 阶段，Compose 就有机会跳过 Composition 和 Layout，只做更轻量的绘制更新。</p>
+<hr>
+<h2 id="Compose-UI-的三大阶段"><a href="#Compose-UI-的三大阶段" class="headerlink" title="Compose UI 的三大阶段"></a>Compose UI 的三大阶段</h2><p>理解这件事，先要知道 Compose 的渲染流程主要分为三个阶段：</p>
+<h3 id="1-Composition"><a href="#1-Composition" class="headerlink" title="1. Composition"></a>1. Composition</h3><p>决定“<strong>要显示什么</strong>”。<br>也就是执行 Composable，构建或更新 UI 树。</p>
+<h3 id="2-Layout"><a href="#2-Layout" class="headerlink" title="2. Layout"></a>2. Layout</h3><p>决定“<strong>显示在哪里、多大</strong>”。<br>也就是测量和摆放组件。</p>
+<h3 id="3-Draw"><a href="#3-Draw" class="headerlink" title="3. Draw"></a>3. Draw</h3><p>决定“<strong>最终画成什么样</strong>”。<br>包括透明度、缩放、旋转、裁剪等绘制相关操作。</p>
+<p>如果一个变化只影响 Draw 阶段，通常会比影响 Layout 阶段更高效，因为整体需要做的工作更少。</p>
+<hr>
+<h2 id="真正的性能差异，来自“状态读取时机”"><a href="#真正的性能差异，来自“状态读取时机”" class="headerlink" title="真正的性能差异，来自“状态读取时机”"></a>真正的性能差异，来自“状态读取时机”</h2><p>很多文章会把这件事简单总结成：</p>
+<ul>
+<li><code>.alpha()</code> 会触发重组</li>
+<li><code>.graphicsLayer {}</code> 不会触发重组</li>
+</ul>
+<p>这个说法<strong>不够准确</strong>。</p>
+<p>更准确的说法是：</p>
+<blockquote>
+<p><strong>是否发生重组，取决于状态是在 Composition、Layout 还是 Draw 阶段被读取。</strong></p>
+</blockquote>
+<p><code>graphicsLayer</code> 的优势并不只是“它能做透明度和缩放”，而是它提供了一个很适合承载<strong>绘制阶段状态读取</strong>的入口。</p>
+<p>也就是说，在适合的场景下，你可以把频繁变化的状态放到更靠后的阶段去处理，从而减少不必要的 Composition 和 Layout 开销。</p>
+<hr>
+<h2 id="为什么-graphicsLayer-常常更适合动画"><a href="#为什么-graphicsLayer-常常更适合动画" class="headerlink" title="为什么 graphicsLayer 常常更适合动画"></a>为什么 <code>graphicsLayer</code> 常常更适合动画</h2><p><code>Modifier.graphicsLayer</code> 主要影响的是绘制阶段，不会改变组件的测量尺寸和摆放位置。</p>
+<p>这意味着下面这些变化，通常更适合放进 <code>graphicsLayer</code>：</p>
+<ul>
+<li><code>alpha</code></li>
+<li><code>scaleX / scaleY</code></li>
+<li><code>translationX / translationY</code></li>
+<li><code>rotationZ</code></li>
+</ul>
+<p>对于高频更新的 UI，这通常更有利，比如：</p>
+<ul>
+<li>滚动时的视差效果</li>
+<li>列表项渐隐渐现</li>
+<li>卡片缩放</li>
+<li>图标呼吸动画</li>
+<li>拖拽过程中的位移或旋转</li>
+</ul>
+<p>因为这些效果本质上更多是在改变“怎么画”，而不是“怎么排版”。</p>
+<hr>
+<h2 id="graphicsLayer-还有一层意义：图形层隔离"><a href="#graphicsLayer-还有一层意义：图形层隔离" class="headerlink" title="graphicsLayer 还有一层意义：图形层隔离"></a><code>graphicsLayer</code> 还有一层意义：图形层隔离</h2><p><code>graphicsLayer</code> 不只是一个 modifier，它还会带来图形层的隔离效果。</p>
+<p>你可以把它理解成：</p>
+<ul>
+<li>组件内容先被组织成一个独立绘制层</li>
+<li>后续对这个层做透明度、缩放、旋转等操作</li>
+<li>不必每次都重新“重画里面的内容”</li>
+</ul>
+<p>这也是它特别适合动画场景的原因之一。</p>
+<p>不过要注意，<strong>有 layer 不代表一定更快</strong>。</p>
+<p>如果只是静态 UI，或者变化频率很低，没必要为了“性能优化”而到处套 <code>graphicsLayer</code>。真正值得优化的，是那些：</p>
+<ul>
+<li>高频变化</li>
+<li>容易掉帧的动画</li>
+<li>滚动联动效果</li>
+<li>明显存在性能瓶颈的界面</li>
+</ul>
+<hr>
+<h2 id="一个更准确的对比方式"><a href="#一个更准确的对比方式" class="headerlink" title="一个更准确的对比方式"></a>一个更准确的对比方式</h2><table>
+<thead>
+<tr>
+<th align="left">对比项</th>
+<th align="left">普通值传递写法</th>
+<th align="left"><code>graphicsLayer { ... }</code> / lambda-based 写法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">状态读取位置</td>
+<td align="left">常见于 Composition 阶段</td>
+<td align="left">可延后到 Draw 阶段</td>
+</tr>
+<tr>
+<td align="left">是否一定触发重组</td>
+<td align="left">不一定，但更容易发生</td>
+<td align="left">不一定完全没有，但更容易跳过 Composition</td>
+</tr>
+<tr>
+<td align="left">是否影响布局</td>
+<td align="left">取决于具体 modifier</td>
+<td align="left"><code>graphicsLayer</code> 本身只影响绘制</td>
+</tr>
+<tr>
+<td align="left">适合场景</td>
+<td align="left">静态 UI、低频变化</td>
+<td align="left">动画、滚动联动、高频视觉变化</td>
+</tr>
+</tbody></table>
+<p>这里最重要的是一句话：</p>
+<blockquote>
+<p><strong>不是 <code>graphicsLayer</code> 天生“无敌”，而是它更适合处理那些只需要改变视觉表现、不需要重新布局的更新。</strong></p>
+</blockquote>
+<hr>
+<h2 id="实战示例：把动画状态留到绘制阶段处理"><a href="#实战示例：把动画状态留到绘制阶段处理" class="headerlink" title="实战示例：把动画状态留到绘制阶段处理"></a>实战示例：把动画状态留到绘制阶段处理</h2><p>下面这个例子非常适合这个思路：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> animatedScale <span class="token keyword">by</span> <span class="token function">animateFloatAsState</span><span class="token punctuation">(</span>targetValue <span class="token operator">=</span> <span class="token number">1.2f</span><span class="token punctuation">)</span>
+
+<span class="token function">Box</span><span class="token punctuation">(</span>
+    Modifier
+        <span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>Magenta<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
+            scaleX <span class="token operator">=</span> animatedScale
+            scaleY <span class="token operator">=</span> animatedScale
+            alpha <span class="token operator">=</span> <span class="token number">0.9f</span>
+        <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这种写法的好处是，<code>scaleX</code> 和 <code>scaleY</code> 这类纯视觉变化，更适合放在 <code>graphicsLayer</code> 中处理。因为它们不需要改变组件本身的测量结果和摆放位置。</p>
+<p>如果你的动画只是让组件“看起来变大”，而不是让布局系统认为“它真的变大了”，这种方式通常更划算。</p>
+<hr>
+<h2 id="什么时候优先考虑-graphicsLayer"><a href="#什么时候优先考虑-graphicsLayer" class="headerlink" title="什么时候优先考虑 graphicsLayer"></a>什么时候优先考虑 <code>graphicsLayer</code></h2><p>你可以优先在下面这些场景考虑它：</p>
+<h3 id="1-高频动画"><a href="#1-高频动画" class="headerlink" title="1. 高频动画"></a>1. 高频动画</h3><p>例如透明度、缩放、旋转、位移持续变化。<br>这类变化通常只影响视觉呈现，不需要反复参与布局。</p>
+<h3 id="2-滚动驱动效果"><a href="#2-滚动驱动效果" class="headerlink" title="2. 滚动驱动效果"></a>2. 滚动驱动效果</h3><p>比如顶部标题渐隐、列表项视差、卡片缩放。<br>这类状态更新非常频繁，更适合尽量延后到 Draw 阶段处理。</p>
+<h3 id="3-不想因为视觉变化触发布局连锁反应"><a href="#3-不想因为视觉变化触发布局连锁反应" class="headerlink" title="3. 不想因为视觉变化触发布局连锁反应"></a>3. 不想因为视觉变化触发布局连锁反应</h3><p>如果变化不会影响组件大小和位置，就尽量别让它进入 Layout。</p>
+<hr>
+<h2 id="什么时候不要滥用"><a href="#什么时候不要滥用" class="headerlink" title="什么时候不要滥用"></a>什么时候不要滥用</h2><p><code>graphicsLayer</code> 不是“看到动画就全上”的银弹。</p>
+<p>下面这些情况要谨慎：</p>
+<h3 id="1-变化本身会影响布局"><a href="#1-变化本身会影响布局" class="headerlink" title="1. 变化本身会影响布局"></a>1. 变化本身会影响布局</h3><p>如果你需要的不是“看起来变大”，而是“真的占更多空间”，那就不能只靠 Draw 阶段处理。</p>
+<h3 id="2-页面本身没有性能问题"><a href="#2-页面本身没有性能问题" class="headerlink" title="2. 页面本身没有性能问题"></a>2. 页面本身没有性能问题</h3><p>优化应该服务于实际瓶颈。<br>如果页面没有掉帧、没有频繁重组、没有滚动抖动，过度使用 <code>graphicsLayer</code> 反而会增加理解成本。</p>
+<h3 id="3-为了“听起来高级”而替换所有-modifier"><a href="#3-为了“听起来高级”而替换所有-modifier" class="headerlink" title="3. 为了“听起来高级”而替换所有 modifier"></a>3. 为了“听起来高级”而替换所有 modifier</h3><p>性能优化不是 API 崇拜。<br>重点是识别哪些状态变化只是视觉层面的，哪些真的会影响布局和结构。</p>
+<hr>
+<h2 id="一句话总结"><a href="#一句话总结" class="headerlink" title="一句话总结"></a>一句话总结</h2><p><code>graphicsLayer</code> 的核心价值，不是“它比 <code>.alpha()</code> 更酷”，而是：</p>
+<blockquote>
+<p><strong>它很适合承载那些只影响绘制结果的高频状态变化，让 Compose 有机会跳过更重的 Composition 和 Layout。</strong></p>
+</blockquote>
+<p>所以，当你在做这些效果时：</p>
+<ul>
+<li>渐隐渐现</li>
+<li>缩放</li>
+<li>旋转</li>
+<li>平移</li>
+<li>滚动联动动画</li>
+</ul>
+<p>优先想一件事：</p>
+<p><strong>这次变化，是不是其实只需要改 Draw，而不必让整个 UI 重新参与组合和布局？</strong></p>
+<p>如果答案是“对”，那 <code>graphicsLayer</code> 往往就是非常值得尝试的方案。</p>
+<hr>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>写 Compose 性能优化时，最容易踩的坑就是把结论说得太绝对。<br>真正值得记住的不是“某个 modifier 一定更快”，而是这条原则：</p>
+<blockquote>
+<p><strong>把状态读取尽量放到更晚的阶段，尤其是 Draw 阶段。</strong></p>
+</blockquote>
+<p>这才是很多 Compose 性能优化技巧背后的共同思路。</p>
+]]></content>
+      <categories>
+        <category>Compose</category>
+      </categories>
+      <tags>
+        <tag>Android</tag>
+        <tag>Jetpack Compose</tag>
       </tags>
   </entry>
 </search>
