@@ -1072,203 +1072,6 @@ NSData<span class="token punctuation">.</span><span class="token function">dataW
       </tags>
   </entry>
   <entry>
-    <title>Jetpack Compose 中 remember 和 rememberSaveable 的区别：一次 Tab 切换状态丢失排查</title>
-    <url>/posts/2023/12/04/f68195/</url>
-    <content><![CDATA[<p>在 Jetpack Compose 中，<code>remember {}</code> 和 <code>rememberSaveable {}</code> 都能“记住”状态。</p>
-<p>但它们的保存范围并不一样。</p>
-<p>这个差异在简单页面里不明显，一旦遇到 Tab 切换、页面离开后重新进入、Activity 重建等场景，就很容易出现状态被意外重置的问题。</p>
-<p>这篇文章结合一次真实排查，说明：</p>
-<p><strong><code>remember</code> 只保证当前组合生命周期内的状态复用；<code>rememberSaveable</code> 适合需要在离开页面后仍然恢复的可保存状态。</strong></p>
-<hr>
-<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>页面里有两个主要部分：</p>
-<ul>
-<li><strong>Dashboard</strong>：根据滚动做缩放动画</li>
-<li><strong>Asset List</strong>：可滚动列表</li>
-</ul>
-<p>最开始使用 <code>remember {}</code> 保存 <code>scale</code> 状态时，表现并不稳定：</p>
-<ul>
-<li>快速切换 Tab：看起来正常，<code>scale</code> 还能保持</li>
-<li>在其他 Tab 停留一段时间再切回：<code>scale</code> 被重置，Dashboard 突然放大</li>
-</ul>
-<p><img src="/images/20231204/remember.gif" alt="Tab 切换后 scale 状态变化" title="remember"></p>
-<p>改成 <code>rememberSaveable {}</code> 后，无论如何切换 Tab，返回时 Dashboard 都能保持之前的缩放状态。</p>
-<p>相关代码如下：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">var</span> scale <span class="token keyword">by</span> rememberSaveable <span class="token punctuation">{</span>
-    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span>
-
-<span class="token keyword">val</span> nestedScrollConnection <span class="token operator">=</span> remember <span class="token punctuation">{</span> <span class="token operator">..</span><span class="token punctuation">.</span> <span class="token punctuation">}</span>
-
-<span class="token function">Box</span><span class="token punctuation">(</span>modifier <span class="token operator">=</span> modifier<span class="token punctuation">.</span><span class="token function">nestedScroll</span><span class="token punctuation">(</span>nestedScrollConnection<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token function">DashboardView</span><span class="token punctuation">(</span>
-        modifier <span class="token operator">=</span> Modifier
-            <span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">scale</span><span class="token punctuation">(</span>scale<span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
-                translationY <span class="token operator">=</span> toolbarHeightRange<span class="token punctuation">.</span>last <span class="token operator">*</span> <span class="token punctuation">(</span>scale <span class="token operator">-</span> <span class="token number">1.0f</span><span class="token punctuation">)</span>
-            <span class="token punctuation">}</span><span class="token punctuation">,</span>
-        onEvent <span class="token operator">=</span> onEvent
-    <span class="token punctuation">)</span>
-
-    <span class="token function">LazyColumn</span><span class="token punctuation">(</span>
-        modifier <span class="token operator">=</span> Modifier
-            <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
-                translationY <span class="token operator">=</span> toolbarState<span class="token punctuation">.</span>height <span class="token operator">+</span> toolbarState<span class="token punctuation">.</span>offset
-            <span class="token punctuation">}</span>
-            <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>MaterialTheme<span class="token punctuation">.</span>colorScheme<span class="token punctuation">.</span>background<span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">shadow</span><span class="token punctuation">(</span>
-                elevation <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span>
-                shape <span class="token operator">=</span> <span class="token function">RoundedCornerShape</span><span class="token punctuation">(</span>topEnd <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> topStart <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
-            <span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">pointerInput</span><span class="token punctuation">(</span>Unit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-                <span class="token function">detectTapGestures</span><span class="token punctuation">(</span>onPress <span class="token operator">=</span> <span class="token punctuation">{</span> scope<span class="token punctuation">.</span>coroutineContext<span class="token punctuation">.</span><span class="token function">cancelChildren</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
-            <span class="token punctuation">}</span><span class="token punctuation">,</span>
-        verticalArrangement <span class="token operator">=</span> Arrangement<span class="token punctuation">.</span><span class="token function">spacedBy</span><span class="token punctuation">(</span><span class="token number">12</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">,</span>
-        state <span class="token operator">=</span> listState
-    <span class="token punctuation">)</span> <span class="token punctuation">{</span>
-        <span class="token function">items</span><span class="token punctuation">(</span>uiState<span class="token punctuation">.</span>tokens<span class="token punctuation">,</span> key <span class="token operator">=</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span>token<span class="token punctuation">.</span>id <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-            <span class="token function">TokenItemView</span><span class="token punctuation">(</span>extraToken <span class="token operator">=</span> it<span class="token punctuation">,</span> onEvent <span class="token operator">=</span> onEvent<span class="token punctuation">)</span>
-        <span class="token punctuation">}</span>
-    <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<hr>
-<h2 id="二、先理解组合生命周期"><a href="#二、先理解组合生命周期" class="headerlink" title="二、先理解组合生命周期"></a>二、先理解组合生命周期</h2><p>根据 Compose 官方文档，Composable 的生命周期可以简单分为三段：</p>
-<ul>
-<li><strong>Enter Composition</strong>：进入组合</li>
-<li><strong>Recomposition</strong>：重组</li>
-<li><strong>Exit Composition</strong>：退出组合</li>
-</ul>
-<p>当页面因为 Tab 切换、导航或列表滑出等原因离开当前 UI 树时，对应 Composable 可能会退出组合。</p>
-<p>再次回到页面时，它不是简单“继续刚才的状态”，而是重新进入组合。</p>
-<p>这正是 <code>remember</code> 和 <code>rememberSaveable</code> 差异出现的地方。</p>
-<hr>
-<h2 id="三、remember-保存的是什么"><a href="#三、remember-保存的是什么" class="headerlink" title="三、remember {} 保存的是什么"></a>三、<code>remember {}</code> 保存的是什么</h2><p><code>remember {}</code> 的核心行为是：</p>
-<p><strong>在当前组合中记住计算结果，重组时复用这个值。</strong></p>
-<p>也就是说：</p>
-<ul>
-<li>初次进入组合：执行 block，计算并保存值</li>
-<li>普通重组：直接返回保存的值，不重新执行 block</li>
-<li>退出组合后再次进入：进入新的组合生命周期，block 会重新执行</li>
-</ul>
-<p>所以在这次问题中，如果页面离开 Tab 后被移出组合，再回来时：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">remember <span class="token punctuation">{</span> <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>会重新执行，<code>scale</code> 自然回到 <code>1.0f</code>。</p>
-<p>快速切换时之所以“看起来正常”，只是因为组合可能还没有被回收，并不代表 <code>remember</code> 能跨页面稳定保存状态。</p>
-<hr>
-<h2 id="四、rememberSaveable-多做了什么"><a href="#四、rememberSaveable-多做了什么" class="headerlink" title="四、rememberSaveable {} 多做了什么"></a>四、<code>rememberSaveable {}</code> 多做了什么</h2><p><code>rememberSaveable {}</code> 和 <code>remember {}</code> 类似，也会在组合中保存状态。</p>
-<p>不同的是，它会把可保存的值接入 Compose 的保存机制，基于 <code>SaveableStateRegistry</code> / Android <code>SavedInstanceState</code> 进行恢复。</p>
-<p>它的要点是：</p>
-<ul>
-<li>默认使用 <code>autoSaver()</code> 保存 Bundle 支持的类型</li>
-<li>支持 <code>Int</code>、<code>String</code>、<code>Float</code> 等基础类型</li>
-<li>自定义类型需要提供 <code>Saver</code></li>
-<li>可以应对 Activity 重建、进程恢复，以及部分离开后重新进入的状态恢复场景</li>
-</ul>
-<p>如果保存的是不支持自动保存的类型，通常会遇到类似错误：</p>
-<pre class="line-numbers language-text" data-language="text"><code class="language-text">java.lang.IllegalArgumentException: MutableState containing ... cannot be saved using the current SaveableStateRegistry.
-The default implementation only supports types which can be stored inside the Bundle.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p>在本文这个场景里，<code>scale</code> 是 <code>Float</code>，属于可保存类型，因此适合用 <code>rememberSaveable</code> 保存。</p>
-<hr>
-<h2 id="五、用日志验证"><a href="#五、用日志验证" class="headerlink" title="五、用日志验证"></a>五、用日志验证</h2><p>可以用下面这段代码验证 <code>remember</code> 在退出组合后会重新计算：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">var</span> scale <span class="token keyword">by</span> remember <span class="token punctuation">{</span>
-    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== re-calculate"</span></span><span class="token punctuation">)</span>
-    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span>
-
-<span class="token function">DisposableEffect</span><span class="token punctuation">(</span>key1 <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    onDispose <span class="token punctuation">{</span> <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== onDispose"</span></span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p><code>DisposableEffect</code> 的 <code>onDispose</code> 会在退出组合时执行。</p>
-<p>使用 <code>remember {}</code> 时：</p>
-<ul>
-<li>第一次进入页面：打印 <code>re-calculate</code></li>
-<li>切到其他 Tab 停留后：打印 <code>onDispose</code></li>
-<li>再切回来：再次打印 <code>re-calculate</code>，状态被重置</li>
-</ul>
-<p><img src="/images/20231204/remember_log.jpg" alt="remember 退出组合后重新计算" title="remember_log"></p>
-<p>改用 <code>rememberSaveable {}</code> 后：</p>
-<ul>
-<li>第一次进入页面时打印 <code>re-calculate</code></li>
-<li>再切 Tab 回来时不会重新计算</li>
-<li><code>scale</code> 会从保存状态中恢复</li>
-</ul>
-<p><img src="/images/20231204/remember_log1.jpg" alt="rememberSaveable 恢复已保存状态" title="remember_log1"></p>
-<hr>
-<h2 id="六、离开屏幕不等于-Activity-重建"><a href="#六、离开屏幕不等于-Activity-重建" class="headerlink" title="六、离开屏幕不等于 Activity 重建"></a>六、离开屏幕不等于 Activity 重建</h2><p>这里还有一个容易混淆的点：</p>
-<p><strong>Composable leaving the screen is not recreation.</strong></p>
-<p>可组合项离开屏幕，不等于 Activity 或进程重建。</p>
-<p>在 Compose 中：</p>
-<ul>
-<li>离开屏幕：Composable 退出组合，<code>onDispose</code> 执行</li>
-<li>再进入屏幕：Composable 重新进入组合</li>
-<li>Activity 重建：触发 Android 保存 / 恢复流程</li>
-</ul>
-<p>常见“离开屏幕”的场景包括：</p>
-<ol>
-<li>Navigation 跳转或 Tab 切换</li>
-<li>LazyColumn item 滑出视口</li>
-<li>条件渲染导致某段 UI 暂时不显示</li>
-</ol>
-<p>因此，状态应该放在哪里，不能只看“会不会重组”，还要看它是否需要跨越组合生命周期。</p>
-<hr>
-<h2 id="七、如何选择"><a href="#七、如何选择" class="headerlink" title="七、如何选择"></a>七、如何选择</h2><p>可以按下面的规则判断：</p>
-<table>
-<thead>
-<tr>
-<th>场景</th>
-<th>推荐</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>只需要在普通重组中保持状态</td>
-<td><code>remember {}</code></td>
-</tr>
-<tr>
-<td>页面离开后再进入仍要恢复状态</td>
-<td><code>rememberSaveable {}</code> 或上层状态持有者</td>
-</tr>
-<tr>
-<td>Activity / 进程重建后要恢复状态</td>
-<td><code>rememberSaveable {}</code>，必要时自定义 <code>Saver</code></td>
-</tr>
-<tr>
-<td>状态属于业务数据或跨多个页面共享</td>
-<td>ViewModel / Repository / 状态管理层</td>
-</tr>
-<tr>
-<td>LazyList 滚动位置</td>
-<td><code>rememberLazyListState</code> 等可保存状态 API</td>
-</tr>
-</tbody></table>
-<p>对本文的 <code>scale</code> 来说，它是 UI 状态，类型简单，而且需要在离开页面后恢复，所以 <code>rememberSaveable</code> 是合理选择。</p>
-<hr>
-<h2 id="八、总结"><a href="#八、总结" class="headerlink" title="八、总结"></a>八、总结</h2><p><code>remember</code> 和 <code>rememberSaveable</code> 的区别，可以用一句话概括：</p>
-<blockquote>
-<p><strong><code>remember</code> 记住当前组合里的值，<code>rememberSaveable</code> 记住可以被保存和恢复的状态。</strong></p>
-</blockquote>
-<p>排查这类问题时，重点不要只看“有没有重组”，而要继续追问：</p>
-<ul>
-<li>这个 Composable 是否会退出组合？</li>
-<li>状态是否需要在再次进入页面时恢复？</li>
-<li>这个状态能不能被保存到 Bundle？</li>
-<li>它应该属于 UI 局部状态，还是应该上移到 ViewModel？</li>
-</ul>
-<p>理解这几个问题后，就能更稳定地选择 <code>remember</code>、<code>rememberSaveable</code> 或更上层的状态持有方式，避免页面切换后状态突然丢失。</p>
-]]></content>
-      <categories>
-        <category>Technical</category>
-      </categories>
-      <tags>
-        <tag>Android</tag>
-        <tag>Jetpack Compose</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Jetpack Compose 性能优化：为什么 graphicsLayer 值得重点掌握</title>
     <url>/posts/2026/02/27/4ae1fc92/</url>
     <content><![CDATA[<p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
@@ -1429,8 +1232,8 @@ The default implementation only supports types which can be stored inside the Bu
         <category>Compose</category>
       </categories>
       <tags>
-        <tag>Android</tag>
         <tag>Jetpack Compose</tag>
+        <tag>Android</tag>
       </tags>
   </entry>
   <entry>
@@ -1690,8 +1493,8 @@ The default implementation only supports types which can be stored inside the Bu
         <category>Compose</category>
       </categories>
       <tags>
-        <tag>Android</tag>
         <tag>Jetpack Compose</tag>
+        <tag>Android</tag>
         <tag>Compose</tag>
       </tags>
   </entry>
@@ -2156,6 +1959,203 @@ Elastic IP 固定地址<span aria-hidden="true" class="line-numbers-rows"><span>
         <tag>Xray</tag>
         <tag>VLESS</tag>
         <tag>REALITY</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Jetpack Compose 中 remember 和 rememberSaveable 的区别：一次 Tab 切换状态丢失排查</title>
+    <url>/posts/2023/12/04/f68195/</url>
+    <content><![CDATA[<p>在 Jetpack Compose 中，<code>remember {}</code> 和 <code>rememberSaveable {}</code> 都能“记住”状态。</p>
+<p>但它们的保存范围并不一样。</p>
+<p>这个差异在简单页面里不明显，一旦遇到 Tab 切换、页面离开后重新进入、Activity 重建等场景，就很容易出现状态被意外重置的问题。</p>
+<p>这篇文章结合一次真实排查，说明：</p>
+<p><strong><code>remember</code> 只保证当前组合生命周期内的状态复用；<code>rememberSaveable</code> 适合需要在离开页面后仍然恢复的可保存状态。</strong></p>
+<hr>
+<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>页面里有两个主要部分：</p>
+<ul>
+<li><strong>Dashboard</strong>：根据滚动做缩放动画</li>
+<li><strong>Asset List</strong>：可滚动列表</li>
+</ul>
+<p>最开始使用 <code>remember {}</code> 保存 <code>scale</code> 状态时，表现并不稳定：</p>
+<ul>
+<li>快速切换 Tab：看起来正常，<code>scale</code> 还能保持</li>
+<li>在其他 Tab 停留一段时间再切回：<code>scale</code> 被重置，Dashboard 突然放大</li>
+</ul>
+<p><img src="/images/20231204/remember.gif" alt="Tab 切换后 scale 状态变化" title="remember"></p>
+<p>改成 <code>rememberSaveable {}</code> 后，无论如何切换 Tab，返回时 Dashboard 都能保持之前的缩放状态。</p>
+<p>相关代码如下：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">var</span> scale <span class="token keyword">by</span> rememberSaveable <span class="token punctuation">{</span>
+    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">val</span> nestedScrollConnection <span class="token operator">=</span> remember <span class="token punctuation">{</span> <span class="token operator">..</span><span class="token punctuation">.</span> <span class="token punctuation">}</span>
+
+<span class="token function">Box</span><span class="token punctuation">(</span>modifier <span class="token operator">=</span> modifier<span class="token punctuation">.</span><span class="token function">nestedScroll</span><span class="token punctuation">(</span>nestedScrollConnection<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">DashboardView</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> Modifier
+            <span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">scale</span><span class="token punctuation">(</span>scale<span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
+                translationY <span class="token operator">=</span> toolbarHeightRange<span class="token punctuation">.</span>last <span class="token operator">*</span> <span class="token punctuation">(</span>scale <span class="token operator">-</span> <span class="token number">1.0f</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        onEvent <span class="token operator">=</span> onEvent
+    <span class="token punctuation">)</span>
+
+    <span class="token function">LazyColumn</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> Modifier
+            <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
+                translationY <span class="token operator">=</span> toolbarState<span class="token punctuation">.</span>height <span class="token operator">+</span> toolbarState<span class="token punctuation">.</span>offset
+            <span class="token punctuation">}</span>
+            <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>MaterialTheme<span class="token punctuation">.</span>colorScheme<span class="token punctuation">.</span>background<span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">shadow</span><span class="token punctuation">(</span>
+                elevation <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span>
+                shape <span class="token operator">=</span> <span class="token function">RoundedCornerShape</span><span class="token punctuation">(</span>topEnd <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> topStart <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
+            <span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">pointerInput</span><span class="token punctuation">(</span>Unit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">detectTapGestures</span><span class="token punctuation">(</span>onPress <span class="token operator">=</span> <span class="token punctuation">{</span> scope<span class="token punctuation">.</span>coroutineContext<span class="token punctuation">.</span><span class="token function">cancelChildren</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        verticalArrangement <span class="token operator">=</span> Arrangement<span class="token punctuation">.</span><span class="token function">spacedBy</span><span class="token punctuation">(</span><span class="token number">12</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        state <span class="token operator">=</span> listState
+    <span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">items</span><span class="token punctuation">(</span>uiState<span class="token punctuation">.</span>tokens<span class="token punctuation">,</span> key <span class="token operator">=</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span>token<span class="token punctuation">.</span>id <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">TokenItemView</span><span class="token punctuation">(</span>extraToken <span class="token operator">=</span> it<span class="token punctuation">,</span> onEvent <span class="token operator">=</span> onEvent<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<hr>
+<h2 id="二、先理解组合生命周期"><a href="#二、先理解组合生命周期" class="headerlink" title="二、先理解组合生命周期"></a>二、先理解组合生命周期</h2><p>根据 Compose 官方文档，Composable 的生命周期可以简单分为三段：</p>
+<ul>
+<li><strong>Enter Composition</strong>：进入组合</li>
+<li><strong>Recomposition</strong>：重组</li>
+<li><strong>Exit Composition</strong>：退出组合</li>
+</ul>
+<p>当页面因为 Tab 切换、导航或列表滑出等原因离开当前 UI 树时，对应 Composable 可能会退出组合。</p>
+<p>再次回到页面时，它不是简单“继续刚才的状态”，而是重新进入组合。</p>
+<p>这正是 <code>remember</code> 和 <code>rememberSaveable</code> 差异出现的地方。</p>
+<hr>
+<h2 id="三、remember-保存的是什么"><a href="#三、remember-保存的是什么" class="headerlink" title="三、remember {} 保存的是什么"></a>三、<code>remember {}</code> 保存的是什么</h2><p><code>remember {}</code> 的核心行为是：</p>
+<p><strong>在当前组合中记住计算结果，重组时复用这个值。</strong></p>
+<p>也就是说：</p>
+<ul>
+<li>初次进入组合：执行 block，计算并保存值</li>
+<li>普通重组：直接返回保存的值，不重新执行 block</li>
+<li>退出组合后再次进入：进入新的组合生命周期，block 会重新执行</li>
+</ul>
+<p>所以在这次问题中，如果页面离开 Tab 后被移出组合，再回来时：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">remember <span class="token punctuation">{</span> <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>会重新执行，<code>scale</code> 自然回到 <code>1.0f</code>。</p>
+<p>快速切换时之所以“看起来正常”，只是因为组合可能还没有被回收，并不代表 <code>remember</code> 能跨页面稳定保存状态。</p>
+<hr>
+<h2 id="四、rememberSaveable-多做了什么"><a href="#四、rememberSaveable-多做了什么" class="headerlink" title="四、rememberSaveable {} 多做了什么"></a>四、<code>rememberSaveable {}</code> 多做了什么</h2><p><code>rememberSaveable {}</code> 和 <code>remember {}</code> 类似，也会在组合中保存状态。</p>
+<p>不同的是，它会把可保存的值接入 Compose 的保存机制，基于 <code>SaveableStateRegistry</code> / Android <code>SavedInstanceState</code> 进行恢复。</p>
+<p>它的要点是：</p>
+<ul>
+<li>默认使用 <code>autoSaver()</code> 保存 Bundle 支持的类型</li>
+<li>支持 <code>Int</code>、<code>String</code>、<code>Float</code> 等基础类型</li>
+<li>自定义类型需要提供 <code>Saver</code></li>
+<li>可以应对 Activity 重建、进程恢复，以及部分离开后重新进入的状态恢复场景</li>
+</ul>
+<p>如果保存的是不支持自动保存的类型，通常会遇到类似错误：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">java.lang.IllegalArgumentException: MutableState containing ... cannot be saved using the current SaveableStateRegistry.
+The default implementation only supports types which can be stored inside the Bundle.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>在本文这个场景里，<code>scale</code> 是 <code>Float</code>，属于可保存类型，因此适合用 <code>rememberSaveable</code> 保存。</p>
+<hr>
+<h2 id="五、用日志验证"><a href="#五、用日志验证" class="headerlink" title="五、用日志验证"></a>五、用日志验证</h2><p>可以用下面这段代码验证 <code>remember</code> 在退出组合后会重新计算：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">var</span> scale <span class="token keyword">by</span> remember <span class="token punctuation">{</span>
+    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== re-calculate"</span></span><span class="token punctuation">)</span>
+    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+
+<span class="token function">DisposableEffect</span><span class="token punctuation">(</span>key1 <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    onDispose <span class="token punctuation">{</span> <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== onDispose"</span></span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><code>DisposableEffect</code> 的 <code>onDispose</code> 会在退出组合时执行。</p>
+<p>使用 <code>remember {}</code> 时：</p>
+<ul>
+<li>第一次进入页面：打印 <code>re-calculate</code></li>
+<li>切到其他 Tab 停留后：打印 <code>onDispose</code></li>
+<li>再切回来：再次打印 <code>re-calculate</code>，状态被重置</li>
+</ul>
+<p><img src="/images/20231204/remember_log.jpg" alt="remember 退出组合后重新计算" title="remember_log"></p>
+<p>改用 <code>rememberSaveable {}</code> 后：</p>
+<ul>
+<li>第一次进入页面时打印 <code>re-calculate</code></li>
+<li>再切 Tab 回来时不会重新计算</li>
+<li><code>scale</code> 会从保存状态中恢复</li>
+</ul>
+<p><img src="/images/20231204/remember_log1.jpg" alt="rememberSaveable 恢复已保存状态" title="remember_log1"></p>
+<hr>
+<h2 id="六、离开屏幕不等于-Activity-重建"><a href="#六、离开屏幕不等于-Activity-重建" class="headerlink" title="六、离开屏幕不等于 Activity 重建"></a>六、离开屏幕不等于 Activity 重建</h2><p>这里还有一个容易混淆的点：</p>
+<p><strong>Composable leaving the screen is not recreation.</strong></p>
+<p>可组合项离开屏幕，不等于 Activity 或进程重建。</p>
+<p>在 Compose 中：</p>
+<ul>
+<li>离开屏幕：Composable 退出组合，<code>onDispose</code> 执行</li>
+<li>再进入屏幕：Composable 重新进入组合</li>
+<li>Activity 重建：触发 Android 保存 / 恢复流程</li>
+</ul>
+<p>常见“离开屏幕”的场景包括：</p>
+<ol>
+<li>Navigation 跳转或 Tab 切换</li>
+<li>LazyColumn item 滑出视口</li>
+<li>条件渲染导致某段 UI 暂时不显示</li>
+</ol>
+<p>因此，状态应该放在哪里，不能只看“会不会重组”，还要看它是否需要跨越组合生命周期。</p>
+<hr>
+<h2 id="七、如何选择"><a href="#七、如何选择" class="headerlink" title="七、如何选择"></a>七、如何选择</h2><p>可以按下面的规则判断：</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>只需要在普通重组中保持状态</td>
+<td><code>remember {}</code></td>
+</tr>
+<tr>
+<td>页面离开后再进入仍要恢复状态</td>
+<td><code>rememberSaveable {}</code> 或上层状态持有者</td>
+</tr>
+<tr>
+<td>Activity / 进程重建后要恢复状态</td>
+<td><code>rememberSaveable {}</code>，必要时自定义 <code>Saver</code></td>
+</tr>
+<tr>
+<td>状态属于业务数据或跨多个页面共享</td>
+<td>ViewModel / Repository / 状态管理层</td>
+</tr>
+<tr>
+<td>LazyList 滚动位置</td>
+<td><code>rememberLazyListState</code> 等可保存状态 API</td>
+</tr>
+</tbody></table>
+<p>对本文的 <code>scale</code> 来说，它是 UI 状态，类型简单，而且需要在离开页面后恢复，所以 <code>rememberSaveable</code> 是合理选择。</p>
+<hr>
+<h2 id="八、总结"><a href="#八、总结" class="headerlink" title="八、总结"></a>八、总结</h2><p><code>remember</code> 和 <code>rememberSaveable</code> 的区别，可以用一句话概括：</p>
+<blockquote>
+<p><strong><code>remember</code> 记住当前组合里的值，<code>rememberSaveable</code> 记住可以被保存和恢复的状态。</strong></p>
+</blockquote>
+<p>排查这类问题时，重点不要只看“有没有重组”，而要继续追问：</p>
+<ul>
+<li>这个 Composable 是否会退出组合？</li>
+<li>状态是否需要在再次进入页面时恢复？</li>
+<li>这个状态能不能被保存到 Bundle？</li>
+<li>它应该属于 UI 局部状态，还是应该上移到 ViewModel？</li>
+</ul>
+<p>理解这几个问题后，就能更稳定地选择 <code>remember</code>、<code>rememberSaveable</code> 或更上层的状态持有方式，避免页面切换后状态突然丢失。</p>
+]]></content>
+      <categories>
+        <category>Technical</category>
+      </categories>
+      <tags>
+        <tag>Jetpack Compose</tag>
+        <tag>Android</tag>
       </tags>
   </entry>
 </search>
