@@ -507,146 +507,6 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
       </tags>
   </entry>
   <entry>
-    <title>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</title>
-    <url>/posts/2026/07/18/9e7d1a5f/</url>
-    <content><![CDATA[<h1 id="单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布"><a href="#单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布" class="headerlink" title="单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布"></a>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</h1><p>本方案的技术链路为：<strong>Mac + OrbStack 本地开发与构建 → Docker Hub 保存版本化镜像 → Ubuntu VPS 使用 Docker Compose 运行</strong>。VPS 只保留部署配置、环境变量、Nginx 配置和数据卷，不上传 Git 仓库或 src 源码目录。</p>
-<blockquote>
-<p><strong>注意</strong>：多阶段镜像不等同绝对源码保护。最终镜像可没有 TypeScript 源码，但编译后的 JavaScript 仍可被分析。密码、令牌和私钥永远不能写进镜像。</p>
-</blockquote>
-<hr>
-<h2 id="一、环境说明"><a href="#一、环境说明" class="headerlink" title="一、环境说明"></a>一、环境说明</h2><p>本地需要 <strong>macOS、OrbStack、Node.js LTS、npm、Git</strong> 和 <strong>Docker Hub 账号</strong>。PostgreSQL 通过 OrbStack 容器运行。</p>
-<p>VPS 建议使用：</p>
-<ul>
-<li><strong>系统</strong>：Ubuntu 24.04 LTS（或仍受支持的 LTS）</li>
-<li><strong>配置</strong>：2 vCPU、4 GB RAM、40 GB 以上 SSD/NVMe</li>
-<li><strong>网络</strong>：公网 IPv4，开放 TCP 80/443</li>
-<li><strong>安全</strong>：SSH 仅对可信 IP 开放</li>
-</ul>
-<blockquote>
-<p>1 GB 内存可试验，但 API、PostgreSQL 与 Docker 共用资源时余量很少。</p>
-</blockquote>
-<hr>
-<h2 id="二、本地-PostgreSQL"><a href="#二、本地-PostgreSQL" class="headerlink" title="二、本地 PostgreSQL"></a>二、本地 PostgreSQL</h2><p>创建 <code>compose.dev.yml</code>：</p>
-<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">services</span><span class="token punctuation">:</span>
-  <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
-    <span class="token key atrule">image</span><span class="token punctuation">:</span> postgres<span class="token punctuation">:</span><span class="token number">16</span>
-    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
-      <span class="token key atrule">POSTGRES_USER</span><span class="token punctuation">:</span> app_user
-      <span class="token key atrule">POSTGRES_PASSWORD</span><span class="token punctuation">:</span> change<span class="token punctuation">-</span>this<span class="token punctuation">-</span>local<span class="token punctuation">-</span>password
-      <span class="token key atrule">POSTGRES_DB</span><span class="token punctuation">:</span> app_db
-    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token string">"127.0.0.1:5432:5432"</span>
-    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> postgres_dev_data<span class="token punctuation">:</span>/var/lib/postgresql/data
-<span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-  postgres_dev_data<span class="token punctuation">:</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>启动并验证：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml up <span class="token parameter variable">-d</span>
-<span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml <span class="token builtin class-name">exec</span> postgres psql <span class="token parameter variable">-U</span> app_user <span class="token parameter variable">-d</span> app_db<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p>本机运行 API 时的数据库连接字符串：</p>
-<pre class="line-numbers language-env" data-language="env"><code class="language-env">DATABASE_URL=postgresql://app_user:***@localhost:5432/app_db<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>绑定 <code>127.0.0.1</code> 代表数据库只供本机开发使用。</p>
-<hr>
-<h2 id="三、构建生产-Docker-镜像"><a href="#三、构建生产-Docker-镜像" class="headerlink" title="三、构建生产 Docker 镜像"></a>三、构建生产 Docker 镜像</h2><p>假设 <code>npm run build</code> 输出 <code>dist</code>，入口为 <code>dist/server.js</code>：</p>
-<pre class="line-numbers language-docker" data-language="docker"><code class="language-docker"><span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> build</span>
-<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
-<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
-<span class="token instruction"><span class="token keyword">RUN</span> npm ci</span>
-<span class="token instruction"><span class="token keyword">COPY</span> tsconfig*.json ./</span>
-<span class="token instruction"><span class="token keyword">COPY</span> src ./src</span>
-<span class="token instruction"><span class="token keyword">RUN</span> npm run build</span>
-
-<span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> production</span>
-<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
-<span class="token instruction"><span class="token keyword">ENV</span> NODE_ENV=production</span>
-<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
-<span class="token instruction"><span class="token keyword">RUN</span> npm ci --omit=dev &amp;&amp; npm cache clean --force</span>
-<span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--from</span><span class="token punctuation">=</span><span class="token string">build</span></span> /app/dist ./dist</span>
-<span class="token instruction"><span class="token keyword">USER</span> node</span>
-<span class="token instruction"><span class="token keyword">EXPOSE</span> 3000</span>
-<span class="token instruction"><span class="token keyword">CMD</span> [<span class="token string">"node"</span>, <span class="token string">"dist/server.js"</span>]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>创建 <code>.dockerignore</code>：</p>
-<pre class="line-numbers language-ignore" data-language="ignore"><code class="language-ignore"><span class="token entry string">node_modules</span>
-<span class="token entry string">dist</span>
-<span class="token entry string">.git</span>
-<span class="token entry string">.env</span>
-<span class="token entry string">.env.<span class="token operator">*</span></span>
-<span class="token entry string">npm-debug.log<span class="token operator">*</span></span>
-<span class="token entry string">compose<span class="token operator">*</span>.yml</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>本地验证构建与运行：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
-<span class="token function">docker</span> run <span class="token parameter variable">--rm</span> <span class="token parameter variable">-p</span> <span class="token number">3000</span>:3000 YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<blockquote>
-<p>Prisma、原生模块等可能需要额外生成步骤，应以项目实际依赖为准。</p>
-</blockquote>
-<hr>
-<h2 id="四、Docker-Hub-如何选择"><a href="#四、Docker-Hub-如何选择" class="headerlink" title="四、Docker Hub 如何选择"></a>四、Docker Hub 如何选择</h2><p>Docker Hub 镜像格式为 <code>docker.io/&lt;用户名&gt;/&lt;镜像名&gt;:&lt;标签&gt;</code>，例如 <code>docker.io/alice/backend-api:1.0.0</code>。它最通用、入门简单，业务 API 通常应使用<strong>私有仓库</strong>。</p>
-<p>各容器仓库选型对比：</p>
-<table>
-<thead>
-<tr>
-<th>仓库</th>
-<th>适用场景</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><strong>Docker Hub</strong></td>
-<td>最通用，入门简单，业务建议使用私有仓库</td>
-</tr>
-<tr>
-<td><strong>GHCR</strong></td>
-<td>适合 GitHub Actions 工作流</td>
-</tr>
-<tr>
-<td><strong>GitLab Container Registry</strong></td>
-<td>适合 GitLab CI</td>
-</tr>
-<tr>
-<td><strong>云厂商仓库</strong></td>
-<td>适合长期部署在同一家云</td>
-</tr>
-</tbody></table>
-<blockquote>
-<p>私有仓库和拉取额度会变化，以各平台官网当前政策为准。</p>
-</blockquote>
-<hr>
-<h2 id="五、推送镜像"><a href="#五、推送镜像" class="headerlink" title="五、推送镜像"></a>五、推送镜像</h2><p>在 Docker Hub 创建 <code>backend-api</code> 私有仓库，使用 <strong>Personal Access Token</strong> 登录：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login
-<span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
-<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<p>可附加 <code>latest</code> 标签：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> tag YOUR_DOCKERHUB_USER/backend-api:1.0.0 YOUR_DOCKERHUB_USER/backend-api:latest
-<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:latest<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p><strong>发布前检查清单：</strong></p>
-<ul>
-<li>✅ API 已连接本地 PostgreSQL 通过关键测试</li>
-<li>✅ 存在 <code>GET /health</code> 健康检查端点</li>
-<li>✅ 机密没有进入镜像</li>
-<li>✅ 每次发布都有新标签</li>
-</ul>
-<blockquote>
-<p>生产 Compose 应固定使用 <code>1.0.0</code> 之类的明确版本，便于回滚。</p>
-</blockquote>
-<hr>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文完成了「单台 VPS 部署 API」的上半部分：从本地开发环境搭建、PostgreSQL 配置、多阶段 Docker 镜像构建，到 Docker Hub 镜像推送。下一篇文章将介绍如何在 Ubuntu VPS 上拉取镜像、配置 Nginx 反向代理，并完成 HTTPS 证书的申请与自动续期。</p>
-]]></content>
-      <categories>
-        <category>Technical</category>
-      </categories>
-      <tags>
-        <tag>Docker</tag>
-        <tag>DevOps</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>升降桌故障排查记</title>
     <url>/posts/2026/03/02/fbb9923f/</url>
     <content><![CDATA[<h1 id="升降桌故障排查记：和-E07-E08-的一场小拉扯"><a href="#升降桌故障排查记：和-E07-E08-的一场小拉扯" class="headerlink" title="升降桌故障排查记：和 E07 / E08 的一场小拉扯"></a>升降桌故障排查记：和 E07 / E08 的一场小拉扯</h1><p>有些家用设备的小故障，最磨人。</p>
@@ -851,6 +711,146 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
       </tags>
   </entry>
   <entry>
+    <title>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</title>
+    <url>/posts/2026/07/18/9e7d1a5f/</url>
+    <content><![CDATA[<h1 id="单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布"><a href="#单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布" class="headerlink" title="单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布"></a>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</h1><p>本方案的技术链路为：<strong>Mac + OrbStack 本地开发与构建 → Docker Hub 保存版本化镜像 → Ubuntu VPS 使用 Docker Compose 运行</strong>。VPS 只保留部署配置、环境变量、Nginx 配置和数据卷，不上传 Git 仓库或 src 源码目录。</p>
+<blockquote>
+<p><strong>注意</strong>：多阶段镜像不等同绝对源码保护。最终镜像可没有 TypeScript 源码，但编译后的 JavaScript 仍可被分析。密码、令牌和私钥永远不能写进镜像。</p>
+</blockquote>
+<hr>
+<h2 id="一、环境说明"><a href="#一、环境说明" class="headerlink" title="一、环境说明"></a>一、环境说明</h2><p>本地需要 <strong>macOS、OrbStack、Node.js LTS、npm、Git</strong> 和 <strong>Docker Hub 账号</strong>。PostgreSQL 通过 OrbStack 容器运行。</p>
+<p>VPS 建议使用：</p>
+<ul>
+<li><strong>系统</strong>：Ubuntu 24.04 LTS（或仍受支持的 LTS）</li>
+<li><strong>配置</strong>：2 vCPU、4 GB RAM、40 GB 以上 SSD/NVMe</li>
+<li><strong>网络</strong>：公网 IPv4，开放 TCP 80/443</li>
+<li><strong>安全</strong>：SSH 仅对可信 IP 开放</li>
+</ul>
+<blockquote>
+<p>1 GB 内存可试验，但 API、PostgreSQL 与 Docker 共用资源时余量很少。</p>
+</blockquote>
+<hr>
+<h2 id="二、本地-PostgreSQL"><a href="#二、本地-PostgreSQL" class="headerlink" title="二、本地 PostgreSQL"></a>二、本地 PostgreSQL</h2><p>创建 <code>compose.dev.yml</code>：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">services</span><span class="token punctuation">:</span>
+  <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> postgres<span class="token punctuation">:</span><span class="token number">16</span>
+    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
+      <span class="token key atrule">POSTGRES_USER</span><span class="token punctuation">:</span> app_user
+      <span class="token key atrule">POSTGRES_PASSWORD</span><span class="token punctuation">:</span> change<span class="token punctuation">-</span>this<span class="token punctuation">-</span>local<span class="token punctuation">-</span>password
+      <span class="token key atrule">POSTGRES_DB</span><span class="token punctuation">:</span> app_db
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"127.0.0.1:5432:5432"</span>
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> postgres_dev_data<span class="token punctuation">:</span>/var/lib/postgresql/data
+<span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+  postgres_dev_data<span class="token punctuation">:</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>启动并验证：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml up <span class="token parameter variable">-d</span>
+<span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml <span class="token builtin class-name">exec</span> postgres psql <span class="token parameter variable">-U</span> app_user <span class="token parameter variable">-d</span> app_db<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>本机运行 API 时的数据库连接字符串：</p>
+<pre class="line-numbers language-env" data-language="env"><code class="language-env">DATABASE_URL=postgresql://app_user:***@localhost:5432/app_db<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>绑定 <code>127.0.0.1</code> 代表数据库只供本机开发使用。</p>
+<hr>
+<h2 id="三、构建生产-Docker-镜像"><a href="#三、构建生产-Docker-镜像" class="headerlink" title="三、构建生产 Docker 镜像"></a>三、构建生产 Docker 镜像</h2><p>假设 <code>npm run build</code> 输出 <code>dist</code>，入口为 <code>dist/server.js</code>：</p>
+<pre class="line-numbers language-docker" data-language="docker"><code class="language-docker"><span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> build</span>
+<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
+<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
+<span class="token instruction"><span class="token keyword">RUN</span> npm ci</span>
+<span class="token instruction"><span class="token keyword">COPY</span> tsconfig*.json ./</span>
+<span class="token instruction"><span class="token keyword">COPY</span> src ./src</span>
+<span class="token instruction"><span class="token keyword">RUN</span> npm run build</span>
+
+<span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> production</span>
+<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
+<span class="token instruction"><span class="token keyword">ENV</span> NODE_ENV=production</span>
+<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
+<span class="token instruction"><span class="token keyword">RUN</span> npm ci --omit=dev &amp;&amp; npm cache clean --force</span>
+<span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--from</span><span class="token punctuation">=</span><span class="token string">build</span></span> /app/dist ./dist</span>
+<span class="token instruction"><span class="token keyword">USER</span> node</span>
+<span class="token instruction"><span class="token keyword">EXPOSE</span> 3000</span>
+<span class="token instruction"><span class="token keyword">CMD</span> [<span class="token string">"node"</span>, <span class="token string">"dist/server.js"</span>]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>创建 <code>.dockerignore</code>：</p>
+<pre class="line-numbers language-ignore" data-language="ignore"><code class="language-ignore"><span class="token entry string">node_modules</span>
+<span class="token entry string">dist</span>
+<span class="token entry string">.git</span>
+<span class="token entry string">.env</span>
+<span class="token entry string">.env.<span class="token operator">*</span></span>
+<span class="token entry string">npm-debug.log<span class="token operator">*</span></span>
+<span class="token entry string">compose<span class="token operator">*</span>.yml</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>本地验证构建与运行：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
+<span class="token function">docker</span> run <span class="token parameter variable">--rm</span> <span class="token parameter variable">-p</span> <span class="token number">3000</span>:3000 YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<blockquote>
+<p>Prisma、原生模块等可能需要额外生成步骤，应以项目实际依赖为准。</p>
+</blockquote>
+<hr>
+<h2 id="四、Docker-Hub-如何选择"><a href="#四、Docker-Hub-如何选择" class="headerlink" title="四、Docker Hub 如何选择"></a>四、Docker Hub 如何选择</h2><p>Docker Hub 镜像格式为 <code>docker.io/&lt;用户名&gt;/&lt;镜像名&gt;:&lt;标签&gt;</code>，例如 <code>docker.io/alice/backend-api:1.0.0</code>。它最通用、入门简单，业务 API 通常应使用<strong>私有仓库</strong>。</p>
+<p>各容器仓库选型对比：</p>
+<table>
+<thead>
+<tr>
+<th>仓库</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Docker Hub</strong></td>
+<td>最通用，入门简单，业务建议使用私有仓库</td>
+</tr>
+<tr>
+<td><strong>GHCR</strong></td>
+<td>适合 GitHub Actions 工作流</td>
+</tr>
+<tr>
+<td><strong>GitLab Container Registry</strong></td>
+<td>适合 GitLab CI</td>
+</tr>
+<tr>
+<td><strong>云厂商仓库</strong></td>
+<td>适合长期部署在同一家云</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>私有仓库和拉取额度会变化，以各平台官网当前政策为准。</p>
+</blockquote>
+<hr>
+<h2 id="五、推送镜像"><a href="#五、推送镜像" class="headerlink" title="五、推送镜像"></a>五、推送镜像</h2><p>在 Docker Hub 创建 <code>backend-api</code> 私有仓库，使用 <strong>Personal Access Token</strong> 登录：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login
+<span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
+<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>可附加 <code>latest</code> 标签：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> tag YOUR_DOCKERHUB_USER/backend-api:1.0.0 YOUR_DOCKERHUB_USER/backend-api:latest
+<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:latest<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p><strong>发布前检查清单：</strong></p>
+<ul>
+<li>✅ API 已连接本地 PostgreSQL 通过关键测试</li>
+<li>✅ 存在 <code>GET /health</code> 健康检查端点</li>
+<li>✅ 机密没有进入镜像</li>
+<li>✅ 每次发布都有新标签</li>
+</ul>
+<blockquote>
+<p>生产 Compose 应固定使用 <code>1.0.0</code> 之类的明确版本，便于回滚。</p>
+</blockquote>
+<hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文完成了「单台 VPS 部署 API」的上半部分：从本地开发环境搭建、PostgreSQL 配置、多阶段 Docker 镜像构建，到 Docker Hub 镜像推送。下一篇文章将介绍如何在 Ubuntu VPS 上拉取镜像、配置 Nginx 反向代理，并完成 HTTPS 证书的申请与自动续期。</p>
+]]></content>
+      <categories>
+        <category>Technical</category>
+      </categories>
+      <tags>
+        <tag>Docker</tag>
+        <tag>DevOps</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS</title>
     <url>/posts/2026/07/18/c8b3f21e/</url>
     <content><![CDATA[<h1 id="单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS"><a href="#单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS" class="headerlink" title="单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS"></a>单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS</h1><p>上一篇将镜像推送到了 Docker Hub。本篇将部署到 Ubuntu VPS，完成从镜像拉取到 HTTPS 证书配置的完整链路。</p>
@@ -868,7 +868,8 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
 <blockquote>
 <p>Let’s Encrypt 不能为裸 IP 签发普通 HTTPS 证书；DNS 和公网 80 是 HTTP-01 验证必要条件。</p>
 </blockquote>
-<p>按 Docker 官方文档为当前 Ubuntu 添加官方 apt 源后，安装 Docker：</p>
+<p>安装 Docker 前，必须先按 <a href="https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository">Docker Engine 在 Ubuntu 上使用官方仓库安装</a> 的步骤设置 Docker 的官方 apt 仓库。若直接执行 <code>apt install docker-ce</code>，通常会出现 <code>Unable to locate package</code>，因为 Ubuntu 默认软件源不包含 Docker CE。</p>
+<p>完成仓库设置后，安装 Docker：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt</span> update
 <span class="token function">sudo</span> <span class="token function">apt</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 <span class="token function">sudo</span> systemctl <span class="token builtin class-name">enable</span> <span class="token parameter variable">--now</span> <span class="token function">docker</span>
