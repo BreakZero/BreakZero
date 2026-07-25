@@ -22,15 +22,15 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"dejinlu.cn","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.22.0","exturl":false,"sidebar":{"position":"right","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12,"width":300},"copycode":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="一、问题现象在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：  现象：导出 .xcappdata 可以确认文件确实在 Documents 目录下，但用 NSData.dataWithContentsOfFile 读取时始终返回空。 报错：No such File or Directory（找不到该文件或目录）。  当时使用的读取代码如下（为便于排查">
+    <meta name="description" content="Kotlin Multiplatform 在 iOS 读取 Documents 文件时报 No such file or directory？根因通常不是文件丢失，而是持久化了会变化的沙盒完整路径。本文说明原因，并给出按相对路径在运行时重新解析的方案。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="iOS通过Container读取文件问题笔录">
+<meta property="og:title" content="iOS 沙盒文件读取失败：不要持久化 Container 完整路径">
 <meta property="og:url" content="https://dejinlu.cn/posts/2023/08/13/bb96b1c7/index.html">
 <meta property="og:site_name" content="D&amp;JのZONE">
-<meta property="og:description" content="一、问题现象在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：  现象：导出 .xcappdata 可以确认文件确实在 Documents 目录下，但用 NSData.dataWithContentsOfFile 读取时始终返回空。 报错：No such File or Directory（找不到该文件或目录）。  当时使用的读取代码如下（为便于排查">
+<meta property="og:description" content="Kotlin Multiplatform 在 iOS 读取 Documents 文件时报 No such file or directory？根因通常不是文件丢失，而是持久化了会变化的沙盒完整路径。本文说明原因，并给出按相对路径在运行时重新解析的方案。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2023-08-13T04:24:44.000Z">
-<meta property="article:modified_time" content="2026-07-09T23:48:23.042Z">
+<meta property="article:modified_time" content="2026-07-18T23:51:49.827Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="SwiftUI">
 <meta property="article:tag" content="Kotlin Native">
@@ -40,10 +40,10 @@
 <link rel="canonical" href="https://dejinlu.cn/posts/2023/08/13/bb96b1c7/">
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://dejinlu.cn/posts/2023/08/13/bb96b1c7/","path":"posts/2023/08/13/bb96b1c7/","title":"iOS通过Container读取文件问题笔录"}</script>
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://dejinlu.cn/posts/2023/08/13/bb96b1c7/","path":"posts/2023/08/13/bb96b1c7/","title":"iOS 沙盒文件读取失败：不要持久化 Container 完整路径"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>iOS通过Container读取文件问题笔录 | D&JのZONE</title>
+<title>iOS 沙盒文件读取失败：不要持久化 Container 完整路径 | D&JのZONE</title>
   
 
   <script src="/js/third-party/analytics/baidu-analytics.js"></script>
@@ -162,7 +162,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-count">8</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -173,7 +173,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">12</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -224,12 +224,12 @@
     </span>
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="iOS通过Container读取文件问题笔录 | D&JのZONE">
-      <meta itemprop="description" content="">
+      <meta itemprop="name" content="iOS 沙盒文件读取失败：不要持久化 Container 完整路径 | D&JのZONE">
+      <meta itemprop="description" content="Kotlin Multiplatform 在 iOS 读取 Documents 文件时报 No such file or directory？根因通常不是文件丢失，而是持久化了会变化的沙盒完整路径。本文说明原因，并给出按相对路径在运行时重新解析的方案。">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          iOS通过Container读取文件问题笔录
+          iOS 沙盒文件读取失败：不要持久化 Container 完整路径
         </h1>
 
         <div class="post-meta-container">
@@ -269,6 +269,7 @@
   
 </div>
 
+            <div class="post-description">Kotlin Multiplatform 在 iOS 读取 Documents 文件时报 No such file or directory？根因通常不是文件丢失，而是持久化了会变化的沙盒完整路径。本文说明原因，并给出按相对路径在运行时重新解析的方案。</div>
         </div>
       </header>
 
@@ -323,8 +324,10 @@ NSData<span class="token punctuation">.</span><span class="token function">dataW
 <span class="token punctuation">)</span><span class="token operator">!!</span>
 <span class="token comment">// 列出目录下所有文件的 url</span>
 <span class="token keyword">val</span> fileUrls <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectoryAtURL</span><span class="token punctuation">(</span>url <span class="token operator">=</span> url<span class="token punctuation">,</span> includingPropertiesForKeys <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span>
-<span class="token comment">// 按文件名匹配得到目标文件的 url</span>
-<span class="token keyword">val</span> currentFileUrl <span class="token operator">=</span> fileUrls<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">first</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">contains</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span> <span class="token punctuation">}</span> <span class="token keyword">as</span><span class="token operator">?</span> NSURL
+<span class="token comment">// 按文件名精确匹配得到目标文件的 URL；不要用 contains，避免误匹配。</span>
+<span class="token keyword">val</span> currentFileUrl <span class="token operator">=</span> fileUrls
+    <span class="token operator">?</span><span class="token punctuation">.</span>filterIsInstance<span class="token operator">&lt;</span>NSURL<span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">firstOrNull</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span>lastPathComponent <span class="token operator">==</span> fileName <span class="token punctuation">}</span>
 <span class="token comment">// 用 URL 读取</span>
 currentFileUrl<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span>
     NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfURL</span><span class="token punctuation">(</span>currentFileUrl<span class="token punctuation">)</span>
@@ -333,7 +336,7 @@ currentFileUrl<span class="token operator">?</span><span class="token punctuatio
             bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
             <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
         <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <h3 id="方法二（推荐）：直接取-Documents-路径再拼接文件名"><a href="#方法二（推荐）：直接取-Documents-路径再拼接文件名" class="headerlink" title="方法二（推荐）：直接取 Documents 路径再拼接文件名"></a>方法二（推荐）：直接取 Documents 路径再拼接文件名</h3><p>遍历有额外开销，更稳妥且高效的方式是：<strong>每次读取时用系统 API 取当前 Documents 目录，再拼接文件名</strong>：</p>
 <pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> documentDirectory <span class="token operator">=</span> <span class="token function">NSSearchPathForDirectoriesInDomains</span><span class="token punctuation">(</span>

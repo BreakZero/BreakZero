@@ -33,7 +33,7 @@
 <meta property="og:image" content="https://dejinlu.cn/images/20231204/remember_log.jpg">
 <meta property="og:image" content="https://dejinlu.cn/images/20231204/remember_log1.jpg">
 <meta property="article:published_time" content="2023-12-04T03:14:00.000Z">
-<meta property="article:modified_time" content="2026-07-09T23:48:23.042Z">
+<meta property="article:modified_time" content="2026-07-18T23:51:49.828Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="Android">
 <meta property="article:tag" content="Jetpack Compose">
@@ -166,7 +166,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-count">8</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -177,7 +177,7 @@
       </div>
       <div class="site-state-item site-state-tags">
           <a href="/tags/">
-        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-count">12</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
@@ -280,7 +280,7 @@
     
     
     
-    <div class="post-body" itemprop="articleBody"><h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在 Jetpack Compose 中，我们常需要「记住」某个计算结果，避免在重组时重复计算以提升性能。Compose 提供了两种常用方式：<code>remember {}</code> 和 <code>rememberSaveable {}</code>。二者都能在重组时复用值，但<strong>持久化范围不同</strong>，选错会导致状态在特定场景下被重置。本文结合一次实际问题和文档/实验，说明两者的区别与使用场景。</p>
+    <div class="post-body" itemprop="articleBody"><h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在 Jetpack Compose 中，<code>remember {}</code> 和 <code>rememberSaveable {}</code> 都能把值保留在组合期间，但它们解决的问题不同：前者把值留在当前 Composition 中；后者会把可保存的值交给 <code>SaveableStateRegistry</code>，以便在 Activity 或进程重建后恢复。选错保存边界，状态就可能在意料之外被重置。本文结合一次实际问题和文档/实验，说明两者的区别与使用场景。</p>
 <h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>页面中有两个主要部分：<strong>Dashboard</strong>（根据滚动做缩放动画）和 <strong>Asset List</strong>（可滚动列表）。用 <code>remember {}</code> 保存 scale 状态时：</p>
 <ul>
 <li><strong>快速切换 Tab</strong>：表现正常，scale 保持。</li>
@@ -351,7 +351,9 @@
 <pre class="line-numbers language-none"><code class="language-none">java.lang.IllegalArgumentException: MutableState containing ... cannot be saved using the current SaveableStateRegistry.
 The default implementation only supports types which can be stored inside the Bundle.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre></li>
 </ul>
-<p>因此，<strong>离开屏幕再进入</strong>时，只要没有发生 Activity/进程重建，<code>rememberSaveable</code> 仍会从 SaveableStateRegistry 里恢复之前保存的值，scale 得以保留。</p>
+<p><code>rememberSaveable</code> 不是“只要离开页面再回来就一定能恢复”的开关。它能否在导航或 Tab 切换后找回值，取决于承载它的 <code>SaveableStateRegistry</code> 是否仍被保留，例如 Navigation Compose 的 back stack 或显式使用 <code>SaveableStateHolder</code> 的场景。</p>
+<p>如果切换 Tab 时直接把页面从 Composition 移除，且没有保留对应的 saveable state，<code>rememberSaveable</code> 同样可能重新初始化；如果状态本来就应跨多个页面长期存在，则更适合放到 ViewModel（必要时结合 <code>SavedStateHandle</code>）中。</p>
+<p>因此，本文案例的准确结论是：当 Tab 容器保留了页面对应的 saveable state 时，<code>rememberSaveable</code> 可以恢复 <code>scale</code>；它不能替代对状态作用域的设计。</p>
 <h2 id="三、验证实验"><a href="#三、验证实验" class="headerlink" title="三、验证实验"></a>三、验证实验</h2><p>用简单日志验证「退出组合后再进入会重新计算」：</p>
 <pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">var</span> scale <span class="token keyword">by</span> remember <span class="token punctuation">{</span>
     <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== re-calculate"</span></span><span class="token punctuation">)</span>
@@ -367,12 +369,13 @@ The default implementation only supports types which can be stored inside the Bu
 <li>**改用 <code>rememberSaveable {}</code>**：只有第一次进入时打印一次 <code>re-calculate</code>，之后切 Tab 再回来也不会再打印，说明一直用的是已保存的值。<br><img src="/images/20231204/remember_log1.jpg" alt="Logger1" title="remember_log1"></li>
 </ul>
 <h2 id="四、延伸：离开屏幕-≠-重建"><a href="#四、延伸：离开屏幕-≠-重建" class="headerlink" title="四、延伸：离开屏幕 ≠ 重建"></a>四、延伸：离开屏幕 ≠ 重建</h2><p><a target="_blank" rel="noopener" href="https://jetc.dev/slack/2021-04-13-when-do-we-use-remembersaveable.html">Jetpack Compose 相关讨论</a> 里有一句：**”Composable leaving the screen is not recreation”**（可组合项离开屏幕并不等于重建）。</p>
-<p>在 Compose 中：</p>
+<p>在 Compose 中，组件离开屏幕与 Activity 重建是两回事：</p>
 <ul>
-<li>组件离开屏幕会触发 <code>onDispose</code>，生命周期结束。</li>
-<li>再次进入屏幕会重新组合，相当于新的生命周期，<code>remember {}</code> 会重新计算。</li>
+<li>组件退出 Composition 后，<code>remember</code> 保存的值会丢失。</li>
+<li><code>rememberSaveable</code> 的值会参与 Android 的状态保存与恢复；Activity 或进程重建后，系统有机会恢复它。</li>
+<li>页面离开后能否在同一进程内恢复 <code>rememberSaveable</code>，还取决于导航/Tab 容器是否保留对应的 <code>SaveableStateRegistry</code>。</li>
 </ul>
-<p>所以「离开屏幕」和「Configuration 变化导致 Activity 重建」是两回事：前者不会触发 SavedInstanceState 流程，只会让可组合项退出组合；后者才会触发进程/Activity 重建，此时才用到 <code>rememberSaveable</code> 的持久化。</p>
+<p>因此，不能把“离开屏幕”直接等同于“必然触发 <code>rememberSaveable</code> 恢复”。如果状态需要跨页面共享或具有业务意义，应提升到 ViewModel 等更合适的作用域。</p>
 <p>常见「离开屏幕」场景包括：</p>
 <ol>
 <li><strong>Navigation 跳转 / Tab 切换</strong>（如本文案例）</li>
@@ -417,13 +420,13 @@ The default implementation only supports types which can be stored inside the Bu
 
           <div class="post-nav">
             <div class="post-nav-item">
-                <a href="/posts/2023/08/13/bb96b1c7/" rel="prev" title="iOS通过Container读取文件问题笔录">
-                  <i class="fa fa-angle-left"></i> iOS通过Container读取文件问题笔录
+                <a href="/posts/2023/08/13/bb96b1c7/" rel="prev" title="iOS 沙盒文件读取失败：不要持久化 Container 完整路径">
+                  <i class="fa fa-angle-left"></i> iOS 沙盒文件读取失败：不要持久化 Container 完整路径
                 </a>
             </div>
             <div class="post-nav-item">
-                <a href="/posts/2026/02/27/4ae1fc92/" rel="next" title="Jetpack Compose Performance Tips Every Developer Should Know">
-                  Jetpack Compose Performance Tips Every Developer Should Know <i class="fa fa-angle-right"></i>
+                <a href="/posts/2026/02/27/4ae1fc92/" rel="next" title="Jetpack Compose 性能优化：用 `graphicsLayer` 延后状态读取">
+                  Jetpack Compose 性能优化：用 `graphicsLayer` 延后状态读取 <i class="fa fa-angle-right"></i>
                 </a>
             </div>
           </div>
