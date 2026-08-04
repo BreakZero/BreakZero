@@ -29,15 +29,15 @@
 <meta property="og:site_name" content="D&amp;JのZONE">
 <meta property="og:description" content="本文区分 LLM、模型服务和 Agent 系统各自负责什么，并解释一次 Inference 如何生成结果。文末让模型在禁用工具的条件下做技术调研：它能写出完整答案，却无法确认资料是否最新，也不能自己搜索、保存进度或验收结果。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://dejinlu.cn/images/agent_loop/llm-not-agent_03.png">
+<meta property="og:image" content="https://dejinlu.cn/images/agent_loop/llm-not-agent_01.png">
 <meta property="og:image" content="https://dejinlu.cn/images/agent_loop/llm-not-agent_02.png">
 <meta property="article:published_time" content="2026-08-04T03:12:01.000Z">
-<meta property="article:modified_time" content="2026-08-04T14:18:12.731Z">
+<meta property="article:modified_time" content="2026-08-04T14:22:25.781Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="Agent Loop">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://dejinlu.cn/images/agent_loop/llm-not-agent_03.png">
+<meta name="twitter:image" content="https://dejinlu.cn/images/agent_loop/llm-not-agent_01.png">
 
 
 <link rel="canonical" href="https://dejinlu.cn/posts/2026/08/04/bf63960/">
@@ -314,7 +314,7 @@
 </tbody></table>
 <p>模型服务和 Agent 系统可能由同一个产品提供，代码里甚至只要调用一个 SDK。但状态仍要保存，工具仍要执行，失败也得处理，只是产品把这些工作藏了起来。</p>
 <p>下面这张图记录了一次真实的任务执行。用户提交 Prompt 后，第一次 LLM Call 决定调用终端。Runtime 执行命令，再把终端返回值和 Session 里的信息组装成下一次输入。如此循环，直到第四次 LLM Call 给出最终结果。</p>
-<p><img src="/images/agent_loop/llm-not-agent_03.png" alt="Agent 任务执行流程" title="Agent 任务执行流程"></p>
+<p><img src="/images/agent_loop/llm-not-agent_01.png" alt="Agent 任务执行流程" title="Agent 任务执行流程"></p>
 <blockquote>
 <p>注：这里使用的是 Hermes Agent，一轮完整交互会被包装在一次 Hermes Turn 中。</p>
 </blockquote>
