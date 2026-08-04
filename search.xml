@@ -507,202 +507,6 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
       </tags>
   </entry>
   <entry>
-    <title>单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS</title>
-    <url>/posts/2026/07/18/c8b3f21e/</url>
-    <content><![CDATA[<h1 id="单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS"><a href="#单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS" class="headerlink" title="单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS"></a>单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS</h1><p>上一篇将镜像推送到了 Docker Hub。本篇将部署到 Ubuntu VPS，完成从镜像拉取到 HTTPS 证书配置的完整链路。</p>
-<pre class="line-numbers language-text" data-language="text"><code class="language-text">Internet → Nginx :80/:443 → API :3000（内部网络） → PostgreSQL :5432（内部网络）<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<hr>
-<h2 id="一、前置条件与-Docker"><a href="#一、前置条件与-Docker" class="headerlink" title="一、前置条件与 Docker"></a>一、前置条件与 Docker</h2><p>准备以下资源：</p>
-<ul>
-<li><strong>Ubuntu LTS VPS</strong> 与 sudo 权限</li>
-<li><strong>已指向 VPS 的域名</strong>（示例 <code>api.example.com</code>）</li>
-<li><strong>已开放</strong> TCP 80/443</li>
-<li><strong>Docker Hub 私有镜像</strong></li>
-<li><strong>API 的 <code>GET /health</code></strong> 健康检查端点</li>
-</ul>
-<blockquote>
-<p>Let’s Encrypt 不能为裸 IP 签发普通 HTTPS 证书；DNS 和公网 80 是 HTTP-01 验证必要条件。</p>
-</blockquote>
-<p>安装 Docker 前，必须先按 <a href="https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository">Docker Engine 在 Ubuntu 上使用官方仓库安装</a> 的步骤设置 Docker 的官方 apt 仓库。若直接执行 <code>apt install docker-ce</code>，通常会出现 <code>Unable to locate package</code>，因为 Ubuntu 默认软件源不包含 Docker CE。</p>
-<p>完成仓库设置后，安装 Docker：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt</span> update
-<span class="token function">sudo</span> <span class="token function">apt</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-<span class="token function">sudo</span> systemctl <span class="token builtin class-name">enable</span> <span class="token parameter variable">--now</span> <span class="token function">docker</span>
-<span class="token function">docker</span> version
-<span class="token function">docker</span> compose version<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>将当前用户加入 docker 组（重新 SSH 登录后生效）：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">usermod</span> <span class="token parameter variable">-aG</span> <span class="token function">docker</span> <span class="token string">"<span class="token environment constant">$USER</span>"</span>
-<span class="token builtin class-name">exit</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p>重新 SSH 登录后运行 <code>docker ps</code> 验证。</p>
-<blockquote>
-<p><strong>安全提醒</strong>：docker 组具有近似 root 的主机控制能力，只应加入可信用户。</p>
-</blockquote>
-<hr>
-<h2 id="二、部署目录、环境变量与拉取镜像"><a href="#二、部署目录、环境变量与拉取镜像" class="headerlink" title="二、部署目录、环境变量与拉取镜像"></a>二、部署目录、环境变量与拉取镜像</h2><h3 id="2-1-创建目录结构"><a href="#2-1-创建目录结构" class="headerlink" title="2.1 创建目录结构"></a>2.1 创建目录结构</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /opt/backend/nginx/conf.d /opt/backend/certbot/www /opt/backend/certbot/conf
-<span class="token function">sudo</span> <span class="token function">chown</span> <span class="token parameter variable">-R</span> <span class="token string">"<span class="token environment constant">$USER</span>"</span><span class="token builtin class-name">:</span><span class="token string">"<span class="token environment constant">$USER</span>"</span> /opt/backend
-<span class="token builtin class-name">cd</span> /opt/backend<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="2-2-创建环境变量文件"><a href="#2-2-创建环境变量文件" class="headerlink" title="2.2 创建环境变量文件"></a>2.2 创建环境变量文件</h3><p>创建 <code>.env</code>：</p>
-<pre class="line-numbers language-env" data-language="env"><code class="language-env">POSTGRES_USER=app_user
-POSTGRES_PASSWORD=REPLACE_WITH_A_LONG_RANDOM_PASSWORD
-POSTGRES_DB=app_db
-DATABASE_URL=postgresql://app_user:***@postgres:5432/app_db<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">chmod</span> <span class="token number">600</span> .env<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<h3 id="2-3-拉取镜像"><a href="#2-3-拉取镜像" class="headerlink" title="2.3 拉取镜像"></a>2.3 拉取镜像</h3><p>使用 <strong>Docker Hub Personal Access Token</strong> 登录并拉取：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login
-<span class="token function">docker</span> pull YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<blockquote>
-<p>认证存于当前用户的 <code>~/.docker/config.json</code>，不要提交或复制到脚本中。</p>
-</blockquote>
-<hr>
-<h2 id="三、docker-compose-yml"><a href="#三、docker-compose-yml" class="headerlink" title="三、docker-compose.yml"></a>三、docker-compose.yml</h2><p>创建 <code>/opt/backend/docker-compose.yml</code>：</p>
-<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">services</span><span class="token punctuation">:</span>
-  <span class="token key atrule">api</span><span class="token punctuation">:</span>
-    <span class="token key atrule">image</span><span class="token punctuation">:</span> YOUR_DOCKERHUB_USER/backend<span class="token punctuation">-</span>api<span class="token punctuation">:</span>1.0.0
-    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
-    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
-      <span class="token key atrule">NODE_ENV</span><span class="token punctuation">:</span> production
-      <span class="token key atrule">DATABASE_URL</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>DATABASE_URL<span class="token punctuation">}</span>
-    <span class="token key atrule">expose</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token string">"3000"</span>
-    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span>
-      <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
-        <span class="token key atrule">condition</span><span class="token punctuation">:</span> service_healthy
-  <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
-    <span class="token key atrule">image</span><span class="token punctuation">:</span> postgres<span class="token punctuation">:</span><span class="token number">16</span>
-    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
-    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
-      <span class="token key atrule">POSTGRES_USER</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>POSTGRES_USER<span class="token punctuation">}</span>
-      <span class="token key atrule">POSTGRES_PASSWORD</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>POSTGRES_PASSWORD<span class="token punctuation">}</span>
-      <span class="token key atrule">POSTGRES_DB</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>POSTGRES_DB<span class="token punctuation">}</span>
-    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> postgres_data<span class="token punctuation">:</span>/var/lib/postgresql/data
-    <span class="token key atrule">expose</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token string">"5432"</span>
-    <span class="token key atrule">healthcheck</span><span class="token punctuation">:</span>
-      <span class="token key atrule">test</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">"CMD-SHELL"</span><span class="token punctuation">,</span> <span class="token string">"pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"</span><span class="token punctuation">]</span>
-      <span class="token key atrule">interval</span><span class="token punctuation">:</span> 10s
-      <span class="token key atrule">timeout</span><span class="token punctuation">:</span> 5s
-      <span class="token key atrule">retries</span><span class="token punctuation">:</span> <span class="token number">5</span>
-  <span class="token key atrule">nginx</span><span class="token punctuation">:</span>
-    <span class="token key atrule">image</span><span class="token punctuation">:</span> nginx<span class="token punctuation">:</span>1.27<span class="token punctuation">-</span>alpine
-    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
-    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token string">"80:80"</span>
-      <span class="token punctuation">-</span> <span class="token string">"443:443"</span>
-    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> ./nginx/conf.d<span class="token punctuation">:</span>/etc/nginx/conf.d<span class="token punctuation">:</span>ro
-      <span class="token punctuation">-</span> ./certbot/www<span class="token punctuation">:</span>/var/www/certbot<span class="token punctuation">:</span>ro
-      <span class="token punctuation">-</span> ./certbot/conf<span class="token punctuation">:</span>/etc/letsencrypt<span class="token punctuation">:</span>ro
-    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> api
-  <span class="token key atrule">certbot</span><span class="token punctuation">:</span>
-    <span class="token key atrule">image</span><span class="token punctuation">:</span> certbot/certbot<span class="token punctuation">:</span>latest
-    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> ./certbot/www<span class="token punctuation">:</span>/var/www/certbot
-      <span class="token punctuation">-</span> ./certbot/conf<span class="token punctuation">:</span>/etc/letsencrypt
-<span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-  postgres_data<span class="token punctuation">:</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<blockquote>
-<p><strong>注意</strong>：API 和 PostgreSQL 只使用 <code>expose</code>（内部网络可见）；只有 Nginx 用 <code>ports</code> 发布 80/443。数据库存于命名 volume，不要执行 <code>docker compose down -v</code>，除非确定要删除数据库。</p>
-</blockquote>
-<hr>
-<h2 id="四、HTTP、Nginx-与证书"><a href="#四、HTTP、Nginx-与证书" class="headerlink" title="四、HTTP、Nginx 与证书"></a>四、HTTP、Nginx 与证书</h2><h3 id="4-1-首次-HTTP-配置"><a href="#4-1-首次-HTTP-配置" class="headerlink" title="4.1 首次 HTTP 配置"></a>4.1 首次 HTTP 配置</h3><p>首次没有证书，创建 <code>nginx/conf.d/api.conf</code>：</p>
-<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">{</span>
-    <span class="token directive"><span class="token keyword">listen</span> <span class="token number">80</span></span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">server_name</span> api.example.com</span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">location</span> /.well-known/acme-challenge/</span> <span class="token punctuation">{</span> <span class="token directive"><span class="token keyword">root</span> /var/www/certbot</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
-    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">{</span>
-        <span class="token directive"><span class="token keyword">proxy_pass</span> http://api:3000</span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> Host <span class="token variable">$host</span></span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Real-IP <span class="token variable">$remote_addr</span></span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-For <span class="token variable">$proxy_add_x_forwarded_for</span></span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-Proto <span class="token variable">$scheme</span></span><span class="token punctuation">;</span>
-    <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>替换域名并启动：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose pull
-<span class="token function">docker</span> compose up <span class="token parameter variable">-d</span>
-<span class="token function">curl</span> <span class="token parameter variable">-i</span> http://api.example.com/health<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="4-2-申请-SSL-证书"><a href="#4-2-申请-SSL-证书" class="headerlink" title="4.2 申请 SSL 证书"></a>4.2 申请 SSL 证书</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose run <span class="token parameter variable">--rm</span> certbot certonly <span class="token punctuation">\</span>
-  <span class="token parameter variable">--webroot</span> --webroot-path<span class="token operator">=</span>/var/www/certbot <span class="token punctuation">\</span>
-  <span class="token parameter variable">--email</span> YOUR_EMAIL@example.com --agree-tos --no-eff-email <span class="token punctuation">\</span>
-  <span class="token parameter variable">-d</span> api.example.com<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="4-3-替换为-HTTPS-配置"><a href="#4-3-替换为-HTTPS-配置" class="headerlink" title="4.3 替换为 HTTPS 配置"></a>4.3 替换为 HTTPS 配置</h3><p>成功申请后，更新 <code>nginx/conf.d/api.conf</code>：</p>
-<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">{</span>
-    <span class="token directive"><span class="token keyword">listen</span> <span class="token number">80</span></span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">server_name</span> api.example.com</span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">location</span> /.well-known/acme-challenge/</span> <span class="token punctuation">{</span> <span class="token directive"><span class="token keyword">root</span> /var/www/certbot</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
-    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">{</span> <span class="token directive"><span class="token keyword">return</span> <span class="token number">301</span> https://<span class="token variable">$host</span><span class="token variable">$request_uri</span></span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
-<span class="token punctuation">}</span>
-<span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">{</span>
-    <span class="token directive"><span class="token keyword">listen</span> <span class="token number">443</span> ssl</span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">server_name</span> api.example.com</span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">ssl_certificate</span> /etc/letsencrypt/live/api.example.com/fullchain.pem</span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">ssl_certificate_key</span> /etc/letsencrypt/live/api.example.com/privkey.pem</span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">ssl_protocols</span> TLSv1.2 TLSv1.3</span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">{</span>
-        <span class="token directive"><span class="token keyword">proxy_pass</span> http://api:3000</span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> Host <span class="token variable">$host</span></span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Real-IP <span class="token variable">$remote_addr</span></span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-For <span class="token variable">$proxy_add_x_forwarded_for</span></span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-Proto <span class="token variable">$scheme</span></span><span class="token punctuation">;</span>
-    <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<blockquote>
-<p><strong>注意</strong>：必须保留 ACME 路径，否则证书续期可能失败。<code>ssl_certificate</code> 后<strong>没有冒号</strong>。</p>
-</blockquote>
-<p>重新加载 Nginx：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose <span class="token builtin class-name">exec</span> nginx nginx <span class="token parameter variable">-t</span>
-<span class="token function">docker</span> compose <span class="token builtin class-name">exec</span> nginx nginx <span class="token parameter variable">-s</span> reload
-<span class="token function">curl</span> <span class="token parameter variable">-I</span> http://api.example.com/health
-<span class="token function">curl</span> <span class="token parameter variable">-i</span> https://api.example.com/health<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<hr>
-<h2 id="五、自动续期与更新"><a href="#五、自动续期与更新" class="headerlink" title="五、自动续期与更新"></a>五、自动续期与更新</h2><h3 id="5-1-Certbot-自动续期"><a href="#5-1-Certbot-自动续期" class="headerlink" title="5.1 Certbot 自动续期"></a>5.1 Certbot 自动续期</h3><p>编辑 crontab（<code>crontab -e</code>）加入：</p>
-<pre class="line-numbers language-cron" data-language="cron"><code class="language-cron">17 3 * * * cd /opt/backend &amp;&amp; docker compose run --rm certbot renew --quiet &amp;&amp; docker compose exec -T nginx nginx -s reload<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>演练续期：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose run <span class="token parameter variable">--rm</span> certbot renew --dry-run<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<h3 id="5-2-更新-API-镜像"><a href="#5-2-更新-API-镜像" class="headerlink" title="5.2 更新 API 镜像"></a>5.2 更新 API 镜像</h3><p>更新镜像时修改 API 标签：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose pull api
-<span class="token function">docker</span> compose up <span class="token parameter variable">-d</span> api
-<span class="token function">docker</span> compose logs <span class="token parameter variable">--tail</span><span class="token operator">=</span><span class="token number">100</span> api
-<span class="token function">curl</span> <span class="token parameter variable">-fsS</span> https://api.example.com/health<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>回滚操作：改回旧标签并重新启动 API。</p>
-<hr>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文完成了「单台 VPS 部署 API」的下半部分：从 Ubuntu VPS 的 Docker 安装、环境变量配置、Docker Compose 多服务编排，到 Nginx 反向代理与 Let’s Encrypt HTTPS 证书的申请、配置和自动续期。至此，整个「本地开发 → Docker Hub 镜像发布 → VPS 部署」的完整链路已全部打通。</p>
-<p><strong>后续建议增加：</strong></p>
-<ul>
-<li>PostgreSQL 异地备份策略</li>
-<li>Docker 日志轮转配置</li>
-<li>Docker Compose 健康检查告警</li>
-</ul>
-]]></content>
-      <categories>
-        <category>Technical</category>
-      </categories>
-      <tags>
-        <tag>Docker</tag>
-        <tag>Nginx</tag>
-        <tag>HTTPS</tag>
-        <tag>DevOps</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>升降桌故障排查记</title>
     <url>/posts/2026/03/02/fbb9923f/</url>
     <content><![CDATA[<h1 id="升降桌故障排查记：和-E07-E08-的一场小拉扯"><a href="#升降桌故障排查记：和-E07-E08-的一场小拉扯" class="headerlink" title="升降桌故障排查记：和 E07 / E08 的一场小拉扯"></a>升降桌故障排查记：和 E07 / E08 的一场小拉扯</h1><p>有些家用设备的小故障，最磨人。</p>
@@ -907,145 +711,6 @@ DATABASE_URL=postgresql://app_user:***@postgres:5432/app_db<span aria-hidden="tr
       </tags>
   </entry>
   <entry>
-    <title>iOS 沙盒文件读取失败：不要持久化 Container 完整路径</title>
-    <url>/posts/2023/08/13/bb96b1c7/</url>
-    <content><![CDATA[<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：</p>
-<ul>
-<li><strong>现象</strong>：导出 <code>.xcappdata</code> 可以确认文件确实在 Documents 目录下，但用 <code>NSData.dataWithContentsOfFile</code> 读取时始终返回空。</li>
-<li><strong>报错</strong>：<code>No such File or Directory</code>（找不到该文件或目录）。</li>
-</ul>
-<p>当时使用的读取代码如下（为便于排查，增加了 <code>errorPtr</code> 输出错误信息）：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> errorPtr<span class="token operator">:</span> ObjCObjectVar<span class="token operator">&lt;</span>NSError<span class="token operator">?</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token function">alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
-    <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-    bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
-    <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
-<span class="token punctuation">}</span>
-<span class="token function">println</span><span class="token punctuation">(</span>errorPtr<span class="token punctuation">.</span>value<span class="token operator">?</span><span class="token punctuation">.</span>description<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">return</span><span class="token label symbol">@withContext</span> <span class="token keyword">null</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<span id="more"></span>
-
-<h2 id="二、问题定位"><a href="#二、问题定位" class="headerlink" title="二、问题定位"></a>二、问题定位</h2><h3 id="2-1-怀疑点：路径可能不对"><a href="#2-1-怀疑点：路径可能不对" class="headerlink" title="2.1 怀疑点：路径可能不对"></a>2.1 怀疑点：路径可能不对</h3><p>从错误日志看，传入的 <code>fullPath</code> 很可能并不是当前运行时的真实路径，所以即使文件实际存在，<code>NSData.dataWithContentsOfFile</code> 仍然找不到。</p>
-<h3 id="2-2-对比验证：Application-目录的-UUID-不一致"><a href="#2-2-对比验证：Application-目录的-UUID-不一致" class="headerlink" title="2.2 对比验证：Application 目录的 UUID 不一致"></a>2.2 对比验证：Application 目录的 UUID 不一致</h3><p>用 Swift 在运行时获取 Documents 目录并列出文件，与 Kotlin 里使用的 <code>fullPath</code> 对比：</p>
-<ul>
-<li><strong>Kotlin 中使用的 fullPath</strong>（可能是之前保存的完整路径）：<pre class="line-numbers language-none"><code class="language-none">/var/mobile/Containers/Data/Application/3FC1CCE9-A788-47AB-902A-FA133FAA3D30/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
-<li><strong>Swift 当前拿到的文件 URL</strong>：<pre class="line-numbers language-none"><code class="language-none">file:///private/var/mobile/Containers/Data/Application/C5AC5178-6887-40F4-9EE5-8D56CB830CB3/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
-</ul>
-<p>可见，<code>Application</code> 后面那一段 UUID 不一致：一个是 <code>3FC1CCE9-...</code>，一个是 <code>C5AC5178-...</code>。</p>
-<p>Swift 侧获取 Documents 的示例代码：</p>
-<pre class="line-numbers language-swift" data-language="swift"><code class="language-swift"><span class="token keyword">let</span> fileManager <span class="token operator">=</span> <span class="token class-name">FileManager</span><span class="token punctuation">.</span><span class="token keyword">default</span>
-<span class="token keyword">let</span> documentsURL <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">urls</span><span class="token punctuation">(</span><span class="token keyword">for</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>documentDirectory<span class="token punctuation">,</span> <span class="token keyword">in</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>userDomainMask<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
-<span class="token keyword">do</span> <span class="token punctuation">{</span>
-    <span class="token keyword">let</span> fileURLs <span class="token operator">=</span> <span class="token keyword">try</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectory</span><span class="token punctuation">(</span>at<span class="token punctuation">:</span> documentsURL<span class="token punctuation">,</span> includingPropertiesForKeys<span class="token punctuation">:</span> <span class="token nil constant">nil</span><span class="token punctuation">)</span>
-    <span class="token function">print</span><span class="token punctuation">(</span>fileURLs<span class="token punctuation">)</span>
-<span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">{</span>
-    <span class="token function">print</span><span class="token punctuation">(</span><span class="token string-literal"><span class="token string">"Error while enumerating files </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">documentsURL<span class="token punctuation">.</span>path</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">: </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">error<span class="token punctuation">.</span>localizedDescription</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">"</span></span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="2-3-根因结论"><a href="#2-3-根因结论" class="headerlink" title="2.3 根因结论"></a>2.3 根因结论</h3><p>自 <strong>iOS 8.0</strong> 起，应用沙盒里 <code>Application</code> 这一级目录的 <strong>UUID 会随安装/部署方式变化</strong>（例如卸载重装、Xcode 重新安装等）。若把「完整路径」存下来，下次启动或重装后 UUID 变了，旧路径就失效，导致「文件在，但按旧路径读不到」。</p>
-<p>因此：<strong>不能依赖存储的完整路径来读文件，只能依赖「相对位置 + 文件名」并在运行时重新解析。</strong></p>
-<h2 id="三、解决方案"><a href="#三、解决方案" class="headerlink" title="三、解决方案"></a>三、解决方案</h2><p>思路统一为：<strong>只存文件名（或相对路径），读的时候先拿到当前 Documents 目录，再拼出完整路径或 URL。</strong> 下面两种写法都符合这一思路。</p>
-<h3 id="方法一：遍历-Documents，按文件名匹配"><a href="#方法一：遍历-Documents，按文件名匹配" class="headerlink" title="方法一：遍历 Documents，按文件名匹配"></a>方法一：遍历 Documents，按文件名匹配</h3><p>不依赖完整路径，先取到 Documents 的 URL，再在目录下按文件名找到对应文件：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 拿到 Documents 目录的 url</span>
-<span class="token keyword">val</span> url <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">URLForDirectory</span><span class="token punctuation">(</span>
-    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
-    inDomain <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
-    appropriateForURL <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
-    create <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
-    error <span class="token operator">=</span> <span class="token keyword">null</span>
-<span class="token punctuation">)</span><span class="token operator">!!</span>
-<span class="token comment">// 列出目录下所有文件的 url</span>
-<span class="token keyword">val</span> fileUrls <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectoryAtURL</span><span class="token punctuation">(</span>url <span class="token operator">=</span> url<span class="token punctuation">,</span> includingPropertiesForKeys <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span>
-<span class="token comment">// 按文件名精确匹配得到目标文件的 URL；不要用 contains，避免误匹配。</span>
-<span class="token keyword">val</span> currentFileUrl <span class="token operator">=</span> fileUrls
-    <span class="token operator">?</span><span class="token punctuation">.</span>filterIsInstance<span class="token operator">&lt;</span>NSURL<span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-    <span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">firstOrNull</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span>lastPathComponent <span class="token operator">==</span> fileName <span class="token punctuation">}</span>
-<span class="token comment">// 用 URL 读取</span>
-currentFileUrl<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span>
-    NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfURL</span><span class="token punctuation">(</span>currentFileUrl<span class="token punctuation">)</span>
-        <span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
-            <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-            bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
-            <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
-        <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="方法二（推荐）：直接取-Documents-路径再拼接文件名"><a href="#方法二（推荐）：直接取-Documents-路径再拼接文件名" class="headerlink" title="方法二（推荐）：直接取 Documents 路径再拼接文件名"></a>方法二（推荐）：直接取 Documents 路径再拼接文件名</h3><p>遍历有额外开销，更稳妥且高效的方式是：<strong>每次读取时用系统 API 取当前 Documents 目录，再拼接文件名</strong>：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> documentDirectory <span class="token operator">=</span> <span class="token function">NSSearchPathForDirectoriesInDomains</span><span class="token punctuation">(</span>
-    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
-    domainMask <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
-    expandTilde <span class="token operator">=</span> <span class="token boolean">true</span>
-<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">first</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> NSString
-<span class="token keyword">val</span> fullPath <span class="token operator">=</span> documentDirectory<span class="token punctuation">.</span><span class="token function">stringByAppendingPathComponent</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span>
-<span class="token comment">// 此处 fullPath 一定是当前应用实例的真实路径</span>
-NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> <span class="token operator">..</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>这样得到的 <code>fullPath</code> 始终对应当前运行时的 Documents，不受 UUID 变化影响。</p>
-<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><table>
-<thead>
-<tr>
-<th>要点</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>不要存完整路径</td>
-<td>iOS 8+ 下 Application 目录 UUID 会变，存完整路径容易失效。</td>
-</tr>
-<tr>
-<td>推荐只存文件名</td>
-<td>使用时通过 API 获取当前 Documents 目录，再拼接文件名。</td>
-</tr>
-<tr>
-<td>优先用系统 API 取目录</td>
-<td>使用 <code>NSSearchPathForDirectoriesInDomains</code> 获取 Documents，比遍历目录更简单、高效。</td>
-</tr>
-</tbody></table>
-<p>按上述方式改造后，<code>NSData.dataWithContentsOfFile</code> 无法读取文件的问题即可解决。</p>
-<h2 id="附录：UUID-何时会变化"><a href="#附录：UUID-何时会变化" class="headerlink" title="附录：UUID 何时会变化"></a>附录：UUID 何时会变化</h2><p>不同安装/运行方式下，沙盒中 Application 目录的 UUID 是否变化可参考下表：</p>
-<table>
-<thead>
-<tr>
-<th>安装/运行方式</th>
-<th>UUID 是否变化</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>App 卸载后重新安装</td>
-<td>✅ 变化（iOS 8+ 的安全机制）</td>
-</tr>
-<tr>
-<td>通过 Xcode 重新安装</td>
-<td>✅ 变化（相当于卸载再安装）</td>
-</tr>
-<tr>
-<td>Xcode 直接运行（不卸载）</td>
-<td>❌ 不变（仅 Build &amp; Run 且未删除 App）</td>
-</tr>
-<tr>
-<td>模拟器上运行</td>
-<td>✅ 可能变化（视情况而定）</td>
-</tr>
-<tr>
-<td>TestFlight / App Store 安装</td>
-<td>✅ 变化（安装时生成新 UUID）</td>
-</tr>
-<tr>
-<td>iOS OTA 更新 App</td>
-<td>❌ 不变（更新不改变 UUID）</td>
-</tr>
-</tbody></table>
-]]></content>
-      <categories>
-        <category>Multiplatform</category>
-      </categories>
-      <tags>
-        <tag>SwiftUI</tag>
-        <tag>Kotlin Native</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</title>
     <url>/posts/2026/07/18/9e7d1a5f/</url>
     <content><![CDATA[<h1 id="单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布"><a href="#单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布" class="headerlink" title="单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布"></a>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</h1><p>本方案的技术链路为：<strong>Mac + OrbStack 本地开发与构建 → Docker Hub 保存版本化镜像 → Ubuntu VPS 使用 Docker Compose 运行</strong>。VPS 只保留部署配置、环境变量、Nginx 配置和数据卷，不上传 Git 仓库或 src 源码目录。</p>
@@ -1186,6 +851,341 @@ NSData<span class="token punctuation">.</span><span class="token function">dataW
       </tags>
   </entry>
   <entry>
+    <title>单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS</title>
+    <url>/posts/2026/07/18/c8b3f21e/</url>
+    <content><![CDATA[<h1 id="单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS"><a href="#单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS" class="headerlink" title="单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS"></a>单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS</h1><p>上一篇将镜像推送到了 Docker Hub。本篇将部署到 Ubuntu VPS，完成从镜像拉取到 HTTPS 证书配置的完整链路。</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">Internet → Nginx :80/:443 → API :3000（内部网络） → PostgreSQL :5432（内部网络）<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<hr>
+<h2 id="一、前置条件与-Docker"><a href="#一、前置条件与-Docker" class="headerlink" title="一、前置条件与 Docker"></a>一、前置条件与 Docker</h2><p>准备以下资源：</p>
+<ul>
+<li><strong>Ubuntu LTS VPS</strong> 与 sudo 权限</li>
+<li><strong>已指向 VPS 的域名</strong>（示例 <code>api.example.com</code>）</li>
+<li><strong>已开放</strong> TCP 80/443</li>
+<li><strong>Docker Hub 私有镜像</strong></li>
+<li><strong>API 的 <code>GET /health</code></strong> 健康检查端点</li>
+</ul>
+<blockquote>
+<p>Let’s Encrypt 不能为裸 IP 签发普通 HTTPS 证书；DNS 和公网 80 是 HTTP-01 验证必要条件。</p>
+</blockquote>
+<p>安装 Docker 前，必须先按 <a href="https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository">Docker Engine 在 Ubuntu 上使用官方仓库安装</a> 的步骤设置 Docker 的官方 apt 仓库。若直接执行 <code>apt install docker-ce</code>，通常会出现 <code>Unable to locate package</code>，因为 Ubuntu 默认软件源不包含 Docker CE。</p>
+<p>完成仓库设置后，安装 Docker：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt</span> update
+<span class="token function">sudo</span> <span class="token function">apt</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+<span class="token function">sudo</span> systemctl <span class="token builtin class-name">enable</span> <span class="token parameter variable">--now</span> <span class="token function">docker</span>
+<span class="token function">docker</span> version
+<span class="token function">docker</span> compose version<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>将当前用户加入 docker 组（重新 SSH 登录后生效）：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">usermod</span> <span class="token parameter variable">-aG</span> <span class="token function">docker</span> <span class="token string">"<span class="token environment constant">$USER</span>"</span>
+<span class="token builtin class-name">exit</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>重新 SSH 登录后运行 <code>docker ps</code> 验证。</p>
+<blockquote>
+<p><strong>安全提醒</strong>：docker 组具有近似 root 的主机控制能力，只应加入可信用户。</p>
+</blockquote>
+<hr>
+<h2 id="二、部署目录、环境变量与拉取镜像"><a href="#二、部署目录、环境变量与拉取镜像" class="headerlink" title="二、部署目录、环境变量与拉取镜像"></a>二、部署目录、环境变量与拉取镜像</h2><h3 id="2-1-创建目录结构"><a href="#2-1-创建目录结构" class="headerlink" title="2.1 创建目录结构"></a>2.1 创建目录结构</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /opt/backend/nginx/conf.d /opt/backend/certbot/www /opt/backend/certbot/conf
+<span class="token function">sudo</span> <span class="token function">chown</span> <span class="token parameter variable">-R</span> <span class="token string">"<span class="token environment constant">$USER</span>"</span><span class="token builtin class-name">:</span><span class="token string">"<span class="token environment constant">$USER</span>"</span> /opt/backend
+<span class="token builtin class-name">cd</span> /opt/backend<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="2-2-创建环境变量文件"><a href="#2-2-创建环境变量文件" class="headerlink" title="2.2 创建环境变量文件"></a>2.2 创建环境变量文件</h3><p>创建 <code>.env</code>：</p>
+<pre class="line-numbers language-env" data-language="env"><code class="language-env">POSTGRES_USER=app_user
+POSTGRES_PASSWORD=REPLACE_WITH_A_LONG_RANDOM_PASSWORD
+POSTGRES_DB=app_db
+DATABASE_URL=postgresql://app_user:***@postgres:5432/app_db<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">chmod</span> <span class="token number">600</span> .env<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<h3 id="2-3-拉取镜像"><a href="#2-3-拉取镜像" class="headerlink" title="2.3 拉取镜像"></a>2.3 拉取镜像</h3><p>使用 <strong>Docker Hub Personal Access Token</strong> 登录并拉取：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login
+<span class="token function">docker</span> pull YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<blockquote>
+<p>认证存于当前用户的 <code>~/.docker/config.json</code>，不要提交或复制到脚本中。</p>
+</blockquote>
+<hr>
+<h2 id="三、docker-compose-yml"><a href="#三、docker-compose-yml" class="headerlink" title="三、docker-compose.yml"></a>三、docker-compose.yml</h2><p>创建 <code>/opt/backend/docker-compose.yml</code>：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">services</span><span class="token punctuation">:</span>
+  <span class="token key atrule">api</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> YOUR_DOCKERHUB_USER/backend<span class="token punctuation">-</span>api<span class="token punctuation">:</span>1.0.0
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
+    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
+      <span class="token key atrule">NODE_ENV</span><span class="token punctuation">:</span> production
+      <span class="token key atrule">DATABASE_URL</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>DATABASE_URL<span class="token punctuation">}</span>
+    <span class="token key atrule">expose</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"3000"</span>
+    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span>
+      <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
+        <span class="token key atrule">condition</span><span class="token punctuation">:</span> service_healthy
+  <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> postgres<span class="token punctuation">:</span><span class="token number">16</span>
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
+    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
+      <span class="token key atrule">POSTGRES_USER</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>POSTGRES_USER<span class="token punctuation">}</span>
+      <span class="token key atrule">POSTGRES_PASSWORD</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>POSTGRES_PASSWORD<span class="token punctuation">}</span>
+      <span class="token key atrule">POSTGRES_DB</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>POSTGRES_DB<span class="token punctuation">}</span>
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> postgres_data<span class="token punctuation">:</span>/var/lib/postgresql/data
+    <span class="token key atrule">expose</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"5432"</span>
+    <span class="token key atrule">healthcheck</span><span class="token punctuation">:</span>
+      <span class="token key atrule">test</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">"CMD-SHELL"</span><span class="token punctuation">,</span> <span class="token string">"pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"</span><span class="token punctuation">]</span>
+      <span class="token key atrule">interval</span><span class="token punctuation">:</span> 10s
+      <span class="token key atrule">timeout</span><span class="token punctuation">:</span> 5s
+      <span class="token key atrule">retries</span><span class="token punctuation">:</span> <span class="token number">5</span>
+  <span class="token key atrule">nginx</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> nginx<span class="token punctuation">:</span>1.27<span class="token punctuation">-</span>alpine
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"80:80"</span>
+      <span class="token punctuation">-</span> <span class="token string">"443:443"</span>
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> ./nginx/conf.d<span class="token punctuation">:</span>/etc/nginx/conf.d<span class="token punctuation">:</span>ro
+      <span class="token punctuation">-</span> ./certbot/www<span class="token punctuation">:</span>/var/www/certbot<span class="token punctuation">:</span>ro
+      <span class="token punctuation">-</span> ./certbot/conf<span class="token punctuation">:</span>/etc/letsencrypt<span class="token punctuation">:</span>ro
+    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> api
+  <span class="token key atrule">certbot</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> certbot/certbot<span class="token punctuation">:</span>latest
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> ./certbot/www<span class="token punctuation">:</span>/var/www/certbot
+      <span class="token punctuation">-</span> ./certbot/conf<span class="token punctuation">:</span>/etc/letsencrypt
+<span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+  postgres_data<span class="token punctuation">:</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<blockquote>
+<p><strong>注意</strong>：API 和 PostgreSQL 只使用 <code>expose</code>（内部网络可见）；只有 Nginx 用 <code>ports</code> 发布 80/443。数据库存于命名 volume，不要执行 <code>docker compose down -v</code>，除非确定要删除数据库。</p>
+</blockquote>
+<hr>
+<h2 id="四、HTTP、Nginx-与证书"><a href="#四、HTTP、Nginx-与证书" class="headerlink" title="四、HTTP、Nginx 与证书"></a>四、HTTP、Nginx 与证书</h2><h3 id="4-1-首次-HTTP-配置"><a href="#4-1-首次-HTTP-配置" class="headerlink" title="4.1 首次 HTTP 配置"></a>4.1 首次 HTTP 配置</h3><p>首次没有证书，创建 <code>nginx/conf.d/api.conf</code>：</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">{</span>
+    <span class="token directive"><span class="token keyword">listen</span> <span class="token number">80</span></span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">server_name</span> api.example.com</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">location</span> /.well-known/acme-challenge/</span> <span class="token punctuation">{</span> <span class="token directive"><span class="token keyword">root</span> /var/www/certbot</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">{</span>
+        <span class="token directive"><span class="token keyword">proxy_pass</span> http://api:3000</span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> Host <span class="token variable">$host</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Real-IP <span class="token variable">$remote_addr</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-For <span class="token variable">$proxy_add_x_forwarded_for</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-Proto <span class="token variable">$scheme</span></span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>替换域名并启动：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose pull
+<span class="token function">docker</span> compose up <span class="token parameter variable">-d</span>
+<span class="token function">curl</span> <span class="token parameter variable">-i</span> http://api.example.com/health<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="4-2-申请-SSL-证书"><a href="#4-2-申请-SSL-证书" class="headerlink" title="4.2 申请 SSL 证书"></a>4.2 申请 SSL 证书</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose run <span class="token parameter variable">--rm</span> certbot certonly <span class="token punctuation">\</span>
+  <span class="token parameter variable">--webroot</span> --webroot-path<span class="token operator">=</span>/var/www/certbot <span class="token punctuation">\</span>
+  <span class="token parameter variable">--email</span> YOUR_EMAIL@example.com --agree-tos --no-eff-email <span class="token punctuation">\</span>
+  <span class="token parameter variable">-d</span> api.example.com<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="4-3-替换为-HTTPS-配置"><a href="#4-3-替换为-HTTPS-配置" class="headerlink" title="4.3 替换为 HTTPS 配置"></a>4.3 替换为 HTTPS 配置</h3><p>成功申请后，更新 <code>nginx/conf.d/api.conf</code>：</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">{</span>
+    <span class="token directive"><span class="token keyword">listen</span> <span class="token number">80</span></span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">server_name</span> api.example.com</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">location</span> /.well-known/acme-challenge/</span> <span class="token punctuation">{</span> <span class="token directive"><span class="token keyword">root</span> /var/www/certbot</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">{</span> <span class="token directive"><span class="token keyword">return</span> <span class="token number">301</span> https://<span class="token variable">$host</span><span class="token variable">$request_uri</span></span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">{</span>
+    <span class="token directive"><span class="token keyword">listen</span> <span class="token number">443</span> ssl</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">server_name</span> api.example.com</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">ssl_certificate</span> /etc/letsencrypt/live/api.example.com/fullchain.pem</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">ssl_certificate_key</span> /etc/letsencrypt/live/api.example.com/privkey.pem</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">ssl_protocols</span> TLSv1.2 TLSv1.3</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">{</span>
+        <span class="token directive"><span class="token keyword">proxy_pass</span> http://api:3000</span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> Host <span class="token variable">$host</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Real-IP <span class="token variable">$remote_addr</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-For <span class="token variable">$proxy_add_x_forwarded_for</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-Proto <span class="token variable">$scheme</span></span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<blockquote>
+<p><strong>注意</strong>：必须保留 ACME 路径，否则证书续期可能失败。<code>ssl_certificate</code> 后<strong>没有冒号</strong>。</p>
+</blockquote>
+<p>重新加载 Nginx：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose <span class="token builtin class-name">exec</span> nginx nginx <span class="token parameter variable">-t</span>
+<span class="token function">docker</span> compose <span class="token builtin class-name">exec</span> nginx nginx <span class="token parameter variable">-s</span> reload
+<span class="token function">curl</span> <span class="token parameter variable">-I</span> http://api.example.com/health
+<span class="token function">curl</span> <span class="token parameter variable">-i</span> https://api.example.com/health<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<hr>
+<h2 id="五、自动续期与更新"><a href="#五、自动续期与更新" class="headerlink" title="五、自动续期与更新"></a>五、自动续期与更新</h2><h3 id="5-1-Certbot-自动续期"><a href="#5-1-Certbot-自动续期" class="headerlink" title="5.1 Certbot 自动续期"></a>5.1 Certbot 自动续期</h3><p>编辑 crontab（<code>crontab -e</code>）加入：</p>
+<pre class="line-numbers language-cron" data-language="cron"><code class="language-cron">17 3 * * * cd /opt/backend &amp;&amp; docker compose run --rm certbot renew --quiet &amp;&amp; docker compose exec -T nginx nginx -s reload<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>演练续期：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose run <span class="token parameter variable">--rm</span> certbot renew --dry-run<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<h3 id="5-2-更新-API-镜像"><a href="#5-2-更新-API-镜像" class="headerlink" title="5.2 更新 API 镜像"></a>5.2 更新 API 镜像</h3><p>更新镜像时修改 API 标签：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose pull api
+<span class="token function">docker</span> compose up <span class="token parameter variable">-d</span> api
+<span class="token function">docker</span> compose logs <span class="token parameter variable">--tail</span><span class="token operator">=</span><span class="token number">100</span> api
+<span class="token function">curl</span> <span class="token parameter variable">-fsS</span> https://api.example.com/health<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>回滚操作：改回旧标签并重新启动 API。</p>
+<hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文完成了「单台 VPS 部署 API」的下半部分：从 Ubuntu VPS 的 Docker 安装、环境变量配置、Docker Compose 多服务编排，到 Nginx 反向代理与 Let’s Encrypt HTTPS 证书的申请、配置和自动续期。至此，整个「本地开发 → Docker Hub 镜像发布 → VPS 部署」的完整链路已全部打通。</p>
+<p><strong>后续建议增加：</strong></p>
+<ul>
+<li>PostgreSQL 异地备份策略</li>
+<li>Docker 日志轮转配置</li>
+<li>Docker Compose 健康检查告警</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Technical</category>
+      </categories>
+      <tags>
+        <tag>Docker</tag>
+        <tag>DevOps</tag>
+        <tag>Nginx</tag>
+        <tag>HTTPS</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>iOS 沙盒文件读取失败：不要持久化 Container 完整路径</title>
+    <url>/posts/2023/08/13/bb96b1c7/</url>
+    <content><![CDATA[<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：</p>
+<ul>
+<li><strong>现象</strong>：导出 <code>.xcappdata</code> 可以确认文件确实在 Documents 目录下，但用 <code>NSData.dataWithContentsOfFile</code> 读取时始终返回空。</li>
+<li><strong>报错</strong>：<code>No such File or Directory</code>（找不到该文件或目录）。</li>
+</ul>
+<p>当时使用的读取代码如下（为便于排查，增加了 <code>errorPtr</code> 输出错误信息）：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> errorPtr<span class="token operator">:</span> ObjCObjectVar<span class="token operator">&lt;</span>NSError<span class="token operator">?</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token function">alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
+    <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+    <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
+<span class="token punctuation">}</span>
+<span class="token function">println</span><span class="token punctuation">(</span>errorPtr<span class="token punctuation">.</span>value<span class="token operator">?</span><span class="token punctuation">.</span>description<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">return</span><span class="token label symbol">@withContext</span> <span class="token keyword">null</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<span id="more"></span>
+
+<h2 id="二、问题定位"><a href="#二、问题定位" class="headerlink" title="二、问题定位"></a>二、问题定位</h2><h3 id="2-1-怀疑点：路径可能不对"><a href="#2-1-怀疑点：路径可能不对" class="headerlink" title="2.1 怀疑点：路径可能不对"></a>2.1 怀疑点：路径可能不对</h3><p>从错误日志看，传入的 <code>fullPath</code> 很可能并不是当前运行时的真实路径，所以即使文件实际存在，<code>NSData.dataWithContentsOfFile</code> 仍然找不到。</p>
+<h3 id="2-2-对比验证：Application-目录的-UUID-不一致"><a href="#2-2-对比验证：Application-目录的-UUID-不一致" class="headerlink" title="2.2 对比验证：Application 目录的 UUID 不一致"></a>2.2 对比验证：Application 目录的 UUID 不一致</h3><p>用 Swift 在运行时获取 Documents 目录并列出文件，与 Kotlin 里使用的 <code>fullPath</code> 对比：</p>
+<ul>
+<li><strong>Kotlin 中使用的 fullPath</strong>（可能是之前保存的完整路径）：<pre class="line-numbers language-none"><code class="language-none">/var/mobile/Containers/Data/Application/3FC1CCE9-A788-47AB-902A-FA133FAA3D30/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
+<li><strong>Swift 当前拿到的文件 URL</strong>：<pre class="line-numbers language-none"><code class="language-none">file:///private/var/mobile/Containers/Data/Application/C5AC5178-6887-40F4-9EE5-8D56CB830CB3/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
+</ul>
+<p>可见，<code>Application</code> 后面那一段 UUID 不一致：一个是 <code>3FC1CCE9-...</code>，一个是 <code>C5AC5178-...</code>。</p>
+<p>Swift 侧获取 Documents 的示例代码：</p>
+<pre class="line-numbers language-swift" data-language="swift"><code class="language-swift"><span class="token keyword">let</span> fileManager <span class="token operator">=</span> <span class="token class-name">FileManager</span><span class="token punctuation">.</span><span class="token keyword">default</span>
+<span class="token keyword">let</span> documentsURL <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">urls</span><span class="token punctuation">(</span><span class="token keyword">for</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>documentDirectory<span class="token punctuation">,</span> <span class="token keyword">in</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>userDomainMask<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+<span class="token keyword">do</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> fileURLs <span class="token operator">=</span> <span class="token keyword">try</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectory</span><span class="token punctuation">(</span>at<span class="token punctuation">:</span> documentsURL<span class="token punctuation">,</span> includingPropertiesForKeys<span class="token punctuation">:</span> <span class="token nil constant">nil</span><span class="token punctuation">)</span>
+    <span class="token function">print</span><span class="token punctuation">(</span>fileURLs<span class="token punctuation">)</span>
+<span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">{</span>
+    <span class="token function">print</span><span class="token punctuation">(</span><span class="token string-literal"><span class="token string">"Error while enumerating files </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">documentsURL<span class="token punctuation">.</span>path</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">: </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">error<span class="token punctuation">.</span>localizedDescription</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">"</span></span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="2-3-根因结论"><a href="#2-3-根因结论" class="headerlink" title="2.3 根因结论"></a>2.3 根因结论</h3><p>自 <strong>iOS 8.0</strong> 起，应用沙盒里 <code>Application</code> 这一级目录的 <strong>UUID 会随安装/部署方式变化</strong>（例如卸载重装、Xcode 重新安装等）。若把「完整路径」存下来，下次启动或重装后 UUID 变了，旧路径就失效，导致「文件在，但按旧路径读不到」。</p>
+<p>因此：<strong>不能依赖存储的完整路径来读文件，只能依赖「相对位置 + 文件名」并在运行时重新解析。</strong></p>
+<h2 id="三、解决方案"><a href="#三、解决方案" class="headerlink" title="三、解决方案"></a>三、解决方案</h2><p>思路统一为：<strong>只存文件名（或相对路径），读的时候先拿到当前 Documents 目录，再拼出完整路径或 URL。</strong> 下面两种写法都符合这一思路。</p>
+<h3 id="方法一：遍历-Documents，按文件名匹配"><a href="#方法一：遍历-Documents，按文件名匹配" class="headerlink" title="方法一：遍历 Documents，按文件名匹配"></a>方法一：遍历 Documents，按文件名匹配</h3><p>不依赖完整路径，先取到 Documents 的 URL，再在目录下按文件名找到对应文件：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 拿到 Documents 目录的 url</span>
+<span class="token keyword">val</span> url <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">URLForDirectory</span><span class="token punctuation">(</span>
+    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
+    inDomain <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
+    appropriateForURL <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
+    create <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+    error <span class="token operator">=</span> <span class="token keyword">null</span>
+<span class="token punctuation">)</span><span class="token operator">!!</span>
+<span class="token comment">// 列出目录下所有文件的 url</span>
+<span class="token keyword">val</span> fileUrls <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectoryAtURL</span><span class="token punctuation">(</span>url <span class="token operator">=</span> url<span class="token punctuation">,</span> includingPropertiesForKeys <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span>
+<span class="token comment">// 按文件名精确匹配得到目标文件的 URL；不要用 contains，避免误匹配。</span>
+<span class="token keyword">val</span> currentFileUrl <span class="token operator">=</span> fileUrls
+    <span class="token operator">?</span><span class="token punctuation">.</span>filterIsInstance<span class="token operator">&lt;</span>NSURL<span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">firstOrNull</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span>lastPathComponent <span class="token operator">==</span> fileName <span class="token punctuation">}</span>
+<span class="token comment">// 用 URL 读取</span>
+currentFileUrl<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span>
+    NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfURL</span><span class="token punctuation">(</span>currentFileUrl<span class="token punctuation">)</span>
+        <span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
+            <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+            <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
+        <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="方法二（推荐）：直接取-Documents-路径再拼接文件名"><a href="#方法二（推荐）：直接取-Documents-路径再拼接文件名" class="headerlink" title="方法二（推荐）：直接取 Documents 路径再拼接文件名"></a>方法二（推荐）：直接取 Documents 路径再拼接文件名</h3><p>遍历有额外开销，更稳妥且高效的方式是：<strong>每次读取时用系统 API 取当前 Documents 目录，再拼接文件名</strong>：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> documentDirectory <span class="token operator">=</span> <span class="token function">NSSearchPathForDirectoriesInDomains</span><span class="token punctuation">(</span>
+    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
+    domainMask <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
+    expandTilde <span class="token operator">=</span> <span class="token boolean">true</span>
+<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">first</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> NSString
+<span class="token keyword">val</span> fullPath <span class="token operator">=</span> documentDirectory<span class="token punctuation">.</span><span class="token function">stringByAppendingPathComponent</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span>
+<span class="token comment">// 此处 fullPath 一定是当前应用实例的真实路径</span>
+NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> <span class="token operator">..</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这样得到的 <code>fullPath</code> 始终对应当前运行时的 Documents，不受 UUID 变化影响。</p>
+<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><table>
+<thead>
+<tr>
+<th>要点</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>不要存完整路径</td>
+<td>iOS 8+ 下 Application 目录 UUID 会变，存完整路径容易失效。</td>
+</tr>
+<tr>
+<td>推荐只存文件名</td>
+<td>使用时通过 API 获取当前 Documents 目录，再拼接文件名。</td>
+</tr>
+<tr>
+<td>优先用系统 API 取目录</td>
+<td>使用 <code>NSSearchPathForDirectoriesInDomains</code> 获取 Documents，比遍历目录更简单、高效。</td>
+</tr>
+</tbody></table>
+<p>按上述方式改造后，<code>NSData.dataWithContentsOfFile</code> 无法读取文件的问题即可解决。</p>
+<h2 id="附录：UUID-何时会变化"><a href="#附录：UUID-何时会变化" class="headerlink" title="附录：UUID 何时会变化"></a>附录：UUID 何时会变化</h2><p>不同安装/运行方式下，沙盒中 Application 目录的 UUID 是否变化可参考下表：</p>
+<table>
+<thead>
+<tr>
+<th>安装/运行方式</th>
+<th>UUID 是否变化</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>App 卸载后重新安装</td>
+<td>✅ 变化（iOS 8+ 的安全机制）</td>
+</tr>
+<tr>
+<td>通过 Xcode 重新安装</td>
+<td>✅ 变化（相当于卸载再安装）</td>
+</tr>
+<tr>
+<td>Xcode 直接运行（不卸载）</td>
+<td>❌ 不变（仅 Build &amp; Run 且未删除 App）</td>
+</tr>
+<tr>
+<td>模拟器上运行</td>
+<td>✅ 可能变化（视情况而定）</td>
+</tr>
+<tr>
+<td>TestFlight / App Store 安装</td>
+<td>✅ 变化（安装时生成新 UUID）</td>
+</tr>
+<tr>
+<td>iOS OTA 更新 App</td>
+<td>❌ 不变（更新不改变 UUID）</td>
+</tr>
+</tbody></table>
+]]></content>
+      <categories>
+        <category>Multiplatform</category>
+      </categories>
+      <tags>
+        <tag>SwiftUI</tag>
+        <tag>Kotlin Native</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>remember VS rememberSaveable</title>
     <url>/posts/2023/12/04/f68195/</url>
     <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在 Jetpack Compose 中，<code>remember {}</code> 和 <code>rememberSaveable {}</code> 都能把值保留在组合期间，但它们解决的问题不同：前者把值留在当前 Composition 中；后者会把可保存的值交给 <code>SaveableStateRegistry</code>，以便在 Activity 或进程重建后恢复。选错保存边界，状态就可能在意料之外被重置。本文结合一次实际问题和文档/实验，说明两者的区别与使用场景。</p>
@@ -1317,167 +1317,6 @@ The default implementation only supports types which can be stored inside the Bu
       </categories>
       <tags>
         <tag>Android</tag>
-        <tag>Jetpack Compose</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Jetpack Compose 性能优化：用 `graphicsLayer` 延后状态读取</title>
-    <url>/posts/2026/02/27/4ae1fc92/</url>
-    <content><![CDATA[<h1 id="Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握"><a href="#Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握" class="headerlink" title="Jetpack Compose 性能优化：为什么 graphicsLayer 值得你重点掌握"></a>Jetpack Compose 性能优化：为什么 <code>graphicsLayer</code> 值得你重点掌握</h1><p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
-<p>比如，想让一个组件半透明，你可以这样写：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">alpha</span><span class="token punctuation">(</span><span class="token number">0.5f</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>也可以这样写：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> alpha <span class="token operator">=</span> <span class="token number">0.5f</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>从界面效果来看，它们几乎一样。<br>但在<strong>动画</strong>、<strong>滚动联动</strong>、<strong>高频状态变化</strong>这类场景里，两者背后的性能路径并不完全相同。</p>
-<p>真正的关键不是“哪个 API 更高级”，而是：</p>
-<blockquote>
-<p><strong>你在哪个阶段读取状态。</strong></p>
-</blockquote>
-<p>如果状态读取发生在 Composition 阶段，就可能触发更多重组工作。<br>如果状态读取被延后到 Draw 阶段，Compose 就有机会跳过 Composition 和 Layout，只做更轻量的绘制更新。</p>
-<hr>
-<h2 id="Compose-UI-的三大阶段"><a href="#Compose-UI-的三大阶段" class="headerlink" title="Compose UI 的三大阶段"></a>Compose UI 的三大阶段</h2><p>理解这件事，先要知道 Compose 的渲染流程主要分为三个阶段：</p>
-<h3 id="1-Composition"><a href="#1-Composition" class="headerlink" title="1. Composition"></a>1. Composition</h3><p>决定“<strong>要显示什么</strong>”。<br>也就是执行 Composable，构建或更新 UI 树。</p>
-<h3 id="2-Layout"><a href="#2-Layout" class="headerlink" title="2. Layout"></a>2. Layout</h3><p>决定“<strong>显示在哪里、多大</strong>”。<br>也就是测量和摆放组件。</p>
-<h3 id="3-Draw"><a href="#3-Draw" class="headerlink" title="3. Draw"></a>3. Draw</h3><p>决定“<strong>最终画成什么样</strong>”。<br>包括透明度、缩放、旋转、裁剪等绘制相关操作。</p>
-<p>如果一个变化只影响 Draw 阶段，通常会比影响 Layout 阶段更高效，因为整体需要做的工作更少。</p>
-<hr>
-<h2 id="真正的性能差异，来自“状态读取时机”"><a href="#真正的性能差异，来自“状态读取时机”" class="headerlink" title="真正的性能差异，来自“状态读取时机”"></a>真正的性能差异，来自“状态读取时机”</h2><p>很多文章会把这件事简单总结成：</p>
-<ul>
-<li><code>.alpha()</code> 会触发重组</li>
-<li><code>.graphicsLayer {}</code> 不会触发重组</li>
-</ul>
-<p>这个说法<strong>不够准确</strong>。</p>
-<p>更准确的说法是：</p>
-<blockquote>
-<p><strong>是否发生重组，取决于状态是在 Composition、Layout 还是 Draw 阶段被读取。</strong></p>
-</blockquote>
-<p><code>graphicsLayer</code> 的优势并不只是“它能做透明度和缩放”，而是它提供了一个很适合承载<strong>绘制阶段状态读取</strong>的入口。</p>
-<p>也就是说，在适合的场景下，你可以把频繁变化的状态放到更靠后的阶段去处理，从而减少不必要的 Composition 和 Layout 开销。</p>
-<hr>
-<h2 id="为什么-graphicsLayer-常常更适合动画"><a href="#为什么-graphicsLayer-常常更适合动画" class="headerlink" title="为什么 graphicsLayer 常常更适合动画"></a>为什么 <code>graphicsLayer</code> 常常更适合动画</h2><p><code>Modifier.graphicsLayer</code> 主要影响的是绘制阶段，不会改变组件的测量尺寸和摆放位置。</p>
-<p>这意味着下面这些变化，通常更适合放进 <code>graphicsLayer</code>：</p>
-<ul>
-<li><code>alpha</code></li>
-<li><code>scaleX / scaleY</code></li>
-<li><code>translationX / translationY</code></li>
-<li><code>rotationZ</code></li>
-</ul>
-<p>对于高频更新的 UI，这通常更有利，比如：</p>
-<ul>
-<li>滚动时的视差效果</li>
-<li>列表项渐隐渐现</li>
-<li>卡片缩放</li>
-<li>图标呼吸动画</li>
-<li>拖拽过程中的位移或旋转</li>
-</ul>
-<p>因为这些效果本质上更多是在改变“怎么画”，而不是“怎么排版”。</p>
-<hr>
-<h2 id="graphicsLayer-还有一层意义：图形层隔离"><a href="#graphicsLayer-还有一层意义：图形层隔离" class="headerlink" title="graphicsLayer 还有一层意义：图形层隔离"></a><code>graphicsLayer</code> 还有一层意义：图形层隔离</h2><p><code>graphicsLayer</code> 不只是一个 modifier，它还会带来图形层的隔离效果。</p>
-<p>你可以把它理解成：</p>
-<ul>
-<li>组件内容先被组织成一个独立绘制层</li>
-<li>后续对这个层做透明度、缩放、旋转等操作</li>
-<li>不必每次都重新“重画里面的内容”</li>
-</ul>
-<p>这也是它特别适合动画场景的原因之一。</p>
-<p>不过要注意，<strong>有 layer 不代表一定更快</strong>。</p>
-<p>如果只是静态 UI，或者变化频率很低，没必要为了“性能优化”而到处套 <code>graphicsLayer</code>。真正值得优化的，是那些：</p>
-<ul>
-<li>高频变化</li>
-<li>容易掉帧的动画</li>
-<li>滚动联动效果</li>
-<li>明显存在性能瓶颈的界面</li>
-</ul>
-<hr>
-<h2 id="一个更准确的对比方式"><a href="#一个更准确的对比方式" class="headerlink" title="一个更准确的对比方式"></a>一个更准确的对比方式</h2><table>
-<thead>
-<tr>
-<th align="left">对比项</th>
-<th align="left">普通值传递写法</th>
-<th align="left"><code>graphicsLayer { ... }</code> / lambda-based 写法</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">状态读取位置</td>
-<td align="left">常见于 Composition 阶段</td>
-<td align="left">可延后到 Draw 阶段</td>
-</tr>
-<tr>
-<td align="left">是否一定触发重组</td>
-<td align="left">不一定，但更容易发生</td>
-<td align="left">不一定完全没有，但更容易跳过 Composition</td>
-</tr>
-<tr>
-<td align="left">是否影响布局</td>
-<td align="left">取决于具体 modifier</td>
-<td align="left"><code>graphicsLayer</code> 本身只影响绘制</td>
-</tr>
-<tr>
-<td align="left">适合场景</td>
-<td align="left">静态 UI、低频变化</td>
-<td align="left">动画、滚动联动、高频视觉变化</td>
-</tr>
-</tbody></table>
-<p>这里最重要的是一句话：</p>
-<blockquote>
-<p><strong>不是 <code>graphicsLayer</code> 天生“无敌”，而是它更适合处理那些只需要改变视觉表现、不需要重新布局的更新。</strong></p>
-</blockquote>
-<hr>
-<h2 id="实战示例：把动画状态留到绘制阶段处理"><a href="#实战示例：把动画状态留到绘制阶段处理" class="headerlink" title="实战示例：把动画状态留到绘制阶段处理"></a>实战示例：把动画状态留到绘制阶段处理</h2><p>下面这个例子非常适合这个思路：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> animatedScale <span class="token operator">=</span> <span class="token function">animateFloatAsState</span><span class="token punctuation">(</span>targetValue <span class="token operator">=</span> <span class="token number">1.2f</span><span class="token punctuation">)</span>
-
-<span class="token function">Box</span><span class="token punctuation">(</span>
-    Modifier
-        <span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
-        <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>Magenta<span class="token punctuation">)</span>
-        <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
-            <span class="token comment">// 在 graphicsLayer 的 lambda 内读取 State，读取才有机会留在 Draw 阶段。</span>
-            scaleX <span class="token operator">=</span> animatedScale<span class="token punctuation">.</span>value
-            scaleY <span class="token operator">=</span> animatedScale<span class="token punctuation">.</span>value
-            alpha <span class="token operator">=</span> <span class="token number">0.9f</span>
-        <span class="token punctuation">}</span>
-<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>注意不要在外层先写成 <code>val scale by animateFloatAsState(...)</code> 再把 <code>scale</code> 传入 lambda。那次读取已经发生在 Composition 阶段，无法获得这里讨论的“延后读取”收益。</p>
-<p>这种写法的好处是，<code>scaleX</code> 和 <code>scaleY</code> 这类纯视觉变化，更适合放在 <code>graphicsLayer</code> 中处理。因为它们不需要改变组件本身的测量结果和摆放位置。</p>
-<p>如果你的动画只是让组件“看起来变大”，而不是让布局系统认为“它真的变大了”，这种方式通常更划算。</p>
-<hr>
-<h2 id="什么时候优先考虑-graphicsLayer"><a href="#什么时候优先考虑-graphicsLayer" class="headerlink" title="什么时候优先考虑 graphicsLayer"></a>什么时候优先考虑 <code>graphicsLayer</code></h2><p>你可以优先在下面这些场景考虑它：</p>
-<h3 id="1-高频动画"><a href="#1-高频动画" class="headerlink" title="1. 高频动画"></a>1. 高频动画</h3><p>例如透明度、缩放、旋转、位移持续变化。<br>这类变化通常只影响视觉呈现，不需要反复参与布局。</p>
-<h3 id="2-滚动驱动效果"><a href="#2-滚动驱动效果" class="headerlink" title="2. 滚动驱动效果"></a>2. 滚动驱动效果</h3><p>比如顶部标题渐隐、列表项视差、卡片缩放。<br>这类状态更新非常频繁，更适合尽量延后到 Draw 阶段处理。</p>
-<h3 id="3-不想因为视觉变化触发布局连锁反应"><a href="#3-不想因为视觉变化触发布局连锁反应" class="headerlink" title="3. 不想因为视觉变化触发布局连锁反应"></a>3. 不想因为视觉变化触发布局连锁反应</h3><p>如果变化不会影响组件大小和位置，就尽量别让它进入 Layout。</p>
-<hr>
-<h2 id="什么时候不要滥用"><a href="#什么时候不要滥用" class="headerlink" title="什么时候不要滥用"></a>什么时候不要滥用</h2><p><code>graphicsLayer</code> 不是“看到动画就全上”的银弹。</p>
-<p>下面这些情况要谨慎：</p>
-<h3 id="1-变化本身会影响布局"><a href="#1-变化本身会影响布局" class="headerlink" title="1. 变化本身会影响布局"></a>1. 变化本身会影响布局</h3><p>如果你需要的不是“看起来变大”，而是“真的占更多空间”，那就不能只靠 Draw 阶段处理。</p>
-<h3 id="2-页面本身没有性能问题"><a href="#2-页面本身没有性能问题" class="headerlink" title="2. 页面本身没有性能问题"></a>2. 页面本身没有性能问题</h3><p>优化应该服务于实际瓶颈。<br>如果页面没有掉帧、没有频繁重组、没有滚动抖动，过度使用 <code>graphicsLayer</code> 反而会增加理解成本。</p>
-<h3 id="3-为了“听起来高级”而替换所有-modifier"><a href="#3-为了“听起来高级”而替换所有-modifier" class="headerlink" title="3. 为了“听起来高级”而替换所有 modifier"></a>3. 为了“听起来高级”而替换所有 modifier</h3><p>性能优化不是 API 崇拜。<br>重点是识别哪些状态变化只是视觉层面的，哪些真的会影响布局和结构。</p>
-<hr>
-<h2 id="一句话总结"><a href="#一句话总结" class="headerlink" title="一句话总结"></a>一句话总结</h2><p><code>graphicsLayer</code> 的核心价值，不是“它比 <code>.alpha()</code> 更酷”，而是：</p>
-<blockquote>
-<p><strong>它很适合承载那些只影响绘制结果的高频状态变化，让 Compose 有机会跳过更重的 Composition 和 Layout。</strong></p>
-</blockquote>
-<p>所以，当你在做这些效果时：</p>
-<ul>
-<li>渐隐渐现</li>
-<li>缩放</li>
-<li>旋转</li>
-<li>平移</li>
-<li>滚动联动动画</li>
-</ul>
-<p>优先想一件事：</p>
-<p><strong>这次变化，是不是其实只需要改 Draw，而不必让整个 UI 重新参与组合和布局？</strong></p>
-<p>如果答案是“对”，那 <code>graphicsLayer</code> 往往就是非常值得尝试的方案。</p>
-<hr>
-<h2 id="结尾：先确认状态读取在哪一层"><a href="#结尾：先确认状态读取在哪一层" class="headerlink" title="结尾：先确认状态读取在哪一层"></a>结尾：先确认状态读取在哪一层</h2><p>写 Compose 性能优化时，最容易踩的坑是把结论说得太绝对。<code>graphicsLayer</code> 适合绘制属性的高频变化，但它不是自动提速开关：只有把 <code>State</code> 的读取放在 lambda 内，才能让 Compose 有机会把这次更新限制在更靠后的阶段。</p>
-<p>遇到卡顿时，先用 Layout Inspector、Compose Tracing 或宏基准测试确认瓶颈，再决定是否调整状态读取位置。优化应由测量结果驱动，而不是由某个 modifier 的名气驱动。</p>
-]]></content>
-      <categories>
-        <category>Compose</category>
-      </categories>
-      <tags>
         <tag>Jetpack Compose</tag>
       </tags>
   </entry>
@@ -1733,6 +1572,360 @@ The default implementation only supports types which can be stored inside the Bu
       </categories>
       <tags>
         <tag>Compose</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Jetpack Compose 性能优化：用 `graphicsLayer` 延后状态读取</title>
+    <url>/posts/2026/02/27/4ae1fc92/</url>
+    <content><![CDATA[<h1 id="Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握"><a href="#Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握" class="headerlink" title="Jetpack Compose 性能优化：为什么 graphicsLayer 值得你重点掌握"></a>Jetpack Compose 性能优化：为什么 <code>graphicsLayer</code> 值得你重点掌握</h1><p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
+<p>比如，想让一个组件半透明，你可以这样写：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">alpha</span><span class="token punctuation">(</span><span class="token number">0.5f</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>也可以这样写：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin">Modifier<span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> alpha <span class="token operator">=</span> <span class="token number">0.5f</span> <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>从界面效果来看，它们几乎一样。<br>但在<strong>动画</strong>、<strong>滚动联动</strong>、<strong>高频状态变化</strong>这类场景里，两者背后的性能路径并不完全相同。</p>
+<p>真正的关键不是“哪个 API 更高级”，而是：</p>
+<blockquote>
+<p><strong>你在哪个阶段读取状态。</strong></p>
+</blockquote>
+<p>如果状态读取发生在 Composition 阶段，就可能触发更多重组工作。<br>如果状态读取被延后到 Draw 阶段，Compose 就有机会跳过 Composition 和 Layout，只做更轻量的绘制更新。</p>
+<hr>
+<h2 id="Compose-UI-的三大阶段"><a href="#Compose-UI-的三大阶段" class="headerlink" title="Compose UI 的三大阶段"></a>Compose UI 的三大阶段</h2><p>理解这件事，先要知道 Compose 的渲染流程主要分为三个阶段：</p>
+<h3 id="1-Composition"><a href="#1-Composition" class="headerlink" title="1. Composition"></a>1. Composition</h3><p>决定“<strong>要显示什么</strong>”。<br>也就是执行 Composable，构建或更新 UI 树。</p>
+<h3 id="2-Layout"><a href="#2-Layout" class="headerlink" title="2. Layout"></a>2. Layout</h3><p>决定“<strong>显示在哪里、多大</strong>”。<br>也就是测量和摆放组件。</p>
+<h3 id="3-Draw"><a href="#3-Draw" class="headerlink" title="3. Draw"></a>3. Draw</h3><p>决定“<strong>最终画成什么样</strong>”。<br>包括透明度、缩放、旋转、裁剪等绘制相关操作。</p>
+<p>如果一个变化只影响 Draw 阶段，通常会比影响 Layout 阶段更高效，因为整体需要做的工作更少。</p>
+<hr>
+<h2 id="真正的性能差异，来自“状态读取时机”"><a href="#真正的性能差异，来自“状态读取时机”" class="headerlink" title="真正的性能差异，来自“状态读取时机”"></a>真正的性能差异，来自“状态读取时机”</h2><p>很多文章会把这件事简单总结成：</p>
+<ul>
+<li><code>.alpha()</code> 会触发重组</li>
+<li><code>.graphicsLayer {}</code> 不会触发重组</li>
+</ul>
+<p>这个说法<strong>不够准确</strong>。</p>
+<p>更准确的说法是：</p>
+<blockquote>
+<p><strong>是否发生重组，取决于状态是在 Composition、Layout 还是 Draw 阶段被读取。</strong></p>
+</blockquote>
+<p><code>graphicsLayer</code> 的优势并不只是“它能做透明度和缩放”，而是它提供了一个很适合承载<strong>绘制阶段状态读取</strong>的入口。</p>
+<p>也就是说，在适合的场景下，你可以把频繁变化的状态放到更靠后的阶段去处理，从而减少不必要的 Composition 和 Layout 开销。</p>
+<hr>
+<h2 id="为什么-graphicsLayer-常常更适合动画"><a href="#为什么-graphicsLayer-常常更适合动画" class="headerlink" title="为什么 graphicsLayer 常常更适合动画"></a>为什么 <code>graphicsLayer</code> 常常更适合动画</h2><p><code>Modifier.graphicsLayer</code> 主要影响的是绘制阶段，不会改变组件的测量尺寸和摆放位置。</p>
+<p>这意味着下面这些变化，通常更适合放进 <code>graphicsLayer</code>：</p>
+<ul>
+<li><code>alpha</code></li>
+<li><code>scaleX / scaleY</code></li>
+<li><code>translationX / translationY</code></li>
+<li><code>rotationZ</code></li>
+</ul>
+<p>对于高频更新的 UI，这通常更有利，比如：</p>
+<ul>
+<li>滚动时的视差效果</li>
+<li>列表项渐隐渐现</li>
+<li>卡片缩放</li>
+<li>图标呼吸动画</li>
+<li>拖拽过程中的位移或旋转</li>
+</ul>
+<p>因为这些效果本质上更多是在改变“怎么画”，而不是“怎么排版”。</p>
+<hr>
+<h2 id="graphicsLayer-还有一层意义：图形层隔离"><a href="#graphicsLayer-还有一层意义：图形层隔离" class="headerlink" title="graphicsLayer 还有一层意义：图形层隔离"></a><code>graphicsLayer</code> 还有一层意义：图形层隔离</h2><p><code>graphicsLayer</code> 不只是一个 modifier，它还会带来图形层的隔离效果。</p>
+<p>你可以把它理解成：</p>
+<ul>
+<li>组件内容先被组织成一个独立绘制层</li>
+<li>后续对这个层做透明度、缩放、旋转等操作</li>
+<li>不必每次都重新“重画里面的内容”</li>
+</ul>
+<p>这也是它特别适合动画场景的原因之一。</p>
+<p>不过要注意，<strong>有 layer 不代表一定更快</strong>。</p>
+<p>如果只是静态 UI，或者变化频率很低，没必要为了“性能优化”而到处套 <code>graphicsLayer</code>。真正值得优化的，是那些：</p>
+<ul>
+<li>高频变化</li>
+<li>容易掉帧的动画</li>
+<li>滚动联动效果</li>
+<li>明显存在性能瓶颈的界面</li>
+</ul>
+<hr>
+<h2 id="一个更准确的对比方式"><a href="#一个更准确的对比方式" class="headerlink" title="一个更准确的对比方式"></a>一个更准确的对比方式</h2><table>
+<thead>
+<tr>
+<th align="left">对比项</th>
+<th align="left">普通值传递写法</th>
+<th align="left"><code>graphicsLayer { ... }</code> / lambda-based 写法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">状态读取位置</td>
+<td align="left">常见于 Composition 阶段</td>
+<td align="left">可延后到 Draw 阶段</td>
+</tr>
+<tr>
+<td align="left">是否一定触发重组</td>
+<td align="left">不一定，但更容易发生</td>
+<td align="left">不一定完全没有，但更容易跳过 Composition</td>
+</tr>
+<tr>
+<td align="left">是否影响布局</td>
+<td align="left">取决于具体 modifier</td>
+<td align="left"><code>graphicsLayer</code> 本身只影响绘制</td>
+</tr>
+<tr>
+<td align="left">适合场景</td>
+<td align="left">静态 UI、低频变化</td>
+<td align="left">动画、滚动联动、高频视觉变化</td>
+</tr>
+</tbody></table>
+<p>这里最重要的是一句话：</p>
+<blockquote>
+<p><strong>不是 <code>graphicsLayer</code> 天生“无敌”，而是它更适合处理那些只需要改变视觉表现、不需要重新布局的更新。</strong></p>
+</blockquote>
+<hr>
+<h2 id="实战示例：把动画状态留到绘制阶段处理"><a href="#实战示例：把动画状态留到绘制阶段处理" class="headerlink" title="实战示例：把动画状态留到绘制阶段处理"></a>实战示例：把动画状态留到绘制阶段处理</h2><p>下面这个例子非常适合这个思路：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> animatedScale <span class="token operator">=</span> <span class="token function">animateFloatAsState</span><span class="token punctuation">(</span>targetValue <span class="token operator">=</span> <span class="token number">1.2f</span><span class="token punctuation">)</span>
+
+<span class="token function">Box</span><span class="token punctuation">(</span>
+    Modifier
+        <span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token number">100</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>Color<span class="token punctuation">.</span>Magenta<span class="token punctuation">)</span>
+        <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span>
+            <span class="token comment">// 在 graphicsLayer 的 lambda 内读取 State，读取才有机会留在 Draw 阶段。</span>
+            scaleX <span class="token operator">=</span> animatedScale<span class="token punctuation">.</span>value
+            scaleY <span class="token operator">=</span> animatedScale<span class="token punctuation">.</span>value
+            alpha <span class="token operator">=</span> <span class="token number">0.9f</span>
+        <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>注意不要在外层先写成 <code>val scale by animateFloatAsState(...)</code> 再把 <code>scale</code> 传入 lambda。那次读取已经发生在 Composition 阶段，无法获得这里讨论的“延后读取”收益。</p>
+<p>这种写法的好处是，<code>scaleX</code> 和 <code>scaleY</code> 这类纯视觉变化，更适合放在 <code>graphicsLayer</code> 中处理。因为它们不需要改变组件本身的测量结果和摆放位置。</p>
+<p>如果你的动画只是让组件“看起来变大”，而不是让布局系统认为“它真的变大了”，这种方式通常更划算。</p>
+<hr>
+<h2 id="什么时候优先考虑-graphicsLayer"><a href="#什么时候优先考虑-graphicsLayer" class="headerlink" title="什么时候优先考虑 graphicsLayer"></a>什么时候优先考虑 <code>graphicsLayer</code></h2><p>你可以优先在下面这些场景考虑它：</p>
+<h3 id="1-高频动画"><a href="#1-高频动画" class="headerlink" title="1. 高频动画"></a>1. 高频动画</h3><p>例如透明度、缩放、旋转、位移持续变化。<br>这类变化通常只影响视觉呈现，不需要反复参与布局。</p>
+<h3 id="2-滚动驱动效果"><a href="#2-滚动驱动效果" class="headerlink" title="2. 滚动驱动效果"></a>2. 滚动驱动效果</h3><p>比如顶部标题渐隐、列表项视差、卡片缩放。<br>这类状态更新非常频繁，更适合尽量延后到 Draw 阶段处理。</p>
+<h3 id="3-不想因为视觉变化触发布局连锁反应"><a href="#3-不想因为视觉变化触发布局连锁反应" class="headerlink" title="3. 不想因为视觉变化触发布局连锁反应"></a>3. 不想因为视觉变化触发布局连锁反应</h3><p>如果变化不会影响组件大小和位置，就尽量别让它进入 Layout。</p>
+<hr>
+<h2 id="什么时候不要滥用"><a href="#什么时候不要滥用" class="headerlink" title="什么时候不要滥用"></a>什么时候不要滥用</h2><p><code>graphicsLayer</code> 不是“看到动画就全上”的银弹。</p>
+<p>下面这些情况要谨慎：</p>
+<h3 id="1-变化本身会影响布局"><a href="#1-变化本身会影响布局" class="headerlink" title="1. 变化本身会影响布局"></a>1. 变化本身会影响布局</h3><p>如果你需要的不是“看起来变大”，而是“真的占更多空间”，那就不能只靠 Draw 阶段处理。</p>
+<h3 id="2-页面本身没有性能问题"><a href="#2-页面本身没有性能问题" class="headerlink" title="2. 页面本身没有性能问题"></a>2. 页面本身没有性能问题</h3><p>优化应该服务于实际瓶颈。<br>如果页面没有掉帧、没有频繁重组、没有滚动抖动，过度使用 <code>graphicsLayer</code> 反而会增加理解成本。</p>
+<h3 id="3-为了“听起来高级”而替换所有-modifier"><a href="#3-为了“听起来高级”而替换所有-modifier" class="headerlink" title="3. 为了“听起来高级”而替换所有 modifier"></a>3. 为了“听起来高级”而替换所有 modifier</h3><p>性能优化不是 API 崇拜。<br>重点是识别哪些状态变化只是视觉层面的，哪些真的会影响布局和结构。</p>
+<hr>
+<h2 id="一句话总结"><a href="#一句话总结" class="headerlink" title="一句话总结"></a>一句话总结</h2><p><code>graphicsLayer</code> 的核心价值，不是“它比 <code>.alpha()</code> 更酷”，而是：</p>
+<blockquote>
+<p><strong>它很适合承载那些只影响绘制结果的高频状态变化，让 Compose 有机会跳过更重的 Composition 和 Layout。</strong></p>
+</blockquote>
+<p>所以，当你在做这些效果时：</p>
+<ul>
+<li>渐隐渐现</li>
+<li>缩放</li>
+<li>旋转</li>
+<li>平移</li>
+<li>滚动联动动画</li>
+</ul>
+<p>优先想一件事：</p>
+<p><strong>这次变化，是不是其实只需要改 Draw，而不必让整个 UI 重新参与组合和布局？</strong></p>
+<p>如果答案是“对”，那 <code>graphicsLayer</code> 往往就是非常值得尝试的方案。</p>
+<hr>
+<h2 id="结尾：先确认状态读取在哪一层"><a href="#结尾：先确认状态读取在哪一层" class="headerlink" title="结尾：先确认状态读取在哪一层"></a>结尾：先确认状态读取在哪一层</h2><p>写 Compose 性能优化时，最容易踩的坑是把结论说得太绝对。<code>graphicsLayer</code> 适合绘制属性的高频变化，但它不是自动提速开关：只有把 <code>State</code> 的读取放在 lambda 内，才能让 Compose 有机会把这次更新限制在更靠后的阶段。</p>
+<p>遇到卡顿时，先用 Layout Inspector、Compose Tracing 或宏基准测试确认瓶颈，再决定是否调整状态读取位置。优化应由测量结果驱动，而不是由某个 modifier 的名气驱动。</p>
+]]></content>
+      <categories>
+        <category>Compose</category>
+      </categories>
+      <tags>
+        <tag>Jetpack Compose</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>LLM 不是 Agent：先理解模型、推理与生成</title>
+    <url>/posts/2026/08/04/bf63960/</url>
+    <content><![CDATA[<h1 id="LLM-不是-Agent：先理解模型、推理与生成"><a href="#LLM-不是-Agent：先理解模型、推理与生成" class="headerlink" title="LLM 不是 Agent：先理解模型、推理与生成"></a>LLM 不是 Agent：先理解模型、推理与生成</h1><p>在聊天窗口里输入一句话，模型能分析需求、列计划、写代码。接上搜索和文件工具后，它还会查资料、改文件。用户看到的只有同一个输入框，很容易把背后的所有能力都算到 LLM 头上。</p>
+<p>可如果程序在模型返回第一条结果后就停止，任务也会停在那里。工具不会自己执行，任务进度没人保存，结果也没人检查。模型只是完成了一次生成。</p>
+<p>我更愿意把 LLM 看成 Agent 系统里的“决策部件”。它很重要，却不是整台机器。</p>
+<h2 id="先把三层拆开"><a href="#先把三层拆开" class="headerlink" title="先把三层拆开"></a>先把三层拆开</h2><p>我们平时使用的聊天产品，已经把对话历史、文件解析、搜索、代码执行和安全检查包在了一起。界面很简单，组件之间的分工却被藏了起来。</p>
+<p>把它们拆开，大致是三层：</p>
+<table>
+<thead>
+<tr>
+<th>层次</th>
+<th>做什么</th>
+<th>输入</th>
+<th>输出</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>模型</td>
+<td>根据当前内容继续生成</td>
+<td>Token 序列</td>
+<td>新 Token 或结构化结果</td>
+</tr>
+<tr>
+<td>模型服务</td>
+<td>提供模型调用接口</td>
+<td>Request</td>
+<td>Response、用量、结束状态</td>
+</tr>
+<tr>
+<td>Agent 系统</td>
+<td>管理任务、工具、状态和权限</td>
+<td>用户目标、环境状态</td>
+<td>任务结果、执行记录</td>
+</tr>
+</tbody></table>
+<p>模型服务和 Agent 系统可能由同一家产品提供，代码里甚至只需要调用一个 SDK。不过，状态仍要保存，工具仍要执行，失败也仍要处理，只是这些工作被产品包装了起来。</p>
+<h2 id="LLM-在一次调用里做了什么"><a href="#LLM-在一次调用里做了什么" class="headerlink" title="LLM 在一次调用里做了什么"></a>LLM 在一次调用里做了什么</h2><p>主流 LLM 大多建立在 Transformer 及其后续架构上。生成文本时，模型根据当前 Token 计算下一个 Token 的概率分布，选出一个结果，再继续往后生成。</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">已有 Token
+   ↓
+计算下一个 Token 的概率
+   ↓
+选择并追加 Token
+   ↓
+继续，直到停止<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这段计算叫 Inference，中文通常译作“推理”。它指模型接收输入并完成计算，不代表用户交代的事情已经办完。</p>
+<p>例如输入：</p>
+<blockquote>
+<p>请比较三个 Agent Runtime。</p>
+</blockquote>
+<p>模型会根据当前上下文和训练得到的参数生成回答。它不会自动创建研究项目，也不会花几个小时阅读官网后再带着核验过的资料回来。要完成这些动作，外部系统必须提供工具，并在第一次生成结束后继续驱动任务。</p>
+<p>同一份输入也未必得到相同结果。模型计算出的是概率分布，解码时可以选择最高概率项，也可以从候选项中采样。Temperature、top-p 等参数会改变选择范围。Temperature 升高后，低概率候选通常更容易出现，输出可能更丰富，也可能跑偏。因此，把 Temperature 简单理解成“创造力旋钮”并不准确。</p>
+<p>模型返回的是生成结果，不是已经验收的事实。内容是否真实、能不能满足业务要求，还得另外检查。</p>
+<h2 id="模型没有一直守着任务"><a href="#模型没有一直守着任务" class="headerlink" title="模型没有一直守着任务"></a>模型没有一直守着任务</h2><p>一次 Inference 结束后，模型的计算就结束了。下一次调用能看到什么，由应用提交的输入决定。某些服务可以通过会话 ID 续接历史，但任务计划、预算、审批状态和中间文件仍要有人管理。</p>
+<p>产品可以通过数据库或服务端会话记住上次聊天，但这不等于模型自己保存着任务。裸模型没有这样的业务状态。</p>
+<p>拿调研任务来说，模型可以写出“下一步应该查官方文档”，但这句话不会给它变出浏览器，页面也不会自己打开。要把建议变成动作，还缺少这些条件：</p>
+<ul>
+<li>可以操作的工具和环境；</li>
+<li>当前做到哪里的状态记录；</li>
+<li>判断完成与失败的规则；</li>
+<li>对写文件、发消息等动作的权限。</li>
+</ul>
+<p>模型写出了动作，Runtime 才负责执行。这是两步。</p>
+<h2 id="什么时候才开始像-Agent"><a href="#什么时候才开始像-Agent" class="headerlink" title="什么时候才开始像 Agent"></a>什么时候才开始像 Agent</h2><p>回复次数不能用来判断系统是不是 Agent。连续聊十轮，有可能只是应用反复把旧消息交给模型。</p>
+<p>当系统开始根据模型结果采取行动，再把环境返回的结果交给模型时，才出现 Agent Loop：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">任务
+  ↓
+模型决定下一步
+  ↓
+系统执行工具
+  ↓
+环境返回结果
+  ↓
+更新状态
+  ↓
+继续或结束<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>模型判断下一步做什么，外部程序执行动作，并决定是否继续循环。后面的文章会分别讨论 Tool Calling、State 和 Runtime，这里先把这层分工说清楚。</p>
+<h2 id="更强的模型也救不了坏掉的系统"><a href="#更强的模型也救不了坏掉的系统" class="headerlink" title="更强的模型也救不了坏掉的系统"></a>更强的模型也救不了坏掉的系统</h2><p>即使模型正确判断出“应该先看官方文档”，系统仍然可能出错。</p>
+<p>系统可能根本没有搜索工具，也可能读到过期页面。工具超时后如果只会反复重试，费用会继续增加；没有验收规则时，缺少引用的报告也可能被直接交付。换一个参数更多的模型，解决不了这些故障。</p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>主要由谁负责</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>理解要求、提出下一步</td>
+<td>模型</td>
+</tr>
+<tr>
+<td>获取网页、文件和数据库内容</td>
+<td>工具与环境</td>
+</tr>
+<tr>
+<td>保存进度、处理超时和恢复</td>
+<td>Runtime</td>
+</tr>
+<tr>
+<td>判断结果能否交付</td>
+<td>验收规则与权限系统</td>
+</tr>
+</tbody></table>
+<p>模型能力会影响 Agent 能做什么，但任务能否稳定完成，还取决于模型之外的系统。</p>
+<p>下面这张图记录了一次真实的任务执行。用户提交 Prompt 后，第一次 LLM Call 决定调用终端。Runtime 执行命令，再把终端返回值和 Session 中已有的信息组装成下一次输入。这个过程持续到第四次 LLM Call 给出最终结果。</p>
+<p><img src="/images/agent_loop/llm-not-agent_03.png" alt="Agent 任务执行流程" title="Agent 任务执行流程"></p>
+<blockquote>
+<p>注：这里使用的是 Hermes Agent，一轮完整交互会被包装在一次 Hermes Turn 中。</p>
+</blockquote>
+<h2 id="C01：让裸模型做一次技术调研"><a href="#C01：让裸模型做一次技术调研" class="headerlink" title="C01：让裸模型做一次技术调研"></a>C01：让裸模型做一次技术调研</h2><p>这个系列会逐步实现一个“技术调研与报告交付 Agent”。在 C01 中，我先关闭搜索，不保存任务状态，也不验证结果，只发出下面这条请求：</p>
+<blockquote>
+<p>调研三个主流 Agent Runtime，比较它们的状态管理、持久化、人工审批和可观测性，并给出选型建议。</p>
+</blockquote>
+<p>模型确实给出了一篇结构完整的答案，比较维度看起来也合理。但只看这份输出，我无法确认：</p>
+<ul>
+<li>它依据的是哪一版资料？</li>
+<li>关键结论来自哪里？</li>
+<li>它有没有读过当前官方文档？</li>
+<li>信息不够时，谁负责继续调查？</li>
+<li>“调研完成”由谁判断？</li>
+</ul>
+<p>一次模型调用回答不了这些问题。</p>
+<p>这是本次裸模型调用的输出：</p>
+<p><img src="/images/agent_loop/llm-not-agent_02.png" alt="C01 裸模型调用结果" title="C01 裸模型调用结果"></p>
+<h3 id="C01-的能力缺口"><a href="#C01-的能力缺口" class="headerlink" title="C01 的能力缺口"></a>C01 的能力缺口</h3><table>
+<thead>
+<tr>
+<th>调研要求</th>
+<th>裸模型能做什么</th>
+<th>还缺什么</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>理解主题</td>
+<td>提炼比较维度</td>
+<td>明确的任务范围和验收条件</td>
+</tr>
+<tr>
+<td>获取当前资料</td>
+<td>根据训练参数生成内容</td>
+<td>搜索、读取工具</td>
+</tr>
+<tr>
+<td>记录证据</td>
+<td>在文本里写引用</td>
+<td>可追踪的证据存储</td>
+</tr>
+<tr>
+<td>持续推进</td>
+<td>描述后续计划</td>
+<td>循环和任务状态</td>
+</tr>
+<tr>
+<td>交付报告</td>
+<td>生成正文</td>
+<td>文件写入、验证和发布权限</td>
+</tr>
+</tbody></table>
+<p>这次实验里，模型已经表现出不错的问题整理和内容生成能力。C01 关心的是另一件事：它给出一次回答后，系统还要补上哪些部件，才能把调研真正做完。</p>
+<h2 id="几个容易混淆的地方"><a href="#几个容易混淆的地方" class="headerlink" title="几个容易混淆的地方"></a>几个容易混淆的地方</h2><p>多轮聊天最容易被误认成 Agent。应用可能只是反复提交历史消息，既没有工具，也没有独立的任务状态。</p>
+<p>Tool Call 则是一份调用请求。模型生成函数名和参数后，网络请求、数据库查询或文件写入仍由 Runtime 完成。</p>
+<p>长 Context 只说明模型这次能读取更多内容。信息是否长期保存、何时更新或删除，属于 Memory 的设计。</p>
+<p>计划同样可能只是一段文本。模型写下“先搜索，再比较，最后写报告”之后，仍要由工具执行步骤，由状态记录进度，并由 Runtime 判断何时停止。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>LLM 读取当前上下文，完成一次 Inference，然后返回结果。模型服务承载这次调用。接下来，Agent 系统还要执行工具、保存进度、处理权限，并判断任务是否结束。</p>
+<p>后面讨论 Agent Loop 时还会反复遇到这条边界：模型给出下一步，Runtime 执行动作，并处理动作对真实环境造成的影响。</p>
+<p>下一篇先把一次模型调用拆开，看看 Request、Context、Inference 和 Response 各自处在哪里。</p>
+<hr>
+<h2 id="案例实践"><a href="#案例实践" class="headerlink" title="案例实践"></a>案例实践</h2><ul>
+<li><input disabled="" type="checkbox"> 使用不带搜索和工具的模型执行 C01 提示。</li>
+<li><input disabled="" type="checkbox"> 保存输入、模型标识、参数、调用时间和原始输出。</li>
+<li><input disabled="" type="checkbox"> 标出回答里的实时事实、无来源主张和无法核验的结论。</li>
+<li><input disabled="" type="checkbox"> 按“任务、工具、证据、状态、验收”整理能力缺口。</li>
+<li><input disabled="" type="checkbox"> 确认聊天产品没有在后台启用搜索或文件工具。</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a href="https://arxiv.org/abs/1706.03762">Attention Is All You Need</a>：Transformer 架构原始论文。</li>
+<li><a href="https://developers.google.com/machine-learning/crash-course/llm/transformers">Google Machine Learning Crash Course：Transformers</a>：Transformer 架构与工作方式的入门说明。</li>
+<li><a href="https://openai.github.io/openai-agents-python/agents/">OpenAI Agents SDK：Agents</a>：Agent 的模型、Instructions、Tools、Guardrails、Handoffs 和 Runtime 行为。</li>
+<li><a href="https://openai.github.io/openai-agents-python/running_agents/">OpenAI Agents SDK：Running agents</a>：Runner 与 Agent Loop 的职责。</li>
+<li><a href="https://www.anthropic.com/engineering/building-effective-agents">Anthropic：Building effective agents</a>：Workflow、Agent 与增强模型的边界。</li>
+<li><a href="https://huggingface.co/docs/transformers/en/generation_strategies">Hugging Face Transformers：Generation strategies</a>：文本生成与解码策略。</li>
+</ul>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>Agent Loop</tag>
       </tags>
   </entry>
 </search>
