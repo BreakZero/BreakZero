@@ -22,15 +22,15 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"dejinlu.cn","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.22.0","exturl":false,"sidebar":{"position":"right","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12,"width":300},"copycode":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="本文为「单台 VPS 部署 API」系列下篇，详解 Ubuntu VPS 上使用 Docker Compose 部署 API 与 PostgreSQL、配置 Nginx 反向代理、申请 Let&#39;s Encrypt 证书及自动续期。包含完整 compose.yml 与 Nginx 配置。">
+    <meta name="description" content="「单台 VPS 部署 API」系列下篇：在 Ubuntu VPS 上用 Docker Compose 运行 API 和 PostgreSQL，配置 Nginx，并申请和续期 Let&#39;s Encrypt 证书。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS">
 <meta property="og:url" content="https://dejinlu.cn/posts/2026/07/18/c8b3f21e/index.html">
 <meta property="og:site_name" content="D&amp;JのZONE">
-<meta property="og:description" content="本文为「单台 VPS 部署 API」系列下篇，详解 Ubuntu VPS 上使用 Docker Compose 部署 API 与 PostgreSQL、配置 Nginx 反向代理、申请 Let&#39;s Encrypt 证书及自动续期。包含完整 compose.yml 与 Nginx 配置。">
+<meta property="og:description" content="「单台 VPS 部署 API」系列下篇：在 Ubuntu VPS 上用 Docker Compose 运行 API 和 PostgreSQL，配置 Nginx，并申请和续期 Let&#39;s Encrypt 证书。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-07-18T04:08:03.000Z">
-<meta property="article:modified_time" content="2026-07-25T01:19:11.618Z">
+<meta property="article:modified_time" content="2026-08-04T08:30:34.592Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="Docker">
 <meta property="article:tag" content="DevOps">
@@ -227,7 +227,7 @@
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
       <meta itemprop="name" content="单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS | D&JのZONE">
-      <meta itemprop="description" content="本文为「单台 VPS 部署 API」系列下篇，详解 Ubuntu VPS 上使用 Docker Compose 部署 API 与 PostgreSQL、配置 Nginx 反向代理、申请 Let's Encrypt 证书及自动续期。包含完整 compose.yml 与 Nginx 配置。">
+      <meta itemprop="description" content="「单台 VPS 部署 API」系列下篇：在 Ubuntu VPS 上用 Docker Compose 运行 API 和 PostgreSQL，配置 Nginx，并申请和续期 Let's Encrypt 证书。">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -271,18 +271,18 @@
   
 </div>
 
-            <div class="post-description">本文为「单台 VPS 部署 API」系列下篇，详解 Ubuntu VPS 上使用 Docker Compose 部署 API 与 PostgreSQL、配置 Nginx 反向代理、申请 Let's Encrypt 证书及自动续期。包含完整 compose.yml 与 Nginx 配置。</div>
+            <div class="post-description">「单台 VPS 部署 API」系列下篇：在 Ubuntu VPS 上用 Docker Compose 运行 API 和 PostgreSQL，配置 Nginx，并申请和续期 Let's Encrypt 证书。</div>
         </div>
       </header>
 
     
     
     
-    <div class="post-body" itemprop="articleBody"><h1 id="单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS"><a href="#单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS" class="headerlink" title="单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS"></a>单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS</h1><p>上一篇将镜像推送到了 Docker Hub。本篇将部署到 Ubuntu VPS，完成从镜像拉取到 HTTPS 证书配置的完整链路。</p>
+    <div class="post-body" itemprop="articleBody"><h1 id="单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS"><a href="#单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS" class="headerlink" title="单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS"></a>单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS</h1><p>上一篇把 API 镜像推送到了 Docker Hub。这一篇转到 Ubuntu VPS：拉取镜像，运行 API 和 PostgreSQL，再让 Nginx 接管公网流量和 HTTPS。</p>
 <pre class="line-numbers language-text" data-language="text"><code class="language-text">Internet → Nginx :80/:443 → API :3000（内部网络） → PostgreSQL :5432（内部网络）<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
 <hr>
-<h2 id="一、前置条件与-Docker"><a href="#一、前置条件与-Docker" class="headerlink" title="一、前置条件与 Docker"></a>一、前置条件与 Docker</h2><p>准备以下资源：</p>
+<h2 id="一、前置条件与-Docker"><a href="#一、前置条件与-Docker" class="headerlink" title="一、前置条件与 Docker"></a>一、前置条件与 Docker</h2><p>开始前需要准备：</p>
 <ul>
 <li><strong>Ubuntu LTS VPS</strong> 与 sudo 权限</li>
 <li><strong>已指向 VPS 的域名</strong>（示例 <code>api.example.com</code>）</li>
@@ -291,9 +291,9 @@
 <li><strong>API 的 <code>GET /health</code></strong> 健康检查端点</li>
 </ul>
 <blockquote>
-<p>Let’s Encrypt 不能为裸 IP 签发普通 HTTPS 证书；DNS 和公网 80 是 HTTP-01 验证必要条件。</p>
+<p>Let’s Encrypt 不为裸 IP 签发这里使用的普通 HTTPS 证书。域名必须正确解析到 VPS，公网也要能访问 80 端口，HTTP-01 验证才能通过。</p>
 </blockquote>
-<p>安装 Docker 前，必须先按 <a target="_blank" rel="noopener" href="https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository">Docker Engine 在 Ubuntu 上使用官方仓库安装</a> 的步骤设置 Docker 的官方 apt 仓库。若直接执行 <code>apt install docker-ce</code>，通常会出现 <code>Unable to locate package</code>，因为 Ubuntu 默认软件源不包含 Docker CE。</p>
+<p>安装 Docker 前，先按照 <a target="_blank" rel="noopener" href="https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository">Docker Engine 在 Ubuntu 上使用官方仓库安装</a> 配置 Docker 官方 apt 仓库。Ubuntu 默认软件源不包含 Docker CE，直接执行 <code>apt install docker-ce</code> 通常会看到 <code>Unable to locate package</code>。</p>
 <p>完成仓库设置后，安装 Docker：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt</span> update
 <span class="token function">sudo</span> <span class="token function">apt</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
@@ -301,13 +301,13 @@
 <span class="token function">docker</span> version
 <span class="token function">docker</span> compose version<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>将当前用户加入 docker 组（重新 SSH 登录后生效）：</p>
+<p>把当前用户加入 docker 组。这个改动要重新登录 SSH 才会生效：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">usermod</span> <span class="token parameter variable">-aG</span> <span class="token function">docker</span> <span class="token string">"<span class="token environment constant">$USER</span>"</span>
 <span class="token builtin class-name">exit</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
-<p>重新 SSH 登录后运行 <code>docker ps</code> 验证。</p>
+<p>重新登录后运行 <code>docker ps</code>，确认当前用户可以访问 Docker。</p>
 <blockquote>
-<p><strong>安全提醒</strong>：docker 组具有近似 root 的主机控制能力，只应加入可信用户。</p>
+<p><strong>安全提醒</strong>：docker 组几乎拥有 root 级别的主机控制能力，只把可信用户加入该组。</p>
 </blockquote>
 <hr>
 <h2 id="二、部署目录、环境变量与拉取镜像"><a href="#二、部署目录、环境变量与拉取镜像" class="headerlink" title="二、部署目录、环境变量与拉取镜像"></a>二、部署目录、环境变量与拉取镜像</h2><h3 id="2-1-创建目录结构"><a href="#2-1-创建目录结构" class="headerlink" title="2.1 创建目录结构"></a>2.1 创建目录结构</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /opt/backend/nginx/conf.d /opt/backend/certbot/www /opt/backend/certbot/conf
@@ -322,12 +322,12 @@ DATABASE_URL=postgresql://app_user:***@postgres:5432/app_db<span aria-hidden="tr
 
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">chmod</span> <span class="token number">600</span> .env<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<h3 id="2-3-拉取镜像"><a href="#2-3-拉取镜像" class="headerlink" title="2.3 拉取镜像"></a>2.3 拉取镜像</h3><p>使用 <strong>Docker Hub Personal Access Token</strong> 登录并拉取：</p>
+<h3 id="2-3-拉取镜像"><a href="#2-3-拉取镜像" class="headerlink" title="2.3 拉取镜像"></a>2.3 拉取镜像</h3><p>使用 <strong>Docker Hub Personal Access Token</strong> 登录，然后拉取镜像：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login
 <span class="token function">docker</span> pull YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <blockquote>
-<p>认证存于当前用户的 <code>~/.docker/config.json</code>，不要提交或复制到脚本中。</p>
+<p>登录信息保存在当前用户的 <code>~/.docker/config.json</code> 中，不要提交这个文件，也不要把其中的内容复制到脚本里。</p>
 </blockquote>
 <hr>
 <h2 id="三、docker-compose-yml"><a href="#三、docker-compose-yml" class="headerlink" title="三、docker-compose.yml"></a>三、docker-compose.yml</h2><p>创建 <code>/opt/backend/docker-compose.yml</code>：</p>
@@ -380,10 +380,10 @@ DATABASE_URL=postgresql://app_user:***@postgres:5432/app_db<span aria-hidden="tr
   postgres_data<span class="token punctuation">:</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <blockquote>
-<p><strong>注意</strong>：API 和 PostgreSQL 只使用 <code>expose</code>（内部网络可见）；只有 Nginx 用 <code>ports</code> 发布 80/443。数据库存于命名 volume，不要执行 <code>docker compose down -v</code>，除非确定要删除数据库。</p>
+<p><strong>注意</strong>：API 和 PostgreSQL 只使用 <code>expose</code>，端口仅在 Compose 内部网络中可见；Nginx 才通过 <code>ports</code> 向公网开放 80/443。数据库保存在命名 volume 中。除非确实要删除数据库，否则不要执行 <code>docker compose down -v</code>。</p>
 </blockquote>
 <hr>
-<h2 id="四、HTTP、Nginx-与证书"><a href="#四、HTTP、Nginx-与证书" class="headerlink" title="四、HTTP、Nginx 与证书"></a>四、HTTP、Nginx 与证书</h2><h3 id="4-1-首次-HTTP-配置"><a href="#4-1-首次-HTTP-配置" class="headerlink" title="4.1 首次 HTTP 配置"></a>4.1 首次 HTTP 配置</h3><p>首次没有证书，创建 <code>nginx/conf.d/api.conf</code>：</p>
+<h2 id="四、HTTP、Nginx-与证书"><a href="#四、HTTP、Nginx-与证书" class="headerlink" title="四、HTTP、Nginx 与证书"></a>四、HTTP、Nginx 与证书</h2><h3 id="4-1-首次-HTTP-配置"><a href="#4-1-首次-HTTP-配置" class="headerlink" title="4.1 首次 HTTP 配置"></a>4.1 首次 HTTP 配置</h3><p>第一次启动时还没有证书，先创建一份只监听 HTTP 的 <code>nginx/conf.d/api.conf</code>：</p>
 <pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">{</span>
     <span class="token directive"><span class="token keyword">listen</span> <span class="token number">80</span></span><span class="token punctuation">;</span>
     <span class="token directive"><span class="token keyword">server_name</span> api.example.com</span><span class="token punctuation">;</span>
@@ -397,7 +397,7 @@ DATABASE_URL=postgresql://app_user:***@postgres:5432/app_db<span aria-hidden="tr
     <span class="token punctuation">}</span>
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>替换域名并启动：</p>
+<p>把示例域名换成自己的域名，然后启动服务：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose pull
 <span class="token function">docker</span> compose up <span class="token parameter variable">-d</span>
 <span class="token function">curl</span> <span class="token parameter variable">-i</span> http://api.example.com/health<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
@@ -407,7 +407,7 @@ DATABASE_URL=postgresql://app_user:***@postgres:5432/app_db<span aria-hidden="tr
   <span class="token parameter variable">--email</span> YOUR_EMAIL@example.com --agree-tos --no-eff-email <span class="token punctuation">\</span>
   <span class="token parameter variable">-d</span> api.example.com<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
-<h3 id="4-3-替换为-HTTPS-配置"><a href="#4-3-替换为-HTTPS-配置" class="headerlink" title="4.3 替换为 HTTPS 配置"></a>4.3 替换为 HTTPS 配置</h3><p>成功申请后，更新 <code>nginx/conf.d/api.conf</code>：</p>
+<h3 id="4-3-替换为-HTTPS-配置"><a href="#4-3-替换为-HTTPS-配置" class="headerlink" title="4.3 替换为 HTTPS 配置"></a>4.3 替换为 HTTPS 配置</h3><p>证书签发成功后，把 <code>nginx/conf.d/api.conf</code> 更新为：</p>
 <pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">{</span>
     <span class="token directive"><span class="token keyword">listen</span> <span class="token number">80</span></span><span class="token punctuation">;</span>
     <span class="token directive"><span class="token keyword">server_name</span> api.example.com</span><span class="token punctuation">;</span>
@@ -430,7 +430,7 @@ DATABASE_URL=postgresql://app_user:***@postgres:5432/app_db<span aria-hidden="tr
 <span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
 <blockquote>
-<p><strong>注意</strong>：必须保留 ACME 路径，否则证书续期可能失败。<code>ssl_certificate</code> 后<strong>没有冒号</strong>。</p>
+<p><strong>注意</strong>：保留 ACME 路径，否则续期验证可能失败。<code>ssl_certificate</code> 后面没有冒号。</p>
 </blockquote>
 <p>重新加载 Nginx：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose <span class="token builtin class-name">exec</span> nginx nginx <span class="token parameter variable">-t</span>
@@ -439,22 +439,22 @@ DATABASE_URL=postgresql://app_user:***@postgres:5432/app_db<span aria-hidden="tr
 <span class="token function">curl</span> <span class="token parameter variable">-i</span> https://api.example.com/health<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
 <hr>
-<h2 id="五、自动续期与更新"><a href="#五、自动续期与更新" class="headerlink" title="五、自动续期与更新"></a>五、自动续期与更新</h2><h3 id="5-1-Certbot-自动续期"><a href="#5-1-Certbot-自动续期" class="headerlink" title="5.1 Certbot 自动续期"></a>5.1 Certbot 自动续期</h3><p>编辑 crontab（<code>crontab -e</code>）加入：</p>
+<h2 id="五、自动续期与更新"><a href="#五、自动续期与更新" class="headerlink" title="五、自动续期与更新"></a>五、自动续期与更新</h2><h3 id="5-1-Certbot-自动续期"><a href="#5-1-Certbot-自动续期" class="headerlink" title="5.1 Certbot 自动续期"></a>5.1 Certbot 自动续期</h3><p>运行 <code>crontab -e</code>，加入下面这行：</p>
 <pre class="line-numbers language-cron" data-language="cron"><code class="language-cron">17 3 * * * cd /opt/backend &amp;&amp; docker compose run --rm certbot renew --quiet &amp;&amp; docker compose exec -T nginx nginx -s reload<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
 <p>演练续期：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose run <span class="token parameter variable">--rm</span> certbot renew --dry-run<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<h3 id="5-2-更新-API-镜像"><a href="#5-2-更新-API-镜像" class="headerlink" title="5.2 更新 API 镜像"></a>5.2 更新 API 镜像</h3><p>更新镜像时修改 API 标签：</p>
+<h3 id="5-2-更新-API-镜像"><a href="#5-2-更新-API-镜像" class="headerlink" title="5.2 更新 API 镜像"></a>5.2 更新 API 镜像</h3><p>发布新版本时，先修改 Compose 文件中的 API 镜像标签，再执行：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose pull api
 <span class="token function">docker</span> compose up <span class="token parameter variable">-d</span> api
 <span class="token function">docker</span> compose logs <span class="token parameter variable">--tail</span><span class="token operator">=</span><span class="token number">100</span> api
 <span class="token function">curl</span> <span class="token parameter variable">-fsS</span> https://api.example.com/health<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>回滚操作：改回旧标签并重新启动 API。</p>
+<p>需要回滚时，把标签改回旧版本，再重新启动 API。</p>
 <hr>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文完成了「单台 VPS 部署 API」的下半部分：从 Ubuntu VPS 的 Docker 安装、环境变量配置、Docker Compose 多服务编排，到 Nginx 反向代理与 Let’s Encrypt HTTPS 证书的申请、配置和自动续期。至此，整个「本地开发 → Docker Hub 镜像发布 → VPS 部署」的完整链路已全部打通。</p>
-<p><strong>后续建议增加：</strong></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>现在，API 和 PostgreSQL 跑在 Compose 内部网络中，公网请求由 Nginx 转发，证书则交给 Certbot 续期。这套配置可以作为单机部署的起点，但数据库备份和日志管理还得单独补上。</p>
+<p>接下来可以补充：</p>
 <ul>
 <li>PostgreSQL 异地备份策略</li>
 <li>Docker 日志轮转配置</li>

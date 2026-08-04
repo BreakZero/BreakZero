@@ -507,6 +507,146 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
       </tags>
   </entry>
   <entry>
+    <title>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</title>
+    <url>/posts/2026/07/18/9e7d1a5f/</url>
+    <content><![CDATA[<h1 id="单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布"><a href="#单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布" class="headerlink" title="单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布"></a>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</h1><p>这套部署方式很直接：在 <strong>Mac + OrbStack</strong> 上开发和构建镜像，把带版本号的镜像推送到 <strong>Docker Hub</strong>，最后由 Ubuntu VPS 通过 Docker Compose 运行。VPS 上只放部署文件、环境变量、Nginx 配置和数据卷，不需要上传 Git 仓库或 <code>src</code> 目录。</p>
+<blockquote>
+<p><strong>注意</strong>：多阶段构建不能绝对保护源码。最终镜像里可以不包含 TypeScript 文件，但编译后的 JavaScript 仍能被分析。密码、令牌和私钥不要写进镜像。</p>
+</blockquote>
+<hr>
+<h2 id="一、环境说明"><a href="#一、环境说明" class="headerlink" title="一、环境说明"></a>一、环境说明</h2><p>本地需要安装 <strong>OrbStack、Node.js LTS、npm 和 Git</strong>，并准备一个 <strong>Docker Hub 账号</strong>。下文在 macOS 上操作，PostgreSQL 跑在 OrbStack 容器里。</p>
+<p>VPS 可以从下面的配置起步：</p>
+<ul>
+<li><strong>系统</strong>：Ubuntu 24.04 LTS（或仍受支持的 LTS）</li>
+<li><strong>配置</strong>：2 vCPU、4 GB RAM、40 GB 以上 SSD/NVMe</li>
+<li><strong>网络</strong>：公网 IPv4，开放 TCP 80/443</li>
+<li><strong>安全</strong>：SSH 仅对可信 IP 开放</li>
+</ul>
+<blockquote>
+<p>1 GB 内存也能用来试验，不过 API、PostgreSQL 和 Docker 跑在一起时，余量会很小。</p>
+</blockquote>
+<hr>
+<h2 id="二、本地-PostgreSQL"><a href="#二、本地-PostgreSQL" class="headerlink" title="二、本地 PostgreSQL"></a>二、本地 PostgreSQL</h2><p>创建 <code>compose.dev.yml</code>：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">services</span><span class="token punctuation">:</span>
+  <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> postgres<span class="token punctuation">:</span><span class="token number">16</span>
+    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
+      <span class="token key atrule">POSTGRES_USER</span><span class="token punctuation">:</span> app_user
+      <span class="token key atrule">POSTGRES_PASSWORD</span><span class="token punctuation">:</span> change<span class="token punctuation">-</span>this<span class="token punctuation">-</span>local<span class="token punctuation">-</span>password
+      <span class="token key atrule">POSTGRES_DB</span><span class="token punctuation">:</span> app_db
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"127.0.0.1:5432:5432"</span>
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> postgres_dev_data<span class="token punctuation">:</span>/var/lib/postgresql/data
+<span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+  postgres_dev_data<span class="token punctuation">:</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>启动并验证：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml up <span class="token parameter variable">-d</span>
+<span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml <span class="token builtin class-name">exec</span> postgres psql <span class="token parameter variable">-U</span> app_user <span class="token parameter variable">-d</span> app_db<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>本机运行 API 时的数据库连接字符串：</p>
+<pre class="line-numbers language-env" data-language="env"><code class="language-env">DATABASE_URL=postgresql://app_user:***@localhost:5432/app_db<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>端口绑定到 <code>127.0.0.1</code> 后，数据库只接受来自本机的连接。</p>
+<hr>
+<h2 id="三、构建生产-Docker-镜像"><a href="#三、构建生产-Docker-镜像" class="headerlink" title="三、构建生产 Docker 镜像"></a>三、构建生产 Docker 镜像</h2><p>假设 <code>npm run build</code> 输出 <code>dist</code>，入口为 <code>dist/server.js</code>：</p>
+<pre class="line-numbers language-docker" data-language="docker"><code class="language-docker"><span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> build</span>
+<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
+<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
+<span class="token instruction"><span class="token keyword">RUN</span> npm ci</span>
+<span class="token instruction"><span class="token keyword">COPY</span> tsconfig*.json ./</span>
+<span class="token instruction"><span class="token keyword">COPY</span> src ./src</span>
+<span class="token instruction"><span class="token keyword">RUN</span> npm run build</span>
+
+<span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> production</span>
+<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
+<span class="token instruction"><span class="token keyword">ENV</span> NODE_ENV=production</span>
+<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
+<span class="token instruction"><span class="token keyword">RUN</span> npm ci --omit=dev &amp;&amp; npm cache clean --force</span>
+<span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--from</span><span class="token punctuation">=</span><span class="token string">build</span></span> /app/dist ./dist</span>
+<span class="token instruction"><span class="token keyword">USER</span> node</span>
+<span class="token instruction"><span class="token keyword">EXPOSE</span> 3000</span>
+<span class="token instruction"><span class="token keyword">CMD</span> [<span class="token string">"node"</span>, <span class="token string">"dist/server.js"</span>]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>创建 <code>.dockerignore</code>：</p>
+<pre class="line-numbers language-ignore" data-language="ignore"><code class="language-ignore"><span class="token entry string">node_modules</span>
+<span class="token entry string">dist</span>
+<span class="token entry string">.git</span>
+<span class="token entry string">.env</span>
+<span class="token entry string">.env.<span class="token operator">*</span></span>
+<span class="token entry string">npm-debug.log<span class="token operator">*</span></span>
+<span class="token entry string">compose<span class="token operator">*</span>.yml</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>本地验证构建与运行：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
+<span class="token function">docker</span> run <span class="token parameter variable">--rm</span> <span class="token parameter variable">-p</span> <span class="token number">3000</span>:3000 YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<blockquote>
+<p>如果项目使用 Prisma 或原生模块，构建镜像时可能还要补充生成或编译步骤，具体取决于项目依赖。</p>
+</blockquote>
+<hr>
+<h2 id="四、Docker-Hub-如何选择"><a href="#四、Docker-Hub-如何选择" class="headerlink" title="四、Docker Hub 如何选择"></a>四、Docker Hub 如何选择</h2><p>Docker Hub 的镜像地址格式是 <code>docker.io/&lt;用户名&gt;/&lt;镜像名&gt;:&lt;标签&gt;</code>，例如 <code>docker.io/alice/backend-api:1.0.0</code>。它的使用门槛不高，也很常见。业务 API 一般放在私有仓库中。</p>
+<p>各容器仓库选型对比：</p>
+<table>
+<thead>
+<tr>
+<th>仓库</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Docker Hub</strong></td>
+<td>配置简单、使用广泛；业务镜像建议设为私有</td>
+</tr>
+<tr>
+<td><strong>GHCR</strong></td>
+<td>项目和 CI 都在 GitHub 时比较顺手</td>
+</tr>
+<tr>
+<td><strong>GitLab Container Registry</strong></td>
+<td>项目使用 GitLab CI 时省去额外集成</td>
+</tr>
+<tr>
+<td><strong>云厂商仓库</strong></td>
+<td>服务长期部署在同一家云厂商时可优先考虑</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>私有仓库和拉取额度会变化，以各平台官网当前政策为准。</p>
+</blockquote>
+<hr>
+<h2 id="五、推送镜像"><a href="#五、推送镜像" class="headerlink" title="五、推送镜像"></a>五、推送镜像</h2><p>先在 Docker Hub 创建名为 <code>backend-api</code> 的私有仓库，再用 <strong>Personal Access Token</strong> 登录：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login
+<span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
+<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>如果需要，也可以附加 <code>latest</code> 标签：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> tag YOUR_DOCKERHUB_USER/backend-api:1.0.0 YOUR_DOCKERHUB_USER/backend-api:latest
+<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:latest<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>发布前检查这几项：</p>
+<ul>
+<li>API 能连接本地 PostgreSQL，关键测试已经通过</li>
+<li>已提供 <code>GET /health</code> 健康检查端点</li>
+<li>镜像中没有密码、令牌等机密</li>
+<li>本次发布使用了新的版本标签</li>
+</ul>
+<blockquote>
+<p>生产 Compose 应固定使用 <code>1.0.0</code> 之类的明确版本，便于回滚。</p>
+</blockquote>
+<hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>到这里，本地环境和 PostgreSQL 已经可以运行，生产镜像也推送到了 Docker Hub。下一篇转到 Ubuntu VPS：拉取镜像、配置 Nginx，再申请并自动续期 HTTPS 证书。</p>
+]]></content>
+      <categories>
+        <category>Technical</category>
+      </categories>
+      <tags>
+        <tag>Docker</tag>
+        <tag>DevOps</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>升降桌故障排查记</title>
     <url>/posts/2026/03/02/fbb9923f/</url>
     <content><![CDATA[<h1 id="升降桌故障排查记：和-E07-E08-的一场小拉扯"><a href="#升降桌故障排查记：和-E07-E08-的一场小拉扯" class="headerlink" title="升降桌故障排查记：和 E07 / E08 的一场小拉扯"></a>升降桌故障排查记：和 E07 / E08 的一场小拉扯</h1><p>有些家用设备的小故障，最磨人。</p>
@@ -711,342 +851,6 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
       </tags>
   </entry>
   <entry>
-    <title>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</title>
-    <url>/posts/2026/07/18/9e7d1a5f/</url>
-    <content><![CDATA[<h1 id="单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布"><a href="#单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布" class="headerlink" title="单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布"></a>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</h1><p>本方案的技术链路为：<strong>Mac + OrbStack 本地开发与构建 → Docker Hub 保存版本化镜像 → Ubuntu VPS 使用 Docker Compose 运行</strong>。VPS 只保留部署配置、环境变量、Nginx 配置和数据卷，不上传 Git 仓库或 src 源码目录。</p>
-<blockquote>
-<p><strong>注意</strong>：多阶段镜像不等同绝对源码保护。最终镜像可没有 TypeScript 源码，但编译后的 JavaScript 仍可被分析。密码、令牌和私钥永远不能写进镜像。</p>
-</blockquote>
-<hr>
-<h2 id="一、环境说明"><a href="#一、环境说明" class="headerlink" title="一、环境说明"></a>一、环境说明</h2><p>本地需要 <strong>macOS、OrbStack、Node.js LTS、npm、Git</strong> 和 <strong>Docker Hub 账号</strong>。PostgreSQL 通过 OrbStack 容器运行。</p>
-<p>VPS 建议使用：</p>
-<ul>
-<li><strong>系统</strong>：Ubuntu 24.04 LTS（或仍受支持的 LTS）</li>
-<li><strong>配置</strong>：2 vCPU、4 GB RAM、40 GB 以上 SSD/NVMe</li>
-<li><strong>网络</strong>：公网 IPv4，开放 TCP 80/443</li>
-<li><strong>安全</strong>：SSH 仅对可信 IP 开放</li>
-</ul>
-<blockquote>
-<p>1 GB 内存可试验，但 API、PostgreSQL 与 Docker 共用资源时余量很少。</p>
-</blockquote>
-<hr>
-<h2 id="二、本地-PostgreSQL"><a href="#二、本地-PostgreSQL" class="headerlink" title="二、本地 PostgreSQL"></a>二、本地 PostgreSQL</h2><p>创建 <code>compose.dev.yml</code>：</p>
-<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">services</span><span class="token punctuation">:</span>
-  <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
-    <span class="token key atrule">image</span><span class="token punctuation">:</span> postgres<span class="token punctuation">:</span><span class="token number">16</span>
-    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
-      <span class="token key atrule">POSTGRES_USER</span><span class="token punctuation">:</span> app_user
-      <span class="token key atrule">POSTGRES_PASSWORD</span><span class="token punctuation">:</span> change<span class="token punctuation">-</span>this<span class="token punctuation">-</span>local<span class="token punctuation">-</span>password
-      <span class="token key atrule">POSTGRES_DB</span><span class="token punctuation">:</span> app_db
-    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token string">"127.0.0.1:5432:5432"</span>
-    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> postgres_dev_data<span class="token punctuation">:</span>/var/lib/postgresql/data
-<span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-  postgres_dev_data<span class="token punctuation">:</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>启动并验证：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml up <span class="token parameter variable">-d</span>
-<span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml <span class="token builtin class-name">exec</span> postgres psql <span class="token parameter variable">-U</span> app_user <span class="token parameter variable">-d</span> app_db<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p>本机运行 API 时的数据库连接字符串：</p>
-<pre class="line-numbers language-env" data-language="env"><code class="language-env">DATABASE_URL=postgresql://app_user:***@localhost:5432/app_db<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>绑定 <code>127.0.0.1</code> 代表数据库只供本机开发使用。</p>
-<hr>
-<h2 id="三、构建生产-Docker-镜像"><a href="#三、构建生产-Docker-镜像" class="headerlink" title="三、构建生产 Docker 镜像"></a>三、构建生产 Docker 镜像</h2><p>假设 <code>npm run build</code> 输出 <code>dist</code>，入口为 <code>dist/server.js</code>：</p>
-<pre class="line-numbers language-docker" data-language="docker"><code class="language-docker"><span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> build</span>
-<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
-<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
-<span class="token instruction"><span class="token keyword">RUN</span> npm ci</span>
-<span class="token instruction"><span class="token keyword">COPY</span> tsconfig*.json ./</span>
-<span class="token instruction"><span class="token keyword">COPY</span> src ./src</span>
-<span class="token instruction"><span class="token keyword">RUN</span> npm run build</span>
-
-<span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> production</span>
-<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
-<span class="token instruction"><span class="token keyword">ENV</span> NODE_ENV=production</span>
-<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
-<span class="token instruction"><span class="token keyword">RUN</span> npm ci --omit=dev &amp;&amp; npm cache clean --force</span>
-<span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--from</span><span class="token punctuation">=</span><span class="token string">build</span></span> /app/dist ./dist</span>
-<span class="token instruction"><span class="token keyword">USER</span> node</span>
-<span class="token instruction"><span class="token keyword">EXPOSE</span> 3000</span>
-<span class="token instruction"><span class="token keyword">CMD</span> [<span class="token string">"node"</span>, <span class="token string">"dist/server.js"</span>]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>创建 <code>.dockerignore</code>：</p>
-<pre class="line-numbers language-ignore" data-language="ignore"><code class="language-ignore"><span class="token entry string">node_modules</span>
-<span class="token entry string">dist</span>
-<span class="token entry string">.git</span>
-<span class="token entry string">.env</span>
-<span class="token entry string">.env.<span class="token operator">*</span></span>
-<span class="token entry string">npm-debug.log<span class="token operator">*</span></span>
-<span class="token entry string">compose<span class="token operator">*</span>.yml</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>本地验证构建与运行：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
-<span class="token function">docker</span> run <span class="token parameter variable">--rm</span> <span class="token parameter variable">-p</span> <span class="token number">3000</span>:3000 YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<blockquote>
-<p>Prisma、原生模块等可能需要额外生成步骤，应以项目实际依赖为准。</p>
-</blockquote>
-<hr>
-<h2 id="四、Docker-Hub-如何选择"><a href="#四、Docker-Hub-如何选择" class="headerlink" title="四、Docker Hub 如何选择"></a>四、Docker Hub 如何选择</h2><p>Docker Hub 镜像格式为 <code>docker.io/&lt;用户名&gt;/&lt;镜像名&gt;:&lt;标签&gt;</code>，例如 <code>docker.io/alice/backend-api:1.0.0</code>。它最通用、入门简单，业务 API 通常应使用<strong>私有仓库</strong>。</p>
-<p>各容器仓库选型对比：</p>
-<table>
-<thead>
-<tr>
-<th>仓库</th>
-<th>适用场景</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><strong>Docker Hub</strong></td>
-<td>最通用，入门简单，业务建议使用私有仓库</td>
-</tr>
-<tr>
-<td><strong>GHCR</strong></td>
-<td>适合 GitHub Actions 工作流</td>
-</tr>
-<tr>
-<td><strong>GitLab Container Registry</strong></td>
-<td>适合 GitLab CI</td>
-</tr>
-<tr>
-<td><strong>云厂商仓库</strong></td>
-<td>适合长期部署在同一家云</td>
-</tr>
-</tbody></table>
-<blockquote>
-<p>私有仓库和拉取额度会变化，以各平台官网当前政策为准。</p>
-</blockquote>
-<hr>
-<h2 id="五、推送镜像"><a href="#五、推送镜像" class="headerlink" title="五、推送镜像"></a>五、推送镜像</h2><p>在 Docker Hub 创建 <code>backend-api</code> 私有仓库，使用 <strong>Personal Access Token</strong> 登录：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login
-<span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
-<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<p>可附加 <code>latest</code> 标签：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> tag YOUR_DOCKERHUB_USER/backend-api:1.0.0 YOUR_DOCKERHUB_USER/backend-api:latest
-<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:latest<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p><strong>发布前检查清单：</strong></p>
-<ul>
-<li>✅ API 已连接本地 PostgreSQL 通过关键测试</li>
-<li>✅ 存在 <code>GET /health</code> 健康检查端点</li>
-<li>✅ 机密没有进入镜像</li>
-<li>✅ 每次发布都有新标签</li>
-</ul>
-<blockquote>
-<p>生产 Compose 应固定使用 <code>1.0.0</code> 之类的明确版本，便于回滚。</p>
-</blockquote>
-<hr>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文完成了「单台 VPS 部署 API」的上半部分：从本地开发环境搭建、PostgreSQL 配置、多阶段 Docker 镜像构建，到 Docker Hub 镜像推送。下一篇文章将介绍如何在 Ubuntu VPS 上拉取镜像、配置 Nginx 反向代理，并完成 HTTPS 证书的申请与自动续期。</p>
-]]></content>
-      <categories>
-        <category>Technical</category>
-      </categories>
-      <tags>
-        <tag>Docker</tag>
-        <tag>DevOps</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS</title>
-    <url>/posts/2026/07/18/c8b3f21e/</url>
-    <content><![CDATA[<h1 id="单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS"><a href="#单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS" class="headerlink" title="单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS"></a>单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS</h1><p>上一篇将镜像推送到了 Docker Hub。本篇将部署到 Ubuntu VPS，完成从镜像拉取到 HTTPS 证书配置的完整链路。</p>
-<pre class="line-numbers language-text" data-language="text"><code class="language-text">Internet → Nginx :80/:443 → API :3000（内部网络） → PostgreSQL :5432（内部网络）<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<hr>
-<h2 id="一、前置条件与-Docker"><a href="#一、前置条件与-Docker" class="headerlink" title="一、前置条件与 Docker"></a>一、前置条件与 Docker</h2><p>准备以下资源：</p>
-<ul>
-<li><strong>Ubuntu LTS VPS</strong> 与 sudo 权限</li>
-<li><strong>已指向 VPS 的域名</strong>（示例 <code>api.example.com</code>）</li>
-<li><strong>已开放</strong> TCP 80/443</li>
-<li><strong>Docker Hub 私有镜像</strong></li>
-<li><strong>API 的 <code>GET /health</code></strong> 健康检查端点</li>
-</ul>
-<blockquote>
-<p>Let’s Encrypt 不能为裸 IP 签发普通 HTTPS 证书；DNS 和公网 80 是 HTTP-01 验证必要条件。</p>
-</blockquote>
-<p>安装 Docker 前，必须先按 <a href="https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository">Docker Engine 在 Ubuntu 上使用官方仓库安装</a> 的步骤设置 Docker 的官方 apt 仓库。若直接执行 <code>apt install docker-ce</code>，通常会出现 <code>Unable to locate package</code>，因为 Ubuntu 默认软件源不包含 Docker CE。</p>
-<p>完成仓库设置后，安装 Docker：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt</span> update
-<span class="token function">sudo</span> <span class="token function">apt</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-<span class="token function">sudo</span> systemctl <span class="token builtin class-name">enable</span> <span class="token parameter variable">--now</span> <span class="token function">docker</span>
-<span class="token function">docker</span> version
-<span class="token function">docker</span> compose version<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>将当前用户加入 docker 组（重新 SSH 登录后生效）：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">usermod</span> <span class="token parameter variable">-aG</span> <span class="token function">docker</span> <span class="token string">"<span class="token environment constant">$USER</span>"</span>
-<span class="token builtin class-name">exit</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p>重新 SSH 登录后运行 <code>docker ps</code> 验证。</p>
-<blockquote>
-<p><strong>安全提醒</strong>：docker 组具有近似 root 的主机控制能力，只应加入可信用户。</p>
-</blockquote>
-<hr>
-<h2 id="二、部署目录、环境变量与拉取镜像"><a href="#二、部署目录、环境变量与拉取镜像" class="headerlink" title="二、部署目录、环境变量与拉取镜像"></a>二、部署目录、环境变量与拉取镜像</h2><h3 id="2-1-创建目录结构"><a href="#2-1-创建目录结构" class="headerlink" title="2.1 创建目录结构"></a>2.1 创建目录结构</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /opt/backend/nginx/conf.d /opt/backend/certbot/www /opt/backend/certbot/conf
-<span class="token function">sudo</span> <span class="token function">chown</span> <span class="token parameter variable">-R</span> <span class="token string">"<span class="token environment constant">$USER</span>"</span><span class="token builtin class-name">:</span><span class="token string">"<span class="token environment constant">$USER</span>"</span> /opt/backend
-<span class="token builtin class-name">cd</span> /opt/backend<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="2-2-创建环境变量文件"><a href="#2-2-创建环境变量文件" class="headerlink" title="2.2 创建环境变量文件"></a>2.2 创建环境变量文件</h3><p>创建 <code>.env</code>：</p>
-<pre class="line-numbers language-env" data-language="env"><code class="language-env">POSTGRES_USER=app_user
-POSTGRES_PASSWORD=REPLACE_WITH_A_LONG_RANDOM_PASSWORD
-POSTGRES_DB=app_db
-DATABASE_URL=postgresql://app_user:***@postgres:5432/app_db<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">chmod</span> <span class="token number">600</span> .env<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<h3 id="2-3-拉取镜像"><a href="#2-3-拉取镜像" class="headerlink" title="2.3 拉取镜像"></a>2.3 拉取镜像</h3><p>使用 <strong>Docker Hub Personal Access Token</strong> 登录并拉取：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login
-<span class="token function">docker</span> pull YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<blockquote>
-<p>认证存于当前用户的 <code>~/.docker/config.json</code>，不要提交或复制到脚本中。</p>
-</blockquote>
-<hr>
-<h2 id="三、docker-compose-yml"><a href="#三、docker-compose-yml" class="headerlink" title="三、docker-compose.yml"></a>三、docker-compose.yml</h2><p>创建 <code>/opt/backend/docker-compose.yml</code>：</p>
-<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">services</span><span class="token punctuation">:</span>
-  <span class="token key atrule">api</span><span class="token punctuation">:</span>
-    <span class="token key atrule">image</span><span class="token punctuation">:</span> YOUR_DOCKERHUB_USER/backend<span class="token punctuation">-</span>api<span class="token punctuation">:</span>1.0.0
-    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
-    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
-      <span class="token key atrule">NODE_ENV</span><span class="token punctuation">:</span> production
-      <span class="token key atrule">DATABASE_URL</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>DATABASE_URL<span class="token punctuation">}</span>
-    <span class="token key atrule">expose</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token string">"3000"</span>
-    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span>
-      <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
-        <span class="token key atrule">condition</span><span class="token punctuation">:</span> service_healthy
-  <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
-    <span class="token key atrule">image</span><span class="token punctuation">:</span> postgres<span class="token punctuation">:</span><span class="token number">16</span>
-    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
-    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
-      <span class="token key atrule">POSTGRES_USER</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>POSTGRES_USER<span class="token punctuation">}</span>
-      <span class="token key atrule">POSTGRES_PASSWORD</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>POSTGRES_PASSWORD<span class="token punctuation">}</span>
-      <span class="token key atrule">POSTGRES_DB</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>POSTGRES_DB<span class="token punctuation">}</span>
-    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> postgres_data<span class="token punctuation">:</span>/var/lib/postgresql/data
-    <span class="token key atrule">expose</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token string">"5432"</span>
-    <span class="token key atrule">healthcheck</span><span class="token punctuation">:</span>
-      <span class="token key atrule">test</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">"CMD-SHELL"</span><span class="token punctuation">,</span> <span class="token string">"pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"</span><span class="token punctuation">]</span>
-      <span class="token key atrule">interval</span><span class="token punctuation">:</span> 10s
-      <span class="token key atrule">timeout</span><span class="token punctuation">:</span> 5s
-      <span class="token key atrule">retries</span><span class="token punctuation">:</span> <span class="token number">5</span>
-  <span class="token key atrule">nginx</span><span class="token punctuation">:</span>
-    <span class="token key atrule">image</span><span class="token punctuation">:</span> nginx<span class="token punctuation">:</span>1.27<span class="token punctuation">-</span>alpine
-    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
-    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token string">"80:80"</span>
-      <span class="token punctuation">-</span> <span class="token string">"443:443"</span>
-    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> ./nginx/conf.d<span class="token punctuation">:</span>/etc/nginx/conf.d<span class="token punctuation">:</span>ro
-      <span class="token punctuation">-</span> ./certbot/www<span class="token punctuation">:</span>/var/www/certbot<span class="token punctuation">:</span>ro
-      <span class="token punctuation">-</span> ./certbot/conf<span class="token punctuation">:</span>/etc/letsencrypt<span class="token punctuation">:</span>ro
-    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> api
-  <span class="token key atrule">certbot</span><span class="token punctuation">:</span>
-    <span class="token key atrule">image</span><span class="token punctuation">:</span> certbot/certbot<span class="token punctuation">:</span>latest
-    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> ./certbot/www<span class="token punctuation">:</span>/var/www/certbot
-      <span class="token punctuation">-</span> ./certbot/conf<span class="token punctuation">:</span>/etc/letsencrypt
-<span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-  postgres_data<span class="token punctuation">:</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<blockquote>
-<p><strong>注意</strong>：API 和 PostgreSQL 只使用 <code>expose</code>（内部网络可见）；只有 Nginx 用 <code>ports</code> 发布 80/443。数据库存于命名 volume，不要执行 <code>docker compose down -v</code>，除非确定要删除数据库。</p>
-</blockquote>
-<hr>
-<h2 id="四、HTTP、Nginx-与证书"><a href="#四、HTTP、Nginx-与证书" class="headerlink" title="四、HTTP、Nginx 与证书"></a>四、HTTP、Nginx 与证书</h2><h3 id="4-1-首次-HTTP-配置"><a href="#4-1-首次-HTTP-配置" class="headerlink" title="4.1 首次 HTTP 配置"></a>4.1 首次 HTTP 配置</h3><p>首次没有证书，创建 <code>nginx/conf.d/api.conf</code>：</p>
-<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">{</span>
-    <span class="token directive"><span class="token keyword">listen</span> <span class="token number">80</span></span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">server_name</span> api.example.com</span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">location</span> /.well-known/acme-challenge/</span> <span class="token punctuation">{</span> <span class="token directive"><span class="token keyword">root</span> /var/www/certbot</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
-    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">{</span>
-        <span class="token directive"><span class="token keyword">proxy_pass</span> http://api:3000</span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> Host <span class="token variable">$host</span></span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Real-IP <span class="token variable">$remote_addr</span></span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-For <span class="token variable">$proxy_add_x_forwarded_for</span></span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-Proto <span class="token variable">$scheme</span></span><span class="token punctuation">;</span>
-    <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>替换域名并启动：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose pull
-<span class="token function">docker</span> compose up <span class="token parameter variable">-d</span>
-<span class="token function">curl</span> <span class="token parameter variable">-i</span> http://api.example.com/health<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="4-2-申请-SSL-证书"><a href="#4-2-申请-SSL-证书" class="headerlink" title="4.2 申请 SSL 证书"></a>4.2 申请 SSL 证书</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose run <span class="token parameter variable">--rm</span> certbot certonly <span class="token punctuation">\</span>
-  <span class="token parameter variable">--webroot</span> --webroot-path<span class="token operator">=</span>/var/www/certbot <span class="token punctuation">\</span>
-  <span class="token parameter variable">--email</span> YOUR_EMAIL@example.com --agree-tos --no-eff-email <span class="token punctuation">\</span>
-  <span class="token parameter variable">-d</span> api.example.com<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h3 id="4-3-替换为-HTTPS-配置"><a href="#4-3-替换为-HTTPS-配置" class="headerlink" title="4.3 替换为 HTTPS 配置"></a>4.3 替换为 HTTPS 配置</h3><p>成功申请后，更新 <code>nginx/conf.d/api.conf</code>：</p>
-<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">{</span>
-    <span class="token directive"><span class="token keyword">listen</span> <span class="token number">80</span></span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">server_name</span> api.example.com</span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">location</span> /.well-known/acme-challenge/</span> <span class="token punctuation">{</span> <span class="token directive"><span class="token keyword">root</span> /var/www/certbot</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
-    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">{</span> <span class="token directive"><span class="token keyword">return</span> <span class="token number">301</span> https://<span class="token variable">$host</span><span class="token variable">$request_uri</span></span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
-<span class="token punctuation">}</span>
-<span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">{</span>
-    <span class="token directive"><span class="token keyword">listen</span> <span class="token number">443</span> ssl</span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">server_name</span> api.example.com</span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">ssl_certificate</span> /etc/letsencrypt/live/api.example.com/fullchain.pem</span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">ssl_certificate_key</span> /etc/letsencrypt/live/api.example.com/privkey.pem</span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">ssl_protocols</span> TLSv1.2 TLSv1.3</span><span class="token punctuation">;</span>
-    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">{</span>
-        <span class="token directive"><span class="token keyword">proxy_pass</span> http://api:3000</span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> Host <span class="token variable">$host</span></span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Real-IP <span class="token variable">$remote_addr</span></span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-For <span class="token variable">$proxy_add_x_forwarded_for</span></span><span class="token punctuation">;</span>
-        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-Proto <span class="token variable">$scheme</span></span><span class="token punctuation">;</span>
-    <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<blockquote>
-<p><strong>注意</strong>：必须保留 ACME 路径，否则证书续期可能失败。<code>ssl_certificate</code> 后<strong>没有冒号</strong>。</p>
-</blockquote>
-<p>重新加载 Nginx：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose <span class="token builtin class-name">exec</span> nginx nginx <span class="token parameter variable">-t</span>
-<span class="token function">docker</span> compose <span class="token builtin class-name">exec</span> nginx nginx <span class="token parameter variable">-s</span> reload
-<span class="token function">curl</span> <span class="token parameter variable">-I</span> http://api.example.com/health
-<span class="token function">curl</span> <span class="token parameter variable">-i</span> https://api.example.com/health<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<hr>
-<h2 id="五、自动续期与更新"><a href="#五、自动续期与更新" class="headerlink" title="五、自动续期与更新"></a>五、自动续期与更新</h2><h3 id="5-1-Certbot-自动续期"><a href="#5-1-Certbot-自动续期" class="headerlink" title="5.1 Certbot 自动续期"></a>5.1 Certbot 自动续期</h3><p>编辑 crontab（<code>crontab -e</code>）加入：</p>
-<pre class="line-numbers language-cron" data-language="cron"><code class="language-cron">17 3 * * * cd /opt/backend &amp;&amp; docker compose run --rm certbot renew --quiet &amp;&amp; docker compose exec -T nginx nginx -s reload<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>演练续期：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose run <span class="token parameter variable">--rm</span> certbot renew --dry-run<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<h3 id="5-2-更新-API-镜像"><a href="#5-2-更新-API-镜像" class="headerlink" title="5.2 更新 API 镜像"></a>5.2 更新 API 镜像</h3><p>更新镜像时修改 API 标签：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose pull api
-<span class="token function">docker</span> compose up <span class="token parameter variable">-d</span> api
-<span class="token function">docker</span> compose logs <span class="token parameter variable">--tail</span><span class="token operator">=</span><span class="token number">100</span> api
-<span class="token function">curl</span> <span class="token parameter variable">-fsS</span> https://api.example.com/health<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>回滚操作：改回旧标签并重新启动 API。</p>
-<hr>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文完成了「单台 VPS 部署 API」的下半部分：从 Ubuntu VPS 的 Docker 安装、环境变量配置、Docker Compose 多服务编排，到 Nginx 反向代理与 Let’s Encrypt HTTPS 证书的申请、配置和自动续期。至此，整个「本地开发 → Docker Hub 镜像发布 → VPS 部署」的完整链路已全部打通。</p>
-<p><strong>后续建议增加：</strong></p>
-<ul>
-<li>PostgreSQL 异地备份策略</li>
-<li>Docker 日志轮转配置</li>
-<li>Docker Compose 健康检查告警</li>
-</ul>
-]]></content>
-      <categories>
-        <category>Technical</category>
-      </categories>
-      <tags>
-        <tag>Docker</tag>
-        <tag>DevOps</tag>
-        <tag>Nginx</tag>
-        <tag>HTTPS</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>iOS 沙盒文件读取失败：不要持久化 Container 完整路径</title>
     <url>/posts/2023/08/13/bb96b1c7/</url>
     <content><![CDATA[<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：</p>
@@ -1183,6 +987,202 @@ NSData<span class="token punctuation">.</span><span class="token function">dataW
       <tags>
         <tag>SwiftUI</tag>
         <tag>Kotlin Native</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS</title>
+    <url>/posts/2026/07/18/c8b3f21e/</url>
+    <content><![CDATA[<h1 id="单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS"><a href="#单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS" class="headerlink" title="单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS"></a>单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS</h1><p>上一篇把 API 镜像推送到了 Docker Hub。这一篇转到 Ubuntu VPS：拉取镜像，运行 API 和 PostgreSQL，再让 Nginx 接管公网流量和 HTTPS。</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">Internet → Nginx :80/:443 → API :3000（内部网络） → PostgreSQL :5432（内部网络）<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<hr>
+<h2 id="一、前置条件与-Docker"><a href="#一、前置条件与-Docker" class="headerlink" title="一、前置条件与 Docker"></a>一、前置条件与 Docker</h2><p>开始前需要准备：</p>
+<ul>
+<li><strong>Ubuntu LTS VPS</strong> 与 sudo 权限</li>
+<li><strong>已指向 VPS 的域名</strong>（示例 <code>api.example.com</code>）</li>
+<li><strong>已开放</strong> TCP 80/443</li>
+<li><strong>Docker Hub 私有镜像</strong></li>
+<li><strong>API 的 <code>GET /health</code></strong> 健康检查端点</li>
+</ul>
+<blockquote>
+<p>Let’s Encrypt 不为裸 IP 签发这里使用的普通 HTTPS 证书。域名必须正确解析到 VPS，公网也要能访问 80 端口，HTTP-01 验证才能通过。</p>
+</blockquote>
+<p>安装 Docker 前，先按照 <a href="https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository">Docker Engine 在 Ubuntu 上使用官方仓库安装</a> 配置 Docker 官方 apt 仓库。Ubuntu 默认软件源不包含 Docker CE，直接执行 <code>apt install docker-ce</code> 通常会看到 <code>Unable to locate package</code>。</p>
+<p>完成仓库设置后，安装 Docker：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">apt</span> update
+<span class="token function">sudo</span> <span class="token function">apt</span> <span class="token function">install</span> <span class="token parameter variable">-y</span> docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+<span class="token function">sudo</span> systemctl <span class="token builtin class-name">enable</span> <span class="token parameter variable">--now</span> <span class="token function">docker</span>
+<span class="token function">docker</span> version
+<span class="token function">docker</span> compose version<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>把当前用户加入 docker 组。这个改动要重新登录 SSH 才会生效：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">usermod</span> <span class="token parameter variable">-aG</span> <span class="token function">docker</span> <span class="token string">"<span class="token environment constant">$USER</span>"</span>
+<span class="token builtin class-name">exit</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>重新登录后运行 <code>docker ps</code>，确认当前用户可以访问 Docker。</p>
+<blockquote>
+<p><strong>安全提醒</strong>：docker 组几乎拥有 root 级别的主机控制能力，只把可信用户加入该组。</p>
+</blockquote>
+<hr>
+<h2 id="二、部署目录、环境变量与拉取镜像"><a href="#二、部署目录、环境变量与拉取镜像" class="headerlink" title="二、部署目录、环境变量与拉取镜像"></a>二、部署目录、环境变量与拉取镜像</h2><h3 id="2-1-创建目录结构"><a href="#2-1-创建目录结构" class="headerlink" title="2.1 创建目录结构"></a>2.1 创建目录结构</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">sudo</span> <span class="token function">mkdir</span> <span class="token parameter variable">-p</span> /opt/backend/nginx/conf.d /opt/backend/certbot/www /opt/backend/certbot/conf
+<span class="token function">sudo</span> <span class="token function">chown</span> <span class="token parameter variable">-R</span> <span class="token string">"<span class="token environment constant">$USER</span>"</span><span class="token builtin class-name">:</span><span class="token string">"<span class="token environment constant">$USER</span>"</span> /opt/backend
+<span class="token builtin class-name">cd</span> /opt/backend<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="2-2-创建环境变量文件"><a href="#2-2-创建环境变量文件" class="headerlink" title="2.2 创建环境变量文件"></a>2.2 创建环境变量文件</h3><p>创建 <code>.env</code>：</p>
+<pre class="line-numbers language-env" data-language="env"><code class="language-env">POSTGRES_USER=app_user
+POSTGRES_PASSWORD=REPLACE_WITH_A_LONG_RANDOM_PASSWORD
+POSTGRES_DB=app_db
+DATABASE_URL=postgresql://app_user:***@postgres:5432/app_db<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">chmod</span> <span class="token number">600</span> .env<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<h3 id="2-3-拉取镜像"><a href="#2-3-拉取镜像" class="headerlink" title="2.3 拉取镜像"></a>2.3 拉取镜像</h3><p>使用 <strong>Docker Hub Personal Access Token</strong> 登录，然后拉取镜像：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login
+<span class="token function">docker</span> pull YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<blockquote>
+<p>登录信息保存在当前用户的 <code>~/.docker/config.json</code> 中，不要提交这个文件，也不要把其中的内容复制到脚本里。</p>
+</blockquote>
+<hr>
+<h2 id="三、docker-compose-yml"><a href="#三、docker-compose-yml" class="headerlink" title="三、docker-compose.yml"></a>三、docker-compose.yml</h2><p>创建 <code>/opt/backend/docker-compose.yml</code>：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">services</span><span class="token punctuation">:</span>
+  <span class="token key atrule">api</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> YOUR_DOCKERHUB_USER/backend<span class="token punctuation">-</span>api<span class="token punctuation">:</span>1.0.0
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
+    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
+      <span class="token key atrule">NODE_ENV</span><span class="token punctuation">:</span> production
+      <span class="token key atrule">DATABASE_URL</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>DATABASE_URL<span class="token punctuation">}</span>
+    <span class="token key atrule">expose</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"3000"</span>
+    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span>
+      <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
+        <span class="token key atrule">condition</span><span class="token punctuation">:</span> service_healthy
+  <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> postgres<span class="token punctuation">:</span><span class="token number">16</span>
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
+    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
+      <span class="token key atrule">POSTGRES_USER</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>POSTGRES_USER<span class="token punctuation">}</span>
+      <span class="token key atrule">POSTGRES_PASSWORD</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>POSTGRES_PASSWORD<span class="token punctuation">}</span>
+      <span class="token key atrule">POSTGRES_DB</span><span class="token punctuation">:</span> $<span class="token punctuation">{</span>POSTGRES_DB<span class="token punctuation">}</span>
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> postgres_data<span class="token punctuation">:</span>/var/lib/postgresql/data
+    <span class="token key atrule">expose</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"5432"</span>
+    <span class="token key atrule">healthcheck</span><span class="token punctuation">:</span>
+      <span class="token key atrule">test</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">"CMD-SHELL"</span><span class="token punctuation">,</span> <span class="token string">"pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"</span><span class="token punctuation">]</span>
+      <span class="token key atrule">interval</span><span class="token punctuation">:</span> 10s
+      <span class="token key atrule">timeout</span><span class="token punctuation">:</span> 5s
+      <span class="token key atrule">retries</span><span class="token punctuation">:</span> <span class="token number">5</span>
+  <span class="token key atrule">nginx</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> nginx<span class="token punctuation">:</span>1.27<span class="token punctuation">-</span>alpine
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"80:80"</span>
+      <span class="token punctuation">-</span> <span class="token string">"443:443"</span>
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> ./nginx/conf.d<span class="token punctuation">:</span>/etc/nginx/conf.d<span class="token punctuation">:</span>ro
+      <span class="token punctuation">-</span> ./certbot/www<span class="token punctuation">:</span>/var/www/certbot<span class="token punctuation">:</span>ro
+      <span class="token punctuation">-</span> ./certbot/conf<span class="token punctuation">:</span>/etc/letsencrypt<span class="token punctuation">:</span>ro
+    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> api
+  <span class="token key atrule">certbot</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> certbot/certbot<span class="token punctuation">:</span>latest
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> ./certbot/www<span class="token punctuation">:</span>/var/www/certbot
+      <span class="token punctuation">-</span> ./certbot/conf<span class="token punctuation">:</span>/etc/letsencrypt
+<span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+  postgres_data<span class="token punctuation">:</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<blockquote>
+<p><strong>注意</strong>：API 和 PostgreSQL 只使用 <code>expose</code>，端口仅在 Compose 内部网络中可见；Nginx 才通过 <code>ports</code> 向公网开放 80/443。数据库保存在命名 volume 中。除非确实要删除数据库，否则不要执行 <code>docker compose down -v</code>。</p>
+</blockquote>
+<hr>
+<h2 id="四、HTTP、Nginx-与证书"><a href="#四、HTTP、Nginx-与证书" class="headerlink" title="四、HTTP、Nginx 与证书"></a>四、HTTP、Nginx 与证书</h2><h3 id="4-1-首次-HTTP-配置"><a href="#4-1-首次-HTTP-配置" class="headerlink" title="4.1 首次 HTTP 配置"></a>4.1 首次 HTTP 配置</h3><p>第一次启动时还没有证书，先创建一份只监听 HTTP 的 <code>nginx/conf.d/api.conf</code>：</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">{</span>
+    <span class="token directive"><span class="token keyword">listen</span> <span class="token number">80</span></span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">server_name</span> api.example.com</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">location</span> /.well-known/acme-challenge/</span> <span class="token punctuation">{</span> <span class="token directive"><span class="token keyword">root</span> /var/www/certbot</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">{</span>
+        <span class="token directive"><span class="token keyword">proxy_pass</span> http://api:3000</span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> Host <span class="token variable">$host</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Real-IP <span class="token variable">$remote_addr</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-For <span class="token variable">$proxy_add_x_forwarded_for</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-Proto <span class="token variable">$scheme</span></span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>把示例域名换成自己的域名，然后启动服务：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose pull
+<span class="token function">docker</span> compose up <span class="token parameter variable">-d</span>
+<span class="token function">curl</span> <span class="token parameter variable">-i</span> http://api.example.com/health<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="4-2-申请-SSL-证书"><a href="#4-2-申请-SSL-证书" class="headerlink" title="4.2 申请 SSL 证书"></a>4.2 申请 SSL 证书</h3><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose run <span class="token parameter variable">--rm</span> certbot certonly <span class="token punctuation">\</span>
+  <span class="token parameter variable">--webroot</span> --webroot-path<span class="token operator">=</span>/var/www/certbot <span class="token punctuation">\</span>
+  <span class="token parameter variable">--email</span> YOUR_EMAIL@example.com --agree-tos --no-eff-email <span class="token punctuation">\</span>
+  <span class="token parameter variable">-d</span> api.example.com<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="4-3-替换为-HTTPS-配置"><a href="#4-3-替换为-HTTPS-配置" class="headerlink" title="4.3 替换为 HTTPS 配置"></a>4.3 替换为 HTTPS 配置</h3><p>证书签发成功后，把 <code>nginx/conf.d/api.conf</code> 更新为：</p>
+<pre class="line-numbers language-nginx" data-language="nginx"><code class="language-nginx"><span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">{</span>
+    <span class="token directive"><span class="token keyword">listen</span> <span class="token number">80</span></span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">server_name</span> api.example.com</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">location</span> /.well-known/acme-challenge/</span> <span class="token punctuation">{</span> <span class="token directive"><span class="token keyword">root</span> /var/www/certbot</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">{</span> <span class="token directive"><span class="token keyword">return</span> <span class="token number">301</span> https://<span class="token variable">$host</span><span class="token variable">$request_uri</span></span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+<span class="token directive"><span class="token keyword">server</span></span> <span class="token punctuation">{</span>
+    <span class="token directive"><span class="token keyword">listen</span> <span class="token number">443</span> ssl</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">server_name</span> api.example.com</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">ssl_certificate</span> /etc/letsencrypt/live/api.example.com/fullchain.pem</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">ssl_certificate_key</span> /etc/letsencrypt/live/api.example.com/privkey.pem</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">ssl_protocols</span> TLSv1.2 TLSv1.3</span><span class="token punctuation">;</span>
+    <span class="token directive"><span class="token keyword">location</span> /</span> <span class="token punctuation">{</span>
+        <span class="token directive"><span class="token keyword">proxy_pass</span> http://api:3000</span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> Host <span class="token variable">$host</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Real-IP <span class="token variable">$remote_addr</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-For <span class="token variable">$proxy_add_x_forwarded_for</span></span><span class="token punctuation">;</span>
+        <span class="token directive"><span class="token keyword">proxy_set_header</span> X-Forwarded-Proto <span class="token variable">$scheme</span></span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<blockquote>
+<p><strong>注意</strong>：保留 ACME 路径，否则续期验证可能失败。<code>ssl_certificate</code> 后面没有冒号。</p>
+</blockquote>
+<p>重新加载 Nginx：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose <span class="token builtin class-name">exec</span> nginx nginx <span class="token parameter variable">-t</span>
+<span class="token function">docker</span> compose <span class="token builtin class-name">exec</span> nginx nginx <span class="token parameter variable">-s</span> reload
+<span class="token function">curl</span> <span class="token parameter variable">-I</span> http://api.example.com/health
+<span class="token function">curl</span> <span class="token parameter variable">-i</span> https://api.example.com/health<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<hr>
+<h2 id="五、自动续期与更新"><a href="#五、自动续期与更新" class="headerlink" title="五、自动续期与更新"></a>五、自动续期与更新</h2><h3 id="5-1-Certbot-自动续期"><a href="#5-1-Certbot-自动续期" class="headerlink" title="5.1 Certbot 自动续期"></a>5.1 Certbot 自动续期</h3><p>运行 <code>crontab -e</code>，加入下面这行：</p>
+<pre class="line-numbers language-cron" data-language="cron"><code class="language-cron">17 3 * * * cd /opt/backend &amp;&amp; docker compose run --rm certbot renew --quiet &amp;&amp; docker compose exec -T nginx nginx -s reload<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>演练续期：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose run <span class="token parameter variable">--rm</span> certbot renew --dry-run<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<h3 id="5-2-更新-API-镜像"><a href="#5-2-更新-API-镜像" class="headerlink" title="5.2 更新 API 镜像"></a>5.2 更新 API 镜像</h3><p>发布新版本时，先修改 Compose 文件中的 API 镜像标签，再执行：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose pull api
+<span class="token function">docker</span> compose up <span class="token parameter variable">-d</span> api
+<span class="token function">docker</span> compose logs <span class="token parameter variable">--tail</span><span class="token operator">=</span><span class="token number">100</span> api
+<span class="token function">curl</span> <span class="token parameter variable">-fsS</span> https://api.example.com/health<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>需要回滚时，把标签改回旧版本，再重新启动 API。</p>
+<hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>现在，API 和 PostgreSQL 跑在 Compose 内部网络中，公网请求由 Nginx 转发，证书则交给 Certbot 续期。这套配置可以作为单机部署的起点，但数据库备份和日志管理还得单独补上。</p>
+<p>接下来可以补充：</p>
+<ul>
+<li>PostgreSQL 异地备份策略</li>
+<li>Docker 日志轮转配置</li>
+<li>Docker Compose 健康检查告警</li>
+</ul>
+]]></content>
+      <categories>
+        <category>Technical</category>
+      </categories>
+      <tags>
+        <tag>Docker</tag>
+        <tag>DevOps</tag>
+        <tag>Nginx</tag>
+        <tag>HTTPS</tag>
       </tags>
   </entry>
   <entry>
@@ -1738,11 +1738,11 @@ The default implementation only supports types which can be stored inside the Bu
   <entry>
     <title>LLM 不是 Agent：先理解模型、推理与生成</title>
     <url>/posts/2026/08/04/bf63960/</url>
-    <content><![CDATA[<h1 id="LLM-不是-Agent：先理解模型、推理与生成"><a href="#LLM-不是-Agent：先理解模型、推理与生成" class="headerlink" title="LLM 不是 Agent：先理解模型、推理与生成"></a>LLM 不是 Agent：先理解模型、推理与生成</h1><p>在聊天窗口里输入一句话，模型能分析需求、列计划、写代码。接上搜索和文件工具后，它还会查资料、改文件。用户看到的只有同一个输入框，很容易把背后的所有能力都算到 LLM 头上。</p>
-<p>可如果程序在模型返回第一条结果后就停止，任务也会停在那里。工具不会自己执行，任务进度没人保存，结果也没人检查。模型只是完成了一次生成。</p>
-<p>我更愿意把 LLM 看成 Agent 系统里的“决策部件”。它很重要，却不是整台机器。</p>
-<h2 id="先把三层拆开"><a href="#先把三层拆开" class="headerlink" title="先把三层拆开"></a>先把三层拆开</h2><p>我们平时使用的聊天产品，已经把对话历史、文件解析、搜索、代码执行和安全检查包在了一起。界面很简单，组件之间的分工却被藏了起来。</p>
-<p>把它们拆开，大致是三层：</p>
+    <content><![CDATA[<h1 id="LLM-不是-Agent：先理解模型、推理与生成"><a href="#LLM-不是-Agent：先理解模型、推理与生成" class="headerlink" title="LLM 不是 Agent：先理解模型、推理与生成"></a>LLM 不是 Agent：先理解模型、推理与生成</h1><p>在聊天窗口里输入一句话，模型能分析需求、列计划、写代码。接上搜索和文件工具后，它还会查资料、改文件。用户只看到同一个输入框，很容易把背后的能力都算到 LLM 头上。</p>
+<p>但程序如果在模型返回第一条结果后停止，任务也就停了。工具不会自己执行，任务进度没人保存，结果也没人检查。模型只完成了一次生成。</p>
+<p>我更愿意把 LLM 看作 Agent 系统里的“决策部件”。它负责判断下一步做什么，周围还需要一套系统把判断变成行动。</p>
+<h2 id="先把三层拆开"><a href="#先把三层拆开" class="headerlink" title="先把三层拆开"></a>先把三层拆开</h2><p>我们常用的聊天产品，通常已经把对话历史、文件解析、搜索、代码执行和安全检查包在一起。界面很简单，组件之间的分工也因此不容易看见。</p>
+<p>拆开来看，大致有三层：</p>
 <table>
 <thead>
 <tr>
@@ -1771,8 +1771,13 @@ The default implementation only supports types which can be stored inside the Bu
 <td>任务结果、执行记录</td>
 </tr>
 </tbody></table>
-<p>模型服务和 Agent 系统可能由同一家产品提供，代码里甚至只需要调用一个 SDK。不过，状态仍要保存，工具仍要执行，失败也仍要处理，只是这些工作被产品包装了起来。</p>
-<h2 id="LLM-在一次调用里做了什么"><a href="#LLM-在一次调用里做了什么" class="headerlink" title="LLM 在一次调用里做了什么"></a>LLM 在一次调用里做了什么</h2><p>主流 LLM 大多建立在 Transformer 及其后续架构上。生成文本时，模型根据当前 Token 计算下一个 Token 的概率分布，选出一个结果，再继续往后生成。</p>
+<p>模型服务和 Agent 系统可能由同一个产品提供，代码里甚至只要调用一个 SDK。但状态仍要保存，工具仍要执行，失败也得处理，只是产品把这些工作藏了起来。</p>
+<p>下面这张图记录了一次真实的任务执行。用户提交 Prompt 后，第一次 LLM Call 决定调用终端。Runtime 执行命令，再把终端返回值和 Session 里的信息组装成下一次输入。如此循环，直到第四次 LLM Call 给出最终结果。</p>
+<p><img src="/images/agent_loop/llm-not-agent_03.png" alt="Agent 任务执行流程" title="Agent 任务执行流程"></p>
+<blockquote>
+<p>注：这里使用的是 Hermes Agent，一轮完整交互会被包装在一次 Hermes Turn 中。</p>
+</blockquote>
+<h2 id="LLM-在一次调用里做了什么"><a href="#LLM-在一次调用里做了什么" class="headerlink" title="LLM 在一次调用里做了什么"></a>LLM 在一次调用里做了什么</h2><p>在上面的任务流程中，每个 <code>LLM Call</code> 都代表一次模型调用。主流 LLM 大多基于 Transformer 及其后续架构。生成文本时，模型根据已有 Token 计算下一个 Token 的概率分布，选出一个结果，再继续生成。</p>
 <pre class="line-numbers language-text" data-language="text"><code class="language-text">已有 Token
    ↓
 计算下一个 Token 的概率
@@ -1781,26 +1786,17 @@ The default implementation only supports types which can be stored inside the Bu
    ↓
 继续，直到停止<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>这段计算叫 Inference，中文通常译作“推理”。它指模型接收输入并完成计算，不代表用户交代的事情已经办完。</p>
-<p>例如输入：</p>
+<p>这段计算叫 Inference，中文通常译作“推理”。这里的“推理”是指模型接收输入并完成计算，不等于用户交代的事情已经办完。</p>
+<p>如果只调用裸模型，可以输入：</p>
 <blockquote>
-<p>请比较三个 Agent Runtime。</p>
+<p>请根据官方文档比较三个 Agent Runtime。</p>
 </blockquote>
-<p>模型会根据当前上下文和训练得到的参数生成回答。它不会自动创建研究项目，也不会花几个小时阅读官网后再带着核验过的资料回来。要完成这些动作，外部系统必须提供工具，并在第一次生成结束后继续驱动任务。</p>
-<p>同一份输入也未必得到相同结果。模型计算出的是概率分布，解码时可以选择最高概率项，也可以从候选项中采样。Temperature、top-p 等参数会改变选择范围。Temperature 升高后，低概率候选通常更容易出现，输出可能更丰富，也可能跑偏。因此，把 Temperature 简单理解成“创造力旋钮”并不准确。</p>
-<p>模型返回的是生成结果，不是已经验收的事实。内容是否真实、能不能满足业务要求，还得另外检查。</p>
-<h2 id="模型没有一直守着任务"><a href="#模型没有一直守着任务" class="headerlink" title="模型没有一直守着任务"></a>模型没有一直守着任务</h2><p>一次 Inference 结束后，模型的计算就结束了。下一次调用能看到什么，由应用提交的输入决定。某些服务可以通过会话 ID 续接历史，但任务计划、预算、审批状态和中间文件仍要有人管理。</p>
-<p>产品可以通过数据库或服务端会话记住上次聊天，但这不等于模型自己保存着任务。裸模型没有这样的业务状态。</p>
-<p>拿调研任务来说，模型可以写出“下一步应该查官方文档”，但这句话不会给它变出浏览器，页面也不会自己打开。要把建议变成动作，还缺少这些条件：</p>
-<ul>
-<li>可以操作的工具和环境；</li>
-<li>当前做到哪里的状态记录；</li>
-<li>判断完成与失败的规则；</li>
-<li>对写文件、发消息等动作的权限。</li>
-</ul>
-<p>模型写出了动作，Runtime 才负责执行。这是两步。</p>
-<h2 id="什么时候才开始像-Agent"><a href="#什么时候才开始像-Agent" class="headerlink" title="什么时候才开始像 Agent"></a>什么时候才开始像 Agent</h2><p>回复次数不能用来判断系统是不是 Agent。连续聊十轮，有可能只是应用反复把旧消息交给模型。</p>
-<p>当系统开始根据模型结果采取行动，再把环境返回的结果交给模型时，才出现 Agent Loop：</p>
+<p>模型会根据当前上下文和训练得到的参数生成回答。它不会主动创建研究项目，也不会花几个小时阅读官网，再带着核验过的资料回来。要做到这些，外部系统必须提供工具，并在第一次生成结束后继续驱动任务。</p>
+<p>同一份输入也未必得到相同结果。模型计算出的是概率分布，解码时可以选择最高概率项，也可以从候选项中采样。Temperature、top-p 等参数会改变选择范围。Temperature 升高时，低概率候选通常更容易出现，输出可能更丰富，也可能跑偏。把 Temperature 简单理解成“创造力旋钮”并不准确。</p>
+<p>模型返回的是生成结果，不是经过验收的事实。内容是否真实、能否满足业务要求，还得另外检查。</p>
+<p>一次 Inference 结束，模型的计算也随之停止。要继续推进任务，外部系统得保存状态、执行工具，再次调用模型。</p>
+<h2 id="什么时候才开始像-Agent"><a href="#什么时候才开始像-Agent" class="headerlink" title="什么时候才开始像 Agent"></a>什么时候才开始像 Agent</h2><p>聊了多少轮，不能用来判断系统是不是 Agent。连续聊十轮，也可能只是应用反复把旧消息交给模型。</p>
+<p>系统根据模型的输出采取行动，再把环境返回的结果交给模型，这才形成 Agent Loop：</p>
 <pre class="line-numbers language-text" data-language="text"><code class="language-text">任务
   ↓
 模型决定下一步
@@ -1813,9 +1809,9 @@ The default implementation only supports types which can be stored inside the Bu
   ↓
 继续或结束<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>模型判断下一步做什么，外部程序执行动作，并决定是否继续循环。后面的文章会分别讨论 Tool Calling、State 和 Runtime，这里先把这层分工说清楚。</p>
-<h2 id="更强的模型也救不了坏掉的系统"><a href="#更强的模型也救不了坏掉的系统" class="headerlink" title="更强的模型也救不了坏掉的系统"></a>更强的模型也救不了坏掉的系统</h2><p>即使模型正确判断出“应该先看官方文档”，系统仍然可能出错。</p>
-<p>系统可能根本没有搜索工具，也可能读到过期页面。工具超时后如果只会反复重试，费用会继续增加；没有验收规则时，缺少引用的报告也可能被直接交付。换一个参数更多的模型，解决不了这些故障。</p>
+<p>每一轮里，模型判断下一步做什么，外部程序执行动作，并决定是否继续。后面的文章会分别讨论 Tool Calling、State 和 Runtime，这里先说清楚它们与模型的分工。</p>
+<h2 id="更强的模型也救不了坏掉的系统"><a href="#更强的模型也救不了坏掉的系统" class="headerlink" title="更强的模型也救不了坏掉的系统"></a>更强的模型也救不了坏掉的系统</h2><p>模型即使正确判断出“应该先看官方文档”，系统仍可能出错。</p>
+<p>系统可能没有搜索工具，也可能读到过期页面。工具超时后如果只会反复重试，费用会不断增加。没有验收规则，缺少引用的报告也可能被直接交付。换一个参数更多的模型，解决不了这些故障。</p>
 <table>
 <thead>
 <tr>
@@ -1840,17 +1836,27 @@ The default implementation only supports types which can be stored inside the Bu
 <td>验收规则与权限系统</td>
 </tr>
 </tbody></table>
-<p>模型能力会影响 Agent 能做什么，但任务能否稳定完成，还取决于模型之外的系统。</p>
-<p>下面这张图记录了一次真实的任务执行。用户提交 Prompt 后，第一次 LLM Call 决定调用终端。Runtime 执行命令，再把终端返回值和 Session 中已有的信息组装成下一次输入。这个过程持续到第四次 LLM Call 给出最终结果。</p>
-<p><img src="/images/agent_loop/llm-not-agent_03.png" alt="Agent 任务执行流程" title="Agent 任务执行流程"></p>
+<p>模型能力会影响 Agent 能做什么，而任务能否稳定完成，还取决于模型之外的系统。</p>
+<h2 id="C01：让裸模型做一次技术调研"><a href="#C01：让裸模型做一次技术调研" class="headerlink" title="C01：让裸模型做一次技术调研"></a>C01：让裸模型做一次技术调研</h2><p>这个系列会逐步实现一个“技术调研与报告交付 Agent”。在 C01 中，我关闭搜索，不保存任务状态，也不验证结果，只发出下面这条请求：</p>
 <blockquote>
-<p>注：这里使用的是 Hermes Agent，一轮完整交互会被包装在一次 Hermes Turn 中。</p>
+<p>调研三个主流 Agent Runtime，根据官方文档比较它们的状态管理、持久化、人工审批和可观测性，并给出选型建议。</p>
 </blockquote>
-<h2 id="C01：让裸模型做一次技术调研"><a href="#C01：让裸模型做一次技术调研" class="headerlink" title="C01：让裸模型做一次技术调研"></a>C01：让裸模型做一次技术调研</h2><p>这个系列会逐步实现一个“技术调研与报告交付 Agent”。在 C01 中，我先关闭搜索，不保存任务状态，也不验证结果，只发出下面这条请求：</p>
-<blockquote>
-<p>调研三个主流 Agent Runtime，比较它们的状态管理、持久化、人工审批和可观测性，并给出选型建议。</p>
-</blockquote>
-<p>模型确实给出了一篇结构完整的答案，比较维度看起来也合理。但只看这份输出，我无法确认：</p>
+<p>如果你用 Hermes Agent，或者在已经具备工具能力的应用中测试，可以改用下面这段指令：</p>
+<pre class="line-numbers language-txt" data-language="txt"><code class="language-txt">你现在处于 DIRECT_INFERENCE 模式。
+
+规则：
+- 只回答 &lt;user_instruction&gt; 中的内容；
+- 只进行一次模型生成；
+- 禁止工具调用、任务委派、Memory 检索、文件读取和网络访问；
+- 禁止创建计划或建议自己稍后继续执行；
+- 缺少信息时，明确说明无法从当前输入确定，不得调用外部能力补全；
+- 输出中只包含最终答案。
+
+&lt;user_instruction&gt;
+调研三个主流 Agent Runtime，根据官方文档比较它们的状态管理、持久化、人工审批和可观测性，并给出选型建议。
+&lt;/user_instruction&gt;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>模型给出了一篇结构完整的答案，比较维度乍看也合理。但只看这份输出，我无法确认：</p>
 <ul>
 <li>它依据的是哪一版资料？</li>
 <li>关键结论来自哪里？</li>
@@ -1858,8 +1864,8 @@ The default implementation only supports types which can be stored inside the Bu
 <li>信息不够时，谁负责继续调查？</li>
 <li>“调研完成”由谁判断？</li>
 </ul>
-<p>一次模型调用回答不了这些问题。</p>
-<p>这是本次裸模型调用的输出：</p>
+<p>一次模型调用无法回答这些问题。</p>
+<p>本次裸模型调用的输出如下：</p>
 <p><img src="/images/agent_loop/llm-not-agent_02.png" alt="C01 裸模型调用结果" title="C01 裸模型调用结果"></p>
 <h3 id="C01-的能力缺口"><a href="#C01-的能力缺口" class="headerlink" title="C01 的能力缺口"></a>C01 的能力缺口</h3><table>
 <thead>
@@ -1895,13 +1901,13 @@ The default implementation only supports types which can be stored inside the Bu
 <td>文件写入、验证和发布权限</td>
 </tr>
 </tbody></table>
-<p>这次实验里，模型已经表现出不错的问题整理和内容生成能力。C01 关心的是另一件事：它给出一次回答后，系统还要补上哪些部件，才能把调研真正做完。</p>
-<h2 id="几个容易混淆的地方"><a href="#几个容易混淆的地方" class="headerlink" title="几个容易混淆的地方"></a>几个容易混淆的地方</h2><p>多轮聊天最容易被误认成 Agent。应用可能只是反复提交历史消息，既没有工具，也没有独立的任务状态。</p>
-<p>Tool Call 则是一份调用请求。模型生成函数名和参数后，网络请求、数据库查询或文件写入仍由 Runtime 完成。</p>
-<p>长 Context 只说明模型这次能读取更多内容。信息是否长期保存、何时更新或删除，属于 Memory 的设计。</p>
-<p>计划同样可能只是一段文本。模型写下“先搜索，再比较，最后写报告”之后，仍要由工具执行步骤，由状态记录进度，并由 Runtime 判断何时停止。</p>
-<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>LLM 读取当前上下文，完成一次 Inference，然后返回结果。模型服务承载这次调用。接下来，Agent 系统还要执行工具、保存进度、处理权限，并判断任务是否结束。</p>
-<p>后面讨论 Agent Loop 时还会反复遇到这条边界：模型给出下一步，Runtime 执行动作，并处理动作对真实环境造成的影响。</p>
+<p>这次实验说明，裸模型能梳理问题，也能生成正文。C01 关注的是：模型回答一次之后，系统还缺哪些部件，才能把调研真正做完。</p>
+<h2 id="几个容易混淆的地方"><a href="#几个容易混淆的地方" class="headerlink" title="几个容易混淆的地方"></a>几个容易混淆的地方</h2><p>多轮聊天最容易被误认成 Agent。应用可能只是在反复提交历史消息，没有工具，也没有独立的任务状态。</p>
+<p>Tool Call 只是一份调用请求。模型生成函数名和参数后，网络请求、数据库查询或文件写入仍由 Runtime 完成。</p>
+<p>Context 更长，只说明模型本次调用能读取更多内容。信息是否长期保存、何时更新或删除，取决于 Memory 的设计。</p>
+<p>计划也可能只是一段文本。模型写下“先搜索，再比较，最后写报告”之后，仍要由工具执行，由状态记录进度，再由 Runtime 判断何时停止。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>LLM 读取当前上下文，完成一次 Inference 并返回结果。模型服务承载这次调用。Agent 系统负责执行工具、保存进度、处理权限，以及判断任务是否结束。</p>
+<p>后面讨论 Agent Loop 时还会反复碰到这条边界：模型给出下一步，Runtime 执行动作，并处理动作对真实环境的影响。</p>
 <p>下一篇先把一次模型调用拆开，看看 Request、Context、Inference 和 Response 各自处在哪里。</p>
 <hr>
 <h2 id="案例实践"><a href="#案例实践" class="headerlink" title="案例实践"></a>案例实践</h2><ul>

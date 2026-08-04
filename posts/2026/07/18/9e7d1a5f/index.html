@@ -22,15 +22,15 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"dejinlu.cn","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.22.0","exturl":false,"sidebar":{"position":"right","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12,"width":300},"copycode":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="本文为「单台 VPS 部署 API」系列上篇，详细讲解 macOS + OrbStack 本地开发、Docker 多阶段构建、Docker Hub 镜像发布及仓库选型策略。VPS 只保留部署配置与环境变量，不上传源码。">
+    <meta name="description" content="「单台 VPS 部署 API」系列上篇：在 macOS 和 OrbStack 中搭建本地环境，构建 Docker 镜像并推送到 Docker Hub。VPS 只保存部署配置和环境变量，不放源码。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布">
 <meta property="og:url" content="https://dejinlu.cn/posts/2026/07/18/9e7d1a5f/index.html">
 <meta property="og:site_name" content="D&amp;JのZONE">
-<meta property="og:description" content="本文为「单台 VPS 部署 API」系列上篇，详细讲解 macOS + OrbStack 本地开发、Docker 多阶段构建、Docker Hub 镜像发布及仓库选型策略。VPS 只保留部署配置与环境变量，不上传源码。">
+<meta property="og:description" content="「单台 VPS 部署 API」系列上篇：在 macOS 和 OrbStack 中搭建本地环境，构建 Docker 镜像并推送到 Docker Hub。VPS 只保存部署配置和环境变量，不放源码。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-07-18T04:05:03.000Z">
-<meta property="article:modified_time" content="2026-07-25T01:19:11.618Z">
+<meta property="article:modified_time" content="2026-08-04T08:30:34.506Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="Docker">
 <meta property="article:tag" content="DevOps">
@@ -225,7 +225,7 @@
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
       <meta itemprop="name" content="单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布 | D&JのZONE">
-      <meta itemprop="description" content="本文为「单台 VPS 部署 API」系列上篇，详细讲解 macOS + OrbStack 本地开发、Docker 多阶段构建、Docker Hub 镜像发布及仓库选型策略。VPS 只保留部署配置与环境变量，不上传源码。">
+      <meta itemprop="description" content="「单台 VPS 部署 API」系列上篇：在 macOS 和 OrbStack 中搭建本地环境，构建 Docker 镜像并推送到 Docker Hub。VPS 只保存部署配置和环境变量，不放源码。">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -269,20 +269,20 @@
   
 </div>
 
-            <div class="post-description">本文为「单台 VPS 部署 API」系列上篇，详细讲解 macOS + OrbStack 本地开发、Docker 多阶段构建、Docker Hub 镜像发布及仓库选型策略。VPS 只保留部署配置与环境变量，不上传源码。</div>
+            <div class="post-description">「单台 VPS 部署 API」系列上篇：在 macOS 和 OrbStack 中搭建本地环境，构建 Docker 镜像并推送到 Docker Hub。VPS 只保存部署配置和环境变量，不放源码。</div>
         </div>
       </header>
 
     
     
     
-    <div class="post-body" itemprop="articleBody"><h1 id="单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布"><a href="#单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布" class="headerlink" title="单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布"></a>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</h1><p>本方案的技术链路为：<strong>Mac + OrbStack 本地开发与构建 → Docker Hub 保存版本化镜像 → Ubuntu VPS 使用 Docker Compose 运行</strong>。VPS 只保留部署配置、环境变量、Nginx 配置和数据卷，不上传 Git 仓库或 src 源码目录。</p>
+    <div class="post-body" itemprop="articleBody"><h1 id="单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布"><a href="#单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布" class="headerlink" title="单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布"></a>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</h1><p>这套部署方式很直接：在 <strong>Mac + OrbStack</strong> 上开发和构建镜像，把带版本号的镜像推送到 <strong>Docker Hub</strong>，最后由 Ubuntu VPS 通过 Docker Compose 运行。VPS 上只放部署文件、环境变量、Nginx 配置和数据卷，不需要上传 Git 仓库或 <code>src</code> 目录。</p>
 <blockquote>
-<p><strong>注意</strong>：多阶段镜像不等同绝对源码保护。最终镜像可没有 TypeScript 源码，但编译后的 JavaScript 仍可被分析。密码、令牌和私钥永远不能写进镜像。</p>
+<p><strong>注意</strong>：多阶段构建不能绝对保护源码。最终镜像里可以不包含 TypeScript 文件，但编译后的 JavaScript 仍能被分析。密码、令牌和私钥不要写进镜像。</p>
 </blockquote>
 <hr>
-<h2 id="一、环境说明"><a href="#一、环境说明" class="headerlink" title="一、环境说明"></a>一、环境说明</h2><p>本地需要 <strong>macOS、OrbStack、Node.js LTS、npm、Git</strong> 和 <strong>Docker Hub 账号</strong>。PostgreSQL 通过 OrbStack 容器运行。</p>
-<p>VPS 建议使用：</p>
+<h2 id="一、环境说明"><a href="#一、环境说明" class="headerlink" title="一、环境说明"></a>一、环境说明</h2><p>本地需要安装 <strong>OrbStack、Node.js LTS、npm 和 Git</strong>，并准备一个 <strong>Docker Hub 账号</strong>。下文在 macOS 上操作，PostgreSQL 跑在 OrbStack 容器里。</p>
+<p>VPS 可以从下面的配置起步：</p>
 <ul>
 <li><strong>系统</strong>：Ubuntu 24.04 LTS（或仍受支持的 LTS）</li>
 <li><strong>配置</strong>：2 vCPU、4 GB RAM、40 GB 以上 SSD/NVMe</li>
@@ -290,7 +290,7 @@
 <li><strong>安全</strong>：SSH 仅对可信 IP 开放</li>
 </ul>
 <blockquote>
-<p>1 GB 内存可试验，但 API、PostgreSQL 与 Docker 共用资源时余量很少。</p>
+<p>1 GB 内存也能用来试验，不过 API、PostgreSQL 和 Docker 跑在一起时，余量会很小。</p>
 </blockquote>
 <hr>
 <h2 id="二、本地-PostgreSQL"><a href="#二、本地-PostgreSQL" class="headerlink" title="二、本地 PostgreSQL"></a>二、本地 PostgreSQL</h2><p>创建 <code>compose.dev.yml</code>：</p>
@@ -315,7 +315,7 @@
 <p>本机运行 API 时的数据库连接字符串：</p>
 <pre class="line-numbers language-env" data-language="env"><code class="language-env">DATABASE_URL=postgresql://app_user:***@localhost:5432/app_db<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<p>绑定 <code>127.0.0.1</code> 代表数据库只供本机开发使用。</p>
+<p>端口绑定到 <code>127.0.0.1</code> 后，数据库只接受来自本机的连接。</p>
 <hr>
 <h2 id="三、构建生产-Docker-镜像"><a href="#三、构建生产-Docker-镜像" class="headerlink" title="三、构建生产 Docker 镜像"></a>三、构建生产 Docker 镜像</h2><p>假设 <code>npm run build</code> 输出 <code>dist</code>，入口为 <code>dist/server.js</code>：</p>
 <pre class="line-numbers language-docker" data-language="docker"><code class="language-docker"><span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> build</span>
@@ -350,10 +350,10 @@
 <span class="token function">docker</span> run <span class="token parameter variable">--rm</span> <span class="token parameter variable">-p</span> <span class="token number">3000</span>:3000 YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
 <blockquote>
-<p>Prisma、原生模块等可能需要额外生成步骤，应以项目实际依赖为准。</p>
+<p>如果项目使用 Prisma 或原生模块，构建镜像时可能还要补充生成或编译步骤，具体取决于项目依赖。</p>
 </blockquote>
 <hr>
-<h2 id="四、Docker-Hub-如何选择"><a href="#四、Docker-Hub-如何选择" class="headerlink" title="四、Docker Hub 如何选择"></a>四、Docker Hub 如何选择</h2><p>Docker Hub 镜像格式为 <code>docker.io/&lt;用户名&gt;/&lt;镜像名&gt;:&lt;标签&gt;</code>，例如 <code>docker.io/alice/backend-api:1.0.0</code>。它最通用、入门简单，业务 API 通常应使用<strong>私有仓库</strong>。</p>
+<h2 id="四、Docker-Hub-如何选择"><a href="#四、Docker-Hub-如何选择" class="headerlink" title="四、Docker Hub 如何选择"></a>四、Docker Hub 如何选择</h2><p>Docker Hub 的镜像地址格式是 <code>docker.io/&lt;用户名&gt;/&lt;镜像名&gt;:&lt;标签&gt;</code>，例如 <code>docker.io/alice/backend-api:1.0.0</code>。它的使用门槛不高，也很常见。业务 API 一般放在私有仓库中。</p>
 <p>各容器仓库选型对比：</p>
 <table>
 <thead>
@@ -364,46 +364,46 @@
 </thead>
 <tbody><tr>
 <td><strong>Docker Hub</strong></td>
-<td>最通用，入门简单，业务建议使用私有仓库</td>
+<td>配置简单、使用广泛；业务镜像建议设为私有</td>
 </tr>
 <tr>
 <td><strong>GHCR</strong></td>
-<td>适合 GitHub Actions 工作流</td>
+<td>项目和 CI 都在 GitHub 时比较顺手</td>
 </tr>
 <tr>
 <td><strong>GitLab Container Registry</strong></td>
-<td>适合 GitLab CI</td>
+<td>项目使用 GitLab CI 时省去额外集成</td>
 </tr>
 <tr>
 <td><strong>云厂商仓库</strong></td>
-<td>适合长期部署在同一家云</td>
+<td>服务长期部署在同一家云厂商时可优先考虑</td>
 </tr>
 </tbody></table>
 <blockquote>
 <p>私有仓库和拉取额度会变化，以各平台官网当前政策为准。</p>
 </blockquote>
 <hr>
-<h2 id="五、推送镜像"><a href="#五、推送镜像" class="headerlink" title="五、推送镜像"></a>五、推送镜像</h2><p>在 Docker Hub 创建 <code>backend-api</code> 私有仓库，使用 <strong>Personal Access Token</strong> 登录：</p>
+<h2 id="五、推送镜像"><a href="#五、推送镜像" class="headerlink" title="五、推送镜像"></a>五、推送镜像</h2><p>先在 Docker Hub 创建名为 <code>backend-api</code> 的私有仓库，再用 <strong>Personal Access Token</strong> 登录：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login
 <span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
 <span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
 
-<p>可附加 <code>latest</code> 标签：</p>
+<p>如果需要，也可以附加 <code>latest</code> 标签：</p>
 <pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> tag YOUR_DOCKERHUB_USER/backend-api:1.0.0 YOUR_DOCKERHUB_USER/backend-api:latest
 <span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:latest<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
-<p><strong>发布前检查清单：</strong></p>
+<p>发布前检查这几项：</p>
 <ul>
-<li>✅ API 已连接本地 PostgreSQL 通过关键测试</li>
-<li>✅ 存在 <code>GET /health</code> 健康检查端点</li>
-<li>✅ 机密没有进入镜像</li>
-<li>✅ 每次发布都有新标签</li>
+<li>API 能连接本地 PostgreSQL，关键测试已经通过</li>
+<li>已提供 <code>GET /health</code> 健康检查端点</li>
+<li>镜像中没有密码、令牌等机密</li>
+<li>本次发布使用了新的版本标签</li>
 </ul>
 <blockquote>
 <p>生产 Compose 应固定使用 <code>1.0.0</code> 之类的明确版本，便于回滚。</p>
 </blockquote>
 <hr>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文完成了「单台 VPS 部署 API」的上半部分：从本地开发环境搭建、PostgreSQL 配置、多阶段 Docker 镜像构建，到 Docker Hub 镜像推送。下一篇文章将介绍如何在 Ubuntu VPS 上拉取镜像、配置 Nginx 反向代理，并完成 HTTPS 证书的申请与自动续期。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>到这里，本地环境和 PostgreSQL 已经可以运行，生产镜像也推送到了 Docker Hub。下一篇转到 Ubuntu VPS：拉取镜像、配置 Nginx，再申请并自动续期 HTTPS 证书。</p>
 
     </div>
 

@@ -22,17 +22,17 @@
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"dejinlu.cn","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.22.0","exturl":false,"sidebar":{"position":"right","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12,"width":300},"copycode":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js"></script>
 
-    <meta name="description" content="这篇文章拆开 LLM、模型服务和 Agent 系统各自负责什么，也解释一次 Inference 如何生成结果。文末用一轮禁止工具调用的技术调研做实验：模型能给出完整答案，却无法确认资料是否最新，也不能自己搜索、保存进度或验收结果。">
+    <meta name="description" content="本文区分 LLM、模型服务和 Agent 系统各自负责什么，并解释一次 Inference 如何生成结果。文末让模型在禁用工具的条件下做技术调研：它能写出完整答案，却无法确认资料是否最新，也不能自己搜索、保存进度或验收结果。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="LLM 不是 Agent：先理解模型、推理与生成">
 <meta property="og:url" content="https://dejinlu.cn/posts/2026/08/04/bf63960/index.html">
 <meta property="og:site_name" content="D&amp;JのZONE">
-<meta property="og:description" content="这篇文章拆开 LLM、模型服务和 Agent 系统各自负责什么，也解释一次 Inference 如何生成结果。文末用一轮禁止工具调用的技术调研做实验：模型能给出完整答案，却无法确认资料是否最新，也不能自己搜索、保存进度或验收结果。">
+<meta property="og:description" content="本文区分 LLM、模型服务和 Agent 系统各自负责什么，并解释一次 Inference 如何生成结果。文末让模型在禁用工具的条件下做技术调研：它能写出完整答案，却无法确认资料是否最新，也不能自己搜索、保存进度或验收结果。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dejinlu.cn/images/agent_loop/llm-not-agent_03.png">
 <meta property="og:image" content="https://dejinlu.cn/images/agent_loop/llm-not-agent_02.png">
 <meta property="article:published_time" content="2026-08-04T03:12:01.000Z">
-<meta property="article:modified_time" content="2026-08-04T05:09:46.297Z">
+<meta property="article:modified_time" content="2026-08-04T14:18:12.731Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="Agent Loop">
@@ -150,7 +150,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#LLM-%E4%B8%8D%E6%98%AF-Agent%EF%BC%9A%E5%85%88%E7%90%86%E8%A7%A3%E6%A8%A1%E5%9E%8B%E3%80%81%E6%8E%A8%E7%90%86%E4%B8%8E%E7%94%9F%E6%88%90"><span class="nav-number">1.</span> <span class="nav-text">LLM 不是 Agent：先理解模型、推理与生成</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E6%8A%8A%E4%B8%89%E5%B1%82%E6%8B%86%E5%BC%80"><span class="nav-number">1.1.</span> <span class="nav-text">先把三层拆开</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LLM-%E5%9C%A8%E4%B8%80%E6%AC%A1%E8%B0%83%E7%94%A8%E9%87%8C%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-number">1.2.</span> <span class="nav-text">LLM 在一次调用里做了什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E6%B2%A1%E6%9C%89%E4%B8%80%E7%9B%B4%E5%AE%88%E7%9D%80%E4%BB%BB%E5%8A%A1"><span class="nav-number">1.3.</span> <span class="nav-text">模型没有一直守着任务</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E6%89%8D%E5%BC%80%E5%A7%8B%E5%83%8F-Agent"><span class="nav-number">1.4.</span> <span class="nav-text">什么时候才开始像 Agent</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9B%B4%E5%BC%BA%E7%9A%84%E6%A8%A1%E5%9E%8B%E4%B9%9F%E6%95%91%E4%B8%8D%E4%BA%86%E5%9D%8F%E6%8E%89%E7%9A%84%E7%B3%BB%E7%BB%9F"><span class="nav-number">1.5.</span> <span class="nav-text">更强的模型也救不了坏掉的系统</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#C01%EF%BC%9A%E8%AE%A9%E8%A3%B8%E6%A8%A1%E5%9E%8B%E5%81%9A%E4%B8%80%E6%AC%A1%E6%8A%80%E6%9C%AF%E8%B0%83%E7%A0%94"><span class="nav-number">1.6.</span> <span class="nav-text">C01：让裸模型做一次技术调研</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#C01-%E7%9A%84%E8%83%BD%E5%8A%9B%E7%BC%BA%E5%8F%A3"><span class="nav-number">1.6.1.</span> <span class="nav-text">C01 的能力缺口</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%A0%E4%B8%AA%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E5%9C%B0%E6%96%B9"><span class="nav-number">1.7.</span> <span class="nav-text">几个容易混淆的地方</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-number">1.8.</span> <span class="nav-text">小结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B%E5%AE%9E%E8%B7%B5"><span class="nav-number">1.9.</span> <span class="nav-text">案例实践</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">1.10.</span> <span class="nav-text">参考资料</span></a></li></ol></li></ol></div>
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#LLM-%E4%B8%8D%E6%98%AF-Agent%EF%BC%9A%E5%85%88%E7%90%86%E8%A7%A3%E6%A8%A1%E5%9E%8B%E3%80%81%E6%8E%A8%E7%90%86%E4%B8%8E%E7%94%9F%E6%88%90"><span class="nav-number">1.</span> <span class="nav-text">LLM 不是 Agent：先理解模型、推理与生成</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E6%8A%8A%E4%B8%89%E5%B1%82%E6%8B%86%E5%BC%80"><span class="nav-number">1.1.</span> <span class="nav-text">先把三层拆开</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LLM-%E5%9C%A8%E4%B8%80%E6%AC%A1%E8%B0%83%E7%94%A8%E9%87%8C%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-number">1.2.</span> <span class="nav-text">LLM 在一次调用里做了什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E6%89%8D%E5%BC%80%E5%A7%8B%E5%83%8F-Agent"><span class="nav-number">1.3.</span> <span class="nav-text">什么时候才开始像 Agent</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9B%B4%E5%BC%BA%E7%9A%84%E6%A8%A1%E5%9E%8B%E4%B9%9F%E6%95%91%E4%B8%8D%E4%BA%86%E5%9D%8F%E6%8E%89%E7%9A%84%E7%B3%BB%E7%BB%9F"><span class="nav-number">1.4.</span> <span class="nav-text">更强的模型也救不了坏掉的系统</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#C01%EF%BC%9A%E8%AE%A9%E8%A3%B8%E6%A8%A1%E5%9E%8B%E5%81%9A%E4%B8%80%E6%AC%A1%E6%8A%80%E6%9C%AF%E8%B0%83%E7%A0%94"><span class="nav-number">1.5.</span> <span class="nav-text">C01：让裸模型做一次技术调研</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#C01-%E7%9A%84%E8%83%BD%E5%8A%9B%E7%BC%BA%E5%8F%A3"><span class="nav-number">1.5.1.</span> <span class="nav-text">C01 的能力缺口</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%A0%E4%B8%AA%E5%AE%B9%E6%98%93%E6%B7%B7%E6%B7%86%E7%9A%84%E5%9C%B0%E6%96%B9"><span class="nav-number">1.6.</span> <span class="nav-text">几个容易混淆的地方</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-number">1.7.</span> <span class="nav-text">小结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B%E5%AE%9E%E8%B7%B5"><span class="nav-number">1.8.</span> <span class="nav-text">案例实践</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">1.9.</span> <span class="nav-text">参考资料</span></a></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -228,7 +228,7 @@
 
     <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
       <meta itemprop="name" content="LLM 不是 Agent：先理解模型、推理与生成 | D&JのZONE">
-      <meta itemprop="description" content="这篇文章拆开 LLM、模型服务和 Agent 系统各自负责什么，也解释一次 Inference 如何生成结果。文末用一轮禁止工具调用的技术调研做实验：模型能给出完整答案，却无法确认资料是否最新，也不能自己搜索、保存进度或验收结果。">
+      <meta itemprop="description" content="本文区分 LLM、模型服务和 Agent 系统各自负责什么，并解释一次 Inference 如何生成结果。文末让模型在禁用工具的条件下做技术调研：它能写出完整答案，却无法确认资料是否最新，也不能自己搜索、保存进度或验收结果。">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -272,18 +272,18 @@
   
 </div>
 
-            <div class="post-description">这篇文章拆开 LLM、模型服务和 Agent 系统各自负责什么，也解释一次 Inference 如何生成结果。文末用一轮禁止工具调用的技术调研做实验：模型能给出完整答案，却无法确认资料是否最新，也不能自己搜索、保存进度或验收结果。</div>
+            <div class="post-description">本文区分 LLM、模型服务和 Agent 系统各自负责什么，并解释一次 Inference 如何生成结果。文末让模型在禁用工具的条件下做技术调研：它能写出完整答案，却无法确认资料是否最新，也不能自己搜索、保存进度或验收结果。</div>
         </div>
       </header>
 
     
     
     
-    <div class="post-body" itemprop="articleBody"><h1 id="LLM-不是-Agent：先理解模型、推理与生成"><a href="#LLM-不是-Agent：先理解模型、推理与生成" class="headerlink" title="LLM 不是 Agent：先理解模型、推理与生成"></a>LLM 不是 Agent：先理解模型、推理与生成</h1><p>在聊天窗口里输入一句话，模型能分析需求、列计划、写代码。接上搜索和文件工具后，它还会查资料、改文件。用户看到的只有同一个输入框，很容易把背后的所有能力都算到 LLM 头上。</p>
-<p>可如果程序在模型返回第一条结果后就停止，任务也会停在那里。工具不会自己执行，任务进度没人保存，结果也没人检查。模型只是完成了一次生成。</p>
-<p>我更愿意把 LLM 看成 Agent 系统里的“决策部件”。它很重要，却不是整台机器。</p>
-<h2 id="先把三层拆开"><a href="#先把三层拆开" class="headerlink" title="先把三层拆开"></a>先把三层拆开</h2><p>我们平时使用的聊天产品，已经把对话历史、文件解析、搜索、代码执行和安全检查包在了一起。界面很简单，组件之间的分工却被藏了起来。</p>
-<p>把它们拆开，大致是三层：</p>
+    <div class="post-body" itemprop="articleBody"><h1 id="LLM-不是-Agent：先理解模型、推理与生成"><a href="#LLM-不是-Agent：先理解模型、推理与生成" class="headerlink" title="LLM 不是 Agent：先理解模型、推理与生成"></a>LLM 不是 Agent：先理解模型、推理与生成</h1><p>在聊天窗口里输入一句话，模型能分析需求、列计划、写代码。接上搜索和文件工具后，它还会查资料、改文件。用户只看到同一个输入框，很容易把背后的能力都算到 LLM 头上。</p>
+<p>但程序如果在模型返回第一条结果后停止，任务也就停了。工具不会自己执行，任务进度没人保存，结果也没人检查。模型只完成了一次生成。</p>
+<p>我更愿意把 LLM 看作 Agent 系统里的“决策部件”。它负责判断下一步做什么，周围还需要一套系统把判断变成行动。</p>
+<h2 id="先把三层拆开"><a href="#先把三层拆开" class="headerlink" title="先把三层拆开"></a>先把三层拆开</h2><p>我们常用的聊天产品，通常已经把对话历史、文件解析、搜索、代码执行和安全检查包在一起。界面很简单，组件之间的分工也因此不容易看见。</p>
+<p>拆开来看，大致有三层：</p>
 <table>
 <thead>
 <tr>
@@ -312,8 +312,13 @@
 <td>任务结果、执行记录</td>
 </tr>
 </tbody></table>
-<p>模型服务和 Agent 系统可能由同一家产品提供，代码里甚至只需要调用一个 SDK。不过，状态仍要保存，工具仍要执行，失败也仍要处理，只是这些工作被产品包装了起来。</p>
-<h2 id="LLM-在一次调用里做了什么"><a href="#LLM-在一次调用里做了什么" class="headerlink" title="LLM 在一次调用里做了什么"></a>LLM 在一次调用里做了什么</h2><p>主流 LLM 大多建立在 Transformer 及其后续架构上。生成文本时，模型根据当前 Token 计算下一个 Token 的概率分布，选出一个结果，再继续往后生成。</p>
+<p>模型服务和 Agent 系统可能由同一个产品提供，代码里甚至只要调用一个 SDK。但状态仍要保存，工具仍要执行，失败也得处理，只是产品把这些工作藏了起来。</p>
+<p>下面这张图记录了一次真实的任务执行。用户提交 Prompt 后，第一次 LLM Call 决定调用终端。Runtime 执行命令，再把终端返回值和 Session 里的信息组装成下一次输入。如此循环，直到第四次 LLM Call 给出最终结果。</p>
+<p><img src="/images/agent_loop/llm-not-agent_03.png" alt="Agent 任务执行流程" title="Agent 任务执行流程"></p>
+<blockquote>
+<p>注：这里使用的是 Hermes Agent，一轮完整交互会被包装在一次 Hermes Turn 中。</p>
+</blockquote>
+<h2 id="LLM-在一次调用里做了什么"><a href="#LLM-在一次调用里做了什么" class="headerlink" title="LLM 在一次调用里做了什么"></a>LLM 在一次调用里做了什么</h2><p>在上面的任务流程中，每个 <code>LLM Call</code> 都代表一次模型调用。主流 LLM 大多基于 Transformer 及其后续架构。生成文本时，模型根据已有 Token 计算下一个 Token 的概率分布，选出一个结果，再继续生成。</p>
 <pre class="line-numbers language-text" data-language="text"><code class="language-text">已有 Token
    ↓
 计算下一个 Token 的概率
@@ -322,26 +327,17 @@
    ↓
 继续，直到停止<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>这段计算叫 Inference，中文通常译作“推理”。它指模型接收输入并完成计算，不代表用户交代的事情已经办完。</p>
-<p>例如输入：</p>
+<p>这段计算叫 Inference，中文通常译作“推理”。这里的“推理”是指模型接收输入并完成计算，不等于用户交代的事情已经办完。</p>
+<p>如果只调用裸模型，可以输入：</p>
 <blockquote>
-<p>请比较三个 Agent Runtime。</p>
+<p>请根据官方文档比较三个 Agent Runtime。</p>
 </blockquote>
-<p>模型会根据当前上下文和训练得到的参数生成回答。它不会自动创建研究项目，也不会花几个小时阅读官网后再带着核验过的资料回来。要完成这些动作，外部系统必须提供工具，并在第一次生成结束后继续驱动任务。</p>
-<p>同一份输入也未必得到相同结果。模型计算出的是概率分布，解码时可以选择最高概率项，也可以从候选项中采样。Temperature、top-p 等参数会改变选择范围。Temperature 升高后，低概率候选通常更容易出现，输出可能更丰富，也可能跑偏。因此，把 Temperature 简单理解成“创造力旋钮”并不准确。</p>
-<p>模型返回的是生成结果，不是已经验收的事实。内容是否真实、能不能满足业务要求，还得另外检查。</p>
-<h2 id="模型没有一直守着任务"><a href="#模型没有一直守着任务" class="headerlink" title="模型没有一直守着任务"></a>模型没有一直守着任务</h2><p>一次 Inference 结束后，模型的计算就结束了。下一次调用能看到什么，由应用提交的输入决定。某些服务可以通过会话 ID 续接历史，但任务计划、预算、审批状态和中间文件仍要有人管理。</p>
-<p>产品可以通过数据库或服务端会话记住上次聊天，但这不等于模型自己保存着任务。裸模型没有这样的业务状态。</p>
-<p>拿调研任务来说，模型可以写出“下一步应该查官方文档”，但这句话不会给它变出浏览器，页面也不会自己打开。要把建议变成动作，还缺少这些条件：</p>
-<ul>
-<li>可以操作的工具和环境；</li>
-<li>当前做到哪里的状态记录；</li>
-<li>判断完成与失败的规则；</li>
-<li>对写文件、发消息等动作的权限。</li>
-</ul>
-<p>模型写出了动作，Runtime 才负责执行。这是两步。</p>
-<h2 id="什么时候才开始像-Agent"><a href="#什么时候才开始像-Agent" class="headerlink" title="什么时候才开始像 Agent"></a>什么时候才开始像 Agent</h2><p>回复次数不能用来判断系统是不是 Agent。连续聊十轮，有可能只是应用反复把旧消息交给模型。</p>
-<p>当系统开始根据模型结果采取行动，再把环境返回的结果交给模型时，才出现 Agent Loop：</p>
+<p>模型会根据当前上下文和训练得到的参数生成回答。它不会主动创建研究项目，也不会花几个小时阅读官网，再带着核验过的资料回来。要做到这些，外部系统必须提供工具，并在第一次生成结束后继续驱动任务。</p>
+<p>同一份输入也未必得到相同结果。模型计算出的是概率分布，解码时可以选择最高概率项，也可以从候选项中采样。Temperature、top-p 等参数会改变选择范围。Temperature 升高时，低概率候选通常更容易出现，输出可能更丰富，也可能跑偏。把 Temperature 简单理解成“创造力旋钮”并不准确。</p>
+<p>模型返回的是生成结果，不是经过验收的事实。内容是否真实、能否满足业务要求，还得另外检查。</p>
+<p>一次 Inference 结束，模型的计算也随之停止。要继续推进任务，外部系统得保存状态、执行工具，再次调用模型。</p>
+<h2 id="什么时候才开始像-Agent"><a href="#什么时候才开始像-Agent" class="headerlink" title="什么时候才开始像 Agent"></a>什么时候才开始像 Agent</h2><p>聊了多少轮，不能用来判断系统是不是 Agent。连续聊十轮，也可能只是应用反复把旧消息交给模型。</p>
+<p>系统根据模型的输出采取行动，再把环境返回的结果交给模型，这才形成 Agent Loop：</p>
 <pre class="line-numbers language-text" data-language="text"><code class="language-text">任务
   ↓
 模型决定下一步
@@ -354,9 +350,9 @@
   ↓
 继续或结束<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>模型判断下一步做什么，外部程序执行动作，并决定是否继续循环。后面的文章会分别讨论 Tool Calling、State 和 Runtime，这里先把这层分工说清楚。</p>
-<h2 id="更强的模型也救不了坏掉的系统"><a href="#更强的模型也救不了坏掉的系统" class="headerlink" title="更强的模型也救不了坏掉的系统"></a>更强的模型也救不了坏掉的系统</h2><p>即使模型正确判断出“应该先看官方文档”，系统仍然可能出错。</p>
-<p>系统可能根本没有搜索工具，也可能读到过期页面。工具超时后如果只会反复重试，费用会继续增加；没有验收规则时，缺少引用的报告也可能被直接交付。换一个参数更多的模型，解决不了这些故障。</p>
+<p>每一轮里，模型判断下一步做什么，外部程序执行动作，并决定是否继续。后面的文章会分别讨论 Tool Calling、State 和 Runtime，这里先说清楚它们与模型的分工。</p>
+<h2 id="更强的模型也救不了坏掉的系统"><a href="#更强的模型也救不了坏掉的系统" class="headerlink" title="更强的模型也救不了坏掉的系统"></a>更强的模型也救不了坏掉的系统</h2><p>模型即使正确判断出“应该先看官方文档”，系统仍可能出错。</p>
+<p>系统可能没有搜索工具，也可能读到过期页面。工具超时后如果只会反复重试，费用会不断增加。没有验收规则，缺少引用的报告也可能被直接交付。换一个参数更多的模型，解决不了这些故障。</p>
 <table>
 <thead>
 <tr>
@@ -381,17 +377,27 @@
 <td>验收规则与权限系统</td>
 </tr>
 </tbody></table>
-<p>模型能力会影响 Agent 能做什么，但任务能否稳定完成，还取决于模型之外的系统。</p>
-<p>下面这张图记录了一次真实的任务执行。用户提交 Prompt 后，第一次 LLM Call 决定调用终端。Runtime 执行命令，再把终端返回值和 Session 中已有的信息组装成下一次输入。这个过程持续到第四次 LLM Call 给出最终结果。</p>
-<p><img src="/images/agent_loop/llm-not-agent_03.png" alt="Agent 任务执行流程" title="Agent 任务执行流程"></p>
+<p>模型能力会影响 Agent 能做什么，而任务能否稳定完成，还取决于模型之外的系统。</p>
+<h2 id="C01：让裸模型做一次技术调研"><a href="#C01：让裸模型做一次技术调研" class="headerlink" title="C01：让裸模型做一次技术调研"></a>C01：让裸模型做一次技术调研</h2><p>这个系列会逐步实现一个“技术调研与报告交付 Agent”。在 C01 中，我关闭搜索，不保存任务状态，也不验证结果，只发出下面这条请求：</p>
 <blockquote>
-<p>注：这里使用的是 Hermes Agent，一轮完整交互会被包装在一次 Hermes Turn 中。</p>
+<p>调研三个主流 Agent Runtime，根据官方文档比较它们的状态管理、持久化、人工审批和可观测性，并给出选型建议。</p>
 </blockquote>
-<h2 id="C01：让裸模型做一次技术调研"><a href="#C01：让裸模型做一次技术调研" class="headerlink" title="C01：让裸模型做一次技术调研"></a>C01：让裸模型做一次技术调研</h2><p>这个系列会逐步实现一个“技术调研与报告交付 Agent”。在 C01 中，我先关闭搜索，不保存任务状态，也不验证结果，只发出下面这条请求：</p>
-<blockquote>
-<p>调研三个主流 Agent Runtime，比较它们的状态管理、持久化、人工审批和可观测性，并给出选型建议。</p>
-</blockquote>
-<p>模型确实给出了一篇结构完整的答案，比较维度看起来也合理。但只看这份输出，我无法确认：</p>
+<p>如果你用 Hermes Agent，或者在已经具备工具能力的应用中测试，可以改用下面这段指令：</p>
+<pre class="line-numbers language-txt" data-language="txt"><code class="language-txt">你现在处于 DIRECT_INFERENCE 模式。
+
+规则：
+- 只回答 &lt;user_instruction&gt; 中的内容；
+- 只进行一次模型生成；
+- 禁止工具调用、任务委派、Memory 检索、文件读取和网络访问；
+- 禁止创建计划或建议自己稍后继续执行；
+- 缺少信息时，明确说明无法从当前输入确定，不得调用外部能力补全；
+- 输出中只包含最终答案。
+
+&lt;user_instruction&gt;
+调研三个主流 Agent Runtime，根据官方文档比较它们的状态管理、持久化、人工审批和可观测性，并给出选型建议。
+&lt;/user_instruction&gt;<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>模型给出了一篇结构完整的答案，比较维度乍看也合理。但只看这份输出，我无法确认：</p>
 <ul>
 <li>它依据的是哪一版资料？</li>
 <li>关键结论来自哪里？</li>
@@ -399,8 +405,8 @@
 <li>信息不够时，谁负责继续调查？</li>
 <li>“调研完成”由谁判断？</li>
 </ul>
-<p>一次模型调用回答不了这些问题。</p>
-<p>这是本次裸模型调用的输出：</p>
+<p>一次模型调用无法回答这些问题。</p>
+<p>本次裸模型调用的输出如下：</p>
 <p><img src="/images/agent_loop/llm-not-agent_02.png" alt="C01 裸模型调用结果" title="C01 裸模型调用结果"></p>
 <h3 id="C01-的能力缺口"><a href="#C01-的能力缺口" class="headerlink" title="C01 的能力缺口"></a>C01 的能力缺口</h3><table>
 <thead>
@@ -436,13 +442,13 @@
 <td>文件写入、验证和发布权限</td>
 </tr>
 </tbody></table>
-<p>这次实验里，模型已经表现出不错的问题整理和内容生成能力。C01 关心的是另一件事：它给出一次回答后，系统还要补上哪些部件，才能把调研真正做完。</p>
-<h2 id="几个容易混淆的地方"><a href="#几个容易混淆的地方" class="headerlink" title="几个容易混淆的地方"></a>几个容易混淆的地方</h2><p>多轮聊天最容易被误认成 Agent。应用可能只是反复提交历史消息，既没有工具，也没有独立的任务状态。</p>
-<p>Tool Call 则是一份调用请求。模型生成函数名和参数后，网络请求、数据库查询或文件写入仍由 Runtime 完成。</p>
-<p>长 Context 只说明模型这次能读取更多内容。信息是否长期保存、何时更新或删除，属于 Memory 的设计。</p>
-<p>计划同样可能只是一段文本。模型写下“先搜索，再比较，最后写报告”之后，仍要由工具执行步骤，由状态记录进度，并由 Runtime 判断何时停止。</p>
-<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>LLM 读取当前上下文，完成一次 Inference，然后返回结果。模型服务承载这次调用。接下来，Agent 系统还要执行工具、保存进度、处理权限，并判断任务是否结束。</p>
-<p>后面讨论 Agent Loop 时还会反复遇到这条边界：模型给出下一步，Runtime 执行动作，并处理动作对真实环境造成的影响。</p>
+<p>这次实验说明，裸模型能梳理问题，也能生成正文。C01 关注的是：模型回答一次之后，系统还缺哪些部件，才能把调研真正做完。</p>
+<h2 id="几个容易混淆的地方"><a href="#几个容易混淆的地方" class="headerlink" title="几个容易混淆的地方"></a>几个容易混淆的地方</h2><p>多轮聊天最容易被误认成 Agent。应用可能只是在反复提交历史消息，没有工具，也没有独立的任务状态。</p>
+<p>Tool Call 只是一份调用请求。模型生成函数名和参数后，网络请求、数据库查询或文件写入仍由 Runtime 完成。</p>
+<p>Context 更长，只说明模型本次调用能读取更多内容。信息是否长期保存、何时更新或删除，取决于 Memory 的设计。</p>
+<p>计划也可能只是一段文本。模型写下“先搜索，再比较，最后写报告”之后，仍要由工具执行，由状态记录进度，再由 Runtime 判断何时停止。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>LLM 读取当前上下文，完成一次 Inference 并返回结果。模型服务承载这次调用。Agent 系统负责执行工具、保存进度、处理权限，以及判断任务是否结束。</p>
+<p>后面讨论 Agent Loop 时还会反复碰到这条边界：模型给出下一步，Runtime 执行动作，并处理动作对真实环境的影响。</p>
 <p>下一篇先把一次模型调用拆开，看看 Request、Context、Inference 和 Response 各自处在哪里。</p>
 <hr>
 <h2 id="案例实践"><a href="#案例实践" class="headerlink" title="案例实践"></a>案例实践</h2><ul>
