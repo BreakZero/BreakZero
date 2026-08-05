@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/siteicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/siteic%20%20on/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/siteicon/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/siteicon/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-center-simple.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"dejinlu.cn","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.22.0","exturl":false,"sidebar":{"position":"right","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12,"width":300},"copycode":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="一次模型调用不只是一条 Prompt。本文拆解 Input、Request、Context、Inference 与 Response 的边界，结合 C02 比较流式与非流式响应、结构化输出和常见失败，说明一次 Response 为什么不等于 Task 已完成。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="一次 Request 中发生了什么：Input、Context、Inference 与 Response">
+<meta property="og:url" content="https://dejinlu.cn/posts/2026/08/04/3658fafc/index.html">
+<meta property="og:site_name" content="D&amp;JのZONE">
+<meta property="og:description" content="一次模型调用不只是一条 Prompt。本文拆解 Input、Request、Context、Inference 与 Response 的边界，结合 C02 比较流式与非流式响应、结构化输出和常见失败，说明一次 Response 为什么不等于 Task 已完成。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dejinlu.cn/images/agent_loop/request-inference-response_01.png">
+<meta property="og:image" content="https://dejinlu.cn/images/agent_loop/request-inference-response_02.png">
+<meta property="article:published_time" content="2026-08-04T03:12:02.000Z">
+<meta property="article:modified_time" content="2026-08-05T01:31:39.131Z">
+<meta property="article:author" content="D&amp;J">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent Loop">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://dejinlu.cn/images/agent_loop/request-inference-response_01.png">
+
+
+<link rel="canonical" href="https://dejinlu.cn/posts/2026/08/04/3658fafc/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://dejinlu.cn/posts/2026/08/04/3658fafc/","path":"posts/2026/08/04/3658fafc/","title":"一次 Request 中发生了什么：Input、Context、Inference 与 Response"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>一次 Request 中发生了什么：Input、Context、Inference 与 Response | D&JのZONE</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?456d489b36d14e73cf4e36ecf2114b5d"></script>
+
+
+
+
+
+
+<link rel="dns-prefetch" href="https://blog-waline-git-main-breakzeros-projects.vercel.app">
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">D&JのZONE</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">知之者不如好之者，好之者不如乐之者</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E6%AC%A1-Request-%E4%B8%AD%E5%8F%91%E7%94%9F%E4%BA%86%E4%BB%80%E4%B9%88%EF%BC%9AInput%E3%80%81Context%E3%80%81Inference-%E4%B8%8E-Response"><span class="nav-number">1.</span> <span class="nav-text">一次 Request 中发生了什么：Input、Context、Inference 与 Response</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8E-Input-%E5%88%B0-Request"><span class="nav-number">1.1.</span> <span class="nav-text">从 Input 到 Request</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Request%EF%BC%9A%E5%BA%94%E7%94%A8%E5%8F%91%E5%87%BA%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-number">1.2.</span> <span class="nav-text">Request：应用发出了什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Context%EF%BC%9A%E6%A8%A1%E5%9E%8B%E5%AE%9E%E9%99%85%E7%9C%8B%E5%88%B0%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-number">1.3.</span> <span class="nav-text">Context：模型实际看到了什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Inference%EF%BC%9A%E6%A8%A1%E5%9E%8B%E5%A6%82%E4%BD%95%E7%94%9F%E6%88%90%E5%86%85%E5%AE%B9"><span class="nav-number">1.4.</span> <span class="nav-text">Inference：模型如何生成内容</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Response%EF%BC%9A%E6%9C%8D%E5%8A%A1%E8%BF%94%E5%9B%9E%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-number">1.5.</span> <span class="nav-text">Response：服务返回了什么</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Schema-%E5%8F%AA%E7%BA%A6%E6%9D%9F%E7%BB%93%E6%9E%84"><span class="nav-number">1.5.1.</span> <span class="nav-text">Schema 只约束结构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Streaming%EF%BC%9A%E4%BC%A0%E8%BE%93%E6%96%B9%E5%BC%8F%E5%8F%98%E4%BA%86%EF%BC%8C%E8%B0%83%E7%94%A8%E6%B2%A1%E6%9C%89%E5%8F%98"><span class="nav-number">1.6.</span> <span class="nav-text">Streaming：传输方式变了，调用没有变</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#C02%EF%BC%9A%E6%8A%8A%E4%B8%80%E6%AC%A1%E8%B0%83%E7%94%A8%E5%AE%8C%E6%95%B4%E8%AE%B0%E5%BD%95%E4%B8%8B%E6%9D%A5"><span class="nav-number">1.7.</span> <span class="nav-text">C02：把一次调用完整记录下来</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-number">1.8.</span> <span class="nav-text">小结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B%E5%AE%9E%E8%B7%B5%E6%B8%85%E5%8D%95"><span class="nav-number">1.9.</span> <span class="nav-text">案例实践清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">1.10.</span> <span class="nav-text">参考资料</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="D&J"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">D&J</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/BreakZero" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;BreakZero" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:dejin.po@gmail.com" title="E-Mail → mailto:dejin.po@gmail.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/MrL51907231" title="Twitter → https:&#x2F;&#x2F;twitter.com&#x2F;MrL51907231" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i></a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://dejinlu.cn/posts/2026/08/04/3658fafc/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="D&J">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="D&JのZONE">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="一次 Request 中发生了什么：Input、Context、Inference 与 Response | D&JのZONE">
+      <meta itemprop="description" content="一次模型调用不只是一条 Prompt。本文拆解 Input、Request、Context、Inference 与 Response 的边界，结合 C02 比较流式与非流式响应、结构化输出和常见失败，说明一次 Response 为什么不等于 Task 已完成。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          一次 Request 中发生了什么：Input、Context、Inference 与 Response
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-08-04 11:12:02" itemprop="dateCreated datePublished" datetime="2026-08-04T11:12:02+08:00">2026-08-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+  
+  <span class="post-meta-item">
+    
+    <span class="post-meta-item-icon">
+      <i class="far fa-comment"></i>
+    </span>
+    <span class="post-meta-item-text">Waline：</span>
+  
+    <a title="waline" href="/posts/2026/08/04/3658fafc/#waline" itemprop="discussionUrl">
+      <span class="post-comments-count waline-comment-count" data-path="/posts/2026/08/04/3658fafc/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+            <div class="post-description">一次模型调用不只是一条 Prompt。本文拆解 Input、Request、Context、Inference 与 Response 的边界，结合 C02 比较流式与非流式响应、结构化输出和常见失败，说明一次 Response 为什么不等于 Task 已完成。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="一次-Request-中发生了什么：Input、Context、Inference-与-Response"><a href="#一次-Request-中发生了什么：Input、Context、Inference-与-Response" class="headerlink" title="一次 Request 中发生了什么：Input、Context、Inference 与 Response"></a>一次 Request 中发生了什么：Input、Context、Inference 与 Response</h1><p>上一篇区分了 LLM、模型服务和 Agent 系统。这一篇继续拆解“调用一次模型”：一条用户消息如何变成 Request，模型实际看到了什么，又返回了什么。</p>
+<p>先看完整链路：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">Input → Request → Context → Inference → Response<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>本文中的含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Input</td>
+<td>用户、应用或工具提供的信息</td>
+</tr>
+<tr>
+<td>Request</td>
+<td>应用发给模型服务的一次调用</td>
+</tr>
+<tr>
+<td>Context</td>
+<td>模型本次推理实际可见的信息</td>
+</tr>
+<tr>
+<td>Inference</td>
+<td>模型计算并生成内容的过程</td>
+</tr>
+<tr>
+<td>Response</td>
+<td>模型服务返回的调用结果</td>
+</tr>
+</tbody></table>
+<p>界面上是一问一答，系统内部处理的却是五个不同概念。混用它们，很容易误判问题发生在哪一层。</p>
+<h2 id="从-Input-到-Request"><a href="#从-Input-到-Request" class="headerlink" title="从 Input 到 Request"></a>从 Input 到 Request</h2><p>继续使用这个系列的案例。用户输入：</p>
+<blockquote>
+<p>调研三个主流 Agent Runtime，并给出选型建议。</p>
+</blockquote>
+<p>这句话是 Input，不是完整的 Request。应用还会加入指令、历史消息、工具定义、输出格式、模型参数和追踪信息。</p>
+<pre class="line-numbers language-mermaid" data-language="mermaid"><code class="language-mermaid"><span class="token keyword">sequenceDiagram</span>
+    <span class="token keyword">participant</span> U as 用户
+    <span class="token keyword">participant</span> A as 应用或 Runtime
+    <span class="token keyword">participant</span> S as 模型服务
+    <span class="token keyword">participant</span> M as 模型
+
+    U<span class="token arrow operator">-&gt;&gt;</span>A<span class="token operator">:</span> 用户 Input
+    A<span class="token arrow operator">-&gt;&gt;</span>A<span class="token operator">:</span> 合并指令、历史、工具与格式
+    A<span class="token arrow operator">-&gt;&gt;</span>S<span class="token operator">:</span> Request
+    S<span class="token arrow operator">-&gt;&gt;</span>M<span class="token operator">:</span> 准备本次 Context
+    M<span class="token arrow operator">-&gt;&gt;</span>M<span class="token operator">:</span> Inference
+    M<span class="token arrow operator">--&gt;&gt;</span>S<span class="token operator">:</span> 生成内容
+    S<span class="token arrow operator">--&gt;&gt;</span>A<span class="token operator">:</span> Response
+    A<span class="token arrow operator">--&gt;&gt;</span>U<span class="token operator">:</span> 展示、校验或继续处理<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这些信息有不同来源：用户提出需求，产品团队设定规则，Runtime 提供工具并记录元数据。只有被放进本次调用的内容，模型才有机会看到。</p>
+<h2 id="Request：应用发出了什么"><a href="#Request：应用发出了什么" class="headerlink" title="Request：应用发出了什么"></a>Request：应用发出了什么</h2><p>Request 是应用提交给模型服务的调用数据。各家厂商的字段名不同，但大多包含以下内容：</p>
+<table>
+<thead>
+<tr>
+<th>内容</th>
+<th>用途</th>
+<th>通常来自哪里</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>model</td>
+<td>选择模型</td>
+<td>应用配置或路由策略</td>
+</tr>
+<tr>
+<td>instructions</td>
+<td>约束角色、规则和处理方式</td>
+<td>产品或开发者</td>
+</tr>
+<tr>
+<td>input / messages</td>
+<td>提供用户内容与历史交互</td>
+<td>用户、会话记录</td>
+</tr>
+<tr>
+<td>tools</td>
+<td>声明模型可选择的外部能力</td>
+<td>Tool Registry</td>
+</tr>
+<tr>
+<td>output schema</td>
+<td>约束返回结构</td>
+<td>下游程序契约</td>
+</tr>
+<tr>
+<td>generation config</td>
+<td>控制长度、采样或推理预算</td>
+<td>应用配置</td>
+</tr>
+<tr>
+<td>metadata</td>
+<td>关联案例、日志和业务记录</td>
+<td>Runtime</td>
+</tr>
+</tbody></table>
+<p>下面是 C02 使用的一份 OpenAI Request 样例：</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"model"</span><span class="token operator">:</span> <span class="token string">"gpt-5.6"</span><span class="token punctuation">,</span>
+  <span class="token property">"instructions"</span><span class="token operator">:</span> <span class="token string">"你是一名技术研究助手。只提炼研究问题、比较维度和当前限制。本次调用没有搜索工具，不得声称已经完成实时资料调研。"</span><span class="token punctuation">,</span>
+  <span class="token property">"input"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"role"</span><span class="token operator">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span>
+      <span class="token property">"content"</span><span class="token operator">:</span> <span class="token string">"调研三个主流 Agent Runtime，并给出选型建议。"</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">"tools"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">"max_output_tokens"</span><span class="token operator">:</span> <span class="token number">2000</span><span class="token punctuation">,</span>
+  <span class="token property">"metadata"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"case"</span><span class="token operator">:</span> <span class="token string">"C02"</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token property">"stream"</span><span class="token operator">:</span> <span class="token boolean">false</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><code>tools</code> 在这里是空数组，因为 C02 只观察一次模型调用，不执行 Agent Loop。</p>
+<p>Prompt 或 Messages 只是 Request 的一部分。Request 还可以包含图片、文件、工具定义和 JSON Schema，因此不能把两者画等号。</p>
+<p>Request 也不是 Task。技术调研是用户要完成的 Task；上面的 JSON 只是为这个 Task 发起的一次调用。</p>
+<h2 id="Context：模型实际看到了什么"><a href="#Context：模型实际看到了什么" class="headerlink" title="Context：模型实际看到了什么"></a>Context：模型实际看到了什么</h2><p>模型不会原样读取 Request。模型服务会套用消息模板、加入控制信息并完成 Tokenization，得到本次 Inference 使用的 Context。</p>
+<p>Context 可能包含：</p>
+<ul>
+<li>系统或开发者指令；</li>
+<li>用户输入和选中的历史消息；</li>
+<li>之前的模型输出、Tool Call 与 Tool Result；</li>
+<li>工具描述、文件片段和输出格式说明。</li>
+</ul>
+<p>聊天记录只是 Context 的来源之一。应用数据库里即使存着一百份资料，本次 Request 只放入三份，模型也只能根据这三份判断。工具定义虽然不显示成普通聊天消息，同样会占用 Context。</p>
+<p>模型一次能处理的 Token 数量有限，这个上限通常称为 Context window。输入过长时，服务可能直接拒绝请求，应用也可能事先截断、摘要或删除部分历史。“模型没理会上轮要求”未必是它突然忘了，那条要求可能根本没有进入本次 Context。</p>
+<p>所以排查“模型忘记了要求”时，先检查实际 Request 和 Trace。聊天界面不足以说明模型当时看到了什么。</p>
+<h2 id="Inference：模型如何生成内容"><a href="#Inference：模型如何生成内容" class="headerlink" title="Inference：模型如何生成内容"></a>Inference：模型如何生成内容</h2><p>模型服务收到 Request 后，会校验参数、准备输入并执行计算。在文本生成场景中，大致过程如下：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">Request 到达
+  → 输入处理与 Tokenization
+  → 模型计算下一个 Token
+  → 按解码策略选取并追加 Token
+  → 重复生成，直到停止
+  → 组装 Response<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这段计算过程就是 Inference。应用可以发送和记录 Request，但 Inference 发生在模型服务内部。</p>
+<p>在最简单的调用中，一次 Request 可以看作一次逻辑生成。但工程实现未必严格一一对应：SDK 可能重试失败请求，服务可能执行路由或批处理，某些托管工具也会在背后做额外编排。审计时，应分别记录应用发出的 Request、模型服务返回的 Response，以及 Runtime 观察到的 Step。</p>
+<h2 id="Response：服务返回了什么"><a href="#Response：服务返回了什么" class="headerlink" title="Response：服务返回了什么"></a>Response：服务返回了什么</h2><p>生成完成或中止后，模型服务返回 Response。除了文字，它还可能包含：</p>
+<ul>
+<li>Response ID、状态和模型信息；</li>
+<li>结构化内容或 Tool Call；</li>
+<li>拒绝、错误和未完成原因；</li>
+<li>Token usage 与其他元数据。</li>
+</ul>
+<p>普通问答应用可以直接展示其中的文本。Agent Runtime 还要判断它是最终输出还是 Tool Call、结构是否合格、是否需要继续执行。一次调用成功，只代表应用收到了 Response，不代表 Task 已完成。</p>
+<p><img src="/images/agent_loop/request-inference-response_01.png" alt="非流式 Response" title="非流式 Response"></p>
+<h3 id="Schema-只约束结构"><a href="#Schema-只约束结构" class="headerlink" title="Schema 只约束结构"></a>Schema 只约束结构</h3><p>C02 接着用 Schema 约束同一个 Request 的输出。先定义 <code>ResearchSummary</code>：</p>
+<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">const</span> ResearchSummary <span class="token operator">=</span> z<span class="token punctuation">.</span><span class="token function">object</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  research_question<span class="token operator">:</span> z<span class="token punctuation">.</span><span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  comparison_dimensions<span class="token operator">:</span> z<span class="token punctuation">.</span><span class="token function">array</span><span class="token punctuation">(</span>z<span class="token punctuation">.</span><span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  known_limitations<span class="token operator">:</span> z<span class="token punctuation">.</span><span class="token function">array</span><span class="token punctuation">(</span>z<span class="token punctuation">.</span><span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>以下是一次实际返回的 Response：</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"id"</span><span class="token operator">:</span> <span class="token string">"resp_035b9f82fe1165ab006a71e04bd8f481998c61b4748a4650d8"</span><span class="token punctuation">,</span>
+  <span class="token property">"status"</span><span class="token operator">:</span> <span class="token string">"completed"</span><span class="token punctuation">,</span>
+  <span class="token property">"model"</span><span class="token operator">:</span> <span class="token string">"gpt-5.6-sol"</span><span class="token punctuation">,</span>
+  <span class="token property">"format"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"json_schema"</span><span class="token punctuation">,</span>
+    <span class="token property">"description"</span><span class="token operator">:</span> <span class="token null keyword">null</span><span class="token punctuation">,</span>
+    <span class="token property">"name"</span><span class="token operator">:</span> <span class="token string">"research_summary"</span><span class="token punctuation">,</span>
+    <span class="token property">"schema"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"object"</span><span class="token punctuation">,</span>
+      <span class="token property">"properties"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token property">"research_question"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"string"</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token property">"comparison_dimensions"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"array"</span><span class="token punctuation">,</span>
+          <span class="token property">"items"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"string"</span>
+          <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token property">"known_limitations"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+          <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"array"</span><span class="token punctuation">,</span>
+          <span class="token property">"items"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"string"</span>
+          <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      <span class="token property">"required"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">"research_question"</span><span class="token punctuation">,</span>
+        <span class="token string">"comparison_dimensions"</span><span class="token punctuation">,</span>
+        <span class="token string">"known_limitations"</span>
+      <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token property">"additionalProperties"</span><span class="token operator">:</span> <span class="token boolean">false</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token property">"strict"</span><span class="token operator">:</span> <span class="token boolean">true</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token property">"output"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"id"</span><span class="token operator">:</span> <span class="token string">"rs_035b9f82fe1165ab006a71e04c7f30819987a7336810590d25"</span><span class="token punctuation">,</span>
+      <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"reasoning"</span><span class="token punctuation">,</span>
+      <span class="token property">"content"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token property">"encrypted_content"</span><span class="token operator">:</span> <span class="token string">"gAAAAABqceBVuIR0yNr***"</span><span class="token punctuation">,</span>
+      <span class="token property">"summary"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      <span class="token property">"id"</span><span class="token operator">:</span> <span class="token string">"msg_035b9f82fe1165ab006a71e04e182c8199aaf5284204c8543d"</span><span class="token punctuation">,</span>
+      <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"message"</span><span class="token punctuation">,</span>
+      <span class="token property">"status"</span><span class="token operator">:</span> <span class="token string">"completed"</span><span class="token punctuation">,</span>
+      <span class="token property">"content"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token punctuation">{</span>
+          <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"output_text"</span><span class="token punctuation">,</span>
+          <span class="token property">"annotations"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+          <span class="token property">"logprobs"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+          <span class="token comment">// 已截取</span>
+          <span class="token property">"text"</span><span class="token operator">:</span> <span class="token string">"{\"research_question\":\"对三个主流 Agent Runtime 进行横向比较，评估其在目标业务场景中的适配性，并形成选型依据；需先明确候选范围（例如 LangGraph、Micros...]}"</span><span class="token punctuation">,</span>
+          <span class="token property">"parsed"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+            <span class="token property">"research_question"</span><span class="token operator">:</span> <span class="token string">"对三个主流 Agent Runtime 进行横向比较，评估其在目标业务场景中的适配性，并形成选型依据；需先明确候选范围（例如 LangGraph、Microsoft AutoGen、CrewAI，或云厂商托管型 Runtime）及具体使用场景。"</span><span class="token punctuation">,</span>
+            <span class="token property">"comparison_dimensions"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+              <span class="token string">"产品定位与核心抽象"</span><span class="token punctuation">,</span>
+              <span class="token string">"Agent 编排能力与多 Agent 协作"</span><span class="token punctuation">,</span>
+              <span class="token string">"状态管理、持久化与断点恢复"</span><span class="token punctuation">,</span>
+              <span class="token string">"工具调用、模型接入与协议兼容性（如 MCP）"</span><span class="token punctuation">,</span>
+              <span class="token string">"工作流控制、人工介入与审批机制"</span><span class="token punctuation">,</span>
+              <span class="token string">"记忆、上下文管理与知识检索集成"</span><span class="token punctuation">,</span>
+              <span class="token string">"可靠性、容错、重试与幂等性"</span><span class="token punctuation">,</span>
+              <span class="token string">"可观测性、调试、评测与追踪能力"</span><span class="token punctuation">,</span>
+              <span class="token string">"部署方式、扩缩容与运行隔离"</span><span class="token punctuation">,</span>
+              <span class="token string">"安全、权限、密钥管理与合规能力"</span><span class="token punctuation">,</span>
+              <span class="token string">"性能、延迟、吞吐量与资源消耗"</span><span class="token punctuation">,</span>
+              <span class="token string">"开发体验、学习成本与生态成熟度"</span><span class="token punctuation">,</span>
+              <span class="token string">"商业授权、平台锁定与总体拥有成本"</span><span class="token punctuation">,</span>
+              <span class="token string">"社区活跃度、版本稳定性与长期维护风险"</span><span class="token punctuation">,</span>
+              <span class="token string">"与现有技术栈和团队能力的匹配程度"</span>
+            <span class="token punctuation">]</span><span class="token punctuation">,</span>
+            <span class="token property">"known_limitations"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+              <span class="token string">"本次调用没有搜索工具，无法完成实时资料调研或验证各产品的最新版本、功能、定价和活跃度。"</span><span class="token punctuation">,</span>
+              <span class="token string">"“三个主流 Agent Runtime”缺少统一定义；框架型、运行时型和云托管型产品不宜在未分组的情况下直接比较。"</span><span class="token punctuation">,</span>
+              <span class="token string">"尚未提供业务场景、负载规模、部署环境、合规要求、预算及团队技术栈，因此不能给出可靠的最终选型建议。"</span><span class="token punctuation">,</span>
+              <span class="token string">"Agent Runtime 领域变化较快，基于非实时信息形成的结论可能存在时效性偏差。"</span>
+            <span class="token punctuation">]</span>
+          <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+      <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token property">"phase"</span><span class="token operator">:</span> <span class="token string">"final_answer"</span><span class="token punctuation">,</span>
+      <span class="token property">"role"</span><span class="token operator">:</span> <span class="token string">"assistant"</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">"usage"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"input_tokens"</span><span class="token operator">:</span> <span class="token number">112</span><span class="token punctuation">,</span>
+    <span class="token property">"input_tokens_details"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token property">"cache_write_tokens"</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+      <span class="token property">"cached_tokens"</span><span class="token operator">:</span> <span class="token number">0</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token property">"output_tokens"</span><span class="token operator">:</span> <span class="token number">489</span><span class="token punctuation">,</span>
+    <span class="token property">"output_tokens_details"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token property">"reasoning_tokens"</span><span class="token operator">:</span> <span class="token number">90</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token property">"total_tokens"</span><span class="token operator">:</span> <span class="token number">601</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>下游代码可以直接读取字段，不必从自然语言中猜测标题和列表。</p>
+<blockquote>
+<p>Note：Schema 只检查结构。格式正确的 JSON 仍可能包含过时或错误的信息，事实需要另行验证。</p>
+</blockquote>
+<h2 id="Streaming：传输方式变了，调用没有变"><a href="#Streaming：传输方式变了，调用没有变" class="headerlink" title="Streaming：传输方式变了，调用没有变"></a>Streaming：传输方式变了，调用没有变</h2><p>Streaming 会把同一个 Response 拆成一串事件发送。每个 delta 都不是新的 Request，也不是新的 Agent Step。</p>
+<p>非流式调用等生成结束后一次返回完整结果：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">Request ─────────等待─────────&gt; 完整 Response<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>流式调用则在生成期间持续发送事件或文本增量：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">Request ─&gt; response.created
+        ─&gt; output_text.delta
+        ─&gt; output_text.delta
+        ─&gt; ...
+        ─&gt; response.completed<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这次调用收到的 Events 如下：</p>
+<p><img src="/images/agent_loop/request-inference-response_02.png" alt="流式 Events" title="流式 Events"></p>
+<p>聚合后的概要如下：</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"mode"</span><span class="token operator">:</span> <span class="token string">"stream"</span><span class="token punctuation">,</span>
+  <span class="token property">"response_id"</span><span class="token operator">:</span> <span class="token string">"resp_05803925ca8f9b36006a71e02fc7d48198a67314caafd8737b"</span><span class="token punctuation">,</span>
+  <span class="token property">"status"</span><span class="token operator">:</span> <span class="token string">"completed"</span><span class="token punctuation">,</span>
+  <span class="token property">"model"</span><span class="token operator">:</span> <span class="token string">"gpt-5.6"</span><span class="token punctuation">,</span>
+  <span class="token property">"elapsed_ms"</span><span class="token operator">:</span> <span class="token number">27889</span><span class="token punctuation">,</span>
+  <span class="token property">"event_count"</span><span class="token operator">:</span> <span class="token number">1184</span><span class="token punctuation">,</span>
+  <span class="token property">"event_type_counts"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"response.created"</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+    <span class="token property">"response.in_progress"</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+    <span class="token property">"response.output_item.added"</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+    <span class="token property">"response.output_item.done"</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span>
+    <span class="token property">"response.content_part.added"</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+    <span class="token property">"response.output_text.delta"</span><span class="token operator">:</span> <span class="token number">1174</span><span class="token punctuation">,</span>
+    <span class="token property">"response.output_text.done"</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+    <span class="token property">"response.content_part.done"</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span>
+    <span class="token property">"response.completed"</span><span class="token operator">:</span> <span class="token number">1</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token property">"first_event"</span><span class="token operator">:</span> <span class="token string">"response.created"</span><span class="token punctuation">,</span>
+  <span class="token property">"last_event"</span><span class="token operator">:</span> <span class="token string">"response.completed"</span><span class="token punctuation">,</span>
+  <span class="token property">"usage"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"input_tokens"</span><span class="token operator">:</span> <span class="token number">60</span><span class="token punctuation">,</span>
+    <span class="token property">"input_tokens_details"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token property">"cache_write_tokens"</span><span class="token operator">:</span> <span class="token number">0</span><span class="token punctuation">,</span>
+      <span class="token property">"cached_tokens"</span><span class="token operator">:</span> <span class="token number">0</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token property">"output_tokens"</span><span class="token operator">:</span> <span class="token number">1611</span><span class="token punctuation">,</span>
+    <span class="token property">"output_tokens_details"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token property">"reasoning_tokens"</span><span class="token operator">:</span> <span class="token number">408</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token property">"total_tokens"</span><span class="token operator">:</span> <span class="token number">1671</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token comment">// 已被截取</span>
+  <span class="token property">"aggregated_text"</span><span class="token operator">:</span> <span class="token string">"以下为**非实时、待验证的初步选型框架**；本次未进行联网检索或最新版本核验。这里暂将 Agent Runtime 定义为：支..."</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>Streaming 的价值是让用户更早看到内容，也让应用提前开始处理。屏幕上的文字逐个出现，并不表示模型被反复调用。</p>
+<p>代价是应用要处理流式连接的状态。连接中断后，必须分清收到的是完整结果还是半截文本；如果 SDK 自动重连或重试，还要防止重复写入。只保存界面最终显示的字符串，无法还原完整过程。</p>
+<h2 id="C02：把一次调用完整记录下来"><a href="#C02：把一次调用完整记录下来" class="headerlink" title="C02：把一次调用完整记录下来"></a>C02：把一次调用完整记录下来</h2><p>C02 不接搜索工具，只验证一次调用的边界：Request 从哪里来、两种传输方式如何返回 Response、结构化输出能否通过校验。</p>
+<p>代码已上传至 GitHub 仓库 <a target="_blank" rel="noopener" href="https://github.com/BreakZero/AgentLoopExperienceSample">AgentLoopExperienceSample</a>。</p>
+<p>运行命令：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> run c02 <span class="token operator"><span class="token file-descriptor important">2</span>&gt;</span><span class="token file-descriptor important">&amp;1</span> <span class="token operator">|</span> <span class="token function">tee</span> artifacts/00-terminal-output.txt<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>非流式与流式输出不必逐字相同。采样和服务执行会带来差异。验证重点是两种方式都能得到一个逻辑 Response，并且流式事件可以聚合、记录和校验。</p>
+<p>调节 <code>max_output_tokens</code> 等参数，还可以主动制造几类失败：</p>
+<table>
+<thead>
+<tr>
+<th>失败</th>
+<th>可观察现象</th>
+<th>责任位置</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Context 超限</td>
+<td>Request 被拒绝或历史被截断</td>
+<td>应用的 Context 策略与服务限制</td>
+</tr>
+<tr>
+<td>流连接中断</td>
+<td>只收到部分事件，没有完成状态</td>
+<td>传输与 Runtime 恢复逻辑</td>
+</tr>
+<tr>
+<td>Schema 校验失败</td>
+<td>Response 存在，但下游无法消费</td>
+<td>输出契约与校验代码</td>
+</tr>
+</tbody></table>
+<p>C02 的结构化结果还不是“调研报告”。系统没有读取当前的官方资料，也没有保存证据。这个实验只证明应用能够构造、记录和检查一次模型调用。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>应用把 Input 组装成 Request，模型服务据此准备 Context、执行 Inference，再返回 Response。Streaming 只改变 Response 的传输方式，Schema 只约束输出结构。它们都不会自动完成整个 Task。</p>
+<p>下一篇再回到 Task：用户交给系统的是一个任务，为什么一次 Request 往往不够？</p>
+<hr>
+<h2 id="案例实践清单"><a href="#案例实践清单" class="headerlink" title="案例实践清单"></a>案例实践清单</h2><ul>
+<li><input disabled="" type="checkbox"> 保存一份 C02 Request，并标注每个字段的来源。</li>
+<li><input disabled="" type="checkbox"> 在不启用工具的前提下分别执行非流式和流式调用。</li>
+<li><input disabled="" type="checkbox"> 保存流式事件，并聚合出最终 Response。</li>
+<li><input disabled="" type="checkbox"> 使用 <code>research_summary</code> Schema 约束和校验输出。</li>
+<li><input disabled="" type="checkbox"> 记录 Response ID、状态、Token usage、耗时与失败原因。</li>
+<li><input disabled="" type="checkbox"> 确认 C02 只验证调用边界，不宣称完成调研 Task。</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://developers.openai.com/api/docs/guides/responses">OpenAI API：Responses API</a>：Responses API 的输入、输出和调用方式。</li>
+<li><a target="_blank" rel="noopener" href="https://developers.openai.com/api/docs/guides/streaming-responses">OpenAI API：Streaming responses</a>：SSE 流式传输和响应事件。</li>
+<li><a target="_blank" rel="noopener" href="https://developers.openai.com/api/docs/guides/structured-outputs">OpenAI API：Structured model outputs</a>：使用 JSON Schema 约束模型输出。</li>
+<li><a target="_blank" rel="noopener" href="https://developers.openai.com/api/docs/guides/conversation-state">OpenAI API：Conversation state</a>：<code>previous_response_id</code> 与 Conversation 的上下文续接方式。</li>
+<li><a target="_blank" rel="noopener" href="https://platform.claude.com/docs/en/api/messages">Anthropic API：Messages</a>：另一种 Messages API 的 Request/Response 设计。</li>
+<li><a target="_blank" rel="noopener" href="https://huggingface.co/docs/transformers/chat_templating">Hugging Face Transformers：Chat templates</a>：消息、控制 Token 与模型输入序列之间的转换。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/Agent-Loop/" rel="tag"># Agent Loop</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/2026/08/04/bf63960/" rel="prev" title="LLM 不是 Agent：先理解模型、推理与生成">
+                  <i class="fa fa-angle-left"></i> LLM 不是 Agent：先理解模型、推理与生成
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="waline"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2021 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">D&J</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/sidebar.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.4.0/mermaid.min.js","integrity":"sha256-G8ouPAnw4zzMbnAenHnVz6h9XpKbNdOkrqTh7AadyHs="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.5.0/wavedrom.min.js","integrity":"sha256-INLAoJc6quTNfiMWkGZniYO2cxE8mHpddnLow1m6RFs="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.5.0/skins/default.js","integrity":"sha256-fduc/Zszk5ezWws2uInY/ALWVmIrmV6VTgXbsYSReFI="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+
+  
+
+
+
+
+<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-CN","enable":true,"serverURL":"https://blog-waline-git-main-breakzeros-projects.vercel.app","cssUrl":"https://unpkg.com/@waline/client@v2/dist/waline.css","commentCount":false,"pageview":false,"dark":"auto","imageUploader":false,"copyright":false,"search":false,"meta":["nick","mail"],"requiredMeta":["nick"],"el":"#waline","comment":true,"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","path":"/posts/2026/08/04/3658fafc/"}</script>
+<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css">
+<script>
+document.addEventListener('page:loaded', () => {
+  NexT.utils.loadComments(CONFIG.waline.el).then(() =>
+    NexT.utils.getScript(CONFIG.waline.libUrl, { condition: window.Waline })
+  ).then(() => 
+    Waline.init(Object.assign({}, CONFIG.waline,{ el: document.querySelector(CONFIG.waline.el) }))
+  );
+});
+</script>
+
+<script async>window.onload=function(){var a=document.createElement('script'),b=document.getElementsByTagName('script')[0];a.type='text/javascript',a.async=!0,a.src='/sw-register.js?v='+Date.now(),b.parentNode.insertBefore(a,b)};</script></body></html>
