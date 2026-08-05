@@ -32,7 +32,7 @@
 <meta property="og:image" content="https://dejinlu.cn/images/agent_loop/request-inference-response_01.png">
 <meta property="og:image" content="https://dejinlu.cn/images/agent_loop/request-inference-response_02.png">
 <meta property="article:published_time" content="2026-08-04T03:12:02.000Z">
-<meta property="article:modified_time" content="2026-08-05T01:31:39.131Z">
+<meta property="article:modified_time" content="2026-08-05T03:01:50.998Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="Agent Loop">
@@ -317,20 +317,20 @@
 <p>调研三个主流 Agent Runtime，并给出选型建议。</p>
 </blockquote>
 <p>这句话是 Input，不是完整的 Request。应用还会加入指令、历史消息、工具定义、输出格式、模型参数和追踪信息。</p>
-<pre class="line-numbers language-mermaid" data-language="mermaid"><code class="language-mermaid"><span class="token keyword">sequenceDiagram</span>
-    <span class="token keyword">participant</span> U as 用户
-    <span class="token keyword">participant</span> A as 应用或 Runtime
-    <span class="token keyword">participant</span> S as 模型服务
-    <span class="token keyword">participant</span> M as 模型
+<pre><code class="mermaid">sequenceDiagram
+    participant U as 用户
+    participant A as 应用或 Runtime
+    participant S as 模型服务
+    participant M as 模型
 
-    U<span class="token arrow operator">-&gt;&gt;</span>A<span class="token operator">:</span> 用户 Input
-    A<span class="token arrow operator">-&gt;&gt;</span>A<span class="token operator">:</span> 合并指令、历史、工具与格式
-    A<span class="token arrow operator">-&gt;&gt;</span>S<span class="token operator">:</span> Request
-    S<span class="token arrow operator">-&gt;&gt;</span>M<span class="token operator">:</span> 准备本次 Context
-    M<span class="token arrow operator">-&gt;&gt;</span>M<span class="token operator">:</span> Inference
-    M<span class="token arrow operator">--&gt;&gt;</span>S<span class="token operator">:</span> 生成内容
-    S<span class="token arrow operator">--&gt;&gt;</span>A<span class="token operator">:</span> Response
-    A<span class="token arrow operator">--&gt;&gt;</span>U<span class="token operator">:</span> 展示、校验或继续处理<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+    U-&gt;&gt;A: 用户 Input
+    A-&gt;&gt;A: 合并指令、历史、工具与格式
+    A-&gt;&gt;S: Request
+    S-&gt;&gt;M: 准备本次 Context
+    M-&gt;&gt;M: Inference
+    M--&gt;&gt;S: 生成内容
+    S--&gt;&gt;A: Response
+    A--&gt;&gt;U: 展示、校验或继续处理</code></pre>
 
 <p>这些信息有不同来源：用户提出需求，产品团队设定规则，Runtime 提供工具并记录元数据。只有被放进本次调用的内容，模型才有机会看到。</p>
 <h2 id="Request：应用发出了什么"><a href="#Request：应用发出了什么" class="headerlink" title="Request：应用发出了什么"></a>Request：应用发出了什么</h2><p>Request 是应用提交给模型服务的调用数据。各家厂商的字段名不同，但大多包含以下内容：</p>
