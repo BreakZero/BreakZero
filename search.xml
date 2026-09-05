@@ -507,6 +507,210 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
       </tags>
   </entry>
   <entry>
+    <title>升降桌故障排查记</title>
+    <url>/posts/2026/03/02/fbb9923f/</url>
+    <content><![CDATA[<h1 id="升降桌故障排查记：和-E07-E08-的一场小拉扯"><a href="#升降桌故障排查记：和-E07-E08-的一场小拉扯" class="headerlink" title="升降桌故障排查记：和 E07 / E08 的一场小拉扯"></a>升降桌故障排查记：和 E07 / E08 的一场小拉扯</h1><p>有些家用设备的小故障，最磨人。</p>
+<p>它不至于让人立刻崩溃，但会持续打断你的节奏。尤其是你准备工作的时候，桌子突然一边高一边低，控制面板还反复跳出 <strong>RST、E07、E08</strong> 这些报码。</p>
+<p>这次出问题的，是家里的乐歌升降桌。</p>
+<p>原本只是一次普通的升降操作。我像往常一样按下上升键，结果桌子没有正常升起来：一边桌脚还有动作，另一边完全没反应。更麻烦的是，反复重试之后，桌面已经明显不平。</p>
+<p>那一刻的感受很真实。不是“这下完了”的大惊失色，而是一种很具体的无奈：桌子没法正常用，售后不一定马上能处理，而你还得继续工作。</p>
+<p>所以我决定先自己排一轮。</p>
+<p>这篇文章不是维修教程，更不是鼓励大家随便拆设备。它只是一次真实的排查记录：我是怎么从错误代码、客服建议、交叉插线，一步步判断到问题可能出在左右桌脚不同步，并最终通过手动找平和系统重置把桌子恢复正常的。</p>
+<hr>
+<h2 id="一、故障现象：一边能动，一边“罢工”"><a href="#一、故障现象：一边能动，一边“罢工”" class="headerlink" title="一、故障现象：一边能动，一边“罢工”"></a>一、故障现象：一边能动，一边“罢工”</h2><p>那天晚上，我按下升降桌的上升按钮后，很快发现状态不对。</p>
+<p>具体表现大概是这样：</p>
+<ul>
+<li>左边桌脚还有反应，但<strong>只能往下，不能上升</strong></li>
+<li>右边桌脚无论上升还是下降都<strong>完全没反应</strong></li>
+<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
+<li>多次尝试后，桌面出现明显的左右高度差</li>
+</ul>
+<p><img src="/images/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg" alt="联系客服反馈问题"></p>
+<p><em>图 1：控制面板显示 RST / E07 / E08 等报码</em></p>
+<p>我又试了几次，结论基本一致：</p>
+<blockquote>
+<p><strong>这不是简单的卡顿，而是桌子已经进入了异常保护状态。</strong></p>
+</blockquote>
+<p>因为每次操作时，始终只有一边桌脚在动，另一边完全静止。整张桌子看起来就像一张“瘸腿桌”，别说继续升降了，光看着就让人难受。</p>
+<hr>
+<h2 id="二、先找客服：按标准流程排一遍"><a href="#二、先找客服：按标准流程排一遍" class="headerlink" title="二、先找客服：按标准流程排一遍"></a>二、先找客服：按标准流程排一遍</h2><p>遇到这种问题，第一反应当然还是联系客服。</p>
+<p>我联系了乐歌京东自营店。对方给出的思路比较标准，也符合这类升降桌常见的排查逻辑：先重置，再交叉插线，看错误代码是否变化。</p>
+<h3 id="1-先做系统重置"><a href="#1-先做系统重置" class="headerlink" title="1. 先做系统重置"></a>1. 先做系统重置</h3><p>客服先让我把桌子尽量降到最低，然后：</p>
+<blockquote>
+<p><strong>长按下降键约 7 秒，执行系统重置。</strong></p>
+</blockquote>
+<p>这是升降桌常见的初始化方式。很多时候，报码并不一定意味着零件损坏，也可能只是系统检测到位置异常后，需要重新校准。</p>
+<p>可惜，对我这台桌子来说，这一步没有解决问题。</p>
+<h3 id="2-再交叉插线"><a href="#2-再交叉插线" class="headerlink" title="2. 再交叉插线"></a>2. 再交叉插线</h3><p>接下来，客服让我拆开桌腿挡板，把控制盒上的 <strong>M1 和 M2 电机线互换</strong>，再观察报码变化。</p>
+<p><img src="/images/20260302/8BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg" alt="客服建议拆开检查"></p>
+<p><em>图 2：客服建议交叉插线排查问题位置</em></p>
+<p>我照着做完之后，面板上的报码确实变了：从 <strong>E07</strong> 变成了 <strong>E08</strong>。</p>
+<p><img src="/images/20260302/C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg" alt="错误代码变化反馈"></p>
+<p><em>图 3：交叉插线后，报码从 E07 变成 E08</em></p>
+<p>客服根据这个变化，初步判断可能是控制盒问题，需要反馈技术部门，再安排后续处理。问题是，当时已经临近假期，对方给出的答复大意是：</p>
+<blockquote>
+<p>年后再安排。</p>
+</blockquote>
+<p>说实话，听到这里，我看着眼前那张高低不平的桌子，第一反应不是失望，而是有点不甘心。</p>
+<p>都已经拆到这一步了，索性继续往下查。</p>
+<hr>
+<h2 id="三、换个思路：不要只盯着报码"><a href="#三、换个思路：不要只盯着报码" class="headerlink" title="三、换个思路：不要只盯着报码"></a>三、换个思路：不要只盯着报码</h2><p>很多时候，真正有用的线索，不在错误代码本身，而在设备到底表现出了什么异常。</p>
+<p>这次也是一样。</p>
+<h3 id="1-先理解报码，但不迷信报码"><a href="#1-先理解报码，但不迷信报码" class="headerlink" title="1. 先理解报码，但不迷信报码"></a>1. 先理解报码，但不迷信报码</h3><p>我先查了 E07 / E08 的相关说明，想弄清楚它们大概对应什么问题。</p>
+<p>网上能查到的说法并不完全一致，但结合乐歌和同类升降桌常见的故障逻辑，大致可以归纳到两个方向：</p>
+<ul>
+<li>一类和<strong>左右桌脚高度不一致</strong>有关</li>
+<li>一类和<strong>电机连接、通信、同步异常</strong>有关</li>
+</ul>
+<p>这至少说明一件事：</p>
+<blockquote>
+<p><strong>问题未必是硬件彻底坏了，也可能是双侧不同步之后触发了保护机制。</strong></p>
+</blockquote>
+<p>这个判断后来证明挺关键。</p>
+<h3 id="2-先确认电机有没有坏"><a href="#2-先确认电机有没有坏" class="headerlink" title="2. 先确认电机有没有坏"></a>2. 先确认电机有没有坏</h3><p>既然客服已经让我拆开挡板，那不如继续往前一步，先把“是不是电机坏了”这件事弄清楚。</p>
+<p>我的操作过程不复杂：</p>
+<ol>
+<li>拧开桌腿挡板螺丝</li>
+<li>断开两侧电机连接线</li>
+<li>分别测试每个电机是否能正常上下动作</li>
+</ol>
+<p>测试结果出来的时候，我心里其实松了一口气：</p>
+<blockquote>
+<p><strong>两个电机都能正常上下运动。</strong></p>
+</blockquote>
+<p>这意味着，问题大概率不在“电机彻底损坏”这一层。</p>
+<p>至少可以先排除掉最麻烦、也最容易让人头疼的情况。</p>
+<h3 id="3-真正的问题，可能是“两边已经不平了”"><a href="#3-真正的问题，可能是“两边已经不平了”" class="headerlink" title="3. 真正的问题，可能是“两边已经不平了”"></a>3. 真正的问题，可能是“两边已经不平了”</h3><p>接下来再回头看整个故障过程，很多细节就串起来了。</p>
+<p>在出问题之前，桌子的状态其实已经变成了：</p>
+<ul>
+<li>只有一边桌脚在动</li>
+<li>另一边没有正常响应</li>
+<li>两边高度差被一点点拉大</li>
+</ul>
+<p>一旦意识到这一点，思路就清楚了。</p>
+<p>如果升降桌系统会持续检测左右桌脚的同步状态，那么当两边高度差大到一定程度时，系统为了保护结构而锁定，反而很合理。</p>
+<p>也就是说，真正的问题也许不是“它坏了”，而是：</p>
+<blockquote>
+<p><strong>它觉得现在这样继续动下去不安全。</strong></p>
+</blockquote>
+<p>想到这里，我决定不再先盯着报码，而是先处理最直观的问题：</p>
+<p><strong>把两边桌脚重新找平。</strong></p>
+<hr>
+<h2 id="四、解决过程：先扶正，再重置"><a href="#四、解决过程：先扶正，再重置" class="headerlink" title="四、解决过程：先扶正，再重置"></a>四、解决过程：先扶正，再重置</h2><p>接下来的处理方法，反而没什么神秘感。</p>
+<p>既然问题可能出在两边高度已经失衡，那就先让它们在物理上回到同一个基准。</p>
+<p>我的做法是：</p>
+<ol>
+<li>先断电，确认桌面没有负载、线缆没有被夹住；不要在桌子带电或承重时拆接电机线</li>
+<li>参考本机型说明书，在不拆解传动结构的前提下，让仍可响应的一侧把两边高度尽量调到接近的最低位置</li>
+<li>确认左右桌脚高度接近后，再把两个电机重新接回控制盒</li>
+<li>恢复供电后，按本机型说明书的步骤执行初始化；我这台机器是长按下降键约 7 秒</li>
+</ol>
+<p>不同型号的重置按键和报码含义可能不同，因此这里的步骤只能作为排查记录，不应替代官方说明书或售后指导。</p>
+<p>做到这里时，我心里已经有一点底了。</p>
+<p>因为至少从机械状态来看，桌子已经不像之前那样一高一低。换句话说，<strong>“看起来不对”的部分，已经先被纠正了一次。</strong></p>
+<p>然后，我重新执行最开始那套重置操作。</p>
+<p>这一次，结果立刻不一样了：</p>
+<ul>
+<li>面板上的错误代码消失了</li>
+<li>显示重新变回正常的高度数字</li>
+<li>再测试升降时，左右两边恢复了同步运动</li>
+</ul>
+<p><img src="/images/20260302/379220D3-EF81-44D3-AFD3-1A9DA10B1F23.jpg" alt="问题解决后反馈客服"></p>
+<p><em>图 4：问题解决后，回头告知客服</em></p>
+<p>那一刻还挺有成就感。</p>
+<p>不是那种“我会修机器了”的成就感，而是你顺着现象一点点摸过去，最后真的把问题捋顺了。前面那种说不上来的烦躁，也一下子散掉了。</p>
+<hr>
+<h2 id="五、这次排查真正有用的是什么"><a href="#五、这次排查真正有用的是什么" class="headerlink" title="五、这次排查真正有用的是什么"></a>五、这次排查真正有用的是什么</h2><p>现在回头看，这次能顺利解决，不是因为我多懂升降桌，而是因为排查顺序还算对。</p>
+<p>我把整个过程总结成一张表：</p>
+<table>
+<thead>
+<tr>
+<th>排查步骤</th>
+<th>关键操作</th>
+<th>目的</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1. 记录报码</td>
+<td>观察 RST / E07 / E08 的变化</td>
+<td>缩小问题范围</td>
+</tr>
+<tr>
+<td>2. 联系客服</td>
+<td>按官方流程先重置，再交叉插线</td>
+<td>建立基础排查路径</td>
+</tr>
+<tr>
+<td>3. 测试电机</td>
+<td>单独测试两侧电机是否能动作</td>
+<td>排除电机本体故障</td>
+</tr>
+<tr>
+<td>4. 手动找平</td>
+<td>让两边桌脚回到同一高度</td>
+<td>恢复物理基准</td>
+</tr>
+<tr>
+<td>5. 系统重置</td>
+<td>长按下降键重新初始化</td>
+<td>让系统重新校准</td>
+</tr>
+</tbody></table>
+<p>真正起作用的，不是某一个“神奇步骤”，而是没有一上来就认定它一定坏了，而是把问题拆开来看：</p>
+<ul>
+<li>是系统没校准？</li>
+<li>是连接异常？</li>
+<li>是左右不同步？</li>
+<li>还是零件真的损坏？</li>
+</ul>
+<p>当这些问题一个个被排掉之后，答案自然就浮出来了。</p>
+<hr>
+<h2 id="六、这次小故障给我的几个提醒"><a href="#六、这次小故障给我的几个提醒" class="headerlink" title="六、这次小故障给我的几个提醒"></a>六、这次小故障给我的几个提醒</h2><h3 id="1-报码吓人，但不等于彻底损坏"><a href="#1-报码吓人，但不等于彻底损坏" class="headerlink" title="1. 报码吓人，但不等于彻底损坏"></a>1. 报码吓人，但不等于彻底损坏</h3><p>这是我这次最大的感受。</p>
+<p>控制面板报码看起来很吓人，但它很多时候只是系统在告诉你：</p>
+<blockquote>
+<p><strong>现在的状态不正常，我先停下来。</strong></p>
+</blockquote>
+<p>停下来未必是坏了，也可能是在避免继续运行带来更大的结构风险。</p>
+<h3 id="2-现象往往比错误代码更重要"><a href="#2-现象往往比错误代码更重要" class="headerlink" title="2. 现象往往比错误代码更重要"></a>2. 现象往往比错误代码更重要</h3><p>如果只盯着 E07 / E08 这两个码，我未必能那么快想到“高度差”这个方向。</p>
+<p>但“始终只有一边桌脚在动”这个现象，几乎已经把答案摆在了面前。</p>
+<p>所以很多时候，先观察设备“到底怎么不对”，比先背报码更有用。</p>
+<h3 id="3-客服不一定直接解决问题，但能提供起点"><a href="#3-客服不一定直接解决问题，但能提供起点" class="headerlink" title="3. 客服不一定直接解决问题，但能提供起点"></a>3. 客服不一定直接解决问题，但能提供起点</h3><p>这次虽然最后是我自己处理好的，但客服给的建议其实很关键。</p>
+<p>至少他们先帮我把流程拉了出来：</p>
+<ul>
+<li>先重置</li>
+<li>再交叉插线</li>
+<li>再看报码变化</li>
+</ul>
+<p>这些步骤本身，就已经帮我少走了不少弯路。</p>
+<h3 id="4-低风险的问题，可以先自己排一排"><a href="#4-低风险的问题，可以先自己排一排" class="headerlink" title="4. 低风险的问题，可以先自己排一排"></a>4. 低风险的问题，可以先自己排一排</h3><p>当然，这不是鼓励所有人都去拆机器。</p>
+<p>但像这类问题，如果你能确认安全，做一些基础排查通常风险不高：</p>
+<ul>
+<li>做一次系统 reset</li>
+<li>检查插线是否松动</li>
+<li>观察两边是否明显不平</li>
+<li>在安全前提下做简单找平</li>
+</ul>
+<p>很多时候，这比直接等售后更快，也更容易让你弄清楚问题到底出在哪。</p>
+<p>如果涉及电源、承重结构、明显异响、烧焦味，或者你不确定自己在做什么，那就别硬来，直接等官方售后处理。</p>
+<hr>
+<h2 id="七、写在最后"><a href="#七、写在最后" class="headerlink" title="七、写在最后"></a>七、写在最后</h2><p>这次升降桌的小故障，最后没有变成一次“换控制盒”或者“换电机”的麻烦事。</p>
+<p>它更像是一个很生活化的小插曲：一个原本以为要拖很久的问题，在你愿意静下来观察、拆解、排查之后，慢慢露出了没那么复杂的本来面目。</p>
+<p>我一直觉得，生活里很多看上去很“专业”的问题，真正可怕的不是它本身，而是你在一开始就把它想得太大、太难、太不可碰。</p>
+<p>可一旦你愿意动手去摸一摸，很多事情就会从“完全不会”变成“原来也能搞明白一点”。</p>
+<p>这次也是一样。</p>
+<p>如果你刚好也遇到了类似情况，希望这篇记录能给你一点参考。</p>
+<p>它未必适用于所有型号，也谈不上是什么标准维修教程。但至少对于“<strong>面板报码 + 一边桌脚不动 + 重置暂时无效</strong>”这种场景，也许能帮你少一点慌张，少走一点弯路。</p>
+<hr>
+<p><em>本文记录于 2026 年 3 月</em></p>
+]]></content>
+      <categories>
+        <category>随笔</category>
+      </categories>
+      <tags>
+        <tag>随笔</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</title>
     <url>/posts/2026/07/18/9e7d1a5f/</url>
     <content><![CDATA[<h1 id="单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布"><a href="#单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布" class="headerlink" title="单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布"></a>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</h1><p>本方案的技术链路为：<strong>Mac + OrbStack 本地开发与构建 → Docker Hub 保存版本化镜像 → Ubuntu VPS 使用 Docker Compose 运行</strong>。VPS 只保留部署配置、环境变量、Nginx 配置和数据卷，不上传 Git 仓库或 src 源码目录。</p>
@@ -982,141 +1186,6 @@ NSData<span class="token punctuation">.</span><span class="token function">dataW
       </tags>
   </entry>
   <entry>
-    <title>remember VS rememberSaveable</title>
-    <url>/posts/2023/12/04/f68195/</url>
-    <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在 Jetpack Compose 中，<code>remember {}</code> 和 <code>rememberSaveable {}</code> 都能把值保留在组合期间，但它们解决的问题不同：前者把值留在当前 Composition 中；后者会把可保存的值交给 <code>SaveableStateRegistry</code>，以便在 Activity 或进程重建后恢复。选错保存边界，状态就可能在意料之外被重置。本文结合一次实际问题和文档/实验，说明两者的区别与使用场景。</p>
-<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>页面中有两个主要部分：<strong>Dashboard</strong>（根据滚动做缩放动画）和 <strong>Asset List</strong>（可滚动列表）。用 <code>remember {}</code> 保存 scale 状态时：</p>
-<ul>
-<li><strong>快速切换 Tab</strong>：表现正常，scale 保持。</li>
-<li><strong>在其他 Tab 停留一段时间再切回</strong>：scale 被重置，Dashboard 突然放大。</li>
-</ul>
-<p><img src="/images/20231204/remember.gif" alt="Recording" title="remember"></p>
-<p>改为 <code>rememberSaveable {}</code> 后，无论如何切换 Tab，返回时 Dashboard 都能保持之前的 scale，符合预期。</p>
-<h3 id="相关代码片段"><a href="#相关代码片段" class="headerlink" title="相关代码片段"></a>相关代码片段</h3><pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 使用 rememberSaveable 保持 scale，避免离开屏幕后再进入时被重置</span>
-<span class="token keyword">var</span> scale <span class="token keyword">by</span> rememberSaveable <span class="token punctuation">{</span>
-    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span>
-<span class="token keyword">val</span> nestedScrollConnection <span class="token operator">=</span> remember <span class="token punctuation">{</span> <span class="token operator">..</span><span class="token punctuation">.</span> <span class="token punctuation">}</span>
-<span class="token function">Box</span><span class="token punctuation">(</span>modifier <span class="token operator">=</span> modifier<span class="token punctuation">.</span><span class="token function">nestedScroll</span><span class="token punctuation">(</span>nestedScrollConnection<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token function">DashboardView</span><span class="token punctuation">(</span>
-        modifier <span class="token operator">=</span> Modifier
-            <span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">scale</span><span class="token punctuation">(</span>scale<span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarHeightRange<span class="token punctuation">.</span>last <span class="token operator">*</span> <span class="token punctuation">(</span>scale <span class="token operator">-</span> <span class="token number">1.0f</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
-        onEvent <span class="token operator">=</span> onEvent
-    <span class="token punctuation">)</span>
-    <span class="token function">LazyColumn</span><span class="token punctuation">(</span>
-        modifier <span class="token operator">=</span> Modifier
-            <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarState<span class="token punctuation">.</span>height <span class="token operator">+</span> toolbarState<span class="token punctuation">.</span>offset <span class="token punctuation">}</span>
-            <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>MaterialTheme<span class="token punctuation">.</span>colorScheme<span class="token punctuation">.</span>background<span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">shadow</span><span class="token punctuation">(</span>elevation <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> shape <span class="token operator">=</span> <span class="token function">RoundedCornerShape</span><span class="token punctuation">(</span>topEnd <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> topStart <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">)</span>
-            <span class="token punctuation">.</span><span class="token function">pointerInput</span><span class="token punctuation">(</span>Unit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-                <span class="token function">detectTapGestures</span><span class="token punctuation">(</span>onPress <span class="token operator">=</span> <span class="token punctuation">{</span> scope<span class="token punctuation">.</span>coroutineContext<span class="token punctuation">.</span><span class="token function">cancelChildren</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
-            <span class="token punctuation">}</span><span class="token punctuation">,</span>
-        verticalArrangement <span class="token operator">=</span> Arrangement<span class="token punctuation">.</span><span class="token function">spacedBy</span><span class="token punctuation">(</span><span class="token number">12</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">,</span>
-        state <span class="token operator">=</span> listState
-    <span class="token punctuation">)</span> <span class="token punctuation">{</span>
-        <span class="token function">items</span><span class="token punctuation">(</span>uiState<span class="token punctuation">.</span>tokens<span class="token punctuation">,</span> key <span class="token operator">=</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span>token<span class="token punctuation">.</span>id <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-            <span class="token function">TokenItemView</span><span class="token punctuation">(</span>extraToken <span class="token operator">=</span> it<span class="token punctuation">,</span> onEvent <span class="token operator">=</span> onEvent<span class="token punctuation">)</span>
-        <span class="token punctuation">}</span>
-    <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h2 id="二、原理解析"><a href="#二、原理解析" class="headerlink" title="二、原理解析"></a>二、原理解析</h2><h3 id="2-1-可组合项的生命周期"><a href="#2-1-可组合项的生命周期" class="headerlink" title="2.1 可组合项的生命周期"></a>2.1 可组合项的生命周期</h3><p>根据官方文档 <a href="https://developer.android.com/jetpack/compose/lifecycle">Lifecycle of composables</a>，可组合项的生命周期可分为三阶段：</p>
-<ul>
-<li><strong>进入组合（Enter Composition）</strong></li>
-<li><strong>重组（Recomposition）</strong></li>
-<li><strong>退出组合（Exit Composition）</strong></li>
-</ul>
-<p>离开当前页面（如切换 Tab）时，该页面的可组合项会<strong>退出组合</strong>；再次进入时则会<strong>重新进入组合</strong>，相当于新一轮生命周期。</p>
-<h3 id="2-2-remember"><a href="#2-2-remember" class="headerlink" title="2.2 remember {}"></a>2.2 remember {}</h3><p>对 <code>remember {}</code> 的文档说明大致如下：</p>
-<blockquote>
-<p>Remember the value produced by calculation. calculation will only be evaluated during the composition. Recomposition will always return the value produced by composition.<br>即：值在<strong>进入组合时</strong>由 block 计算得到，<strong>重组时</strong>直接返回该值，不会重新计算。</p>
-</blockquote>
-<p>因此：</p>
-<ul>
-<li><strong>初次进入组合</strong>：执行 block，计算并保存值。</li>
-<li><strong>重组</strong>：直接返回已保存的值，不执行 block。</li>
-<li><strong>退出组合后再次进入</strong>：视为新的组合，block <strong>会再次执行</strong>，状态会被重新初始化。</li>
-</ul>
-<p>这就是「在其他 Tab 停留一段时间再切回」时 scale 被重置的原因：页面先退出组合，再进入时 <code>remember { mutableFloatStateOf(1.0f) }</code> 重新执行，scale 又变回 1.0。若切换很快，组合尚未被回收，就不会触发重新计算，看起来就「正常」。</p>
-<h3 id="2-3-rememberSaveable"><a href="#2-3-rememberSaveable" class="headerlink" title="2.3 rememberSaveable {}"></a>2.3 rememberSaveable {}</h3><p>官方对 <a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/saveable/package-summary#rememberSaveable(kotlin.Array,androidx.compose.runtime.saveable.Saver,kotlin.String,kotlin.Function0)">rememberSaveable</a> 的说明：</p>
-<blockquote>
-<p>与 <code>remember {}</code> 类似，但存储的值会在 <strong>Activity 或进程重建后</strong> 仍然保留，基于 Android 的 <code>SavedInstanceState</code> 机制。</p>
-</blockquote>
-<p>要点：</p>
-<ul>
-<li><p>默认使用 <code>autoSaver()</code> 将值写入 Bundle；也可自定义 <code>Saver</code>。</p>
-</li>
-<li><p>仅支持可放入 Bundle 的类型（如 Int、String、Float 等）。</p>
-</li>
-<li><p>若保存的是自定义类型（如 data class），必须提供 <code>Saver</code> 实现，否则会报错：</p>
-<pre class="line-numbers language-none"><code class="language-none">java.lang.IllegalArgumentException: MutableState containing ... cannot be saved using the current SaveableStateRegistry.
-The default implementation only supports types which can be stored inside the Bundle.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre></li>
-</ul>
-<p><code>rememberSaveable</code> 不是“只要离开页面再回来就一定能恢复”的开关。它能否在导航或 Tab 切换后找回值，取决于承载它的 <code>SaveableStateRegistry</code> 是否仍被保留，例如 Navigation Compose 的 back stack 或显式使用 <code>SaveableStateHolder</code> 的场景。</p>
-<p>如果切换 Tab 时直接把页面从 Composition 移除，且没有保留对应的 saveable state，<code>rememberSaveable</code> 同样可能重新初始化；如果状态本来就应跨多个页面长期存在，则更适合放到 ViewModel（必要时结合 <code>SavedStateHandle</code>）中。</p>
-<p>因此，本文案例的准确结论是：当 Tab 容器保留了页面对应的 saveable state 时，<code>rememberSaveable</code> 可以恢复 <code>scale</code>；它不能替代对状态作用域的设计。</p>
-<h2 id="三、验证实验"><a href="#三、验证实验" class="headerlink" title="三、验证实验"></a>三、验证实验</h2><p>用简单日志验证「退出组合后再进入会重新计算」：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">var</span> scale <span class="token keyword">by</span> remember <span class="token punctuation">{</span>
-    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== re-calculate"</span></span><span class="token punctuation">)</span>
-    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span>
-<span class="token function">DisposableEffect</span><span class="token punctuation">(</span>key1 <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    onDispose <span class="token punctuation">{</span> <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== onDispose"</span></span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p><code>DisposableEffect(key1 = null)</code> 保证只有在<strong>退出组合</strong>时才会执行 <code>onDispose</code>。</p>
-<ul>
-<li>**使用 <code>remember {}</code>**：第一次进入打印 <code>re-calculate</code>；切到其他 Tab 停留后，先打印 <code>onDispose</code>，再切回来会再次打印 <code>re-calculate</code>，scale 被重置。<br><img src="/images/20231204/remember_log.jpg" alt="Logger" title="remember_log"></li>
-<li>**改用 <code>rememberSaveable {}</code>**：只有第一次进入时打印一次 <code>re-calculate</code>，之后切 Tab 再回来也不会再打印，说明一直用的是已保存的值。<br><img src="/images/20231204/remember_log1.jpg" alt="Logger1" title="remember_log1"></li>
-</ul>
-<h2 id="四、延伸：离开屏幕-≠-重建"><a href="#四、延伸：离开屏幕-≠-重建" class="headerlink" title="四、延伸：离开屏幕 ≠ 重建"></a>四、延伸：离开屏幕 ≠ 重建</h2><p><a href="https://jetc.dev/slack/2021-04-13-when-do-we-use-remembersaveable.html">Jetpack Compose 相关讨论</a> 里有一句：**”Composable leaving the screen is not recreation”**（可组合项离开屏幕并不等于重建）。</p>
-<p>在 Compose 中，组件离开屏幕与 Activity 重建是两回事：</p>
-<ul>
-<li>组件退出 Composition 后，<code>remember</code> 保存的值会丢失。</li>
-<li><code>rememberSaveable</code> 的值会参与 Android 的状态保存与恢复；Activity 或进程重建后，系统有机会恢复它。</li>
-<li>页面离开后能否在同一进程内恢复 <code>rememberSaveable</code>，还取决于导航/Tab 容器是否保留对应的 <code>SaveableStateRegistry</code>。</li>
-</ul>
-<p>因此，不能把“离开屏幕”直接等同于“必然触发 <code>rememberSaveable</code> 恢复”。如果状态需要跨页面共享或具有业务意义，应提升到 ViewModel 等更合适的作用域。</p>
-<p>常见「离开屏幕」场景包括：</p>
-<ol>
-<li><strong>Navigation 跳转 / Tab 切换</strong>（如本文案例）</li>
-<li><strong>列表滑动</strong>：Item 滑出视口时会退出组合，<code>onDispose</code> 会执行</li>
-</ol>
-<p>例如 LazyColumn 的 Item 配合 <code>DisposableEffect</code> 可以观察到滑出时打印；若需要<strong>跨页面或重新进入页面时恢复列表滚动位置</strong>，应使用基于 <code>rememberSaveable</code> 的 <code>rememberLazyListState</code> 等 API。</p>
-<h2 id="五、如何选择"><a href="#五、如何选择" class="headerlink" title="五、如何选择"></a>五、如何选择</h2><table>
-<thead>
-<tr>
-<th>需求</th>
-<th>推荐</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>状态只需在<strong>重组</strong>过程中保持</td>
-<td><code>remember {}</code></td>
-</tr>
-<tr>
-<td>状态需要在 <strong>Activity/进程重建</strong>（如旋转、内存回收）后恢复</td>
-<td><code>rememberSaveable {}</code></td>
-</tr>
-<tr>
-<td>状态需要<strong>跨页面</strong>或更复杂的作用域</td>
-<td>ViewModel 等；若仅在单页内且需应对「离开再进入」，<code>rememberSaveable {}</code> 仍适用</td>
-</tr>
-</tbody></table>
-<p>理解「进入/重组/退出组合」与「SavedInstanceState 重建」的差异后，就能在开发中按场景选用 <code>remember</code> 或 <code>rememberSaveable</code>，避免状态被意外重置。</p>
-]]></content>
-      <categories>
-        <category>Technical</category>
-      </categories>
-      <tags>
-        <tag>Android</tag>
-        <tag>Jetpack Compose</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Jetpack Compose 性能优化：用 `graphicsLayer` 延后状态读取</title>
     <url>/posts/2026/02/27/4ae1fc92/</url>
     <content><![CDATA[<h1 id="Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握"><a href="#Jetpack-Compose-性能优化：为什么-graphicsLayer-值得你重点掌握" class="headerlink" title="Jetpack Compose 性能优化：为什么 graphicsLayer 值得你重点掌握"></a>Jetpack Compose 性能优化：为什么 <code>graphicsLayer</code> 值得你重点掌握</h1><p>在 Jetpack Compose 里，同一个视觉效果往往有不止一种写法。</p>
@@ -1275,210 +1344,6 @@ The default implementation only supports types which can be stored inside the Bu
       </categories>
       <tags>
         <tag>Jetpack Compose</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>升降桌故障排查记</title>
-    <url>/posts/2026/03/02/fbb9923f/</url>
-    <content><![CDATA[<h1 id="升降桌故障排查记：和-E07-E08-的一场小拉扯"><a href="#升降桌故障排查记：和-E07-E08-的一场小拉扯" class="headerlink" title="升降桌故障排查记：和 E07 / E08 的一场小拉扯"></a>升降桌故障排查记：和 E07 / E08 的一场小拉扯</h1><p>有些家用设备的小故障，最磨人。</p>
-<p>它不至于让人立刻崩溃，但会持续打断你的节奏。尤其是你准备工作的时候，桌子突然一边高一边低，控制面板还反复跳出 <strong>RST、E07、E08</strong> 这些报码。</p>
-<p>这次出问题的，是家里的乐歌升降桌。</p>
-<p>原本只是一次普通的升降操作。我像往常一样按下上升键，结果桌子没有正常升起来：一边桌脚还有动作，另一边完全没反应。更麻烦的是，反复重试之后，桌面已经明显不平。</p>
-<p>那一刻的感受很真实。不是“这下完了”的大惊失色，而是一种很具体的无奈：桌子没法正常用，售后不一定马上能处理，而你还得继续工作。</p>
-<p>所以我决定先自己排一轮。</p>
-<p>这篇文章不是维修教程，更不是鼓励大家随便拆设备。它只是一次真实的排查记录：我是怎么从错误代码、客服建议、交叉插线，一步步判断到问题可能出在左右桌脚不同步，并最终通过手动找平和系统重置把桌子恢复正常的。</p>
-<hr>
-<h2 id="一、故障现象：一边能动，一边“罢工”"><a href="#一、故障现象：一边能动，一边“罢工”" class="headerlink" title="一、故障现象：一边能动，一边“罢工”"></a>一、故障现象：一边能动，一边“罢工”</h2><p>那天晚上，我按下升降桌的上升按钮后，很快发现状态不对。</p>
-<p>具体表现大概是这样：</p>
-<ul>
-<li>左边桌脚还有反应，但<strong>只能往下，不能上升</strong></li>
-<li>右边桌脚无论上升还是下降都<strong>完全没反应</strong></li>
-<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
-<li>多次尝试后，桌面出现明显的左右高度差</li>
-</ul>
-<p><img src="/images/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg" alt="联系客服反馈问题"></p>
-<p><em>图 1：控制面板显示 RST / E07 / E08 等报码</em></p>
-<p>我又试了几次，结论基本一致：</p>
-<blockquote>
-<p><strong>这不是简单的卡顿，而是桌子已经进入了异常保护状态。</strong></p>
-</blockquote>
-<p>因为每次操作时，始终只有一边桌脚在动，另一边完全静止。整张桌子看起来就像一张“瘸腿桌”，别说继续升降了，光看着就让人难受。</p>
-<hr>
-<h2 id="二、先找客服：按标准流程排一遍"><a href="#二、先找客服：按标准流程排一遍" class="headerlink" title="二、先找客服：按标准流程排一遍"></a>二、先找客服：按标准流程排一遍</h2><p>遇到这种问题，第一反应当然还是联系客服。</p>
-<p>我联系了乐歌京东自营店。对方给出的思路比较标准，也符合这类升降桌常见的排查逻辑：先重置，再交叉插线，看错误代码是否变化。</p>
-<h3 id="1-先做系统重置"><a href="#1-先做系统重置" class="headerlink" title="1. 先做系统重置"></a>1. 先做系统重置</h3><p>客服先让我把桌子尽量降到最低，然后：</p>
-<blockquote>
-<p><strong>长按下降键约 7 秒，执行系统重置。</strong></p>
-</blockquote>
-<p>这是升降桌常见的初始化方式。很多时候，报码并不一定意味着零件损坏，也可能只是系统检测到位置异常后，需要重新校准。</p>
-<p>可惜，对我这台桌子来说，这一步没有解决问题。</p>
-<h3 id="2-再交叉插线"><a href="#2-再交叉插线" class="headerlink" title="2. 再交叉插线"></a>2. 再交叉插线</h3><p>接下来，客服让我拆开桌腿挡板，把控制盒上的 <strong>M1 和 M2 电机线互换</strong>，再观察报码变化。</p>
-<p><img src="/images/20260302/8BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg" alt="客服建议拆开检查"></p>
-<p><em>图 2：客服建议交叉插线排查问题位置</em></p>
-<p>我照着做完之后，面板上的报码确实变了：从 <strong>E07</strong> 变成了 <strong>E08</strong>。</p>
-<p><img src="/images/20260302/C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg" alt="错误代码变化反馈"></p>
-<p><em>图 3：交叉插线后，报码从 E07 变成 E08</em></p>
-<p>客服根据这个变化，初步判断可能是控制盒问题，需要反馈技术部门，再安排后续处理。问题是，当时已经临近假期，对方给出的答复大意是：</p>
-<blockquote>
-<p>年后再安排。</p>
-</blockquote>
-<p>说实话，听到这里，我看着眼前那张高低不平的桌子，第一反应不是失望，而是有点不甘心。</p>
-<p>都已经拆到这一步了，索性继续往下查。</p>
-<hr>
-<h2 id="三、换个思路：不要只盯着报码"><a href="#三、换个思路：不要只盯着报码" class="headerlink" title="三、换个思路：不要只盯着报码"></a>三、换个思路：不要只盯着报码</h2><p>很多时候，真正有用的线索，不在错误代码本身，而在设备到底表现出了什么异常。</p>
-<p>这次也是一样。</p>
-<h3 id="1-先理解报码，但不迷信报码"><a href="#1-先理解报码，但不迷信报码" class="headerlink" title="1. 先理解报码，但不迷信报码"></a>1. 先理解报码，但不迷信报码</h3><p>我先查了 E07 / E08 的相关说明，想弄清楚它们大概对应什么问题。</p>
-<p>网上能查到的说法并不完全一致，但结合乐歌和同类升降桌常见的故障逻辑，大致可以归纳到两个方向：</p>
-<ul>
-<li>一类和<strong>左右桌脚高度不一致</strong>有关</li>
-<li>一类和<strong>电机连接、通信、同步异常</strong>有关</li>
-</ul>
-<p>这至少说明一件事：</p>
-<blockquote>
-<p><strong>问题未必是硬件彻底坏了，也可能是双侧不同步之后触发了保护机制。</strong></p>
-</blockquote>
-<p>这个判断后来证明挺关键。</p>
-<h3 id="2-先确认电机有没有坏"><a href="#2-先确认电机有没有坏" class="headerlink" title="2. 先确认电机有没有坏"></a>2. 先确认电机有没有坏</h3><p>既然客服已经让我拆开挡板，那不如继续往前一步，先把“是不是电机坏了”这件事弄清楚。</p>
-<p>我的操作过程不复杂：</p>
-<ol>
-<li>拧开桌腿挡板螺丝</li>
-<li>断开两侧电机连接线</li>
-<li>分别测试每个电机是否能正常上下动作</li>
-</ol>
-<p>测试结果出来的时候，我心里其实松了一口气：</p>
-<blockquote>
-<p><strong>两个电机都能正常上下运动。</strong></p>
-</blockquote>
-<p>这意味着，问题大概率不在“电机彻底损坏”这一层。</p>
-<p>至少可以先排除掉最麻烦、也最容易让人头疼的情况。</p>
-<h3 id="3-真正的问题，可能是“两边已经不平了”"><a href="#3-真正的问题，可能是“两边已经不平了”" class="headerlink" title="3. 真正的问题，可能是“两边已经不平了”"></a>3. 真正的问题，可能是“两边已经不平了”</h3><p>接下来再回头看整个故障过程，很多细节就串起来了。</p>
-<p>在出问题之前，桌子的状态其实已经变成了：</p>
-<ul>
-<li>只有一边桌脚在动</li>
-<li>另一边没有正常响应</li>
-<li>两边高度差被一点点拉大</li>
-</ul>
-<p>一旦意识到这一点，思路就清楚了。</p>
-<p>如果升降桌系统会持续检测左右桌脚的同步状态，那么当两边高度差大到一定程度时，系统为了保护结构而锁定，反而很合理。</p>
-<p>也就是说，真正的问题也许不是“它坏了”，而是：</p>
-<blockquote>
-<p><strong>它觉得现在这样继续动下去不安全。</strong></p>
-</blockquote>
-<p>想到这里，我决定不再先盯着报码，而是先处理最直观的问题：</p>
-<p><strong>把两边桌脚重新找平。</strong></p>
-<hr>
-<h2 id="四、解决过程：先扶正，再重置"><a href="#四、解决过程：先扶正，再重置" class="headerlink" title="四、解决过程：先扶正，再重置"></a>四、解决过程：先扶正，再重置</h2><p>接下来的处理方法，反而没什么神秘感。</p>
-<p>既然问题可能出在两边高度已经失衡，那就先让它们在物理上回到同一个基准。</p>
-<p>我的做法是：</p>
-<ol>
-<li>先断电，确认桌面没有负载、线缆没有被夹住；不要在桌子带电或承重时拆接电机线</li>
-<li>参考本机型说明书，在不拆解传动结构的前提下，让仍可响应的一侧把两边高度尽量调到接近的最低位置</li>
-<li>确认左右桌脚高度接近后，再把两个电机重新接回控制盒</li>
-<li>恢复供电后，按本机型说明书的步骤执行初始化；我这台机器是长按下降键约 7 秒</li>
-</ol>
-<p>不同型号的重置按键和报码含义可能不同，因此这里的步骤只能作为排查记录，不应替代官方说明书或售后指导。</p>
-<p>做到这里时，我心里已经有一点底了。</p>
-<p>因为至少从机械状态来看，桌子已经不像之前那样一高一低。换句话说，<strong>“看起来不对”的部分，已经先被纠正了一次。</strong></p>
-<p>然后，我重新执行最开始那套重置操作。</p>
-<p>这一次，结果立刻不一样了：</p>
-<ul>
-<li>面板上的错误代码消失了</li>
-<li>显示重新变回正常的高度数字</li>
-<li>再测试升降时，左右两边恢复了同步运动</li>
-</ul>
-<p><img src="/images/20260302/379220D3-EF81-44D3-AFD3-1A9DA10B1F23.jpg" alt="问题解决后反馈客服"></p>
-<p><em>图 4：问题解决后，回头告知客服</em></p>
-<p>那一刻还挺有成就感。</p>
-<p>不是那种“我会修机器了”的成就感，而是你顺着现象一点点摸过去，最后真的把问题捋顺了。前面那种说不上来的烦躁，也一下子散掉了。</p>
-<hr>
-<h2 id="五、这次排查真正有用的是什么"><a href="#五、这次排查真正有用的是什么" class="headerlink" title="五、这次排查真正有用的是什么"></a>五、这次排查真正有用的是什么</h2><p>现在回头看，这次能顺利解决，不是因为我多懂升降桌，而是因为排查顺序还算对。</p>
-<p>我把整个过程总结成一张表：</p>
-<table>
-<thead>
-<tr>
-<th>排查步骤</th>
-<th>关键操作</th>
-<th>目的</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>1. 记录报码</td>
-<td>观察 RST / E07 / E08 的变化</td>
-<td>缩小问题范围</td>
-</tr>
-<tr>
-<td>2. 联系客服</td>
-<td>按官方流程先重置，再交叉插线</td>
-<td>建立基础排查路径</td>
-</tr>
-<tr>
-<td>3. 测试电机</td>
-<td>单独测试两侧电机是否能动作</td>
-<td>排除电机本体故障</td>
-</tr>
-<tr>
-<td>4. 手动找平</td>
-<td>让两边桌脚回到同一高度</td>
-<td>恢复物理基准</td>
-</tr>
-<tr>
-<td>5. 系统重置</td>
-<td>长按下降键重新初始化</td>
-<td>让系统重新校准</td>
-</tr>
-</tbody></table>
-<p>真正起作用的，不是某一个“神奇步骤”，而是没有一上来就认定它一定坏了，而是把问题拆开来看：</p>
-<ul>
-<li>是系统没校准？</li>
-<li>是连接异常？</li>
-<li>是左右不同步？</li>
-<li>还是零件真的损坏？</li>
-</ul>
-<p>当这些问题一个个被排掉之后，答案自然就浮出来了。</p>
-<hr>
-<h2 id="六、这次小故障给我的几个提醒"><a href="#六、这次小故障给我的几个提醒" class="headerlink" title="六、这次小故障给我的几个提醒"></a>六、这次小故障给我的几个提醒</h2><h3 id="1-报码吓人，但不等于彻底损坏"><a href="#1-报码吓人，但不等于彻底损坏" class="headerlink" title="1. 报码吓人，但不等于彻底损坏"></a>1. 报码吓人，但不等于彻底损坏</h3><p>这是我这次最大的感受。</p>
-<p>控制面板报码看起来很吓人，但它很多时候只是系统在告诉你：</p>
-<blockquote>
-<p><strong>现在的状态不正常，我先停下来。</strong></p>
-</blockquote>
-<p>停下来未必是坏了，也可能是在避免继续运行带来更大的结构风险。</p>
-<h3 id="2-现象往往比错误代码更重要"><a href="#2-现象往往比错误代码更重要" class="headerlink" title="2. 现象往往比错误代码更重要"></a>2. 现象往往比错误代码更重要</h3><p>如果只盯着 E07 / E08 这两个码，我未必能那么快想到“高度差”这个方向。</p>
-<p>但“始终只有一边桌脚在动”这个现象，几乎已经把答案摆在了面前。</p>
-<p>所以很多时候，先观察设备“到底怎么不对”，比先背报码更有用。</p>
-<h3 id="3-客服不一定直接解决问题，但能提供起点"><a href="#3-客服不一定直接解决问题，但能提供起点" class="headerlink" title="3. 客服不一定直接解决问题，但能提供起点"></a>3. 客服不一定直接解决问题，但能提供起点</h3><p>这次虽然最后是我自己处理好的，但客服给的建议其实很关键。</p>
-<p>至少他们先帮我把流程拉了出来：</p>
-<ul>
-<li>先重置</li>
-<li>再交叉插线</li>
-<li>再看报码变化</li>
-</ul>
-<p>这些步骤本身，就已经帮我少走了不少弯路。</p>
-<h3 id="4-低风险的问题，可以先自己排一排"><a href="#4-低风险的问题，可以先自己排一排" class="headerlink" title="4. 低风险的问题，可以先自己排一排"></a>4. 低风险的问题，可以先自己排一排</h3><p>当然，这不是鼓励所有人都去拆机器。</p>
-<p>但像这类问题，如果你能确认安全，做一些基础排查通常风险不高：</p>
-<ul>
-<li>做一次系统 reset</li>
-<li>检查插线是否松动</li>
-<li>观察两边是否明显不平</li>
-<li>在安全前提下做简单找平</li>
-</ul>
-<p>很多时候，这比直接等售后更快，也更容易让你弄清楚问题到底出在哪。</p>
-<p>如果涉及电源、承重结构、明显异响、烧焦味，或者你不确定自己在做什么，那就别硬来，直接等官方售后处理。</p>
-<hr>
-<h2 id="七、写在最后"><a href="#七、写在最后" class="headerlink" title="七、写在最后"></a>七、写在最后</h2><p>这次升降桌的小故障，最后没有变成一次“换控制盒”或者“换电机”的麻烦事。</p>
-<p>它更像是一个很生活化的小插曲：一个原本以为要拖很久的问题，在你愿意静下来观察、拆解、排查之后，慢慢露出了没那么复杂的本来面目。</p>
-<p>我一直觉得，生活里很多看上去很“专业”的问题，真正可怕的不是它本身，而是你在一开始就把它想得太大、太难、太不可碰。</p>
-<p>可一旦你愿意动手去摸一摸，很多事情就会从“完全不会”变成“原来也能搞明白一点”。</p>
-<p>这次也是一样。</p>
-<p>如果你刚好也遇到了类似情况，希望这篇记录能给你一点参考。</p>
-<p>它未必适用于所有型号，也谈不上是什么标准维修教程。但至少对于“<strong>面板报码 + 一边桌脚不动 + 重置暂时无效</strong>”这种场景，也许能帮你少一点慌张，少走一点弯路。</p>
-<hr>
-<p><em>本文记录于 2026 年 3 月</em></p>
-]]></content>
-      <categories>
-        <category>随笔</category>
-      </categories>
-      <tags>
-        <tag>随笔</tag>
       </tags>
   </entry>
   <entry>
@@ -1733,6 +1598,141 @@ The default implementation only supports types which can be stored inside the Bu
       </categories>
       <tags>
         <tag>Compose</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>remember VS rememberSaveable</title>
+    <url>/posts/2023/12/04/f68195/</url>
+    <content><![CDATA[<h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在 Jetpack Compose 中，<code>remember {}</code> 和 <code>rememberSaveable {}</code> 都能把值保留在组合期间，但它们解决的问题不同：前者把值留在当前 Composition 中；后者会把可保存的值交给 <code>SaveableStateRegistry</code>，以便在 Activity 或进程重建后恢复。选错保存边界，状态就可能在意料之外被重置。本文结合一次实际问题和文档/实验，说明两者的区别与使用场景。</p>
+<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>页面中有两个主要部分：<strong>Dashboard</strong>（根据滚动做缩放动画）和 <strong>Asset List</strong>（可滚动列表）。用 <code>remember {}</code> 保存 scale 状态时：</p>
+<ul>
+<li><strong>快速切换 Tab</strong>：表现正常，scale 保持。</li>
+<li><strong>在其他 Tab 停留一段时间再切回</strong>：scale 被重置，Dashboard 突然放大。</li>
+</ul>
+<p><img src="/images/20231204/remember.gif" alt="Recording" title="remember"></p>
+<p>改为 <code>rememberSaveable {}</code> 后，无论如何切换 Tab，返回时 Dashboard 都能保持之前的 scale，符合预期。</p>
+<h3 id="相关代码片段"><a href="#相关代码片段" class="headerlink" title="相关代码片段"></a>相关代码片段</h3><pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 使用 rememberSaveable 保持 scale，避免离开屏幕后再进入时被重置</span>
+<span class="token keyword">var</span> scale <span class="token keyword">by</span> rememberSaveable <span class="token punctuation">{</span>
+    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+<span class="token keyword">val</span> nestedScrollConnection <span class="token operator">=</span> remember <span class="token punctuation">{</span> <span class="token operator">..</span><span class="token punctuation">.</span> <span class="token punctuation">}</span>
+<span class="token function">Box</span><span class="token punctuation">(</span>modifier <span class="token operator">=</span> modifier<span class="token punctuation">.</span><span class="token function">nestedScroll</span><span class="token punctuation">(</span>nestedScrollConnection<span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token function">DashboardView</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> Modifier
+            <span class="token punctuation">.</span><span class="token function">fillMaxWidth</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">scale</span><span class="token punctuation">(</span>scale<span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarHeightRange<span class="token punctuation">.</span>last <span class="token operator">*</span> <span class="token punctuation">(</span>scale <span class="token operator">-</span> <span class="token number">1.0f</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        onEvent <span class="token operator">=</span> onEvent
+    <span class="token punctuation">)</span>
+    <span class="token function">LazyColumn</span><span class="token punctuation">(</span>
+        modifier <span class="token operator">=</span> Modifier
+            <span class="token punctuation">.</span><span class="token function">fillMaxSize</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">graphicsLayer</span> <span class="token punctuation">{</span> translationY <span class="token operator">=</span> toolbarState<span class="token punctuation">.</span>height <span class="token operator">+</span> toolbarState<span class="token punctuation">.</span>offset <span class="token punctuation">}</span>
+            <span class="token punctuation">.</span><span class="token function">background</span><span class="token punctuation">(</span>MaterialTheme<span class="token punctuation">.</span>colorScheme<span class="token punctuation">.</span>background<span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">shadow</span><span class="token punctuation">(</span>elevation <span class="token operator">=</span> <span class="token number">3</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> shape <span class="token operator">=</span> <span class="token function">RoundedCornerShape</span><span class="token punctuation">(</span>topEnd <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">,</span> topStart <span class="token operator">=</span> <span class="token number">20</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">)</span>
+            <span class="token punctuation">.</span><span class="token function">pointerInput</span><span class="token punctuation">(</span>Unit<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+                <span class="token function">detectTapGestures</span><span class="token punctuation">(</span>onPress <span class="token operator">=</span> <span class="token punctuation">{</span> scope<span class="token punctuation">.</span>coroutineContext<span class="token punctuation">.</span><span class="token function">cancelChildren</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">}</span><span class="token punctuation">)</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        verticalArrangement <span class="token operator">=</span> Arrangement<span class="token punctuation">.</span><span class="token function">spacedBy</span><span class="token punctuation">(</span><span class="token number">12</span><span class="token punctuation">.</span>dp<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        state <span class="token operator">=</span> listState
+    <span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token function">items</span><span class="token punctuation">(</span>uiState<span class="token punctuation">.</span>tokens<span class="token punctuation">,</span> key <span class="token operator">=</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span>token<span class="token punctuation">.</span>id <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            <span class="token function">TokenItemView</span><span class="token punctuation">(</span>extraToken <span class="token operator">=</span> it<span class="token punctuation">,</span> onEvent <span class="token operator">=</span> onEvent<span class="token punctuation">)</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h2 id="二、原理解析"><a href="#二、原理解析" class="headerlink" title="二、原理解析"></a>二、原理解析</h2><h3 id="2-1-可组合项的生命周期"><a href="#2-1-可组合项的生命周期" class="headerlink" title="2.1 可组合项的生命周期"></a>2.1 可组合项的生命周期</h3><p>根据官方文档 <a href="https://developer.android.com/jetpack/compose/lifecycle">Lifecycle of composables</a>，可组合项的生命周期可分为三阶段：</p>
+<ul>
+<li><strong>进入组合（Enter Composition）</strong></li>
+<li><strong>重组（Recomposition）</strong></li>
+<li><strong>退出组合（Exit Composition）</strong></li>
+</ul>
+<p>离开当前页面（如切换 Tab）时，该页面的可组合项会<strong>退出组合</strong>；再次进入时则会<strong>重新进入组合</strong>，相当于新一轮生命周期。</p>
+<h3 id="2-2-remember"><a href="#2-2-remember" class="headerlink" title="2.2 remember {}"></a>2.2 remember {}</h3><p>对 <code>remember {}</code> 的文档说明大致如下：</p>
+<blockquote>
+<p>Remember the value produced by calculation. calculation will only be evaluated during the composition. Recomposition will always return the value produced by composition.<br>即：值在<strong>进入组合时</strong>由 block 计算得到，<strong>重组时</strong>直接返回该值，不会重新计算。</p>
+</blockquote>
+<p>因此：</p>
+<ul>
+<li><strong>初次进入组合</strong>：执行 block，计算并保存值。</li>
+<li><strong>重组</strong>：直接返回已保存的值，不执行 block。</li>
+<li><strong>退出组合后再次进入</strong>：视为新的组合，block <strong>会再次执行</strong>，状态会被重新初始化。</li>
+</ul>
+<p>这就是「在其他 Tab 停留一段时间再切回」时 scale 被重置的原因：页面先退出组合，再进入时 <code>remember { mutableFloatStateOf(1.0f) }</code> 重新执行，scale 又变回 1.0。若切换很快，组合尚未被回收，就不会触发重新计算，看起来就「正常」。</p>
+<h3 id="2-3-rememberSaveable"><a href="#2-3-rememberSaveable" class="headerlink" title="2.3 rememberSaveable {}"></a>2.3 rememberSaveable {}</h3><p>官方对 <a href="https://developer.android.com/reference/kotlin/androidx/compose/runtime/saveable/package-summary#rememberSaveable(kotlin.Array,androidx.compose.runtime.saveable.Saver,kotlin.String,kotlin.Function0)">rememberSaveable</a> 的说明：</p>
+<blockquote>
+<p>与 <code>remember {}</code> 类似，但存储的值会在 <strong>Activity 或进程重建后</strong> 仍然保留，基于 Android 的 <code>SavedInstanceState</code> 机制。</p>
+</blockquote>
+<p>要点：</p>
+<ul>
+<li><p>默认使用 <code>autoSaver()</code> 将值写入 Bundle；也可自定义 <code>Saver</code>。</p>
+</li>
+<li><p>仅支持可放入 Bundle 的类型（如 Int、String、Float 等）。</p>
+</li>
+<li><p>若保存的是自定义类型（如 data class），必须提供 <code>Saver</code> 实现，否则会报错：</p>
+<pre class="line-numbers language-none"><code class="language-none">java.lang.IllegalArgumentException: MutableState containing ... cannot be saved using the current SaveableStateRegistry.
+The default implementation only supports types which can be stored inside the Bundle.<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre></li>
+</ul>
+<p><code>rememberSaveable</code> 不是“只要离开页面再回来就一定能恢复”的开关。它能否在导航或 Tab 切换后找回值，取决于承载它的 <code>SaveableStateRegistry</code> 是否仍被保留，例如 Navigation Compose 的 back stack 或显式使用 <code>SaveableStateHolder</code> 的场景。</p>
+<p>如果切换 Tab 时直接把页面从 Composition 移除，且没有保留对应的 saveable state，<code>rememberSaveable</code> 同样可能重新初始化；如果状态本来就应跨多个页面长期存在，则更适合放到 ViewModel（必要时结合 <code>SavedStateHandle</code>）中。</p>
+<p>因此，本文案例的准确结论是：当 Tab 容器保留了页面对应的 saveable state 时，<code>rememberSaveable</code> 可以恢复 <code>scale</code>；它不能替代对状态作用域的设计。</p>
+<h2 id="三、验证实验"><a href="#三、验证实验" class="headerlink" title="三、验证实验"></a>三、验证实验</h2><p>用简单日志验证「退出组合后再进入会重新计算」：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">var</span> scale <span class="token keyword">by</span> remember <span class="token punctuation">{</span>
+    <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== re-calculate"</span></span><span class="token punctuation">)</span>
+    <span class="token function">mutableFloatStateOf</span><span class="token punctuation">(</span><span class="token number">1.0f</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span>
+<span class="token function">DisposableEffect</span><span class="token punctuation">(</span>key1 <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    onDispose <span class="token punctuation">{</span> <span class="token function">println</span><span class="token punctuation">(</span><span class="token string-literal singleline"><span class="token string">"=== onDispose"</span></span><span class="token punctuation">)</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p><code>DisposableEffect(key1 = null)</code> 保证只有在<strong>退出组合</strong>时才会执行 <code>onDispose</code>。</p>
+<ul>
+<li>**使用 <code>remember {}</code>**：第一次进入打印 <code>re-calculate</code>；切到其他 Tab 停留后，先打印 <code>onDispose</code>，再切回来会再次打印 <code>re-calculate</code>，scale 被重置。<br><img src="/images/20231204/remember_log.jpg" alt="Logger" title="remember_log"></li>
+<li>**改用 <code>rememberSaveable {}</code>**：只有第一次进入时打印一次 <code>re-calculate</code>，之后切 Tab 再回来也不会再打印，说明一直用的是已保存的值。<br><img src="/images/20231204/remember_log1.jpg" alt="Logger1" title="remember_log1"></li>
+</ul>
+<h2 id="四、延伸：离开屏幕-≠-重建"><a href="#四、延伸：离开屏幕-≠-重建" class="headerlink" title="四、延伸：离开屏幕 ≠ 重建"></a>四、延伸：离开屏幕 ≠ 重建</h2><p><a href="https://jetc.dev/slack/2021-04-13-when-do-we-use-remembersaveable.html">Jetpack Compose 相关讨论</a> 里有一句：**”Composable leaving the screen is not recreation”**（可组合项离开屏幕并不等于重建）。</p>
+<p>在 Compose 中，组件离开屏幕与 Activity 重建是两回事：</p>
+<ul>
+<li>组件退出 Composition 后，<code>remember</code> 保存的值会丢失。</li>
+<li><code>rememberSaveable</code> 的值会参与 Android 的状态保存与恢复；Activity 或进程重建后，系统有机会恢复它。</li>
+<li>页面离开后能否在同一进程内恢复 <code>rememberSaveable</code>，还取决于导航/Tab 容器是否保留对应的 <code>SaveableStateRegistry</code>。</li>
+</ul>
+<p>因此，不能把“离开屏幕”直接等同于“必然触发 <code>rememberSaveable</code> 恢复”。如果状态需要跨页面共享或具有业务意义，应提升到 ViewModel 等更合适的作用域。</p>
+<p>常见「离开屏幕」场景包括：</p>
+<ol>
+<li><strong>Navigation 跳转 / Tab 切换</strong>（如本文案例）</li>
+<li><strong>列表滑动</strong>：Item 滑出视口时会退出组合，<code>onDispose</code> 会执行</li>
+</ol>
+<p>例如 LazyColumn 的 Item 配合 <code>DisposableEffect</code> 可以观察到滑出时打印；若需要<strong>跨页面或重新进入页面时恢复列表滚动位置</strong>，应使用基于 <code>rememberSaveable</code> 的 <code>rememberLazyListState</code> 等 API。</p>
+<h2 id="五、如何选择"><a href="#五、如何选择" class="headerlink" title="五、如何选择"></a>五、如何选择</h2><table>
+<thead>
+<tr>
+<th>需求</th>
+<th>推荐</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>状态只需在<strong>重组</strong>过程中保持</td>
+<td><code>remember {}</code></td>
+</tr>
+<tr>
+<td>状态需要在 <strong>Activity/进程重建</strong>（如旋转、内存回收）后恢复</td>
+<td><code>rememberSaveable {}</code></td>
+</tr>
+<tr>
+<td>状态需要<strong>跨页面</strong>或更复杂的作用域</td>
+<td>ViewModel 等；若仅在单页内且需应对「离开再进入」，<code>rememberSaveable {}</code> 仍适用</td>
+</tr>
+</tbody></table>
+<p>理解「进入/重组/退出组合」与「SavedInstanceState 重建」的差异后，就能在开发中按场景选用 <code>remember</code> 或 <code>rememberSaveable</code>，避免状态被意外重置。</p>
+]]></content>
+      <categories>
+        <category>Technical</category>
+      </categories>
+      <tags>
+        <tag>Jetpack Compose</tag>
+        <tag>Android</tag>
       </tags>
   </entry>
 </search>
