@@ -1,856 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证</title>
-    <url>/posts/2026/04/09/4dc832d4/</url>
-    <content><![CDATA[<h1 id="从-0-开始实操-MCP：用-TypeScript-接入-CoinGecko，并在-Inspector-Codex-中验证"><a href="#从-0-开始实操-MCP：用-TypeScript-接入-CoinGecko，并在-Inspector-Codex-中验证" class="headerlink" title="从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"></a>从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证</h1><p>如果你已经看过不少 MCP 介绍，却始终没有真正跑通过一个完整例子，那么这篇文章会更适合你。</p>
-<p>这篇文章不讲太多抽象概念，也不一开始堆很多工具，而是只做一件事：</p>
-<p><strong>从零写一个最小的 TypeScript MCP Server，接入 CoinGecko 的真实市场数据接口，并在 Inspector 和 Codex 中完成验证。</strong></p>
-<p>整个过程只围绕一个工具展开：<code>fetch_market_data</code>。</p>
-<p>你可以把它理解成一条完整的入门链路：</p>
-<ul>
-<li>先理解 MCP 在这个案例里到底是什么</li>
-<li>再动手写一个最小可运行的 MCP Server</li>
-<li>然后接入真实 API</li>
-<li>最后验证这个工具确实能被宿主发现和调用</li>
-</ul>
-<p>这样学的好处是，你不会停留在“知道 MCP 是什么”，而是能真正完成一次从开发到验证的闭环。</p>
-<p>本文配套示例代码已上传 GitHub，方便你边看边对照实践：</p>
-<ul>
-<li>GitHub 仓库：<a href="https://github.com/BreakZero/mcp-tooling-example">mcp-tooling-example</a></li>
-</ul>
-<hr>
-<h2 id="一、这篇文章要解决什么问题"><a href="#一、这篇文章要解决什么问题" class="headerlink" title="一、这篇文章要解决什么问题"></a>一、这篇文章要解决什么问题</h2><p>学 MCP 时，很多人最容易卡住的地方，不是概念看不懂，而是<strong>不知道一个最小可运行项目到底长什么样</strong>。</p>
-<p>所以先把本文的目标说清楚。读完并跑通后，你会完成下面几件事：</p>
-<ol>
-<li>理解 MCP 在这个例子里的定位</li>
-<li>用 TypeScript 写一个最小 MCP Server</li>
-<li>注册一个可调用的工具：<code>fetch_market_data</code></li>
-<li>让这个工具真正调用 CoinGecko API 获取市场价格</li>
-<li>用 MCP Inspector 验证工具是否可用</li>
-<li>把它接入 Codex CLI，验证宿主确实能够调用它</li>
-</ol>
-<p>也就是说，这不是一个只打印 <code>hello world</code> 的示例，而是一个<strong>真正有外部数据输入、有工具注册、有调试验证的完整入门项目</strong>。</p>
-<hr>
-<h2 id="二、先建立一个最小认知：MCP-在这个例子里是什么"><a href="#二、先建立一个最小认知：MCP-在这个例子里是什么" class="headerlink" title="二、先建立一个最小认知：MCP 在这个例子里是什么"></a>二、先建立一个最小认知：MCP 在这个例子里是什么</h2><p>在开始搭项目之前，先把最关键的问题讲清楚：</p>
-<p><strong>MCP 在这里不是业务逻辑本身，而是一层标准化的工具协议。</strong></p>
-<p>你可以先看这条链路：</p>
-<pre class="line-numbers language-text" data-language="text"><code class="language-text">Codex / ChatGPT / Inspector
-    -&gt; MCP Client
-    -&gt; 你的 MCP Server
-    -&gt; 你的 TypeScript 逻辑
-    -&gt; CoinGecko API<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>这里面每一层的职责都不一样：</p>
-<ul>
-<li><p><strong>宿主（Host）</strong>：比如 Codex、Inspector、ChatGPT<br>它们负责发现工具、调用工具、消费结果</p>
-</li>
-<li><p><strong>MCP Client</strong>：负责按 MCP 协议和 Server 通信</p>
-</li>
-<li><p><strong>你的 MCP Server</strong>：负责把你的能力暴露成标准工具</p>
-</li>
-<li><p><strong>你的业务逻辑</strong>：真正做事的部分，比如“根据 symbol 拉取市场价格”</p>
-</li>
-<li><p><strong>第三方 API</strong>：比如 CoinGecko，提供真实数据来源</p>
-</li>
-</ul>
-<p>所以，本文里你真正要实现的核心能力，其实是：</p>
-<p><strong>输入一个币种 symbol，比如 BTC，返回对应的实时市场数据。</strong></p>
-<p>而 MCP 做的事，是让这个能力能够被宿主以标准方式调用。</p>
-<p>这点对新手非常重要。因为很多人一开始会把 MCP 和 Agent、业务逻辑、应用框架混在一起。其实更准确的理解应该是：</p>
-<p><strong>MCP 解决的是“能力如何暴露和被调用”，不是“业务本身如何实现”。</strong></p>
-<h3 id="为什么这篇文章先从-STDIO-开始，而不是-HTTP"><a href="#为什么这篇文章先从-STDIO-开始，而不是-HTTP" class="headerlink" title="为什么这篇文章先从 STDIO 开始，而不是 HTTP"></a>为什么这篇文章先从 STDIO 开始，而不是 HTTP</h3><p>MCP 支持不同传输方式，但对新手来说，最适合入门的通常不是远程 HTTP，而是本地 <strong>STDIO</strong>。</p>
-<p>原因很简单，STDIO 足够直接：</p>
-<ul>
-<li>不需要先搭 Web 服务</li>
-<li>不需要处理端口和路由</li>
-<li>不需要 HTTPS 或公网暴露</li>
-<li>本地调试链路更短，更容易定位问题</li>
-</ul>
-<p>也就是说，你现在最需要的是<strong>先把一个工具从“写出来”到“被调用成功”跑通</strong>，而不是一上来解决部署问题。</p>
-<p>所以这篇文章的策略是：</p>
-<p><strong>先用 STDIO 完成最小闭环，再考虑远程服务化。</strong></p>
-<p>这个顺序对初学者更稳，也更容易建立对 MCP 的直觉。</p>
-<hr>
-<h2 id="三、开始动手：从-0-搭一个最小可运行的-MCP-Server"><a href="#三、开始动手：从-0-搭一个最小可运行的-MCP-Server" class="headerlink" title="三、开始动手：从 0 搭一个最小可运行的 MCP Server"></a>三、开始动手：从 0 搭一个最小可运行的 MCP Server</h2><h3 id="1-准备工作"><a href="#1-准备工作" class="headerlink" title="1. 准备工作"></a>1. 准备工作</h3><p>开始之前，先准备好本地环境：</p>
-<ul>
-<li>Node.js 18 或更高版本</li>
-<li>npm</li>
-<li>一个 CoinGecko API Key</li>
-<li>已安装 Codex CLI（后文用于扩展验证，可选）</li>
-</ul>
-<h4 id="获取-CoinGecko-API-Key"><a href="#获取-CoinGecko-API-Key" class="headerlink" title="获取 CoinGecko API Key"></a>获取 CoinGecko API Key</h4><p>CoinGecko 提供 API Key 认证。常见方式是通过请求头传递：</p>
-<ul>
-<li>Demo Key：<code>x-cg-demo-api-key</code></li>
-<li>Pro Key：<code>x-cg-pro-api-key</code></li>
-</ul>
-<p>本文先使用 Demo Key 即可。因为我们的目标是跑通 MCP 链路，不是做高并发或生产级接入。</p>
-<h3 id="2-创建项目"><a href="#2-创建项目" class="headerlink" title="2. 创建项目"></a>2. 创建项目</h3><p>先初始化一个最小项目：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> mcp-coingecko-demo
-<span class="token builtin class-name">cd</span> mcp-coingecko-demo
-<span class="token function">npm</span> init <span class="token parameter variable">-y</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<p>安装依赖：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> <span class="token function">install</span> @modelcontextprotocol/sdk zod dotenv
-<span class="token function">npm</span> <span class="token function">install</span> <span class="token parameter variable">-D</span> typescript tsx @types/node<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p>初始化 TypeScript 配置：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">npx tsc <span class="token parameter variable">--init</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>到这里，你就有了一个可以写 MCP Server 的基础项目。</p>
-<h3 id="3-设计项目结构"><a href="#3-设计项目结构" class="headerlink" title="3. 设计项目结构"></a>3. 设计项目结构</h3><p>为了让示例保持简单，同时又不过度把所有逻辑塞进一个文件，这里建议先用下面这套结构：</p>
-<pre class="line-numbers language-text" data-language="text"><code class="language-text">mcp-coingecko-demo/
-  package.json
-  .env
-  src/
-    server.ts
-    domain/
-      market.ts<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>各文件职责如下：</p>
-<ul>
-<li><p><code>src/server.ts</code><br>MCP Server 入口，负责注册工具、定义输入输出、连接传输层</p>
-</li>
-<li><p><code>src/domain/market.ts</code><br>业务逻辑层，负责调用 CoinGecko API，处理市场数据</p>
-</li>
-</ul>
-<p>这样拆的好处很明显：</p>
-<ol>
-<li><p><strong>协议层和业务层分开</strong><br>你能更清楚地理解：什么是 MCP，什么是业务逻辑</p>
-</li>
-<li><p><strong>后续更容易扩展</strong><br>将来无论接 CLI、HTTP、ChatGPT，甚至测试脚本，都可以复用 <code>domain</code> 层</p>
-</li>
-<li><p><strong>更符合真实项目演进方式</strong><br>哪怕这是一个入门项目，也最好从一开始建立基本的分层意识</p>
-</li>
-</ol>
-<p>对新手来说，这种拆分不是“为了架构而架构”，而是为了以后少踩坑。</p>
-<h3 id="4-配置环境变量"><a href="#4-配置环境变量" class="headerlink" title="4. 配置环境变量"></a>4. 配置环境变量</h3><p>在项目根目录创建 <code>.env</code> 文件：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token assign-left variable">COINGECKO_API_KEY</span><span class="token operator">=</span>your_demo_key_here
-<span class="token assign-left variable">COINGECKO_API_PLAN</span><span class="token operator">=</span>demo<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p>这两个环境变量分别表示：</p>
-<ul>
-<li><code>COINGECKO_API_KEY</code>：你的 CoinGecko API Key</li>
-<li><code>COINGECKO_API_PLAN</code>：当前使用的套餐类型，本文先填 <code>demo</code></li>
-</ul>
-<p>这样做的意义是把配置和代码分开。以后如果你切换到 Pro Key，或者在不同环境使用不同配置，就不用改业务代码。</p>
-<h3 id="5-先写业务逻辑：获取市场数据"><a href="#5-先写业务逻辑：获取市场数据" class="headerlink" title="5. 先写业务逻辑：获取市场数据"></a>5. 先写业务逻辑：获取市场数据</h3><p>先新建 <code>src/domain/market.ts</code>：</p>
-<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">import</span> <span class="token string">"dotenv/config"</span><span class="token punctuation">;</span>
-
-<span class="token keyword">export</span> <span class="token keyword">type</span> <span class="token class-name">MarketData</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
-  id<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
-  <span class="token builtin">symbol</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
-  price<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
-  currency<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
-  source<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
-  change24h<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span> <span class="token operator">|</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
-  lastUpdatedAt<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span> <span class="token operator">|</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span class="token punctuation">;</span>
-
-<span class="token keyword">const</span> <span class="token constant">SYMBOL_TO_COINGECKO_ID</span><span class="token operator">:</span> Record<span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">string</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
-  <span class="token constant">BTC</span><span class="token operator">:</span> <span class="token string">"bitcoin"</span><span class="token punctuation">,</span>
-  <span class="token constant">ETH</span><span class="token operator">:</span> <span class="token string">"ethereum"</span><span class="token punctuation">,</span>
-  <span class="token constant">SOL</span><span class="token operator">:</span> <span class="token string">"solana"</span><span class="token punctuation">,</span>
-<span class="token punctuation">}</span><span class="token punctuation">;</span>
-
-<span class="token keyword">function</span> <span class="token function">getCoinGeckoConfig</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-  <span class="token keyword">const</span> plan <span class="token operator">=</span> <span class="token punctuation">(</span>process<span class="token punctuation">.</span>env<span class="token punctuation">.</span><span class="token constant">COINGECKO_API_PLAN</span> <span class="token operator">||</span> <span class="token string">"demo"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toLowerCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token keyword">const</span> apiKey <span class="token operator">=</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span><span class="token constant">COINGECKO_API_KEY</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>apiKey<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">"Missing COINGECKO_API_KEY"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token punctuation">}</span>
-
-  <span class="token keyword">if</span> <span class="token punctuation">(</span>plan <span class="token operator">===</span> <span class="token string">"pro"</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token keyword">return</span> <span class="token punctuation">{</span>
-      baseUrl<span class="token operator">:</span> <span class="token string">"https://pro-api.coingecko.com/api/v3"</span><span class="token punctuation">,</span>
-      headers<span class="token operator">:</span> <span class="token punctuation">{</span>
-        <span class="token string-property property">"x-cg-pro-api-key"</span><span class="token operator">:</span> apiKey<span class="token punctuation">,</span>
-      <span class="token punctuation">}</span><span class="token punctuation">,</span>
-      source<span class="token operator">:</span> <span class="token string">"coingecko-pro"</span><span class="token punctuation">,</span>
-    <span class="token punctuation">}</span><span class="token punctuation">;</span>
-  <span class="token punctuation">}</span>
-
-  <span class="token keyword">return</span> <span class="token punctuation">{</span>
-    baseUrl<span class="token operator">:</span> <span class="token string">"https://api.coingecko.com/api/v3"</span><span class="token punctuation">,</span>
-    headers<span class="token operator">:</span> <span class="token punctuation">{</span>
-      <span class="token string-property property">"x-cg-demo-api-key"</span><span class="token operator">:</span> apiKey<span class="token punctuation">,</span>
-    <span class="token punctuation">}</span><span class="token punctuation">,</span>
-    source<span class="token operator">:</span> <span class="token string">"coingecko-demo"</span><span class="token punctuation">,</span>
-  <span class="token punctuation">}</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span>
-
-<span class="token keyword">function</span> <span class="token function">resolveCoinId</span><span class="token punctuation">(</span><span class="token builtin">symbol</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token punctuation">{</span>
-  <span class="token keyword">const</span> normalizedSymbol <span class="token operator">=</span> <span class="token builtin">symbol</span><span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toUpperCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>normalizedSymbol<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">"symbol is required"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token punctuation">}</span>
-
-  <span class="token keyword">const</span> coinId <span class="token operator">=</span> <span class="token constant">SYMBOL_TO_COINGECKO_ID</span><span class="token punctuation">[</span>normalizedSymbol<span class="token punctuation">]</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>coinId<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Unsupported symbol: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>normalizedSymbol<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token punctuation">}</span>
-
-  <span class="token keyword">return</span> coinId<span class="token punctuation">;</span>
-<span class="token punctuation">}</span>
-
-<span class="token keyword">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">fetchMarketData</span><span class="token punctuation">(</span><span class="token builtin">symbol</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">Promise</span><span class="token operator">&lt;</span>MarketData<span class="token operator">&gt;</span> <span class="token punctuation">{</span>
-  <span class="token keyword">const</span> normalizedSymbol <span class="token operator">=</span> <span class="token builtin">symbol</span><span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toUpperCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token keyword">const</span> coinId <span class="token operator">=</span> <span class="token function">resolveCoinId</span><span class="token punctuation">(</span>normalizedSymbol<span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token keyword">const</span> <span class="token punctuation">{</span> baseUrl<span class="token punctuation">,</span> headers<span class="token punctuation">,</span> source <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">getCoinGeckoConfig</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">const</span> url <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name"><span class="token constant">URL</span></span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>baseUrl<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">/simple/price</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"ids"</span><span class="token punctuation">,</span> coinId<span class="token punctuation">)</span><span class="token punctuation">;</span>
-  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"vs_currencies"</span><span class="token punctuation">,</span> <span class="token string">"usd"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"include_24hr_change"</span><span class="token punctuation">,</span> <span class="token string">"true"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"include_last_updated_at"</span><span class="token punctuation">,</span> <span class="token string">"true"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span>url<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
-    method<span class="token operator">:</span> <span class="token string">"GET"</span><span class="token punctuation">,</span>
-    headers<span class="token punctuation">,</span>
-  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>response<span class="token punctuation">.</span>ok<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token keyword">const</span> text <span class="token operator">=</span> <span class="token keyword">await</span> response<span class="token punctuation">.</span><span class="token function">text</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">CoinGecko API error: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>response<span class="token punctuation">.</span>status<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>text<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token punctuation">}</span>
-
-  <span class="token keyword">const</span> json <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">await</span> response<span class="token punctuation">.</span><span class="token function">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token keyword">as</span> Record<span class="token operator">&lt;</span>
-    <span class="token builtin">string</span><span class="token punctuation">,</span>
-    <span class="token punctuation">{</span>
-      usd<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
-      usd_24h_change<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
-      last_updated_at<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
-    <span class="token punctuation">}</span>
-  <span class="token operator">&gt;</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">const</span> data <span class="token operator">=</span> json<span class="token punctuation">[</span>coinId<span class="token punctuation">]</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>data <span class="token operator">||</span> <span class="token keyword">typeof</span> data<span class="token punctuation">.</span>usd <span class="token operator">!==</span> <span class="token string">"number"</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">No price data returned for </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>coinId<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token punctuation">}</span>
-
-  <span class="token keyword">return</span> <span class="token punctuation">{</span>
-    id<span class="token operator">:</span> coinId<span class="token punctuation">,</span>
-    <span class="token builtin">symbol</span><span class="token operator">:</span> normalizedSymbol<span class="token punctuation">,</span>
-    price<span class="token operator">:</span> data<span class="token punctuation">.</span>usd<span class="token punctuation">,</span>
-    currency<span class="token operator">:</span> <span class="token string">"USD"</span><span class="token punctuation">,</span>
-    source<span class="token punctuation">,</span>
-    change24h<span class="token operator">:</span> <span class="token keyword">typeof</span> data<span class="token punctuation">.</span>usd_24h_change <span class="token operator">===</span> <span class="token string">"number"</span> <span class="token operator">?</span> data<span class="token punctuation">.</span>usd_24h_change <span class="token operator">:</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
-    lastUpdatedAt<span class="token operator">:</span>
-      <span class="token keyword">typeof</span> data<span class="token punctuation">.</span>last_updated_at <span class="token operator">===</span> <span class="token string">"number"</span> <span class="token operator">?</span> data<span class="token punctuation">.</span>last_updated_at <span class="token operator">:</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
-  <span class="token punctuation">}</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h4 id="这段业务代码到底做了什么"><a href="#这段业务代码到底做了什么" class="headerlink" title="这段业务代码到底做了什么"></a>这段业务代码到底做了什么</h4><p>这段代码看起来不长，但已经覆盖了一个真实工具最关键的几个环节。</p>
-<p>它主要做了 5 件事：</p>
-<ol>
-<li>读取环境变量，确定用 Demo 还是 Pro 配置</li>
-<li>把输入的 symbol 映射成 CoinGecko 识别的 coin id</li>
-<li>调用 CoinGecko 的 <code>/simple/price</code> 接口</li>
-<li>从响应里提取价格、24 小时涨跌幅、更新时间</li>
-<li>把结果整理成统一的数据结构返回</li>
-</ol>
-<p>换句话说，这一层解决的是：</p>
-<p><strong>“怎么把一个用户能理解的输入，变成第三方 API 能理解的请求，再把返回值整理成自己可控的输出格式。”</strong></p>
-<p>这就是典型的业务逻辑层职责。</p>
-<h4 id="为什么这里先手写-symbol-映射，而不是自动支持所有币种"><a href="#为什么这里先手写-symbol-映射，而不是自动支持所有币种" class="headerlink" title="为什么这里先手写 symbol 映射，而不是自动支持所有币种"></a>为什么这里先手写 symbol 映射，而不是自动支持所有币种</h4><p>你会发现这里没有一开始就去拉 <code>/coins/list</code>，而是先手写了几个映射：</p>
-<ul>
-<li><code>BTC -&gt; bitcoin</code></li>
-<li><code>ETH -&gt; ethereum</code></li>
-<li><code>SOL -&gt; solana</code></li>
-</ul>
-<p>这样做不是因为它更高级，而是因为它更适合入门阶段。</p>
-<p>原因有两个：</p>
-<ol>
-<li><p>先降低复杂度，优先跑通链路<br>新手最重要的不是“支持所有币种”，而是先确认整条链路能正常工作。如果一开始就引入动态映射、缓存、搜索、容错等问题，排错成本会明显升高。</p>
-</li>
-<li><p>把问题拆小，更容易理解<br>在这一阶段，你只需要先理解工具如何注册、请求如何发出、数据如何返回、宿主如何调用。至于“如何支持所有 symbol”，那是下一阶段的问题。</p>
-</li>
-</ol>
-<p>技术学习里，一个很重要的原则就是：</p>
-<p><strong>先完成最小可运行版本，再逐步扩展能力。</strong></p>
-<h3 id="6-再写-MCP-Server：把业务能力暴露成工具"><a href="#6-再写-MCP-Server：把业务能力暴露成工具" class="headerlink" title="6. 再写 MCP Server：把业务能力暴露成工具"></a>6. 再写 MCP Server：把业务能力暴露成工具</h3><p>当业务逻辑已经能独立工作后，再来写 <code>src/server.ts</code>：</p>
-<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">import</span> <span class="token punctuation">{</span> McpServer <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@modelcontextprotocol/sdk/server/mcp.js"</span><span class="token punctuation">;</span>
-<span class="token keyword">import</span> <span class="token punctuation">{</span> StdioServerTransport <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@modelcontextprotocol/sdk/server/stdio.js"</span><span class="token punctuation">;</span>
-<span class="token keyword">import</span> <span class="token punctuation">{</span> z <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"zod"</span><span class="token punctuation">;</span>
-<span class="token keyword">import</span> <span class="token punctuation">{</span> fetchMarketData <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"./domain/market.js"</span><span class="token punctuation">;</span>
-
-<span class="token keyword">const</span> server <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">McpServer</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
-  name<span class="token operator">:</span> <span class="token string">"market-data-server"</span><span class="token punctuation">,</span>
-  version<span class="token operator">:</span> <span class="token string">"1.1.0"</span><span class="token punctuation">,</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-server<span class="token punctuation">.</span><span class="token function">tool</span><span class="token punctuation">(</span>
-  <span class="token string">"fetch_market_data"</span><span class="token punctuation">,</span>
-  <span class="token string">"Fetch crypto market data from CoinGecko for symbols like BTC, ETH, or SOL"</span><span class="token punctuation">,</span>
-  <span class="token punctuation">{</span>
-    <span class="token builtin">symbol</span><span class="token operator">:</span> z
-      <span class="token punctuation">.</span><span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-      <span class="token punctuation">.</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token string">"symbol cannot be empty"</span><span class="token punctuation">)</span>
-      <span class="token punctuation">.</span><span class="token function">describe</span><span class="token punctuation">(</span><span class="token string">"Crypto asset symbol, for example BTC, ETH, or SOL"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-  <span class="token punctuation">}</span><span class="token punctuation">,</span>
-  <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token builtin">symbol</span> <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
-    <span class="token keyword">try</span> <span class="token punctuation">{</span>
-      <span class="token keyword">const</span> result <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">fetchMarketData</span><span class="token punctuation">(</span><span class="token builtin">symbol</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-      <span class="token keyword">return</span> <span class="token punctuation">{</span>
-        content<span class="token operator">:</span> <span class="token punctuation">[</span>
-          <span class="token punctuation">{</span>
-            type<span class="token operator">:</span> <span class="token string">"text"</span><span class="token punctuation">,</span>
-            text<span class="token operator">:</span> <span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">stringify</span><span class="token punctuation">(</span>result<span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-          <span class="token punctuation">}</span><span class="token punctuation">,</span>
-        <span class="token punctuation">]</span><span class="token punctuation">,</span>
-      <span class="token punctuation">}</span><span class="token punctuation">;</span>
-    <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-      <span class="token keyword">const</span> message <span class="token operator">=</span>
-        error <span class="token keyword">instanceof</span> <span class="token class-name">Error</span> <span class="token operator">?</span> error<span class="token punctuation">.</span>message <span class="token operator">:</span> <span class="token string">"Unknown error occurred"</span><span class="token punctuation">;</span>
-
-      <span class="token keyword">return</span> <span class="token punctuation">{</span>
-        content<span class="token operator">:</span> <span class="token punctuation">[</span>
-          <span class="token punctuation">{</span>
-            type<span class="token operator">:</span> <span class="token string">"text"</span><span class="token punctuation">,</span>
-            text<span class="token operator">:</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Failed to fetch market data: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>message<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span>
-          <span class="token punctuation">}</span><span class="token punctuation">,</span>
-        <span class="token punctuation">]</span><span class="token punctuation">,</span>
-        isError<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
-      <span class="token punctuation">}</span><span class="token punctuation">;</span>
-    <span class="token punctuation">}</span>
-  <span class="token punctuation">}</span>
-<span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-<span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-  <span class="token keyword">const</span> transport <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">StdioServerTransport</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token keyword">await</span> server<span class="token punctuation">.</span><span class="token function">connect</span><span class="token punctuation">(</span>transport<span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token string">"MCP server is running..."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span>
-
-<span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">catch</span><span class="token punctuation">(</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
-  <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token string">"Server error:"</span><span class="token punctuation">,</span> error<span class="token punctuation">)</span><span class="token punctuation">;</span>
-  process<span class="token punctuation">.</span><span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<h4 id="这段-MCP-Server-代码应该怎么看"><a href="#这段-MCP-Server-代码应该怎么看" class="headerlink" title="这段 MCP Server 代码应该怎么看"></a>这段 MCP Server 代码应该怎么看</h4><p>到这里，文章最关键的一层连接出现了：</p>
-<p><strong>业务逻辑已经有了，现在我们要把它变成一个标准工具。</strong></p>
-<p>上面这段代码主要做了 4 件事：</p>
-<ol>
-<li><p>创建一个 MCP Server<br>这一步是在声明你的服务身份。宿主连接时，会把它当成一个 MCP Server 来识别。</p>
-</li>
-<li><p>注册一个工具<br>这里注册了一个名为 <code>fetch_market_data</code> 的工具。从宿主视角看，它不关心你内部怎么实现，它只关心工具叫什么、接收什么参数、返回什么结果。</p>
-</li>
-<li><p>用 Zod 描述输入参数<br>这一步不是为了“写得更正式”，而是为了让工具输入更可验证、更清晰。这样在 Inspector 或其他宿主里，也更容易看到工具需要什么参数。</p>
-</li>
-<li><p>把业务逻辑接进来<br>MCP 层只负责协议和工具暴露，真正的业务仍然交给 <code>domain/market.ts</code>。</p>
-</li>
-</ol>
-<p>这就是为什么前面要先拆文件。如果你把所有代码都写在一个地方，新手很容易分不清“协议代码”和“业务代码”分别在干什么。</p>
-<h3 id="7-启动服务并理解运行细节"><a href="#7-启动服务并理解运行细节" class="headerlink" title="7. 启动服务并理解运行细节"></a>7. 启动服务并理解运行细节</h3><p>接下来给 <code>package.json</code> 增加脚本：</p>
-<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
-  <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"commonjs"</span><span class="token punctuation">,</span>
-  <span class="token property">"scripts"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
-    <span class="token property">"dev"</span><span class="token operator">:</span> <span class="token string">"tsx watch src/server.ts"</span><span class="token punctuation">,</span>
-    <span class="token property">"build"</span><span class="token operator">:</span> <span class="token string">"tsc src/server.ts --outDir dist --module commonjs --target es2020 --esModuleInterop"</span><span class="token punctuation">,</span>
-  <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>然后启动：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> run dev<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>如果没有报错，而且进程保持运行、等待输入，那么通常说明你的 MCP Server 已经启动成功了。</p>
-<p>这里要注意一点：</p>
-<p><strong>对 STDIO Server 来说，“启动后挂起等待输入”是正常现象，不是程序卡死。</strong></p>
-<p>因为它本来就是在等宿主通过标准输入和它通信。</p>
-<h4 id="为什么日志要写到-stderr，而不是-stdout"><a href="#为什么日志要写到-stderr，而不是-stdout" class="headerlink" title="为什么日志要写到 stderr，而不是 stdout"></a>为什么日志要写到 stderr，而不是 stdout</h4><p>如果你使用的是 <strong>STDIO</strong> 传输，那么：</p>
-<p><strong>stdout 是 MCP 协议消息通道，不能随便输出普通日志。</strong></p>
-<p>也就是说，下面这种做法是有风险的：</p>
-<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">"server started"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>因为这类普通日志会混进协议输出，可能直接破坏通信。</p>
-<p>所以在 STDIO 模式下，普通日志应该写到：</p>
-<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>也就是 stderr。</p>
-<p>这类细节很适合在入门文章里强调一下。因为很多人第一次跑不通，不是 MCP 本身有问题，而是被日志输出干扰了。</p>
-<hr>
-<h2 id="四、验证这个-MCP-工具是否真的可用"><a href="#四、验证这个-MCP-工具是否真的可用" class="headerlink" title="四、验证这个 MCP 工具是否真的可用"></a>四、验证这个 MCP 工具是否真的可用</h2><h3 id="1-用-MCP-Inspector-验证"><a href="#1-用-MCP-Inspector-验证" class="headerlink" title="1. 用 MCP Inspector 验证"></a>1. 用 MCP Inspector 验证</h3><p>在真正接入 Codex 前，最好的做法是先用 MCP Inspector 验证。因为 Inspector 更适合做“工具级调试”。</p>
-<h4 id="启动-Inspector"><a href="#启动-Inspector" class="headerlink" title="启动 Inspector"></a>启动 Inspector</h4><p>如果你已经编译成 JS，可以这样启动：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> run build
-npx @modelcontextprotocol/inspector <span class="token function">node</span> dist/server.js<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p>如果你更习惯直接用 <code>tsx</code> 跑，也可以按自己的本地执行方式配置。</p>
-<h4 id="在-Inspector-里重点验证什么"><a href="#在-Inspector-里重点验证什么" class="headerlink" title="在 Inspector 里重点验证什么"></a>在 Inspector 里重点验证什么</h4><p>你不需要一上来测试很多场景，先抓住 3 个核心问题：</p>
-<ul>
-<li>Server 是否连接成功</li>
-<li>是否能看到 <code>fetch_market_data</code></li>
-<li>这个工具是否真的可以被调用</li>
-</ul>
-<p>也就是说，Inspector 阶段的重点不是“功能多强”，而是“工具链路是否成立”。</p>
-<h4 id="测试正常输入"><a href="#测试正常输入" class="headerlink" title="测试正常输入"></a>测试正常输入</h4><p>输入：</p>
-<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
-  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"BTC"</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<p>预期返回类似：</p>
-<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
-  <span class="token property">"id"</span><span class="token operator">:</span> <span class="token string">"bitcoin"</span><span class="token punctuation">,</span>
-  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"BTC"</span><span class="token punctuation">,</span>
-  <span class="token property">"price"</span><span class="token operator">:</span> <span class="token number">123456</span><span class="token punctuation">,</span>
-  <span class="token property">"currency"</span><span class="token operator">:</span> <span class="token string">"USD"</span><span class="token punctuation">,</span>
-  <span class="token property">"source"</span><span class="token operator">:</span> <span class="token string">"coingecko-demo"</span><span class="token punctuation">,</span>
-  <span class="token property">"change24h"</span><span class="token operator">:</span> <span class="token number">1.23</span><span class="token punctuation">,</span>
-  <span class="token property">"lastUpdatedAt"</span><span class="token operator">:</span> <span class="token number">1712345678</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>其中价格会变化，这正说明你拿到的是实时数据，而不是写死的 mock 数据。</p>
-<h4 id="测试异常输入"><a href="#测试异常输入" class="headerlink" title="测试异常输入"></a>测试异常输入</h4><p>除了成功场景，建议至少测下面几种失败输入。</p>
-<h5 id="空字符串"><a href="#空字符串" class="headerlink" title="空字符串"></a>空字符串</h5><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
-  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">""</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<h5 id="不支持的-symbol"><a href="#不支持的-symbol" class="headerlink" title="不支持的 symbol"></a>不支持的 symbol</h5><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
-  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"DOGE"</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<h5 id="缺少字段"><a href="#缺少字段" class="headerlink" title="缺少字段"></a>缺少字段</h5><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span><span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>这一步的目的不是追求“所有输入都成功”，而是确认下面三件事：</p>
-<ul>
-<li>合法输入能正常返回</li>
-<li>非法输入不会把 Server 打崩</li>
-<li>错误信息对人来说是可理解的</li>
-</ul>
-<p>一个入门项目做到这里，其实已经比很多纯演示性质的示例更接近真实开发了。</p>
-<h4 id="执行结果证明图"><a href="#执行结果证明图" class="headerlink" title="执行结果证明图"></a>执行结果证明图</h4><p>下面这张图是 <code>fetch_market_data</code> 在 MCP Inspector 中连接并调用成功的示例。实际界面和启动命令会随 Inspector 版本变化，请以 <code>npx @modelcontextprotocol/inspector --help</code> 与官方文档为准。验证时重点确认三件事：</p>
-<ul>
-<li>左侧已成功连接本地 <code>market-data-server</code></li>
-<li>工具列表中已经出现 <code>fetch_market_data</code></li>
-<li>右侧输入 <code>ETH</code> 后，工具返回了来自 CoinGecko 的真实市场数据</li>
-<li><code>Tool Result: Success</code> 说明这条本地 MCP 调用链路已经跑通</li>
-</ul>
-<p><img src="/images/20260409/inspector-validation-success.png" alt="Inspector 连接验证成功结果"></p>
-<h3 id="2-接入-Codex-CLI-验证"><a href="#2-接入-Codex-CLI-验证" class="headerlink" title="2. 接入 Codex CLI 验证"></a>2. 接入 Codex CLI 验证</h3><p>当 Inspector 验证通过后，再接入 Codex 才更稳。因为这时候你已经知道问题不在工具本身，而只可能在宿主配置或调用方式上。</p>
-<h4 id="准备-Codex-配置文件"><a href="#准备-Codex-配置文件" class="headerlink" title="准备 Codex 配置文件"></a>准备 Codex 配置文件</h4><p>创建或编辑：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">~/.codex/config.toml<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>加入 MCP Server 配置：</p>
-<pre class="line-numbers language-toml" data-language="toml"><code class="language-toml"><span class="token key property">model</span> <span class="token punctuation">=</span> <span class="token string">"gpt-5.4"</span>
-
-<span class="token punctuation">[</span><span class="token table class-name">mcp_servers.market_data</span><span class="token punctuation">]</span>
-<span class="token key property">command</span> <span class="token punctuation">=</span> <span class="token string">"npx"</span>
-<span class="token key property">args</span> <span class="token punctuation">=</span> <span class="token punctuation">[</span><span class="token string">"tsx"</span><span class="token punctuation">,</span> <span class="token string">"/绝对路径/mcp-coingecko-demo/src/server.ts"</span><span class="token punctuation">]</span>
-
-<span class="token punctuation">[</span><span class="token table class-name">mcp_servers.market_data.env</span><span class="token punctuation">]</span>
-<span class="token key property">COINGECKO_API_KEY</span> <span class="token punctuation">=</span> <span class="token string">"your_demo_key_here"</span>
-<span class="token key property">COINGECKO_API_PLAN</span> <span class="token punctuation">=</span> <span class="token string">"demo"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>注意把路径替换成你自己的绝对路径。</p>
-<h4 id="启动-Codex"><a href="#启动-Codex" class="headerlink" title="启动 Codex"></a>启动 Codex</h4><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">codex<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<h4 id="第一次测试时，尽量显式要求调用工具"><a href="#第一次测试时，尽量显式要求调用工具" class="headerlink" title="第一次测试时，尽量显式要求调用工具"></a>第一次测试时，尽量显式要求调用工具</h4><p>建议用比较明确的提示词，例如：</p>
-<pre class="line-numbers language-text" data-language="text"><code class="language-text">Use the MCP tool fetch_market_data with symbol BTC. Return the raw result first, then explain it.<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>为什么要写得这么明确？因为在验证阶段，你的目标不是“写一个自然对话提示词”，而是先确认宿主是否真的触发了工具调用。</p>
-<h4 id="如何判断-Codex-不是在“猜答案”"><a href="#如何判断-Codex-不是在“猜答案”" class="headerlink" title="如何判断 Codex 不是在“猜答案”"></a>如何判断 Codex 不是在“猜答案”</h4><p>你可以重点看返回结果里是否出现你自己定义过的字段，比如：</p>
-<ul>
-<li><code>source: coingecko-demo</code></li>
-<li><code>id: bitcoin</code></li>
-<li><code>change24h</code></li>
-<li><code>lastUpdatedAt</code></li>
-</ul>
-<p>这些字段如果都出现了，通常就可以比较确定：</p>
-<p><strong>它不是在凭语言模型常识回答，而是真的通过 MCP 调用了你的工具。</strong></p>
-<h4 id="执行结果证明图-1"><a href="#执行结果证明图-1" class="headerlink" title="执行结果证明图"></a>执行结果证明图</h4><p>下面这张图展示的是把 MCP Server 接入 Codex 后的调用结果。可以看到 Codex 明确调用了：</p>
-<p><code>market_data.fetch_market_data({"symbol":"BTC"})</code></p>
-<p>并返回了你在工具中定义的字段，例如：</p>
-<ul>
-<li><code>id: bitcoin</code></li>
-<li><code>symbol: BTC</code></li>
-<li><code>price</code></li>
-<li><code>source: coingecko-demo</code></li>
-<li><code>change24h</code></li>
-<li><code>lastUpdatedAt</code></li>
-</ul>
-<p>这说明 Codex 并不是在“猜答案”，而是真的通过 MCP 工具拿到了返回结果。</p>
-<p><img src="/images/20260409/codex-execution-success.png" alt="Codex 配置执行结果"></p>
-<hr>
-<h2 id="五、总结：跑通这条链路后，你真正掌握了什么"><a href="#五、总结：跑通这条链路后，你真正掌握了什么" class="headerlink" title="五、总结：跑通这条链路后，你真正掌握了什么"></a>五、总结：跑通这条链路后，你真正掌握了什么</h2><p>如果前面的步骤都已经跑通，那么你完成的其实不是一个简单 demo，而是一个完整的入门闭环：</p>
-<ol>
-<li>你写了一个 TypeScript MCP Server</li>
-<li>你注册了一个真实可用的工具 <code>fetch_market_data</code></li>
-<li>你接入了第三方 API，而不是只返回静态内容</li>
-<li>你用 Inspector 验证了工具层是否正常</li>
-<li>你用 Codex 验证了宿主能否真正调用工具</li>
-</ol>
-<p>这一步很重要，因为它意味着你已经跨过了 MCP 入门最难的那道坎：</p>
-<p><strong>从“知道概念”进入“能做出一个可验证的工具”。</strong></p>
-<p>很多人学到这里，后面再增加第二个工具、替换数据源、接入更多宿主，都会顺很多。</p>
-<p>这篇文章本质上只做了一件事：</p>
-<p><strong>用一个真实的 CoinGecko 市场数据工具，把 MCP 的完整入门流程跑通。</strong></p>
-<p>如果你刚接触 MCP，其实不需要一开始就把所有协议细节都啃透。更重要的是先建立这几个直觉：</p>
-<ul>
-<li>MCP 是一层工具协议</li>
-<li>业务逻辑仍然是你自己写</li>
-<li>宿主通过 MCP 发现并调用你的工具</li>
-<li>Inspector 适合做调试验证</li>
-<li>Codex 可以作为真实宿主来消费你的工具能力</li>
-</ul>
-<p>只要这条链路你亲手跑通过一次，后面再去扩展更多工具、更多数据源，甚至更完整的 agent 体系，理解都会快很多。</p>
-]]></content>
-      <categories>
-        <category>AI</category>
-      </categories>
-      <tags>
-        <tag>AI</tag>
-        <tag>MCP</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>升降桌故障排查记</title>
-    <url>/posts/2026/03/02/fbb9923f/</url>
-    <content><![CDATA[<h1 id="升降桌故障排查记：和-E07-E08-的一场小拉扯"><a href="#升降桌故障排查记：和-E07-E08-的一场小拉扯" class="headerlink" title="升降桌故障排查记：和 E07 / E08 的一场小拉扯"></a>升降桌故障排查记：和 E07 / E08 的一场小拉扯</h1><p>有些家用设备的小故障，最磨人。</p>
-<p>它不至于让人立刻崩溃，但会持续打断你的节奏。尤其是你准备工作的时候，桌子突然一边高一边低，控制面板还反复跳出 <strong>RST、E07、E08</strong> 这些报码。</p>
-<p>这次出问题的，是家里的乐歌升降桌。</p>
-<p>原本只是一次普通的升降操作。我像往常一样按下上升键，结果桌子没有正常升起来：一边桌脚还有动作，另一边完全没反应。更麻烦的是，反复重试之后，桌面已经明显不平。</p>
-<p>那一刻的感受很真实。不是“这下完了”的大惊失色，而是一种很具体的无奈：桌子没法正常用，售后不一定马上能处理，而你还得继续工作。</p>
-<p>所以我决定先自己排一轮。</p>
-<p>这篇文章不是维修教程，更不是鼓励大家随便拆设备。它只是一次真实的排查记录：我是怎么从错误代码、客服建议、交叉插线，一步步判断到问题可能出在左右桌脚不同步，并最终通过手动找平和系统重置把桌子恢复正常的。</p>
-<hr>
-<h2 id="一、故障现象：一边能动，一边“罢工”"><a href="#一、故障现象：一边能动，一边“罢工”" class="headerlink" title="一、故障现象：一边能动，一边“罢工”"></a>一、故障现象：一边能动，一边“罢工”</h2><p>那天晚上，我按下升降桌的上升按钮后，很快发现状态不对。</p>
-<p>具体表现大概是这样：</p>
-<ul>
-<li>左边桌脚还有反应，但<strong>只能往下，不能上升</strong></li>
-<li>右边桌脚无论上升还是下降都<strong>完全没反应</strong></li>
-<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
-<li>多次尝试后，桌面出现明显的左右高度差</li>
-</ul>
-<p><img src="/images/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg" alt="联系客服反馈问题"></p>
-<p><em>图 1：控制面板显示 RST / E07 / E08 等报码</em></p>
-<p>我又试了几次，结论基本一致：</p>
-<blockquote>
-<p><strong>这不是简单的卡顿，而是桌子已经进入了异常保护状态。</strong></p>
-</blockquote>
-<p>因为每次操作时，始终只有一边桌脚在动，另一边完全静止。整张桌子看起来就像一张“瘸腿桌”，别说继续升降了，光看着就让人难受。</p>
-<hr>
-<h2 id="二、先找客服：按标准流程排一遍"><a href="#二、先找客服：按标准流程排一遍" class="headerlink" title="二、先找客服：按标准流程排一遍"></a>二、先找客服：按标准流程排一遍</h2><p>遇到这种问题，第一反应当然还是联系客服。</p>
-<p>我联系了乐歌京东自营店。对方给出的思路比较标准，也符合这类升降桌常见的排查逻辑：先重置，再交叉插线，看错误代码是否变化。</p>
-<h3 id="1-先做系统重置"><a href="#1-先做系统重置" class="headerlink" title="1. 先做系统重置"></a>1. 先做系统重置</h3><p>客服先让我把桌子尽量降到最低，然后：</p>
-<blockquote>
-<p><strong>长按下降键约 7 秒，执行系统重置。</strong></p>
-</blockquote>
-<p>这是升降桌常见的初始化方式。很多时候，报码并不一定意味着零件损坏，也可能只是系统检测到位置异常后，需要重新校准。</p>
-<p>可惜，对我这台桌子来说，这一步没有解决问题。</p>
-<h3 id="2-再交叉插线"><a href="#2-再交叉插线" class="headerlink" title="2. 再交叉插线"></a>2. 再交叉插线</h3><p>接下来，客服让我拆开桌腿挡板，把控制盒上的 <strong>M1 和 M2 电机线互换</strong>，再观察报码变化。</p>
-<p><img src="/images/20260302/8BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg" alt="客服建议拆开检查"></p>
-<p><em>图 2：客服建议交叉插线排查问题位置</em></p>
-<p>我照着做完之后，面板上的报码确实变了：从 <strong>E07</strong> 变成了 <strong>E08</strong>。</p>
-<p><img src="/images/20260302/C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg" alt="错误代码变化反馈"></p>
-<p><em>图 3：交叉插线后，报码从 E07 变成 E08</em></p>
-<p>客服根据这个变化，初步判断可能是控制盒问题，需要反馈技术部门，再安排后续处理。问题是，当时已经临近假期，对方给出的答复大意是：</p>
-<blockquote>
-<p>年后再安排。</p>
-</blockquote>
-<p>说实话，听到这里，我看着眼前那张高低不平的桌子，第一反应不是失望，而是有点不甘心。</p>
-<p>都已经拆到这一步了，索性继续往下查。</p>
-<hr>
-<h2 id="三、换个思路：不要只盯着报码"><a href="#三、换个思路：不要只盯着报码" class="headerlink" title="三、换个思路：不要只盯着报码"></a>三、换个思路：不要只盯着报码</h2><p>很多时候，真正有用的线索，不在错误代码本身，而在设备到底表现出了什么异常。</p>
-<p>这次也是一样。</p>
-<h3 id="1-先理解报码，但不迷信报码"><a href="#1-先理解报码，但不迷信报码" class="headerlink" title="1. 先理解报码，但不迷信报码"></a>1. 先理解报码，但不迷信报码</h3><p>我先查了 E07 / E08 的相关说明，想弄清楚它们大概对应什么问题。</p>
-<p>网上能查到的说法并不完全一致，但结合乐歌和同类升降桌常见的故障逻辑，大致可以归纳到两个方向：</p>
-<ul>
-<li>一类和<strong>左右桌脚高度不一致</strong>有关</li>
-<li>一类和<strong>电机连接、通信、同步异常</strong>有关</li>
-</ul>
-<p>这至少说明一件事：</p>
-<blockquote>
-<p><strong>问题未必是硬件彻底坏了，也可能是双侧不同步之后触发了保护机制。</strong></p>
-</blockquote>
-<p>这个判断后来证明挺关键。</p>
-<h3 id="2-先确认电机有没有坏"><a href="#2-先确认电机有没有坏" class="headerlink" title="2. 先确认电机有没有坏"></a>2. 先确认电机有没有坏</h3><p>既然客服已经让我拆开挡板，那不如继续往前一步，先把“是不是电机坏了”这件事弄清楚。</p>
-<p>我的操作过程不复杂：</p>
-<ol>
-<li>拧开桌腿挡板螺丝</li>
-<li>断开两侧电机连接线</li>
-<li>分别测试每个电机是否能正常上下动作</li>
-</ol>
-<p>测试结果出来的时候，我心里其实松了一口气：</p>
-<blockquote>
-<p><strong>两个电机都能正常上下运动。</strong></p>
-</blockquote>
-<p>这意味着，问题大概率不在“电机彻底损坏”这一层。</p>
-<p>至少可以先排除掉最麻烦、也最容易让人头疼的情况。</p>
-<h3 id="3-真正的问题，可能是“两边已经不平了”"><a href="#3-真正的问题，可能是“两边已经不平了”" class="headerlink" title="3. 真正的问题，可能是“两边已经不平了”"></a>3. 真正的问题，可能是“两边已经不平了”</h3><p>接下来再回头看整个故障过程，很多细节就串起来了。</p>
-<p>在出问题之前，桌子的状态其实已经变成了：</p>
-<ul>
-<li>只有一边桌脚在动</li>
-<li>另一边没有正常响应</li>
-<li>两边高度差被一点点拉大</li>
-</ul>
-<p>一旦意识到这一点，思路就清楚了。</p>
-<p>如果升降桌系统会持续检测左右桌脚的同步状态，那么当两边高度差大到一定程度时，系统为了保护结构而锁定，反而很合理。</p>
-<p>也就是说，真正的问题也许不是“它坏了”，而是：</p>
-<blockquote>
-<p><strong>它觉得现在这样继续动下去不安全。</strong></p>
-</blockquote>
-<p>想到这里，我决定不再先盯着报码，而是先处理最直观的问题：</p>
-<p><strong>把两边桌脚重新找平。</strong></p>
-<hr>
-<h2 id="四、解决过程：先扶正，再重置"><a href="#四、解决过程：先扶正，再重置" class="headerlink" title="四、解决过程：先扶正，再重置"></a>四、解决过程：先扶正，再重置</h2><p>接下来的处理方法，反而没什么神秘感。</p>
-<p>既然问题可能出在两边高度已经失衡，那就先让它们在物理上回到同一个基准。</p>
-<p>我的做法是：</p>
-<ol>
-<li>先断电，确认桌面没有负载、线缆没有被夹住；不要在桌子带电或承重时拆接电机线</li>
-<li>参考本机型说明书，在不拆解传动结构的前提下，让仍可响应的一侧把两边高度尽量调到接近的最低位置</li>
-<li>确认左右桌脚高度接近后，再把两个电机重新接回控制盒</li>
-<li>恢复供电后，按本机型说明书的步骤执行初始化；我这台机器是长按下降键约 7 秒</li>
-</ol>
-<p>不同型号的重置按键和报码含义可能不同，因此这里的步骤只能作为排查记录，不应替代官方说明书或售后指导。</p>
-<p>做到这里时，我心里已经有一点底了。</p>
-<p>因为至少从机械状态来看，桌子已经不像之前那样一高一低。换句话说，<strong>“看起来不对”的部分，已经先被纠正了一次。</strong></p>
-<p>然后，我重新执行最开始那套重置操作。</p>
-<p>这一次，结果立刻不一样了：</p>
-<ul>
-<li>面板上的错误代码消失了</li>
-<li>显示重新变回正常的高度数字</li>
-<li>再测试升降时，左右两边恢复了同步运动</li>
-</ul>
-<p><img src="/images/20260302/379220D3-EF81-44D3-AFD3-1A9DA10B1F23.jpg" alt="问题解决后反馈客服"></p>
-<p><em>图 4：问题解决后，回头告知客服</em></p>
-<p>那一刻还挺有成就感。</p>
-<p>不是那种“我会修机器了”的成就感，而是你顺着现象一点点摸过去，最后真的把问题捋顺了。前面那种说不上来的烦躁，也一下子散掉了。</p>
-<hr>
-<h2 id="五、这次排查真正有用的是什么"><a href="#五、这次排查真正有用的是什么" class="headerlink" title="五、这次排查真正有用的是什么"></a>五、这次排查真正有用的是什么</h2><p>现在回头看，这次能顺利解决，不是因为我多懂升降桌，而是因为排查顺序还算对。</p>
-<p>我把整个过程总结成一张表：</p>
-<table>
-<thead>
-<tr>
-<th>排查步骤</th>
-<th>关键操作</th>
-<th>目的</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>1. 记录报码</td>
-<td>观察 RST / E07 / E08 的变化</td>
-<td>缩小问题范围</td>
-</tr>
-<tr>
-<td>2. 联系客服</td>
-<td>按官方流程先重置，再交叉插线</td>
-<td>建立基础排查路径</td>
-</tr>
-<tr>
-<td>3. 测试电机</td>
-<td>单独测试两侧电机是否能动作</td>
-<td>排除电机本体故障</td>
-</tr>
-<tr>
-<td>4. 手动找平</td>
-<td>让两边桌脚回到同一高度</td>
-<td>恢复物理基准</td>
-</tr>
-<tr>
-<td>5. 系统重置</td>
-<td>长按下降键重新初始化</td>
-<td>让系统重新校准</td>
-</tr>
-</tbody></table>
-<p>真正起作用的，不是某一个“神奇步骤”，而是没有一上来就认定它一定坏了，而是把问题拆开来看：</p>
-<ul>
-<li>是系统没校准？</li>
-<li>是连接异常？</li>
-<li>是左右不同步？</li>
-<li>还是零件真的损坏？</li>
-</ul>
-<p>当这些问题一个个被排掉之后，答案自然就浮出来了。</p>
-<hr>
-<h2 id="六、这次小故障给我的几个提醒"><a href="#六、这次小故障给我的几个提醒" class="headerlink" title="六、这次小故障给我的几个提醒"></a>六、这次小故障给我的几个提醒</h2><h3 id="1-报码吓人，但不等于彻底损坏"><a href="#1-报码吓人，但不等于彻底损坏" class="headerlink" title="1. 报码吓人，但不等于彻底损坏"></a>1. 报码吓人，但不等于彻底损坏</h3><p>这是我这次最大的感受。</p>
-<p>控制面板报码看起来很吓人，但它很多时候只是系统在告诉你：</p>
-<blockquote>
-<p><strong>现在的状态不正常，我先停下来。</strong></p>
-</blockquote>
-<p>停下来未必是坏了，也可能是在避免继续运行带来更大的结构风险。</p>
-<h3 id="2-现象往往比错误代码更重要"><a href="#2-现象往往比错误代码更重要" class="headerlink" title="2. 现象往往比错误代码更重要"></a>2. 现象往往比错误代码更重要</h3><p>如果只盯着 E07 / E08 这两个码，我未必能那么快想到“高度差”这个方向。</p>
-<p>但“始终只有一边桌脚在动”这个现象，几乎已经把答案摆在了面前。</p>
-<p>所以很多时候，先观察设备“到底怎么不对”，比先背报码更有用。</p>
-<h3 id="3-客服不一定直接解决问题，但能提供起点"><a href="#3-客服不一定直接解决问题，但能提供起点" class="headerlink" title="3. 客服不一定直接解决问题，但能提供起点"></a>3. 客服不一定直接解决问题，但能提供起点</h3><p>这次虽然最后是我自己处理好的，但客服给的建议其实很关键。</p>
-<p>至少他们先帮我把流程拉了出来：</p>
-<ul>
-<li>先重置</li>
-<li>再交叉插线</li>
-<li>再看报码变化</li>
-</ul>
-<p>这些步骤本身，就已经帮我少走了不少弯路。</p>
-<h3 id="4-低风险的问题，可以先自己排一排"><a href="#4-低风险的问题，可以先自己排一排" class="headerlink" title="4. 低风险的问题，可以先自己排一排"></a>4. 低风险的问题，可以先自己排一排</h3><p>当然，这不是鼓励所有人都去拆机器。</p>
-<p>但像这类问题，如果你能确认安全，做一些基础排查通常风险不高：</p>
-<ul>
-<li>做一次系统 reset</li>
-<li>检查插线是否松动</li>
-<li>观察两边是否明显不平</li>
-<li>在安全前提下做简单找平</li>
-</ul>
-<p>很多时候，这比直接等售后更快，也更容易让你弄清楚问题到底出在哪。</p>
-<p>如果涉及电源、承重结构、明显异响、烧焦味，或者你不确定自己在做什么，那就别硬来，直接等官方售后处理。</p>
-<hr>
-<h2 id="七、写在最后"><a href="#七、写在最后" class="headerlink" title="七、写在最后"></a>七、写在最后</h2><p>这次升降桌的小故障，最后没有变成一次“换控制盒”或者“换电机”的麻烦事。</p>
-<p>它更像是一个很生活化的小插曲：一个原本以为要拖很久的问题，在你愿意静下来观察、拆解、排查之后，慢慢露出了没那么复杂的本来面目。</p>
-<p>我一直觉得，生活里很多看上去很“专业”的问题，真正可怕的不是它本身，而是你在一开始就把它想得太大、太难、太不可碰。</p>
-<p>可一旦你愿意动手去摸一摸，很多事情就会从“完全不会”变成“原来也能搞明白一点”。</p>
-<p>这次也是一样。</p>
-<p>如果你刚好也遇到了类似情况，希望这篇记录能给你一点参考。</p>
-<p>它未必适用于所有型号，也谈不上是什么标准维修教程。但至少对于“<strong>面板报码 + 一边桌脚不动 + 重置暂时无效</strong>”这种场景，也许能帮你少一点慌张，少走一点弯路。</p>
-<hr>
-<p><em>本文记录于 2026 年 3 月</em></p>
-]]></content>
-      <categories>
-        <category>随笔</category>
-      </categories>
-      <tags>
-        <tag>随笔</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</title>
-    <url>/posts/2026/07/18/9e7d1a5f/</url>
-    <content><![CDATA[<h1 id="单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布"><a href="#单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布" class="headerlink" title="单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布"></a>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</h1><p>本方案的技术链路为：<strong>Mac + OrbStack 本地开发与构建 → Docker Hub 保存版本化镜像 → Ubuntu VPS 使用 Docker Compose 运行</strong>。VPS 只保留部署配置、环境变量、Nginx 配置和数据卷，不上传 Git 仓库或 src 源码目录。</p>
-<blockquote>
-<p><strong>注意</strong>：多阶段镜像不等同绝对源码保护。最终镜像可没有 TypeScript 源码，但编译后的 JavaScript 仍可被分析。密码、令牌和私钥永远不能写进镜像。</p>
-</blockquote>
-<hr>
-<h2 id="一、环境说明"><a href="#一、环境说明" class="headerlink" title="一、环境说明"></a>一、环境说明</h2><p>本地需要 <strong>macOS、OrbStack、Node.js LTS、npm、Git</strong> 和 <strong>Docker Hub 账号</strong>。PostgreSQL 通过 OrbStack 容器运行。</p>
-<p>VPS 建议使用：</p>
-<ul>
-<li><strong>系统</strong>：Ubuntu 24.04 LTS（或仍受支持的 LTS）</li>
-<li><strong>配置</strong>：2 vCPU、4 GB RAM、40 GB 以上 SSD/NVMe</li>
-<li><strong>网络</strong>：公网 IPv4，开放 TCP 80/443</li>
-<li><strong>安全</strong>：SSH 仅对可信 IP 开放</li>
-</ul>
-<blockquote>
-<p>1 GB 内存可试验，但 API、PostgreSQL 与 Docker 共用资源时余量很少。</p>
-</blockquote>
-<hr>
-<h2 id="二、本地-PostgreSQL"><a href="#二、本地-PostgreSQL" class="headerlink" title="二、本地 PostgreSQL"></a>二、本地 PostgreSQL</h2><p>创建 <code>compose.dev.yml</code>：</p>
-<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">services</span><span class="token punctuation">:</span>
-  <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
-    <span class="token key atrule">image</span><span class="token punctuation">:</span> postgres<span class="token punctuation">:</span><span class="token number">16</span>
-    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
-      <span class="token key atrule">POSTGRES_USER</span><span class="token punctuation">:</span> app_user
-      <span class="token key atrule">POSTGRES_PASSWORD</span><span class="token punctuation">:</span> change<span class="token punctuation">-</span>this<span class="token punctuation">-</span>local<span class="token punctuation">-</span>password
-      <span class="token key atrule">POSTGRES_DB</span><span class="token punctuation">:</span> app_db
-    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token string">"127.0.0.1:5432:5432"</span>
-    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> postgres_dev_data<span class="token punctuation">:</span>/var/lib/postgresql/data
-<span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-  postgres_dev_data<span class="token punctuation">:</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>启动并验证：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml up <span class="token parameter variable">-d</span>
-<span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml <span class="token builtin class-name">exec</span> postgres psql <span class="token parameter variable">-U</span> app_user <span class="token parameter variable">-d</span> app_db<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p>本机运行 API 时的数据库连接字符串：</p>
-<pre class="line-numbers language-env" data-language="env"><code class="language-env">DATABASE_URL=postgresql://app_user:***@localhost:5432/app_db<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>绑定 <code>127.0.0.1</code> 代表数据库只供本机开发使用。</p>
-<hr>
-<h2 id="三、构建生产-Docker-镜像"><a href="#三、构建生产-Docker-镜像" class="headerlink" title="三、构建生产 Docker 镜像"></a>三、构建生产 Docker 镜像</h2><p>假设 <code>npm run build</code> 输出 <code>dist</code>，入口为 <code>dist/server.js</code>：</p>
-<pre class="line-numbers language-docker" data-language="docker"><code class="language-docker"><span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> build</span>
-<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
-<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
-<span class="token instruction"><span class="token keyword">RUN</span> npm ci</span>
-<span class="token instruction"><span class="token keyword">COPY</span> tsconfig*.json ./</span>
-<span class="token instruction"><span class="token keyword">COPY</span> src ./src</span>
-<span class="token instruction"><span class="token keyword">RUN</span> npm run build</span>
-
-<span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> production</span>
-<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
-<span class="token instruction"><span class="token keyword">ENV</span> NODE_ENV=production</span>
-<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
-<span class="token instruction"><span class="token keyword">RUN</span> npm ci --omit=dev &amp;&amp; npm cache clean --force</span>
-<span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--from</span><span class="token punctuation">=</span><span class="token string">build</span></span> /app/dist ./dist</span>
-<span class="token instruction"><span class="token keyword">USER</span> node</span>
-<span class="token instruction"><span class="token keyword">EXPOSE</span> 3000</span>
-<span class="token instruction"><span class="token keyword">CMD</span> [<span class="token string">"node"</span>, <span class="token string">"dist/server.js"</span>]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>创建 <code>.dockerignore</code>：</p>
-<pre class="line-numbers language-ignore" data-language="ignore"><code class="language-ignore"><span class="token entry string">node_modules</span>
-<span class="token entry string">dist</span>
-<span class="token entry string">.git</span>
-<span class="token entry string">.env</span>
-<span class="token entry string">.env.<span class="token operator">*</span></span>
-<span class="token entry string">npm-debug.log<span class="token operator">*</span></span>
-<span class="token entry string">compose<span class="token operator">*</span>.yml</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>本地验证构建与运行：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
-<span class="token function">docker</span> run <span class="token parameter variable">--rm</span> <span class="token parameter variable">-p</span> <span class="token number">3000</span>:3000 YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<blockquote>
-<p>Prisma、原生模块等可能需要额外生成步骤，应以项目实际依赖为准。</p>
-</blockquote>
-<hr>
-<h2 id="四、Docker-Hub-如何选择"><a href="#四、Docker-Hub-如何选择" class="headerlink" title="四、Docker Hub 如何选择"></a>四、Docker Hub 如何选择</h2><p>Docker Hub 镜像格式为 <code>docker.io/&lt;用户名&gt;/&lt;镜像名&gt;:&lt;标签&gt;</code>，例如 <code>docker.io/alice/backend-api:1.0.0</code>。它最通用、入门简单，业务 API 通常应使用<strong>私有仓库</strong>。</p>
-<p>各容器仓库选型对比：</p>
-<table>
-<thead>
-<tr>
-<th>仓库</th>
-<th>适用场景</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><strong>Docker Hub</strong></td>
-<td>最通用，入门简单，业务建议使用私有仓库</td>
-</tr>
-<tr>
-<td><strong>GHCR</strong></td>
-<td>适合 GitHub Actions 工作流</td>
-</tr>
-<tr>
-<td><strong>GitLab Container Registry</strong></td>
-<td>适合 GitLab CI</td>
-</tr>
-<tr>
-<td><strong>云厂商仓库</strong></td>
-<td>适合长期部署在同一家云</td>
-</tr>
-</tbody></table>
-<blockquote>
-<p>私有仓库和拉取额度会变化，以各平台官网当前政策为准。</p>
-</blockquote>
-<hr>
-<h2 id="五、推送镜像"><a href="#五、推送镜像" class="headerlink" title="五、推送镜像"></a>五、推送镜像</h2><p>在 Docker Hub 创建 <code>backend-api</code> 私有仓库，使用 <strong>Personal Access Token</strong> 登录：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login
-<span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
-<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<p>可附加 <code>latest</code> 标签：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> tag YOUR_DOCKERHUB_USER/backend-api:1.0.0 YOUR_DOCKERHUB_USER/backend-api:latest
-<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:latest<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p><strong>发布前检查清单：</strong></p>
-<ul>
-<li>✅ API 已连接本地 PostgreSQL 通过关键测试</li>
-<li>✅ 存在 <code>GET /health</code> 健康检查端点</li>
-<li>✅ 机密没有进入镜像</li>
-<li>✅ 每次发布都有新标签</li>
-</ul>
-<blockquote>
-<p>生产 Compose 应固定使用 <code>1.0.0</code> 之类的明确版本，便于回滚。</p>
-</blockquote>
-<hr>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文完成了「单台 VPS 部署 API」的上半部分：从本地开发环境搭建、PostgreSQL 配置、多阶段 Docker 镜像构建，到 Docker Hub 镜像推送。下一篇文章将介绍如何在 Ubuntu VPS 上拉取镜像、配置 Nginx 反向代理，并完成 HTTPS 证书的申请与自动续期。</p>
-]]></content>
-      <categories>
-        <category>Technical</category>
-      </categories>
-      <tags>
-        <tag>Docker</tag>
-        <tag>DevOps</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS</title>
     <url>/posts/2026/07/18/c8b3f21e/</url>
     <content><![CDATA[<h1 id="单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS"><a href="#单台-VPS-部署-API（下）：拉取镜像、PostgreSQL、Nginx-与-HTTPS" class="headerlink" title="单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS"></a>单台 VPS 部署 API（下）：拉取镜像、PostgreSQL、Nginx 与 HTTPS</h1><p>上一篇将镜像推送到了 Docker Hub。本篇将部署到 Ubuntu VPS，完成从镜像拉取到 HTTPS 证书配置的完整链路。</p>
@@ -1041,148 +191,149 @@ DATABASE_URL=postgresql://app_user:***@postgres:5432/app_db<span aria-hidden="tr
       </categories>
       <tags>
         <tag>Docker</tag>
-        <tag>DevOps</tag>
         <tag>Nginx</tag>
         <tag>HTTPS</tag>
+        <tag>DevOps</tag>
       </tags>
   </entry>
   <entry>
-    <title>iOS 沙盒文件读取失败：不要持久化 Container 完整路径</title>
-    <url>/posts/2023/08/13/bb96b1c7/</url>
-    <content><![CDATA[<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：</p>
+    <title>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</title>
+    <url>/posts/2026/07/18/9e7d1a5f/</url>
+    <content><![CDATA[<h1 id="单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布"><a href="#单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布" class="headerlink" title="单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布"></a>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</h1><p>本方案的技术链路为：<strong>Mac + OrbStack 本地开发与构建 → Docker Hub 保存版本化镜像 → Ubuntu VPS 使用 Docker Compose 运行</strong>。VPS 只保留部署配置、环境变量、Nginx 配置和数据卷，不上传 Git 仓库或 src 源码目录。</p>
+<blockquote>
+<p><strong>注意</strong>：多阶段镜像不等同绝对源码保护。最终镜像可没有 TypeScript 源码，但编译后的 JavaScript 仍可被分析。密码、令牌和私钥永远不能写进镜像。</p>
+</blockquote>
+<hr>
+<h2 id="一、环境说明"><a href="#一、环境说明" class="headerlink" title="一、环境说明"></a>一、环境说明</h2><p>本地需要 <strong>macOS、OrbStack、Node.js LTS、npm、Git</strong> 和 <strong>Docker Hub 账号</strong>。PostgreSQL 通过 OrbStack 容器运行。</p>
+<p>VPS 建议使用：</p>
 <ul>
-<li><strong>现象</strong>：导出 <code>.xcappdata</code> 可以确认文件确实在 Documents 目录下，但用 <code>NSData.dataWithContentsOfFile</code> 读取时始终返回空。</li>
-<li><strong>报错</strong>：<code>No such File or Directory</code>（找不到该文件或目录）。</li>
+<li><strong>系统</strong>：Ubuntu 24.04 LTS（或仍受支持的 LTS）</li>
+<li><strong>配置</strong>：2 vCPU、4 GB RAM、40 GB 以上 SSD/NVMe</li>
+<li><strong>网络</strong>：公网 IPv4，开放 TCP 80/443</li>
+<li><strong>安全</strong>：SSH 仅对可信 IP 开放</li>
 </ul>
-<p>当时使用的读取代码如下（为便于排查，增加了 <code>errorPtr</code> 输出错误信息）：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> errorPtr<span class="token operator">:</span> ObjCObjectVar<span class="token operator">&lt;</span>NSError<span class="token operator">?</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token function">alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
-    <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-    bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
-    <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
-<span class="token punctuation">}</span>
-<span class="token function">println</span><span class="token punctuation">(</span>errorPtr<span class="token punctuation">.</span>value<span class="token operator">?</span><span class="token punctuation">.</span>description<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-<span class="token keyword">return</span><span class="token label symbol">@withContext</span> <span class="token keyword">null</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<blockquote>
+<p>1 GB 内存可试验，但 API、PostgreSQL 与 Docker 共用资源时余量很少。</p>
+</blockquote>
+<hr>
+<h2 id="二、本地-PostgreSQL"><a href="#二、本地-PostgreSQL" class="headerlink" title="二、本地 PostgreSQL"></a>二、本地 PostgreSQL</h2><p>创建 <code>compose.dev.yml</code>：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">services</span><span class="token punctuation">:</span>
+  <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> postgres<span class="token punctuation">:</span><span class="token number">16</span>
+    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
+      <span class="token key atrule">POSTGRES_USER</span><span class="token punctuation">:</span> app_user
+      <span class="token key atrule">POSTGRES_PASSWORD</span><span class="token punctuation">:</span> change<span class="token punctuation">-</span>this<span class="token punctuation">-</span>local<span class="token punctuation">-</span>password
+      <span class="token key atrule">POSTGRES_DB</span><span class="token punctuation">:</span> app_db
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"127.0.0.1:5432:5432"</span>
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> postgres_dev_data<span class="token punctuation">:</span>/var/lib/postgresql/data
+<span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+  postgres_dev_data<span class="token punctuation">:</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<span id="more"></span>
+<p>启动并验证：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml up <span class="token parameter variable">-d</span>
+<span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml <span class="token builtin class-name">exec</span> postgres psql <span class="token parameter variable">-U</span> app_user <span class="token parameter variable">-d</span> app_db<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
 
-<h2 id="二、问题定位"><a href="#二、问题定位" class="headerlink" title="二、问题定位"></a>二、问题定位</h2><h3 id="2-1-怀疑点：路径可能不对"><a href="#2-1-怀疑点：路径可能不对" class="headerlink" title="2.1 怀疑点：路径可能不对"></a>2.1 怀疑点：路径可能不对</h3><p>从错误日志看，传入的 <code>fullPath</code> 很可能并不是当前运行时的真实路径，所以即使文件实际存在，<code>NSData.dataWithContentsOfFile</code> 仍然找不到。</p>
-<h3 id="2-2-对比验证：Application-目录的-UUID-不一致"><a href="#2-2-对比验证：Application-目录的-UUID-不一致" class="headerlink" title="2.2 对比验证：Application 目录的 UUID 不一致"></a>2.2 对比验证：Application 目录的 UUID 不一致</h3><p>用 Swift 在运行时获取 Documents 目录并列出文件，与 Kotlin 里使用的 <code>fullPath</code> 对比：</p>
-<ul>
-<li><strong>Kotlin 中使用的 fullPath</strong>（可能是之前保存的完整路径）：<pre class="line-numbers language-none"><code class="language-none">/var/mobile/Containers/Data/Application/3FC1CCE9-A788-47AB-902A-FA133FAA3D30/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
-<li><strong>Swift 当前拿到的文件 URL</strong>：<pre class="line-numbers language-none"><code class="language-none">file:///private/var/mobile/Containers/Data/Application/C5AC5178-6887-40F4-9EE5-8D56CB830CB3/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
-</ul>
-<p>可见，<code>Application</code> 后面那一段 UUID 不一致：一个是 <code>3FC1CCE9-...</code>，一个是 <code>C5AC5178-...</code>。</p>
-<p>Swift 侧获取 Documents 的示例代码：</p>
-<pre class="line-numbers language-swift" data-language="swift"><code class="language-swift"><span class="token keyword">let</span> fileManager <span class="token operator">=</span> <span class="token class-name">FileManager</span><span class="token punctuation">.</span><span class="token keyword">default</span>
-<span class="token keyword">let</span> documentsURL <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">urls</span><span class="token punctuation">(</span><span class="token keyword">for</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>documentDirectory<span class="token punctuation">,</span> <span class="token keyword">in</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>userDomainMask<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
-<span class="token keyword">do</span> <span class="token punctuation">{</span>
-    <span class="token keyword">let</span> fileURLs <span class="token operator">=</span> <span class="token keyword">try</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectory</span><span class="token punctuation">(</span>at<span class="token punctuation">:</span> documentsURL<span class="token punctuation">,</span> includingPropertiesForKeys<span class="token punctuation">:</span> <span class="token nil constant">nil</span><span class="token punctuation">)</span>
-    <span class="token function">print</span><span class="token punctuation">(</span>fileURLs<span class="token punctuation">)</span>
-<span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">{</span>
-    <span class="token function">print</span><span class="token punctuation">(</span><span class="token string-literal"><span class="token string">"Error while enumerating files </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">documentsURL<span class="token punctuation">.</span>path</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">: </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">error<span class="token punctuation">.</span>localizedDescription</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">"</span></span><span class="token punctuation">)</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>本机运行 API 时的数据库连接字符串：</p>
+<pre class="line-numbers language-env" data-language="env"><code class="language-env">DATABASE_URL=postgresql://app_user:***@localhost:5432/app_db<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
 
-<h3 id="2-3-根因结论"><a href="#2-3-根因结论" class="headerlink" title="2.3 根因结论"></a>2.3 根因结论</h3><p>自 <strong>iOS 8.0</strong> 起，应用沙盒里 <code>Application</code> 这一级目录的 <strong>UUID 会随安装/部署方式变化</strong>（例如卸载重装、Xcode 重新安装等）。若把「完整路径」存下来，下次启动或重装后 UUID 变了，旧路径就失效，导致「文件在，但按旧路径读不到」。</p>
-<p>因此：<strong>不能依赖存储的完整路径来读文件，只能依赖「相对位置 + 文件名」并在运行时重新解析。</strong></p>
-<h2 id="三、解决方案"><a href="#三、解决方案" class="headerlink" title="三、解决方案"></a>三、解决方案</h2><p>思路统一为：<strong>只存文件名（或相对路径），读的时候先拿到当前 Documents 目录，再拼出完整路径或 URL。</strong> 下面两种写法都符合这一思路。</p>
-<h3 id="方法一：遍历-Documents，按文件名匹配"><a href="#方法一：遍历-Documents，按文件名匹配" class="headerlink" title="方法一：遍历 Documents，按文件名匹配"></a>方法一：遍历 Documents，按文件名匹配</h3><p>不依赖完整路径，先取到 Documents 的 URL，再在目录下按文件名找到对应文件：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 拿到 Documents 目录的 url</span>
-<span class="token keyword">val</span> url <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">URLForDirectory</span><span class="token punctuation">(</span>
-    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
-    inDomain <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
-    appropriateForURL <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
-    create <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
-    error <span class="token operator">=</span> <span class="token keyword">null</span>
-<span class="token punctuation">)</span><span class="token operator">!!</span>
-<span class="token comment">// 列出目录下所有文件的 url</span>
-<span class="token keyword">val</span> fileUrls <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectoryAtURL</span><span class="token punctuation">(</span>url <span class="token operator">=</span> url<span class="token punctuation">,</span> includingPropertiesForKeys <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span>
-<span class="token comment">// 按文件名精确匹配得到目标文件的 URL；不要用 contains，避免误匹配。</span>
-<span class="token keyword">val</span> currentFileUrl <span class="token operator">=</span> fileUrls
-    <span class="token operator">?</span><span class="token punctuation">.</span>filterIsInstance<span class="token operator">&lt;</span>NSURL<span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-    <span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">firstOrNull</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span>lastPathComponent <span class="token operator">==</span> fileName <span class="token punctuation">}</span>
-<span class="token comment">// 用 URL 读取</span>
-currentFileUrl<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span>
-    NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfURL</span><span class="token punctuation">(</span>currentFileUrl<span class="token punctuation">)</span>
-        <span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
-            <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
-            bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
-            <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
-        <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<p>绑定 <code>127.0.0.1</code> 代表数据库只供本机开发使用。</p>
+<hr>
+<h2 id="三、构建生产-Docker-镜像"><a href="#三、构建生产-Docker-镜像" class="headerlink" title="三、构建生产 Docker 镜像"></a>三、构建生产 Docker 镜像</h2><p>假设 <code>npm run build</code> 输出 <code>dist</code>，入口为 <code>dist/server.js</code>：</p>
+<pre class="line-numbers language-docker" data-language="docker"><code class="language-docker"><span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> build</span>
+<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
+<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
+<span class="token instruction"><span class="token keyword">RUN</span> npm ci</span>
+<span class="token instruction"><span class="token keyword">COPY</span> tsconfig*.json ./</span>
+<span class="token instruction"><span class="token keyword">COPY</span> src ./src</span>
+<span class="token instruction"><span class="token keyword">RUN</span> npm run build</span>
 
-<h3 id="方法二（推荐）：直接取-Documents-路径再拼接文件名"><a href="#方法二（推荐）：直接取-Documents-路径再拼接文件名" class="headerlink" title="方法二（推荐）：直接取 Documents 路径再拼接文件名"></a>方法二（推荐）：直接取 Documents 路径再拼接文件名</h3><p>遍历有额外开销，更稳妥且高效的方式是：<strong>每次读取时用系统 API 取当前 Documents 目录，再拼接文件名</strong>：</p>
-<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> documentDirectory <span class="token operator">=</span> <span class="token function">NSSearchPathForDirectoriesInDomains</span><span class="token punctuation">(</span>
-    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
-    domainMask <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
-    expandTilde <span class="token operator">=</span> <span class="token boolean">true</span>
-<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">first</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> NSString
-<span class="token keyword">val</span> fullPath <span class="token operator">=</span> documentDirectory<span class="token punctuation">.</span><span class="token function">stringByAppendingPathComponent</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span>
-<span class="token comment">// 此处 fullPath 一定是当前应用实例的真实路径</span>
-NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> <span class="token operator">..</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> production</span>
+<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
+<span class="token instruction"><span class="token keyword">ENV</span> NODE_ENV=production</span>
+<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
+<span class="token instruction"><span class="token keyword">RUN</span> npm ci --omit=dev &amp;&amp; npm cache clean --force</span>
+<span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--from</span><span class="token punctuation">=</span><span class="token string">build</span></span> /app/dist ./dist</span>
+<span class="token instruction"><span class="token keyword">USER</span> node</span>
+<span class="token instruction"><span class="token keyword">EXPOSE</span> 3000</span>
+<span class="token instruction"><span class="token keyword">CMD</span> [<span class="token string">"node"</span>, <span class="token string">"dist/server.js"</span>]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>这样得到的 <code>fullPath</code> 始终对应当前运行时的 Documents，不受 UUID 变化影响。</p>
-<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><table>
-<thead>
-<tr>
-<th>要点</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>不要存完整路径</td>
-<td>iOS 8+ 下 Application 目录 UUID 会变，存完整路径容易失效。</td>
-</tr>
-<tr>
-<td>推荐只存文件名</td>
-<td>使用时通过 API 获取当前 Documents 目录，再拼接文件名。</td>
-</tr>
-<tr>
-<td>优先用系统 API 取目录</td>
-<td>使用 <code>NSSearchPathForDirectoriesInDomains</code> 获取 Documents，比遍历目录更简单、高效。</td>
-</tr>
-</tbody></table>
-<p>按上述方式改造后，<code>NSData.dataWithContentsOfFile</code> 无法读取文件的问题即可解决。</p>
-<h2 id="附录：UUID-何时会变化"><a href="#附录：UUID-何时会变化" class="headerlink" title="附录：UUID 何时会变化"></a>附录：UUID 何时会变化</h2><p>不同安装/运行方式下，沙盒中 Application 目录的 UUID 是否变化可参考下表：</p>
+<p>创建 <code>.dockerignore</code>：</p>
+<pre class="line-numbers language-ignore" data-language="ignore"><code class="language-ignore"><span class="token entry string">node_modules</span>
+<span class="token entry string">dist</span>
+<span class="token entry string">.git</span>
+<span class="token entry string">.env</span>
+<span class="token entry string">.env.<span class="token operator">*</span></span>
+<span class="token entry string">npm-debug.log<span class="token operator">*</span></span>
+<span class="token entry string">compose<span class="token operator">*</span>.yml</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>本地验证构建与运行：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
+<span class="token function">docker</span> run <span class="token parameter variable">--rm</span> <span class="token parameter variable">-p</span> <span class="token number">3000</span>:3000 YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<blockquote>
+<p>Prisma、原生模块等可能需要额外生成步骤，应以项目实际依赖为准。</p>
+</blockquote>
+<hr>
+<h2 id="四、Docker-Hub-如何选择"><a href="#四、Docker-Hub-如何选择" class="headerlink" title="四、Docker Hub 如何选择"></a>四、Docker Hub 如何选择</h2><p>Docker Hub 镜像格式为 <code>docker.io/&lt;用户名&gt;/&lt;镜像名&gt;:&lt;标签&gt;</code>，例如 <code>docker.io/alice/backend-api:1.0.0</code>。它最通用、入门简单，业务 API 通常应使用<strong>私有仓库</strong>。</p>
+<p>各容器仓库选型对比：</p>
 <table>
 <thead>
 <tr>
-<th>安装/运行方式</th>
-<th>UUID 是否变化</th>
+<th>仓库</th>
+<th>适用场景</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>App 卸载后重新安装</td>
-<td>✅ 变化（iOS 8+ 的安全机制）</td>
+<td><strong>Docker Hub</strong></td>
+<td>最通用，入门简单，业务建议使用私有仓库</td>
 </tr>
 <tr>
-<td>通过 Xcode 重新安装</td>
-<td>✅ 变化（相当于卸载再安装）</td>
+<td><strong>GHCR</strong></td>
+<td>适合 GitHub Actions 工作流</td>
 </tr>
 <tr>
-<td>Xcode 直接运行（不卸载）</td>
-<td>❌ 不变（仅 Build &amp; Run 且未删除 App）</td>
+<td><strong>GitLab Container Registry</strong></td>
+<td>适合 GitLab CI</td>
 </tr>
 <tr>
-<td>模拟器上运行</td>
-<td>✅ 可能变化（视情况而定）</td>
-</tr>
-<tr>
-<td>TestFlight / App Store 安装</td>
-<td>✅ 变化（安装时生成新 UUID）</td>
-</tr>
-<tr>
-<td>iOS OTA 更新 App</td>
-<td>❌ 不变（更新不改变 UUID）</td>
+<td><strong>云厂商仓库</strong></td>
+<td>适合长期部署在同一家云</td>
 </tr>
 </tbody></table>
+<blockquote>
+<p>私有仓库和拉取额度会变化，以各平台官网当前政策为准。</p>
+</blockquote>
+<hr>
+<h2 id="五、推送镜像"><a href="#五、推送镜像" class="headerlink" title="五、推送镜像"></a>五、推送镜像</h2><p>在 Docker Hub 创建 <code>backend-api</code> 私有仓库，使用 <strong>Personal Access Token</strong> 登录：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login
+<span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
+<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>可附加 <code>latest</code> 标签：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> tag YOUR_DOCKERHUB_USER/backend-api:1.0.0 YOUR_DOCKERHUB_USER/backend-api:latest
+<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:latest<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p><strong>发布前检查清单：</strong></p>
+<ul>
+<li>✅ API 已连接本地 PostgreSQL 通过关键测试</li>
+<li>✅ 存在 <code>GET /health</code> 健康检查端点</li>
+<li>✅ 机密没有进入镜像</li>
+<li>✅ 每次发布都有新标签</li>
+</ul>
+<blockquote>
+<p>生产 Compose 应固定使用 <code>1.0.0</code> 之类的明确版本，便于回滚。</p>
+</blockquote>
+<hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文完成了「单台 VPS 部署 API」的上半部分：从本地开发环境搭建、PostgreSQL 配置、多阶段 Docker 镜像构建，到 Docker Hub 镜像推送。下一篇文章将介绍如何在 Ubuntu VPS 上拉取镜像、配置 Nginx 反向代理，并完成 HTTPS 证书的申请与自动续期。</p>
 ]]></content>
       <categories>
-        <category>Multiplatform</category>
+        <category>Technical</category>
       </categories>
       <tags>
-        <tag>SwiftUI</tag>
-        <tag>Kotlin Native</tag>
+        <tag>Docker</tag>
+        <tag>DevOps</tag>
       </tags>
   </entry>
   <entry>
@@ -1733,6 +884,855 @@ The default implementation only supports types which can be stored inside the Bu
       </categories>
       <tags>
         <tag>Compose</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>升降桌故障排查记</title>
+    <url>/posts/2026/03/02/fbb9923f/</url>
+    <content><![CDATA[<h1 id="升降桌故障排查记：和-E07-E08-的一场小拉扯"><a href="#升降桌故障排查记：和-E07-E08-的一场小拉扯" class="headerlink" title="升降桌故障排查记：和 E07 / E08 的一场小拉扯"></a>升降桌故障排查记：和 E07 / E08 的一场小拉扯</h1><p>有些家用设备的小故障，最磨人。</p>
+<p>它不至于让人立刻崩溃，但会持续打断你的节奏。尤其是你准备工作的时候，桌子突然一边高一边低，控制面板还反复跳出 <strong>RST、E07、E08</strong> 这些报码。</p>
+<p>这次出问题的，是家里的乐歌升降桌。</p>
+<p>原本只是一次普通的升降操作。我像往常一样按下上升键，结果桌子没有正常升起来：一边桌脚还有动作，另一边完全没反应。更麻烦的是，反复重试之后，桌面已经明显不平。</p>
+<p>那一刻的感受很真实。不是“这下完了”的大惊失色，而是一种很具体的无奈：桌子没法正常用，售后不一定马上能处理，而你还得继续工作。</p>
+<p>所以我决定先自己排一轮。</p>
+<p>这篇文章不是维修教程，更不是鼓励大家随便拆设备。它只是一次真实的排查记录：我是怎么从错误代码、客服建议、交叉插线，一步步判断到问题可能出在左右桌脚不同步，并最终通过手动找平和系统重置把桌子恢复正常的。</p>
+<hr>
+<h2 id="一、故障现象：一边能动，一边“罢工”"><a href="#一、故障现象：一边能动，一边“罢工”" class="headerlink" title="一、故障现象：一边能动，一边“罢工”"></a>一、故障现象：一边能动，一边“罢工”</h2><p>那天晚上，我按下升降桌的上升按钮后，很快发现状态不对。</p>
+<p>具体表现大概是这样：</p>
+<ul>
+<li>左边桌脚还有反应，但<strong>只能往下，不能上升</strong></li>
+<li>右边桌脚无论上升还是下降都<strong>完全没反应</strong></li>
+<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
+<li>多次尝试后，桌面出现明显的左右高度差</li>
+</ul>
+<p><img src="/images/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg" alt="联系客服反馈问题"></p>
+<p><em>图 1：控制面板显示 RST / E07 / E08 等报码</em></p>
+<p>我又试了几次，结论基本一致：</p>
+<blockquote>
+<p><strong>这不是简单的卡顿，而是桌子已经进入了异常保护状态。</strong></p>
+</blockquote>
+<p>因为每次操作时，始终只有一边桌脚在动，另一边完全静止。整张桌子看起来就像一张“瘸腿桌”，别说继续升降了，光看着就让人难受。</p>
+<hr>
+<h2 id="二、先找客服：按标准流程排一遍"><a href="#二、先找客服：按标准流程排一遍" class="headerlink" title="二、先找客服：按标准流程排一遍"></a>二、先找客服：按标准流程排一遍</h2><p>遇到这种问题，第一反应当然还是联系客服。</p>
+<p>我联系了乐歌京东自营店。对方给出的思路比较标准，也符合这类升降桌常见的排查逻辑：先重置，再交叉插线，看错误代码是否变化。</p>
+<h3 id="1-先做系统重置"><a href="#1-先做系统重置" class="headerlink" title="1. 先做系统重置"></a>1. 先做系统重置</h3><p>客服先让我把桌子尽量降到最低，然后：</p>
+<blockquote>
+<p><strong>长按下降键约 7 秒，执行系统重置。</strong></p>
+</blockquote>
+<p>这是升降桌常见的初始化方式。很多时候，报码并不一定意味着零件损坏，也可能只是系统检测到位置异常后，需要重新校准。</p>
+<p>可惜，对我这台桌子来说，这一步没有解决问题。</p>
+<h3 id="2-再交叉插线"><a href="#2-再交叉插线" class="headerlink" title="2. 再交叉插线"></a>2. 再交叉插线</h3><p>接下来，客服让我拆开桌腿挡板，把控制盒上的 <strong>M1 和 M2 电机线互换</strong>，再观察报码变化。</p>
+<p><img src="/images/20260302/8BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg" alt="客服建议拆开检查"></p>
+<p><em>图 2：客服建议交叉插线排查问题位置</em></p>
+<p>我照着做完之后，面板上的报码确实变了：从 <strong>E07</strong> 变成了 <strong>E08</strong>。</p>
+<p><img src="/images/20260302/C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg" alt="错误代码变化反馈"></p>
+<p><em>图 3：交叉插线后，报码从 E07 变成 E08</em></p>
+<p>客服根据这个变化，初步判断可能是控制盒问题，需要反馈技术部门，再安排后续处理。问题是，当时已经临近假期，对方给出的答复大意是：</p>
+<blockquote>
+<p>年后再安排。</p>
+</blockquote>
+<p>说实话，听到这里，我看着眼前那张高低不平的桌子，第一反应不是失望，而是有点不甘心。</p>
+<p>都已经拆到这一步了，索性继续往下查。</p>
+<hr>
+<h2 id="三、换个思路：不要只盯着报码"><a href="#三、换个思路：不要只盯着报码" class="headerlink" title="三、换个思路：不要只盯着报码"></a>三、换个思路：不要只盯着报码</h2><p>很多时候，真正有用的线索，不在错误代码本身，而在设备到底表现出了什么异常。</p>
+<p>这次也是一样。</p>
+<h3 id="1-先理解报码，但不迷信报码"><a href="#1-先理解报码，但不迷信报码" class="headerlink" title="1. 先理解报码，但不迷信报码"></a>1. 先理解报码，但不迷信报码</h3><p>我先查了 E07 / E08 的相关说明，想弄清楚它们大概对应什么问题。</p>
+<p>网上能查到的说法并不完全一致，但结合乐歌和同类升降桌常见的故障逻辑，大致可以归纳到两个方向：</p>
+<ul>
+<li>一类和<strong>左右桌脚高度不一致</strong>有关</li>
+<li>一类和<strong>电机连接、通信、同步异常</strong>有关</li>
+</ul>
+<p>这至少说明一件事：</p>
+<blockquote>
+<p><strong>问题未必是硬件彻底坏了，也可能是双侧不同步之后触发了保护机制。</strong></p>
+</blockquote>
+<p>这个判断后来证明挺关键。</p>
+<h3 id="2-先确认电机有没有坏"><a href="#2-先确认电机有没有坏" class="headerlink" title="2. 先确认电机有没有坏"></a>2. 先确认电机有没有坏</h3><p>既然客服已经让我拆开挡板，那不如继续往前一步，先把“是不是电机坏了”这件事弄清楚。</p>
+<p>我的操作过程不复杂：</p>
+<ol>
+<li>拧开桌腿挡板螺丝</li>
+<li>断开两侧电机连接线</li>
+<li>分别测试每个电机是否能正常上下动作</li>
+</ol>
+<p>测试结果出来的时候，我心里其实松了一口气：</p>
+<blockquote>
+<p><strong>两个电机都能正常上下运动。</strong></p>
+</blockquote>
+<p>这意味着，问题大概率不在“电机彻底损坏”这一层。</p>
+<p>至少可以先排除掉最麻烦、也最容易让人头疼的情况。</p>
+<h3 id="3-真正的问题，可能是“两边已经不平了”"><a href="#3-真正的问题，可能是“两边已经不平了”" class="headerlink" title="3. 真正的问题，可能是“两边已经不平了”"></a>3. 真正的问题，可能是“两边已经不平了”</h3><p>接下来再回头看整个故障过程，很多细节就串起来了。</p>
+<p>在出问题之前，桌子的状态其实已经变成了：</p>
+<ul>
+<li>只有一边桌脚在动</li>
+<li>另一边没有正常响应</li>
+<li>两边高度差被一点点拉大</li>
+</ul>
+<p>一旦意识到这一点，思路就清楚了。</p>
+<p>如果升降桌系统会持续检测左右桌脚的同步状态，那么当两边高度差大到一定程度时，系统为了保护结构而锁定，反而很合理。</p>
+<p>也就是说，真正的问题也许不是“它坏了”，而是：</p>
+<blockquote>
+<p><strong>它觉得现在这样继续动下去不安全。</strong></p>
+</blockquote>
+<p>想到这里，我决定不再先盯着报码，而是先处理最直观的问题：</p>
+<p><strong>把两边桌脚重新找平。</strong></p>
+<hr>
+<h2 id="四、解决过程：先扶正，再重置"><a href="#四、解决过程：先扶正，再重置" class="headerlink" title="四、解决过程：先扶正，再重置"></a>四、解决过程：先扶正，再重置</h2><p>接下来的处理方法，反而没什么神秘感。</p>
+<p>既然问题可能出在两边高度已经失衡，那就先让它们在物理上回到同一个基准。</p>
+<p>我的做法是：</p>
+<ol>
+<li>先断电，确认桌面没有负载、线缆没有被夹住；不要在桌子带电或承重时拆接电机线</li>
+<li>参考本机型说明书，在不拆解传动结构的前提下，让仍可响应的一侧把两边高度尽量调到接近的最低位置</li>
+<li>确认左右桌脚高度接近后，再把两个电机重新接回控制盒</li>
+<li>恢复供电后，按本机型说明书的步骤执行初始化；我这台机器是长按下降键约 7 秒</li>
+</ol>
+<p>不同型号的重置按键和报码含义可能不同，因此这里的步骤只能作为排查记录，不应替代官方说明书或售后指导。</p>
+<p>做到这里时，我心里已经有一点底了。</p>
+<p>因为至少从机械状态来看，桌子已经不像之前那样一高一低。换句话说，<strong>“看起来不对”的部分，已经先被纠正了一次。</strong></p>
+<p>然后，我重新执行最开始那套重置操作。</p>
+<p>这一次，结果立刻不一样了：</p>
+<ul>
+<li>面板上的错误代码消失了</li>
+<li>显示重新变回正常的高度数字</li>
+<li>再测试升降时，左右两边恢复了同步运动</li>
+</ul>
+<p><img src="/images/20260302/379220D3-EF81-44D3-AFD3-1A9DA10B1F23.jpg" alt="问题解决后反馈客服"></p>
+<p><em>图 4：问题解决后，回头告知客服</em></p>
+<p>那一刻还挺有成就感。</p>
+<p>不是那种“我会修机器了”的成就感，而是你顺着现象一点点摸过去，最后真的把问题捋顺了。前面那种说不上来的烦躁，也一下子散掉了。</p>
+<hr>
+<h2 id="五、这次排查真正有用的是什么"><a href="#五、这次排查真正有用的是什么" class="headerlink" title="五、这次排查真正有用的是什么"></a>五、这次排查真正有用的是什么</h2><p>现在回头看，这次能顺利解决，不是因为我多懂升降桌，而是因为排查顺序还算对。</p>
+<p>我把整个过程总结成一张表：</p>
+<table>
+<thead>
+<tr>
+<th>排查步骤</th>
+<th>关键操作</th>
+<th>目的</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1. 记录报码</td>
+<td>观察 RST / E07 / E08 的变化</td>
+<td>缩小问题范围</td>
+</tr>
+<tr>
+<td>2. 联系客服</td>
+<td>按官方流程先重置，再交叉插线</td>
+<td>建立基础排查路径</td>
+</tr>
+<tr>
+<td>3. 测试电机</td>
+<td>单独测试两侧电机是否能动作</td>
+<td>排除电机本体故障</td>
+</tr>
+<tr>
+<td>4. 手动找平</td>
+<td>让两边桌脚回到同一高度</td>
+<td>恢复物理基准</td>
+</tr>
+<tr>
+<td>5. 系统重置</td>
+<td>长按下降键重新初始化</td>
+<td>让系统重新校准</td>
+</tr>
+</tbody></table>
+<p>真正起作用的，不是某一个“神奇步骤”，而是没有一上来就认定它一定坏了，而是把问题拆开来看：</p>
+<ul>
+<li>是系统没校准？</li>
+<li>是连接异常？</li>
+<li>是左右不同步？</li>
+<li>还是零件真的损坏？</li>
+</ul>
+<p>当这些问题一个个被排掉之后，答案自然就浮出来了。</p>
+<hr>
+<h2 id="六、这次小故障给我的几个提醒"><a href="#六、这次小故障给我的几个提醒" class="headerlink" title="六、这次小故障给我的几个提醒"></a>六、这次小故障给我的几个提醒</h2><h3 id="1-报码吓人，但不等于彻底损坏"><a href="#1-报码吓人，但不等于彻底损坏" class="headerlink" title="1. 报码吓人，但不等于彻底损坏"></a>1. 报码吓人，但不等于彻底损坏</h3><p>这是我这次最大的感受。</p>
+<p>控制面板报码看起来很吓人，但它很多时候只是系统在告诉你：</p>
+<blockquote>
+<p><strong>现在的状态不正常，我先停下来。</strong></p>
+</blockquote>
+<p>停下来未必是坏了，也可能是在避免继续运行带来更大的结构风险。</p>
+<h3 id="2-现象往往比错误代码更重要"><a href="#2-现象往往比错误代码更重要" class="headerlink" title="2. 现象往往比错误代码更重要"></a>2. 现象往往比错误代码更重要</h3><p>如果只盯着 E07 / E08 这两个码，我未必能那么快想到“高度差”这个方向。</p>
+<p>但“始终只有一边桌脚在动”这个现象，几乎已经把答案摆在了面前。</p>
+<p>所以很多时候，先观察设备“到底怎么不对”，比先背报码更有用。</p>
+<h3 id="3-客服不一定直接解决问题，但能提供起点"><a href="#3-客服不一定直接解决问题，但能提供起点" class="headerlink" title="3. 客服不一定直接解决问题，但能提供起点"></a>3. 客服不一定直接解决问题，但能提供起点</h3><p>这次虽然最后是我自己处理好的，但客服给的建议其实很关键。</p>
+<p>至少他们先帮我把流程拉了出来：</p>
+<ul>
+<li>先重置</li>
+<li>再交叉插线</li>
+<li>再看报码变化</li>
+</ul>
+<p>这些步骤本身，就已经帮我少走了不少弯路。</p>
+<h3 id="4-低风险的问题，可以先自己排一排"><a href="#4-低风险的问题，可以先自己排一排" class="headerlink" title="4. 低风险的问题，可以先自己排一排"></a>4. 低风险的问题，可以先自己排一排</h3><p>当然，这不是鼓励所有人都去拆机器。</p>
+<p>但像这类问题，如果你能确认安全，做一些基础排查通常风险不高：</p>
+<ul>
+<li>做一次系统 reset</li>
+<li>检查插线是否松动</li>
+<li>观察两边是否明显不平</li>
+<li>在安全前提下做简单找平</li>
+</ul>
+<p>很多时候，这比直接等售后更快，也更容易让你弄清楚问题到底出在哪。</p>
+<p>如果涉及电源、承重结构、明显异响、烧焦味，或者你不确定自己在做什么，那就别硬来，直接等官方售后处理。</p>
+<hr>
+<h2 id="七、写在最后"><a href="#七、写在最后" class="headerlink" title="七、写在最后"></a>七、写在最后</h2><p>这次升降桌的小故障，最后没有变成一次“换控制盒”或者“换电机”的麻烦事。</p>
+<p>它更像是一个很生活化的小插曲：一个原本以为要拖很久的问题，在你愿意静下来观察、拆解、排查之后，慢慢露出了没那么复杂的本来面目。</p>
+<p>我一直觉得，生活里很多看上去很“专业”的问题，真正可怕的不是它本身，而是你在一开始就把它想得太大、太难、太不可碰。</p>
+<p>可一旦你愿意动手去摸一摸，很多事情就会从“完全不会”变成“原来也能搞明白一点”。</p>
+<p>这次也是一样。</p>
+<p>如果你刚好也遇到了类似情况，希望这篇记录能给你一点参考。</p>
+<p>它未必适用于所有型号，也谈不上是什么标准维修教程。但至少对于“<strong>面板报码 + 一边桌脚不动 + 重置暂时无效</strong>”这种场景，也许能帮你少一点慌张，少走一点弯路。</p>
+<hr>
+<p><em>本文记录于 2026 年 3 月</em></p>
+]]></content>
+      <categories>
+        <category>随笔</category>
+      </categories>
+      <tags>
+        <tag>随笔</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>iOS 沙盒文件读取失败：不要持久化 Container 完整路径</title>
+    <url>/posts/2023/08/13/bb96b1c7/</url>
+    <content><![CDATA[<h2 id="一、问题现象"><a href="#一、问题现象" class="headerlink" title="一、问题现象"></a>一、问题现象</h2><p>在 Kotlin Multiplatform 项目中实现 iOS 平台的文件存储时，出现如下情况：</p>
+<ul>
+<li><strong>现象</strong>：导出 <code>.xcappdata</code> 可以确认文件确实在 Documents 目录下，但用 <code>NSData.dataWithContentsOfFile</code> 读取时始终返回空。</li>
+<li><strong>报错</strong>：<code>No such File or Directory</code>（找不到该文件或目录）。</li>
+</ul>
+<p>当时使用的读取代码如下（为便于排查，增加了 <code>errorPtr</code> 输出错误信息）：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> errorPtr<span class="token operator">:</span> ObjCObjectVar<span class="token operator">&lt;</span>NSError<span class="token operator">?</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token function">alloc</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span><span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
+    <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+    <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
+<span class="token punctuation">}</span>
+<span class="token function">println</span><span class="token punctuation">(</span>errorPtr<span class="token punctuation">.</span>value<span class="token operator">?</span><span class="token punctuation">.</span>description<span class="token punctuation">.</span><span class="token function">orEmpty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+<span class="token keyword">return</span><span class="token label symbol">@withContext</span> <span class="token keyword">null</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<span id="more"></span>
+
+<h2 id="二、问题定位"><a href="#二、问题定位" class="headerlink" title="二、问题定位"></a>二、问题定位</h2><h3 id="2-1-怀疑点：路径可能不对"><a href="#2-1-怀疑点：路径可能不对" class="headerlink" title="2.1 怀疑点：路径可能不对"></a>2.1 怀疑点：路径可能不对</h3><p>从错误日志看，传入的 <code>fullPath</code> 很可能并不是当前运行时的真实路径，所以即使文件实际存在，<code>NSData.dataWithContentsOfFile</code> 仍然找不到。</p>
+<h3 id="2-2-对比验证：Application-目录的-UUID-不一致"><a href="#2-2-对比验证：Application-目录的-UUID-不一致" class="headerlink" title="2.2 对比验证：Application 目录的 UUID 不一致"></a>2.2 对比验证：Application 目录的 UUID 不一致</h3><p>用 Swift 在运行时获取 Documents 目录并列出文件，与 Kotlin 里使用的 <code>fullPath</code> 对比：</p>
+<ul>
+<li><strong>Kotlin 中使用的 fullPath</strong>（可能是之前保存的完整路径）：<pre class="line-numbers language-none"><code class="language-none">/var/mobile/Containers/Data/Application/3FC1CCE9-A788-47AB-902A-FA133FAA3D30/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
+<li><strong>Swift 当前拿到的文件 URL</strong>：<pre class="line-numbers language-none"><code class="language-none">file:///private/var/mobile/Containers/Data/Application/C5AC5178-6887-40F4-9EE5-8D56CB830CB3/Documents/60F570BE-2A16-4EFB-96B3-9203C0A0ABCE.jpg<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre></li>
+</ul>
+<p>可见，<code>Application</code> 后面那一段 UUID 不一致：一个是 <code>3FC1CCE9-...</code>，一个是 <code>C5AC5178-...</code>。</p>
+<p>Swift 侧获取 Documents 的示例代码：</p>
+<pre class="line-numbers language-swift" data-language="swift"><code class="language-swift"><span class="token keyword">let</span> fileManager <span class="token operator">=</span> <span class="token class-name">FileManager</span><span class="token punctuation">.</span><span class="token keyword">default</span>
+<span class="token keyword">let</span> documentsURL <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">urls</span><span class="token punctuation">(</span><span class="token keyword">for</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>documentDirectory<span class="token punctuation">,</span> <span class="token keyword">in</span><span class="token punctuation">:</span> <span class="token punctuation">.</span>userDomainMask<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>
+<span class="token keyword">do</span> <span class="token punctuation">{</span>
+    <span class="token keyword">let</span> fileURLs <span class="token operator">=</span> <span class="token keyword">try</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectory</span><span class="token punctuation">(</span>at<span class="token punctuation">:</span> documentsURL<span class="token punctuation">,</span> includingPropertiesForKeys<span class="token punctuation">:</span> <span class="token nil constant">nil</span><span class="token punctuation">)</span>
+    <span class="token function">print</span><span class="token punctuation">(</span>fileURLs<span class="token punctuation">)</span>
+<span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">{</span>
+    <span class="token function">print</span><span class="token punctuation">(</span><span class="token string-literal"><span class="token string">"Error while enumerating files </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">documentsURL<span class="token punctuation">.</span>path</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">: </span><span class="token interpolation-punctuation punctuation">\(</span><span class="token interpolation">error<span class="token punctuation">.</span>localizedDescription</span><span class="token interpolation-punctuation punctuation">)</span><span class="token string">"</span></span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="2-3-根因结论"><a href="#2-3-根因结论" class="headerlink" title="2.3 根因结论"></a>2.3 根因结论</h3><p>自 <strong>iOS 8.0</strong> 起，应用沙盒里 <code>Application</code> 这一级目录的 <strong>UUID 会随安装/部署方式变化</strong>（例如卸载重装、Xcode 重新安装等）。若把「完整路径」存下来，下次启动或重装后 UUID 变了，旧路径就失效，导致「文件在，但按旧路径读不到」。</p>
+<p>因此：<strong>不能依赖存储的完整路径来读文件，只能依赖「相对位置 + 文件名」并在运行时重新解析。</strong></p>
+<h2 id="三、解决方案"><a href="#三、解决方案" class="headerlink" title="三、解决方案"></a>三、解决方案</h2><p>思路统一为：<strong>只存文件名（或相对路径），读的时候先拿到当前 Documents 目录，再拼出完整路径或 URL。</strong> 下面两种写法都符合这一思路。</p>
+<h3 id="方法一：遍历-Documents，按文件名匹配"><a href="#方法一：遍历-Documents，按文件名匹配" class="headerlink" title="方法一：遍历 Documents，按文件名匹配"></a>方法一：遍历 Documents，按文件名匹配</h3><p>不依赖完整路径，先取到 Documents 的 URL，再在目录下按文件名找到对应文件：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token comment">// 拿到 Documents 目录的 url</span>
+<span class="token keyword">val</span> url <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">URLForDirectory</span><span class="token punctuation">(</span>
+    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
+    inDomain <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
+    appropriateForURL <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
+    create <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">,</span>
+    error <span class="token operator">=</span> <span class="token keyword">null</span>
+<span class="token punctuation">)</span><span class="token operator">!!</span>
+<span class="token comment">// 列出目录下所有文件的 url</span>
+<span class="token keyword">val</span> fileUrls <span class="token operator">=</span> fileManager<span class="token punctuation">.</span><span class="token function">contentsOfDirectoryAtURL</span><span class="token punctuation">(</span>url <span class="token operator">=</span> url<span class="token punctuation">,</span> includingPropertiesForKeys <span class="token operator">=</span> <span class="token keyword">null</span><span class="token punctuation">,</span> options <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">,</span> error <span class="token operator">=</span> errorPtr<span class="token punctuation">.</span>ptr<span class="token punctuation">)</span>
+<span class="token comment">// 按文件名精确匹配得到目标文件的 URL；不要用 contains，避免误匹配。</span>
+<span class="token keyword">val</span> currentFileUrl <span class="token operator">=</span> fileUrls
+    <span class="token operator">?</span><span class="token punctuation">.</span>filterIsInstance<span class="token operator">&lt;</span>NSURL<span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">firstOrNull</span> <span class="token punctuation">{</span> it<span class="token punctuation">.</span>lastPathComponent <span class="token operator">==</span> fileName <span class="token punctuation">}</span>
+<span class="token comment">// 用 URL 读取</span>
+currentFileUrl<span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span>
+    NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfURL</span><span class="token punctuation">(</span>currentFileUrl<span class="token punctuation">)</span>
+        <span class="token operator">?</span><span class="token punctuation">.</span><span class="token function">let</span> <span class="token punctuation">{</span> bytes <span class="token operator">-&gt;</span>
+            <span class="token keyword">val</span> array <span class="token operator">=</span> <span class="token function">ByteArray</span><span class="token punctuation">(</span>bytes<span class="token punctuation">.</span>length<span class="token punctuation">.</span><span class="token function">toInt</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+            bytes<span class="token punctuation">.</span><span class="token function">getBytes</span><span class="token punctuation">(</span>array<span class="token punctuation">.</span><span class="token function">refTo</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">getPointer</span><span class="token punctuation">(</span><span class="token keyword">this</span><span class="token punctuation">)</span><span class="token punctuation">,</span> bytes<span class="token punctuation">.</span>length<span class="token punctuation">)</span>
+            <span class="token keyword">return</span><span class="token label symbol">@withContext</span> array
+        <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h3 id="方法二（推荐）：直接取-Documents-路径再拼接文件名"><a href="#方法二（推荐）：直接取-Documents-路径再拼接文件名" class="headerlink" title="方法二（推荐）：直接取 Documents 路径再拼接文件名"></a>方法二（推荐）：直接取 Documents 路径再拼接文件名</h3><p>遍历有额外开销，更稳妥且高效的方式是：<strong>每次读取时用系统 API 取当前 Documents 目录，再拼接文件名</strong>：</p>
+<pre class="line-numbers language-kotlin" data-language="kotlin"><code class="language-kotlin"><span class="token keyword">val</span> documentDirectory <span class="token operator">=</span> <span class="token function">NSSearchPathForDirectoriesInDomains</span><span class="token punctuation">(</span>
+    directory <span class="token operator">=</span> NSDocumentDirectory<span class="token punctuation">,</span>
+    domainMask <span class="token operator">=</span> NSUserDomainMask<span class="token punctuation">,</span>
+    expandTilde <span class="token operator">=</span> <span class="token boolean">true</span>
+<span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">first</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token keyword">as</span> NSString
+<span class="token keyword">val</span> fullPath <span class="token operator">=</span> documentDirectory<span class="token punctuation">.</span><span class="token function">stringByAppendingPathComponent</span><span class="token punctuation">(</span>fileName<span class="token punctuation">)</span>
+<span class="token comment">// 此处 fullPath 一定是当前应用实例的真实路径</span>
+NSData<span class="token punctuation">.</span><span class="token function">dataWithContentsOfFile</span><span class="token punctuation">(</span>fullPath<span class="token punctuation">,</span> <span class="token operator">..</span><span class="token punctuation">.</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这样得到的 <code>fullPath</code> 始终对应当前运行时的 Documents，不受 UUID 变化影响。</p>
+<h2 id="四、总结"><a href="#四、总结" class="headerlink" title="四、总结"></a>四、总结</h2><table>
+<thead>
+<tr>
+<th>要点</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>不要存完整路径</td>
+<td>iOS 8+ 下 Application 目录 UUID 会变，存完整路径容易失效。</td>
+</tr>
+<tr>
+<td>推荐只存文件名</td>
+<td>使用时通过 API 获取当前 Documents 目录，再拼接文件名。</td>
+</tr>
+<tr>
+<td>优先用系统 API 取目录</td>
+<td>使用 <code>NSSearchPathForDirectoriesInDomains</code> 获取 Documents，比遍历目录更简单、高效。</td>
+</tr>
+</tbody></table>
+<p>按上述方式改造后，<code>NSData.dataWithContentsOfFile</code> 无法读取文件的问题即可解决。</p>
+<h2 id="附录：UUID-何时会变化"><a href="#附录：UUID-何时会变化" class="headerlink" title="附录：UUID 何时会变化"></a>附录：UUID 何时会变化</h2><p>不同安装/运行方式下，沙盒中 Application 目录的 UUID 是否变化可参考下表：</p>
+<table>
+<thead>
+<tr>
+<th>安装/运行方式</th>
+<th>UUID 是否变化</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>App 卸载后重新安装</td>
+<td>✅ 变化（iOS 8+ 的安全机制）</td>
+</tr>
+<tr>
+<td>通过 Xcode 重新安装</td>
+<td>✅ 变化（相当于卸载再安装）</td>
+</tr>
+<tr>
+<td>Xcode 直接运行（不卸载）</td>
+<td>❌ 不变（仅 Build &amp; Run 且未删除 App）</td>
+</tr>
+<tr>
+<td>模拟器上运行</td>
+<td>✅ 可能变化（视情况而定）</td>
+</tr>
+<tr>
+<td>TestFlight / App Store 安装</td>
+<td>✅ 变化（安装时生成新 UUID）</td>
+</tr>
+<tr>
+<td>iOS OTA 更新 App</td>
+<td>❌ 不变（更新不改变 UUID）</td>
+</tr>
+</tbody></table>
+]]></content>
+      <categories>
+        <category>Multiplatform</category>
+      </categories>
+      <tags>
+        <tag>SwiftUI</tag>
+        <tag>Kotlin Native</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证</title>
+    <url>/posts/2026/04/09/4dc832d4/</url>
+    <content><![CDATA[<h1 id="从-0-开始实操-MCP：用-TypeScript-接入-CoinGecko，并在-Inspector-Codex-中验证"><a href="#从-0-开始实操-MCP：用-TypeScript-接入-CoinGecko，并在-Inspector-Codex-中验证" class="headerlink" title="从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"></a>从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证</h1><p>如果你已经看过不少 MCP 介绍，却始终没有真正跑通过一个完整例子，那么这篇文章会更适合你。</p>
+<p>这篇文章不讲太多抽象概念，也不一开始堆很多工具，而是只做一件事：</p>
+<p><strong>从零写一个最小的 TypeScript MCP Server，接入 CoinGecko 的真实市场数据接口，并在 Inspector 和 Codex 中完成验证。</strong></p>
+<p>整个过程只围绕一个工具展开：<code>fetch_market_data</code>。</p>
+<p>你可以把它理解成一条完整的入门链路：</p>
+<ul>
+<li>先理解 MCP 在这个案例里到底是什么</li>
+<li>再动手写一个最小可运行的 MCP Server</li>
+<li>然后接入真实 API</li>
+<li>最后验证这个工具确实能被宿主发现和调用</li>
+</ul>
+<p>这样学的好处是，你不会停留在“知道 MCP 是什么”，而是能真正完成一次从开发到验证的闭环。</p>
+<p>本文配套示例代码已上传 GitHub，方便你边看边对照实践：</p>
+<ul>
+<li>GitHub 仓库：<a href="https://github.com/BreakZero/mcp-tooling-example">mcp-tooling-example</a></li>
+</ul>
+<hr>
+<h2 id="一、这篇文章要解决什么问题"><a href="#一、这篇文章要解决什么问题" class="headerlink" title="一、这篇文章要解决什么问题"></a>一、这篇文章要解决什么问题</h2><p>学 MCP 时，很多人最容易卡住的地方，不是概念看不懂，而是<strong>不知道一个最小可运行项目到底长什么样</strong>。</p>
+<p>所以先把本文的目标说清楚。读完并跑通后，你会完成下面几件事：</p>
+<ol>
+<li>理解 MCP 在这个例子里的定位</li>
+<li>用 TypeScript 写一个最小 MCP Server</li>
+<li>注册一个可调用的工具：<code>fetch_market_data</code></li>
+<li>让这个工具真正调用 CoinGecko API 获取市场价格</li>
+<li>用 MCP Inspector 验证工具是否可用</li>
+<li>把它接入 Codex CLI，验证宿主确实能够调用它</li>
+</ol>
+<p>也就是说，这不是一个只打印 <code>hello world</code> 的示例，而是一个<strong>真正有外部数据输入、有工具注册、有调试验证的完整入门项目</strong>。</p>
+<hr>
+<h2 id="二、先建立一个最小认知：MCP-在这个例子里是什么"><a href="#二、先建立一个最小认知：MCP-在这个例子里是什么" class="headerlink" title="二、先建立一个最小认知：MCP 在这个例子里是什么"></a>二、先建立一个最小认知：MCP 在这个例子里是什么</h2><p>在开始搭项目之前，先把最关键的问题讲清楚：</p>
+<p><strong>MCP 在这里不是业务逻辑本身，而是一层标准化的工具协议。</strong></p>
+<p>你可以先看这条链路：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">Codex / ChatGPT / Inspector
+    -&gt; MCP Client
+    -&gt; 你的 MCP Server
+    -&gt; 你的 TypeScript 逻辑
+    -&gt; CoinGecko API<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这里面每一层的职责都不一样：</p>
+<ul>
+<li><p><strong>宿主（Host）</strong>：比如 Codex、Inspector、ChatGPT<br>它们负责发现工具、调用工具、消费结果</p>
+</li>
+<li><p><strong>MCP Client</strong>：负责按 MCP 协议和 Server 通信</p>
+</li>
+<li><p><strong>你的 MCP Server</strong>：负责把你的能力暴露成标准工具</p>
+</li>
+<li><p><strong>你的业务逻辑</strong>：真正做事的部分，比如“根据 symbol 拉取市场价格”</p>
+</li>
+<li><p><strong>第三方 API</strong>：比如 CoinGecko，提供真实数据来源</p>
+</li>
+</ul>
+<p>所以，本文里你真正要实现的核心能力，其实是：</p>
+<p><strong>输入一个币种 symbol，比如 BTC，返回对应的实时市场数据。</strong></p>
+<p>而 MCP 做的事，是让这个能力能够被宿主以标准方式调用。</p>
+<p>这点对新手非常重要。因为很多人一开始会把 MCP 和 Agent、业务逻辑、应用框架混在一起。其实更准确的理解应该是：</p>
+<p><strong>MCP 解决的是“能力如何暴露和被调用”，不是“业务本身如何实现”。</strong></p>
+<h3 id="为什么这篇文章先从-STDIO-开始，而不是-HTTP"><a href="#为什么这篇文章先从-STDIO-开始，而不是-HTTP" class="headerlink" title="为什么这篇文章先从 STDIO 开始，而不是 HTTP"></a>为什么这篇文章先从 STDIO 开始，而不是 HTTP</h3><p>MCP 支持不同传输方式，但对新手来说，最适合入门的通常不是远程 HTTP，而是本地 <strong>STDIO</strong>。</p>
+<p>原因很简单，STDIO 足够直接：</p>
+<ul>
+<li>不需要先搭 Web 服务</li>
+<li>不需要处理端口和路由</li>
+<li>不需要 HTTPS 或公网暴露</li>
+<li>本地调试链路更短，更容易定位问题</li>
+</ul>
+<p>也就是说，你现在最需要的是<strong>先把一个工具从“写出来”到“被调用成功”跑通</strong>，而不是一上来解决部署问题。</p>
+<p>所以这篇文章的策略是：</p>
+<p><strong>先用 STDIO 完成最小闭环，再考虑远程服务化。</strong></p>
+<p>这个顺序对初学者更稳，也更容易建立对 MCP 的直觉。</p>
+<hr>
+<h2 id="三、开始动手：从-0-搭一个最小可运行的-MCP-Server"><a href="#三、开始动手：从-0-搭一个最小可运行的-MCP-Server" class="headerlink" title="三、开始动手：从 0 搭一个最小可运行的 MCP Server"></a>三、开始动手：从 0 搭一个最小可运行的 MCP Server</h2><h3 id="1-准备工作"><a href="#1-准备工作" class="headerlink" title="1. 准备工作"></a>1. 准备工作</h3><p>开始之前，先准备好本地环境：</p>
+<ul>
+<li>Node.js 18 或更高版本</li>
+<li>npm</li>
+<li>一个 CoinGecko API Key</li>
+<li>已安装 Codex CLI（后文用于扩展验证，可选）</li>
+</ul>
+<h4 id="获取-CoinGecko-API-Key"><a href="#获取-CoinGecko-API-Key" class="headerlink" title="获取 CoinGecko API Key"></a>获取 CoinGecko API Key</h4><p>CoinGecko 提供 API Key 认证。常见方式是通过请求头传递：</p>
+<ul>
+<li>Demo Key：<code>x-cg-demo-api-key</code></li>
+<li>Pro Key：<code>x-cg-pro-api-key</code></li>
+</ul>
+<p>本文先使用 Demo Key 即可。因为我们的目标是跑通 MCP 链路，不是做高并发或生产级接入。</p>
+<h3 id="2-创建项目"><a href="#2-创建项目" class="headerlink" title="2. 创建项目"></a>2. 创建项目</h3><p>先初始化一个最小项目：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> mcp-coingecko-demo
+<span class="token builtin class-name">cd</span> mcp-coingecko-demo
+<span class="token function">npm</span> init <span class="token parameter variable">-y</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>安装依赖：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> <span class="token function">install</span> @modelcontextprotocol/sdk zod dotenv
+<span class="token function">npm</span> <span class="token function">install</span> <span class="token parameter variable">-D</span> typescript tsx @types/node<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>初始化 TypeScript 配置：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">npx tsc <span class="token parameter variable">--init</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>到这里，你就有了一个可以写 MCP Server 的基础项目。</p>
+<h3 id="3-设计项目结构"><a href="#3-设计项目结构" class="headerlink" title="3. 设计项目结构"></a>3. 设计项目结构</h3><p>为了让示例保持简单，同时又不过度把所有逻辑塞进一个文件，这里建议先用下面这套结构：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">mcp-coingecko-demo/
+  package.json
+  .env
+  src/
+    server.ts
+    domain/
+      market.ts<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>各文件职责如下：</p>
+<ul>
+<li><p><code>src/server.ts</code><br>MCP Server 入口，负责注册工具、定义输入输出、连接传输层</p>
+</li>
+<li><p><code>src/domain/market.ts</code><br>业务逻辑层，负责调用 CoinGecko API，处理市场数据</p>
+</li>
+</ul>
+<p>这样拆的好处很明显：</p>
+<ol>
+<li><p><strong>协议层和业务层分开</strong><br>你能更清楚地理解：什么是 MCP，什么是业务逻辑</p>
+</li>
+<li><p><strong>后续更容易扩展</strong><br>将来无论接 CLI、HTTP、ChatGPT，甚至测试脚本，都可以复用 <code>domain</code> 层</p>
+</li>
+<li><p><strong>更符合真实项目演进方式</strong><br>哪怕这是一个入门项目，也最好从一开始建立基本的分层意识</p>
+</li>
+</ol>
+<p>对新手来说，这种拆分不是“为了架构而架构”，而是为了以后少踩坑。</p>
+<h3 id="4-配置环境变量"><a href="#4-配置环境变量" class="headerlink" title="4. 配置环境变量"></a>4. 配置环境变量</h3><p>在项目根目录创建 <code>.env</code> 文件：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token assign-left variable">COINGECKO_API_KEY</span><span class="token operator">=</span>your_demo_key_here
+<span class="token assign-left variable">COINGECKO_API_PLAN</span><span class="token operator">=</span>demo<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>这两个环境变量分别表示：</p>
+<ul>
+<li><code>COINGECKO_API_KEY</code>：你的 CoinGecko API Key</li>
+<li><code>COINGECKO_API_PLAN</code>：当前使用的套餐类型，本文先填 <code>demo</code></li>
+</ul>
+<p>这样做的意义是把配置和代码分开。以后如果你切换到 Pro Key，或者在不同环境使用不同配置，就不用改业务代码。</p>
+<h3 id="5-先写业务逻辑：获取市场数据"><a href="#5-先写业务逻辑：获取市场数据" class="headerlink" title="5. 先写业务逻辑：获取市场数据"></a>5. 先写业务逻辑：获取市场数据</h3><p>先新建 <code>src/domain/market.ts</code>：</p>
+<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">import</span> <span class="token string">"dotenv/config"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">export</span> <span class="token keyword">type</span> <span class="token class-name">MarketData</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  id<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+  <span class="token builtin">symbol</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+  price<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+  currency<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+  source<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
+  change24h<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span> <span class="token operator">|</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+  lastUpdatedAt<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span> <span class="token operator">|</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> <span class="token constant">SYMBOL_TO_COINGECKO_ID</span><span class="token operator">:</span> Record<span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">string</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
+  <span class="token constant">BTC</span><span class="token operator">:</span> <span class="token string">"bitcoin"</span><span class="token punctuation">,</span>
+  <span class="token constant">ETH</span><span class="token operator">:</span> <span class="token string">"ethereum"</span><span class="token punctuation">,</span>
+  <span class="token constant">SOL</span><span class="token operator">:</span> <span class="token string">"solana"</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+<span class="token keyword">function</span> <span class="token function">getCoinGeckoConfig</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> plan <span class="token operator">=</span> <span class="token punctuation">(</span>process<span class="token punctuation">.</span>env<span class="token punctuation">.</span><span class="token constant">COINGECKO_API_PLAN</span> <span class="token operator">||</span> <span class="token string">"demo"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toLowerCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> apiKey <span class="token operator">=</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span><span class="token constant">COINGECKO_API_KEY</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>apiKey<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">"Missing COINGECKO_API_KEY"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span>plan <span class="token operator">===</span> <span class="token string">"pro"</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{</span>
+      baseUrl<span class="token operator">:</span> <span class="token string">"https://pro-api.coingecko.com/api/v3"</span><span class="token punctuation">,</span>
+      headers<span class="token operator">:</span> <span class="token punctuation">{</span>
+        <span class="token string-property property">"x-cg-pro-api-key"</span><span class="token operator">:</span> apiKey<span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">,</span>
+      source<span class="token operator">:</span> <span class="token string">"coingecko-pro"</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">return</span> <span class="token punctuation">{</span>
+    baseUrl<span class="token operator">:</span> <span class="token string">"https://api.coingecko.com/api/v3"</span><span class="token punctuation">,</span>
+    headers<span class="token operator">:</span> <span class="token punctuation">{</span>
+      <span class="token string-property property">"x-cg-demo-api-key"</span><span class="token operator">:</span> apiKey<span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    source<span class="token operator">:</span> <span class="token string">"coingecko-demo"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">function</span> <span class="token function">resolveCoinId</span><span class="token punctuation">(</span><span class="token builtin">symbol</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> normalizedSymbol <span class="token operator">=</span> <span class="token builtin">symbol</span><span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toUpperCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>normalizedSymbol<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">"symbol is required"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">const</span> coinId <span class="token operator">=</span> <span class="token constant">SYMBOL_TO_COINGECKO_ID</span><span class="token punctuation">[</span>normalizedSymbol<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>coinId<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Unsupported symbol: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>normalizedSymbol<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">return</span> coinId<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token keyword">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">fetchMarketData</span><span class="token punctuation">(</span><span class="token builtin">symbol</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">Promise</span><span class="token operator">&lt;</span>MarketData<span class="token operator">&gt;</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> normalizedSymbol <span class="token operator">=</span> <span class="token builtin">symbol</span><span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toUpperCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> coinId <span class="token operator">=</span> <span class="token function">resolveCoinId</span><span class="token punctuation">(</span>normalizedSymbol<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">const</span> <span class="token punctuation">{</span> baseUrl<span class="token punctuation">,</span> headers<span class="token punctuation">,</span> source <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">getCoinGeckoConfig</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> url <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name"><span class="token constant">URL</span></span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>baseUrl<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">/simple/price</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"ids"</span><span class="token punctuation">,</span> coinId<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"vs_currencies"</span><span class="token punctuation">,</span> <span class="token string">"usd"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"include_24hr_change"</span><span class="token punctuation">,</span> <span class="token string">"true"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"include_last_updated_at"</span><span class="token punctuation">,</span> <span class="token string">"true"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span>url<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
+    method<span class="token operator">:</span> <span class="token string">"GET"</span><span class="token punctuation">,</span>
+    headers<span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>response<span class="token punctuation">.</span>ok<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">const</span> text <span class="token operator">=</span> <span class="token keyword">await</span> response<span class="token punctuation">.</span><span class="token function">text</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">CoinGecko API error: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>response<span class="token punctuation">.</span>status<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>text<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">const</span> json <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">await</span> response<span class="token punctuation">.</span><span class="token function">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token keyword">as</span> Record<span class="token operator">&lt;</span>
+    <span class="token builtin">string</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+      usd<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+      usd_24h_change<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+      last_updated_at<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token operator">&gt;</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">const</span> data <span class="token operator">=</span> json<span class="token punctuation">[</span>coinId<span class="token punctuation">]</span><span class="token punctuation">;</span>
+
+  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>data <span class="token operator">||</span> <span class="token keyword">typeof</span> data<span class="token punctuation">.</span>usd <span class="token operator">!==</span> <span class="token string">"number"</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">No price data returned for </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>coinId<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token punctuation">}</span>
+
+  <span class="token keyword">return</span> <span class="token punctuation">{</span>
+    id<span class="token operator">:</span> coinId<span class="token punctuation">,</span>
+    <span class="token builtin">symbol</span><span class="token operator">:</span> normalizedSymbol<span class="token punctuation">,</span>
+    price<span class="token operator">:</span> data<span class="token punctuation">.</span>usd<span class="token punctuation">,</span>
+    currency<span class="token operator">:</span> <span class="token string">"USD"</span><span class="token punctuation">,</span>
+    source<span class="token punctuation">,</span>
+    change24h<span class="token operator">:</span> <span class="token keyword">typeof</span> data<span class="token punctuation">.</span>usd_24h_change <span class="token operator">===</span> <span class="token string">"number"</span> <span class="token operator">?</span> data<span class="token punctuation">.</span>usd_24h_change <span class="token operator">:</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
+    lastUpdatedAt<span class="token operator">:</span>
+      <span class="token keyword">typeof</span> data<span class="token punctuation">.</span>last_updated_at <span class="token operator">===</span> <span class="token string">"number"</span> <span class="token operator">?</span> data<span class="token punctuation">.</span>last_updated_at <span class="token operator">:</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h4 id="这段业务代码到底做了什么"><a href="#这段业务代码到底做了什么" class="headerlink" title="这段业务代码到底做了什么"></a>这段业务代码到底做了什么</h4><p>这段代码看起来不长，但已经覆盖了一个真实工具最关键的几个环节。</p>
+<p>它主要做了 5 件事：</p>
+<ol>
+<li>读取环境变量，确定用 Demo 还是 Pro 配置</li>
+<li>把输入的 symbol 映射成 CoinGecko 识别的 coin id</li>
+<li>调用 CoinGecko 的 <code>/simple/price</code> 接口</li>
+<li>从响应里提取价格、24 小时涨跌幅、更新时间</li>
+<li>把结果整理成统一的数据结构返回</li>
+</ol>
+<p>换句话说，这一层解决的是：</p>
+<p><strong>“怎么把一个用户能理解的输入，变成第三方 API 能理解的请求，再把返回值整理成自己可控的输出格式。”</strong></p>
+<p>这就是典型的业务逻辑层职责。</p>
+<h4 id="为什么这里先手写-symbol-映射，而不是自动支持所有币种"><a href="#为什么这里先手写-symbol-映射，而不是自动支持所有币种" class="headerlink" title="为什么这里先手写 symbol 映射，而不是自动支持所有币种"></a>为什么这里先手写 symbol 映射，而不是自动支持所有币种</h4><p>你会发现这里没有一开始就去拉 <code>/coins/list</code>，而是先手写了几个映射：</p>
+<ul>
+<li><code>BTC -&gt; bitcoin</code></li>
+<li><code>ETH -&gt; ethereum</code></li>
+<li><code>SOL -&gt; solana</code></li>
+</ul>
+<p>这样做不是因为它更高级，而是因为它更适合入门阶段。</p>
+<p>原因有两个：</p>
+<ol>
+<li><p>先降低复杂度，优先跑通链路<br>新手最重要的不是“支持所有币种”，而是先确认整条链路能正常工作。如果一开始就引入动态映射、缓存、搜索、容错等问题，排错成本会明显升高。</p>
+</li>
+<li><p>把问题拆小，更容易理解<br>在这一阶段，你只需要先理解工具如何注册、请求如何发出、数据如何返回、宿主如何调用。至于“如何支持所有 symbol”，那是下一阶段的问题。</p>
+</li>
+</ol>
+<p>技术学习里，一个很重要的原则就是：</p>
+<p><strong>先完成最小可运行版本，再逐步扩展能力。</strong></p>
+<h3 id="6-再写-MCP-Server：把业务能力暴露成工具"><a href="#6-再写-MCP-Server：把业务能力暴露成工具" class="headerlink" title="6. 再写 MCP Server：把业务能力暴露成工具"></a>6. 再写 MCP Server：把业务能力暴露成工具</h3><p>当业务逻辑已经能独立工作后，再来写 <code>src/server.ts</code>：</p>
+<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">import</span> <span class="token punctuation">{</span> McpServer <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@modelcontextprotocol/sdk/server/mcp.js"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> StdioServerTransport <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@modelcontextprotocol/sdk/server/stdio.js"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> z <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"zod"</span><span class="token punctuation">;</span>
+<span class="token keyword">import</span> <span class="token punctuation">{</span> fetchMarketData <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"./domain/market.js"</span><span class="token punctuation">;</span>
+
+<span class="token keyword">const</span> server <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">McpServer</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
+  name<span class="token operator">:</span> <span class="token string">"market-data-server"</span><span class="token punctuation">,</span>
+  version<span class="token operator">:</span> <span class="token string">"1.1.0"</span><span class="token punctuation">,</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+server<span class="token punctuation">.</span><span class="token function">tool</span><span class="token punctuation">(</span>
+  <span class="token string">"fetch_market_data"</span><span class="token punctuation">,</span>
+  <span class="token string">"Fetch crypto market data from CoinGecko for symbols like BTC, ETH, or SOL"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">{</span>
+    <span class="token builtin">symbol</span><span class="token operator">:</span> z
+      <span class="token punctuation">.</span><span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
+      <span class="token punctuation">.</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token string">"symbol cannot be empty"</span><span class="token punctuation">)</span>
+      <span class="token punctuation">.</span><span class="token function">describe</span><span class="token punctuation">(</span><span class="token string">"Crypto asset symbol, for example BTC, ETH, or SOL"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span><span class="token punctuation">,</span>
+  <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token builtin">symbol</span> <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+    <span class="token keyword">try</span> <span class="token punctuation">{</span>
+      <span class="token keyword">const</span> result <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">fetchMarketData</span><span class="token punctuation">(</span><span class="token builtin">symbol</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+      <span class="token keyword">return</span> <span class="token punctuation">{</span>
+        content<span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token punctuation">{</span>
+            type<span class="token operator">:</span> <span class="token string">"text"</span><span class="token punctuation">,</span>
+            text<span class="token operator">:</span> <span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">stringify</span><span class="token punctuation">(</span>result<span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+          <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      <span class="token keyword">const</span> message <span class="token operator">=</span>
+        error <span class="token keyword">instanceof</span> <span class="token class-name">Error</span> <span class="token operator">?</span> error<span class="token punctuation">.</span>message <span class="token operator">:</span> <span class="token string">"Unknown error occurred"</span><span class="token punctuation">;</span>
+
+      <span class="token keyword">return</span> <span class="token punctuation">{</span>
+        content<span class="token operator">:</span> <span class="token punctuation">[</span>
+          <span class="token punctuation">{</span>
+            type<span class="token operator">:</span> <span class="token string">"text"</span><span class="token punctuation">,</span>
+            text<span class="token operator">:</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Failed to fetch market data: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>message<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span>
+          <span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        isError<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
+      <span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+<span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+  <span class="token keyword">const</span> transport <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">StdioServerTransport</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token keyword">await</span> server<span class="token punctuation">.</span><span class="token function">connect</span><span class="token punctuation">(</span>transport<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token string">"MCP server is running..."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">catch</span><span class="token punctuation">(</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
+  <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token string">"Server error:"</span><span class="token punctuation">,</span> error<span class="token punctuation">)</span><span class="token punctuation">;</span>
+  process<span class="token punctuation">.</span><span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<h4 id="这段-MCP-Server-代码应该怎么看"><a href="#这段-MCP-Server-代码应该怎么看" class="headerlink" title="这段 MCP Server 代码应该怎么看"></a>这段 MCP Server 代码应该怎么看</h4><p>到这里，文章最关键的一层连接出现了：</p>
+<p><strong>业务逻辑已经有了，现在我们要把它变成一个标准工具。</strong></p>
+<p>上面这段代码主要做了 4 件事：</p>
+<ol>
+<li><p>创建一个 MCP Server<br>这一步是在声明你的服务身份。宿主连接时，会把它当成一个 MCP Server 来识别。</p>
+</li>
+<li><p>注册一个工具<br>这里注册了一个名为 <code>fetch_market_data</code> 的工具。从宿主视角看，它不关心你内部怎么实现，它只关心工具叫什么、接收什么参数、返回什么结果。</p>
+</li>
+<li><p>用 Zod 描述输入参数<br>这一步不是为了“写得更正式”，而是为了让工具输入更可验证、更清晰。这样在 Inspector 或其他宿主里，也更容易看到工具需要什么参数。</p>
+</li>
+<li><p>把业务逻辑接进来<br>MCP 层只负责协议和工具暴露，真正的业务仍然交给 <code>domain/market.ts</code>。</p>
+</li>
+</ol>
+<p>这就是为什么前面要先拆文件。如果你把所有代码都写在一个地方，新手很容易分不清“协议代码”和“业务代码”分别在干什么。</p>
+<h3 id="7-启动服务并理解运行细节"><a href="#7-启动服务并理解运行细节" class="headerlink" title="7. 启动服务并理解运行细节"></a>7. 启动服务并理解运行细节</h3><p>接下来给 <code>package.json</code> 增加脚本：</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"commonjs"</span><span class="token punctuation">,</span>
+  <span class="token property">"scripts"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
+    <span class="token property">"dev"</span><span class="token operator">:</span> <span class="token string">"tsx watch src/server.ts"</span><span class="token punctuation">,</span>
+    <span class="token property">"build"</span><span class="token operator">:</span> <span class="token string">"tsc src/server.ts --outDir dist --module commonjs --target es2020 --esModuleInterop"</span><span class="token punctuation">,</span>
+  <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>然后启动：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> run dev<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>如果没有报错，而且进程保持运行、等待输入，那么通常说明你的 MCP Server 已经启动成功了。</p>
+<p>这里要注意一点：</p>
+<p><strong>对 STDIO Server 来说，“启动后挂起等待输入”是正常现象，不是程序卡死。</strong></p>
+<p>因为它本来就是在等宿主通过标准输入和它通信。</p>
+<h4 id="为什么日志要写到-stderr，而不是-stdout"><a href="#为什么日志要写到-stderr，而不是-stdout" class="headerlink" title="为什么日志要写到 stderr，而不是 stdout"></a>为什么日志要写到 stderr，而不是 stdout</h4><p>如果你使用的是 <strong>STDIO</strong> 传输，那么：</p>
+<p><strong>stdout 是 MCP 协议消息通道，不能随便输出普通日志。</strong></p>
+<p>也就是说，下面这种做法是有风险的：</p>
+<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">"server started"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>因为这类普通日志会混进协议输出，可能直接破坏通信。</p>
+<p>所以在 STDIO 模式下，普通日志应该写到：</p>
+<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>也就是 stderr。</p>
+<p>这类细节很适合在入门文章里强调一下。因为很多人第一次跑不通，不是 MCP 本身有问题，而是被日志输出干扰了。</p>
+<hr>
+<h2 id="四、验证这个-MCP-工具是否真的可用"><a href="#四、验证这个-MCP-工具是否真的可用" class="headerlink" title="四、验证这个 MCP 工具是否真的可用"></a>四、验证这个 MCP 工具是否真的可用</h2><h3 id="1-用-MCP-Inspector-验证"><a href="#1-用-MCP-Inspector-验证" class="headerlink" title="1. 用 MCP Inspector 验证"></a>1. 用 MCP Inspector 验证</h3><p>在真正接入 Codex 前，最好的做法是先用 MCP Inspector 验证。因为 Inspector 更适合做“工具级调试”。</p>
+<h4 id="启动-Inspector"><a href="#启动-Inspector" class="headerlink" title="启动 Inspector"></a>启动 Inspector</h4><p>如果你已经编译成 JS，可以这样启动：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> run build
+npx @modelcontextprotocol/inspector <span class="token function">node</span> dist/server.js<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>如果你更习惯直接用 <code>tsx</code> 跑，也可以按自己的本地执行方式配置。</p>
+<h4 id="在-Inspector-里重点验证什么"><a href="#在-Inspector-里重点验证什么" class="headerlink" title="在 Inspector 里重点验证什么"></a>在 Inspector 里重点验证什么</h4><p>你不需要一上来测试很多场景，先抓住 3 个核心问题：</p>
+<ul>
+<li>Server 是否连接成功</li>
+<li>是否能看到 <code>fetch_market_data</code></li>
+<li>这个工具是否真的可以被调用</li>
+</ul>
+<p>也就是说，Inspector 阶段的重点不是“功能多强”，而是“工具链路是否成立”。</p>
+<h4 id="测试正常输入"><a href="#测试正常输入" class="headerlink" title="测试正常输入"></a>测试正常输入</h4><p>输入：</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"BTC"</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>预期返回类似：</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"id"</span><span class="token operator">:</span> <span class="token string">"bitcoin"</span><span class="token punctuation">,</span>
+  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"BTC"</span><span class="token punctuation">,</span>
+  <span class="token property">"price"</span><span class="token operator">:</span> <span class="token number">123456</span><span class="token punctuation">,</span>
+  <span class="token property">"currency"</span><span class="token operator">:</span> <span class="token string">"USD"</span><span class="token punctuation">,</span>
+  <span class="token property">"source"</span><span class="token operator">:</span> <span class="token string">"coingecko-demo"</span><span class="token punctuation">,</span>
+  <span class="token property">"change24h"</span><span class="token operator">:</span> <span class="token number">1.23</span><span class="token punctuation">,</span>
+  <span class="token property">"lastUpdatedAt"</span><span class="token operator">:</span> <span class="token number">1712345678</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>其中价格会变化，这正说明你拿到的是实时数据，而不是写死的 mock 数据。</p>
+<h4 id="测试异常输入"><a href="#测试异常输入" class="headerlink" title="测试异常输入"></a>测试异常输入</h4><p>除了成功场景，建议至少测下面几种失败输入。</p>
+<h5 id="空字符串"><a href="#空字符串" class="headerlink" title="空字符串"></a>空字符串</h5><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">""</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<h5 id="不支持的-symbol"><a href="#不支持的-symbol" class="headerlink" title="不支持的 symbol"></a>不支持的 symbol</h5><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"DOGE"</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<h5 id="缺少字段"><a href="#缺少字段" class="headerlink" title="缺少字段"></a>缺少字段</h5><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span><span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>这一步的目的不是追求“所有输入都成功”，而是确认下面三件事：</p>
+<ul>
+<li>合法输入能正常返回</li>
+<li>非法输入不会把 Server 打崩</li>
+<li>错误信息对人来说是可理解的</li>
+</ul>
+<p>一个入门项目做到这里，其实已经比很多纯演示性质的示例更接近真实开发了。</p>
+<h4 id="执行结果证明图"><a href="#执行结果证明图" class="headerlink" title="执行结果证明图"></a>执行结果证明图</h4><p>下面这张图是 <code>fetch_market_data</code> 在 MCP Inspector 中连接并调用成功的示例。实际界面和启动命令会随 Inspector 版本变化，请以 <code>npx @modelcontextprotocol/inspector --help</code> 与官方文档为准。验证时重点确认三件事：</p>
+<ul>
+<li>左侧已成功连接本地 <code>market-data-server</code></li>
+<li>工具列表中已经出现 <code>fetch_market_data</code></li>
+<li>右侧输入 <code>ETH</code> 后，工具返回了来自 CoinGecko 的真实市场数据</li>
+<li><code>Tool Result: Success</code> 说明这条本地 MCP 调用链路已经跑通</li>
+</ul>
+<p><img src="/images/20260409/inspector-validation-success.png" alt="Inspector 连接验证成功结果"></p>
+<h3 id="2-接入-Codex-CLI-验证"><a href="#2-接入-Codex-CLI-验证" class="headerlink" title="2. 接入 Codex CLI 验证"></a>2. 接入 Codex CLI 验证</h3><p>当 Inspector 验证通过后，再接入 Codex 才更稳。因为这时候你已经知道问题不在工具本身，而只可能在宿主配置或调用方式上。</p>
+<h4 id="准备-Codex-配置文件"><a href="#准备-Codex-配置文件" class="headerlink" title="准备 Codex 配置文件"></a>准备 Codex 配置文件</h4><p>创建或编辑：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">~/.codex/config.toml<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>加入 MCP Server 配置：</p>
+<pre class="line-numbers language-toml" data-language="toml"><code class="language-toml"><span class="token key property">model</span> <span class="token punctuation">=</span> <span class="token string">"gpt-5.4"</span>
+
+<span class="token punctuation">[</span><span class="token table class-name">mcp_servers.market_data</span><span class="token punctuation">]</span>
+<span class="token key property">command</span> <span class="token punctuation">=</span> <span class="token string">"npx"</span>
+<span class="token key property">args</span> <span class="token punctuation">=</span> <span class="token punctuation">[</span><span class="token string">"tsx"</span><span class="token punctuation">,</span> <span class="token string">"/绝对路径/mcp-coingecko-demo/src/server.ts"</span><span class="token punctuation">]</span>
+
+<span class="token punctuation">[</span><span class="token table class-name">mcp_servers.market_data.env</span><span class="token punctuation">]</span>
+<span class="token key property">COINGECKO_API_KEY</span> <span class="token punctuation">=</span> <span class="token string">"your_demo_key_here"</span>
+<span class="token key property">COINGECKO_API_PLAN</span> <span class="token punctuation">=</span> <span class="token string">"demo"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>注意把路径替换成你自己的绝对路径。</p>
+<h4 id="启动-Codex"><a href="#启动-Codex" class="headerlink" title="启动 Codex"></a>启动 Codex</h4><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">codex<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<h4 id="第一次测试时，尽量显式要求调用工具"><a href="#第一次测试时，尽量显式要求调用工具" class="headerlink" title="第一次测试时，尽量显式要求调用工具"></a>第一次测试时，尽量显式要求调用工具</h4><p>建议用比较明确的提示词，例如：</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">Use the MCP tool fetch_market_data with symbol BTC. Return the raw result first, then explain it.<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>为什么要写得这么明确？因为在验证阶段，你的目标不是“写一个自然对话提示词”，而是先确认宿主是否真的触发了工具调用。</p>
+<h4 id="如何判断-Codex-不是在“猜答案”"><a href="#如何判断-Codex-不是在“猜答案”" class="headerlink" title="如何判断 Codex 不是在“猜答案”"></a>如何判断 Codex 不是在“猜答案”</h4><p>你可以重点看返回结果里是否出现你自己定义过的字段，比如：</p>
+<ul>
+<li><code>source: coingecko-demo</code></li>
+<li><code>id: bitcoin</code></li>
+<li><code>change24h</code></li>
+<li><code>lastUpdatedAt</code></li>
+</ul>
+<p>这些字段如果都出现了，通常就可以比较确定：</p>
+<p><strong>它不是在凭语言模型常识回答，而是真的通过 MCP 调用了你的工具。</strong></p>
+<h4 id="执行结果证明图-1"><a href="#执行结果证明图-1" class="headerlink" title="执行结果证明图"></a>执行结果证明图</h4><p>下面这张图展示的是把 MCP Server 接入 Codex 后的调用结果。可以看到 Codex 明确调用了：</p>
+<p><code>market_data.fetch_market_data({"symbol":"BTC"})</code></p>
+<p>并返回了你在工具中定义的字段，例如：</p>
+<ul>
+<li><code>id: bitcoin</code></li>
+<li><code>symbol: BTC</code></li>
+<li><code>price</code></li>
+<li><code>source: coingecko-demo</code></li>
+<li><code>change24h</code></li>
+<li><code>lastUpdatedAt</code></li>
+</ul>
+<p>这说明 Codex 并不是在“猜答案”，而是真的通过 MCP 工具拿到了返回结果。</p>
+<p><img src="/images/20260409/codex-execution-success.png" alt="Codex 配置执行结果"></p>
+<hr>
+<h2 id="五、总结：跑通这条链路后，你真正掌握了什么"><a href="#五、总结：跑通这条链路后，你真正掌握了什么" class="headerlink" title="五、总结：跑通这条链路后，你真正掌握了什么"></a>五、总结：跑通这条链路后，你真正掌握了什么</h2><p>如果前面的步骤都已经跑通，那么你完成的其实不是一个简单 demo，而是一个完整的入门闭环：</p>
+<ol>
+<li>你写了一个 TypeScript MCP Server</li>
+<li>你注册了一个真实可用的工具 <code>fetch_market_data</code></li>
+<li>你接入了第三方 API，而不是只返回静态内容</li>
+<li>你用 Inspector 验证了工具层是否正常</li>
+<li>你用 Codex 验证了宿主能否真正调用工具</li>
+</ol>
+<p>这一步很重要，因为它意味着你已经跨过了 MCP 入门最难的那道坎：</p>
+<p><strong>从“知道概念”进入“能做出一个可验证的工具”。</strong></p>
+<p>很多人学到这里，后面再增加第二个工具、替换数据源、接入更多宿主，都会顺很多。</p>
+<p>这篇文章本质上只做了一件事：</p>
+<p><strong>用一个真实的 CoinGecko 市场数据工具，把 MCP 的完整入门流程跑通。</strong></p>
+<p>如果你刚接触 MCP，其实不需要一开始就把所有协议细节都啃透。更重要的是先建立这几个直觉：</p>
+<ul>
+<li>MCP 是一层工具协议</li>
+<li>业务逻辑仍然是你自己写</li>
+<li>宿主通过 MCP 发现并调用你的工具</li>
+<li>Inspector 适合做调试验证</li>
+<li>Codex 可以作为真实宿主来消费你的工具能力</li>
+</ul>
+<p>只要这条链路你亲手跑通过一次，后面再去扩展更多工具、更多数据源，甚至更完整的 agent 体系，理解都会快很多。</p>
+]]></content>
+      <categories>
+        <category>AI</category>
+      </categories>
+      <tags>
+        <tag>AI</tag>
+        <tag>MCP</tag>
       </tags>
   </entry>
 </search>
