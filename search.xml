@@ -1,146 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</title>
-    <url>/posts/2026/07/18/9e7d1a5f/</url>
-    <content><![CDATA[<h1 id="单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布"><a href="#单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布" class="headerlink" title="单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布"></a>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</h1><p>本方案的技术链路为：<strong>Mac + OrbStack 本地开发与构建 → Docker Hub 保存版本化镜像 → Ubuntu VPS 使用 Docker Compose 运行</strong>。VPS 只保留部署配置、环境变量、Nginx 配置和数据卷，不上传 Git 仓库或 src 源码目录。</p>
-<blockquote>
-<p><strong>注意</strong>：多阶段镜像不等同绝对源码保护。最终镜像可没有 TypeScript 源码，但编译后的 JavaScript 仍可被分析。密码、令牌和私钥永远不能写进镜像。</p>
-</blockquote>
-<hr>
-<h2 id="一、环境说明"><a href="#一、环境说明" class="headerlink" title="一、环境说明"></a>一、环境说明</h2><p>本地需要 <strong>macOS、OrbStack、Node.js LTS、npm、Git</strong> 和 <strong>Docker Hub 账号</strong>。PostgreSQL 通过 OrbStack 容器运行。</p>
-<p>VPS 建议使用：</p>
-<ul>
-<li><strong>系统</strong>：Ubuntu 24.04 LTS（或仍受支持的 LTS）</li>
-<li><strong>配置</strong>：2 vCPU、4 GB RAM、40 GB 以上 SSD/NVMe</li>
-<li><strong>网络</strong>：公网 IPv4，开放 TCP 80/443</li>
-<li><strong>安全</strong>：SSH 仅对可信 IP 开放</li>
-</ul>
-<blockquote>
-<p>1 GB 内存可试验，但 API、PostgreSQL 与 Docker 共用资源时余量很少。</p>
-</blockquote>
-<hr>
-<h2 id="二、本地-PostgreSQL"><a href="#二、本地-PostgreSQL" class="headerlink" title="二、本地 PostgreSQL"></a>二、本地 PostgreSQL</h2><p>创建 <code>compose.dev.yml</code>：</p>
-<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">services</span><span class="token punctuation">:</span>
-  <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
-    <span class="token key atrule">image</span><span class="token punctuation">:</span> postgres<span class="token punctuation">:</span><span class="token number">16</span>
-    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
-      <span class="token key atrule">POSTGRES_USER</span><span class="token punctuation">:</span> app_user
-      <span class="token key atrule">POSTGRES_PASSWORD</span><span class="token punctuation">:</span> change<span class="token punctuation">-</span>this<span class="token punctuation">-</span>local<span class="token punctuation">-</span>password
-      <span class="token key atrule">POSTGRES_DB</span><span class="token punctuation">:</span> app_db
-    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> <span class="token string">"127.0.0.1:5432:5432"</span>
-    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-      <span class="token punctuation">-</span> postgres_dev_data<span class="token punctuation">:</span>/var/lib/postgresql/data
-<span class="token key atrule">volumes</span><span class="token punctuation">:</span>
-  postgres_dev_data<span class="token punctuation">:</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>启动并验证：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml up <span class="token parameter variable">-d</span>
-<span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml <span class="token builtin class-name">exec</span> postgres psql <span class="token parameter variable">-U</span> app_user <span class="token parameter variable">-d</span> app_db<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p>本机运行 API 时的数据库连接字符串：</p>
-<pre class="line-numbers language-env" data-language="env"><code class="language-env">DATABASE_URL=postgresql://app_user:***@localhost:5432/app_db<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
-
-<p>绑定 <code>127.0.0.1</code> 代表数据库只供本机开发使用。</p>
-<hr>
-<h2 id="三、构建生产-Docker-镜像"><a href="#三、构建生产-Docker-镜像" class="headerlink" title="三、构建生产 Docker 镜像"></a>三、构建生产 Docker 镜像</h2><p>假设 <code>npm run build</code> 输出 <code>dist</code>，入口为 <code>dist/server.js</code>：</p>
-<pre class="line-numbers language-docker" data-language="docker"><code class="language-docker"><span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> build</span>
-<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
-<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
-<span class="token instruction"><span class="token keyword">RUN</span> npm ci</span>
-<span class="token instruction"><span class="token keyword">COPY</span> tsconfig*.json ./</span>
-<span class="token instruction"><span class="token keyword">COPY</span> src ./src</span>
-<span class="token instruction"><span class="token keyword">RUN</span> npm run build</span>
-
-<span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> production</span>
-<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
-<span class="token instruction"><span class="token keyword">ENV</span> NODE_ENV=production</span>
-<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
-<span class="token instruction"><span class="token keyword">RUN</span> npm ci --omit=dev &amp;&amp; npm cache clean --force</span>
-<span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--from</span><span class="token punctuation">=</span><span class="token string">build</span></span> /app/dist ./dist</span>
-<span class="token instruction"><span class="token keyword">USER</span> node</span>
-<span class="token instruction"><span class="token keyword">EXPOSE</span> 3000</span>
-<span class="token instruction"><span class="token keyword">CMD</span> [<span class="token string">"node"</span>, <span class="token string">"dist/server.js"</span>]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>创建 <code>.dockerignore</code>：</p>
-<pre class="line-numbers language-ignore" data-language="ignore"><code class="language-ignore"><span class="token entry string">node_modules</span>
-<span class="token entry string">dist</span>
-<span class="token entry string">.git</span>
-<span class="token entry string">.env</span>
-<span class="token entry string">.env.<span class="token operator">*</span></span>
-<span class="token entry string">npm-debug.log<span class="token operator">*</span></span>
-<span class="token entry string">compose<span class="token operator">*</span>.yml</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
-
-<p>本地验证构建与运行：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
-<span class="token function">docker</span> run <span class="token parameter variable">--rm</span> <span class="token parameter variable">-p</span> <span class="token number">3000</span>:3000 YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<blockquote>
-<p>Prisma、原生模块等可能需要额外生成步骤，应以项目实际依赖为准。</p>
-</blockquote>
-<hr>
-<h2 id="四、Docker-Hub-如何选择"><a href="#四、Docker-Hub-如何选择" class="headerlink" title="四、Docker Hub 如何选择"></a>四、Docker Hub 如何选择</h2><p>Docker Hub 镜像格式为 <code>docker.io/&lt;用户名&gt;/&lt;镜像名&gt;:&lt;标签&gt;</code>，例如 <code>docker.io/alice/backend-api:1.0.0</code>。它最通用、入门简单，业务 API 通常应使用<strong>私有仓库</strong>。</p>
-<p>各容器仓库选型对比：</p>
-<table>
-<thead>
-<tr>
-<th>仓库</th>
-<th>适用场景</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><strong>Docker Hub</strong></td>
-<td>最通用，入门简单，业务建议使用私有仓库</td>
-</tr>
-<tr>
-<td><strong>GHCR</strong></td>
-<td>适合 GitHub Actions 工作流</td>
-</tr>
-<tr>
-<td><strong>GitLab Container Registry</strong></td>
-<td>适合 GitLab CI</td>
-</tr>
-<tr>
-<td><strong>云厂商仓库</strong></td>
-<td>适合长期部署在同一家云</td>
-</tr>
-</tbody></table>
-<blockquote>
-<p>私有仓库和拉取额度会变化，以各平台官网当前政策为准。</p>
-</blockquote>
-<hr>
-<h2 id="五、推送镜像"><a href="#五、推送镜像" class="headerlink" title="五、推送镜像"></a>五、推送镜像</h2><p>在 Docker Hub 创建 <code>backend-api</code> 私有仓库，使用 <strong>Personal Access Token</strong> 登录：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login
-<span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
-<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
-
-<p>可附加 <code>latest</code> 标签：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> tag YOUR_DOCKERHUB_USER/backend-api:1.0.0 YOUR_DOCKERHUB_USER/backend-api:latest
-<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:latest<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
-
-<p><strong>发布前检查清单：</strong></p>
-<ul>
-<li>✅ API 已连接本地 PostgreSQL 通过关键测试</li>
-<li>✅ 存在 <code>GET /health</code> 健康检查端点</li>
-<li>✅ 机密没有进入镜像</li>
-<li>✅ 每次发布都有新标签</li>
-</ul>
-<blockquote>
-<p>生产 Compose 应固定使用 <code>1.0.0</code> 之类的明确版本，便于回滚。</p>
-</blockquote>
-<hr>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文完成了「单台 VPS 部署 API」的上半部分：从本地开发环境搭建、PostgreSQL 配置、多阶段 Docker 镜像构建，到 Docker Hub 镜像推送。下一篇文章将介绍如何在 Ubuntu VPS 上拉取镜像、配置 Nginx 反向代理，并完成 HTTPS 证书的申请与自动续期。</p>
-]]></content>
-      <categories>
-        <category>Technical</category>
-      </categories>
-      <tags>
-        <tag>Docker</tag>
-        <tag>DevOps</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证</title>
     <url>/posts/2026/04/09/4dc832d4/</url>
     <content><![CDATA[<h1 id="从-0-开始实操-MCP：用-TypeScript-接入-CoinGecko，并在-Inspector-Codex-中验证"><a href="#从-0-开始实操-MCP：用-TypeScript-接入-CoinGecko，并在-Inspector-Codex-中验证" class="headerlink" title="从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"></a>从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证</h1><p>如果你已经看过不少 MCP 介绍，却始终没有真正跑通过一个完整例子，那么这篇文章会更适合你。</p>
@@ -644,6 +504,350 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
       <tags>
         <tag>AI</tag>
         <tag>MCP</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>升降桌故障排查记</title>
+    <url>/posts/2026/03/02/fbb9923f/</url>
+    <content><![CDATA[<h1 id="升降桌故障排查记：和-E07-E08-的一场小拉扯"><a href="#升降桌故障排查记：和-E07-E08-的一场小拉扯" class="headerlink" title="升降桌故障排查记：和 E07 / E08 的一场小拉扯"></a>升降桌故障排查记：和 E07 / E08 的一场小拉扯</h1><p>有些家用设备的小故障，最磨人。</p>
+<p>它不至于让人立刻崩溃，但会持续打断你的节奏。尤其是你准备工作的时候，桌子突然一边高一边低，控制面板还反复跳出 <strong>RST、E07、E08</strong> 这些报码。</p>
+<p>这次出问题的，是家里的乐歌升降桌。</p>
+<p>原本只是一次普通的升降操作。我像往常一样按下上升键，结果桌子没有正常升起来：一边桌脚还有动作，另一边完全没反应。更麻烦的是，反复重试之后，桌面已经明显不平。</p>
+<p>那一刻的感受很真实。不是“这下完了”的大惊失色，而是一种很具体的无奈：桌子没法正常用，售后不一定马上能处理，而你还得继续工作。</p>
+<p>所以我决定先自己排一轮。</p>
+<p>这篇文章不是维修教程，更不是鼓励大家随便拆设备。它只是一次真实的排查记录：我是怎么从错误代码、客服建议、交叉插线，一步步判断到问题可能出在左右桌脚不同步，并最终通过手动找平和系统重置把桌子恢复正常的。</p>
+<hr>
+<h2 id="一、故障现象：一边能动，一边“罢工”"><a href="#一、故障现象：一边能动，一边“罢工”" class="headerlink" title="一、故障现象：一边能动，一边“罢工”"></a>一、故障现象：一边能动，一边“罢工”</h2><p>那天晚上，我按下升降桌的上升按钮后，很快发现状态不对。</p>
+<p>具体表现大概是这样：</p>
+<ul>
+<li>左边桌脚还有反应，但<strong>只能往下，不能上升</strong></li>
+<li>右边桌脚无论上升还是下降都<strong>完全没反应</strong></li>
+<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
+<li>多次尝试后，桌面出现明显的左右高度差</li>
+</ul>
+<p><img src="/images/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg" alt="联系客服反馈问题"></p>
+<p><em>图 1：控制面板显示 RST / E07 / E08 等报码</em></p>
+<p>我又试了几次，结论基本一致：</p>
+<blockquote>
+<p><strong>这不是简单的卡顿，而是桌子已经进入了异常保护状态。</strong></p>
+</blockquote>
+<p>因为每次操作时，始终只有一边桌脚在动，另一边完全静止。整张桌子看起来就像一张“瘸腿桌”，别说继续升降了，光看着就让人难受。</p>
+<hr>
+<h2 id="二、先找客服：按标准流程排一遍"><a href="#二、先找客服：按标准流程排一遍" class="headerlink" title="二、先找客服：按标准流程排一遍"></a>二、先找客服：按标准流程排一遍</h2><p>遇到这种问题，第一反应当然还是联系客服。</p>
+<p>我联系了乐歌京东自营店。对方给出的思路比较标准，也符合这类升降桌常见的排查逻辑：先重置，再交叉插线，看错误代码是否变化。</p>
+<h3 id="1-先做系统重置"><a href="#1-先做系统重置" class="headerlink" title="1. 先做系统重置"></a>1. 先做系统重置</h3><p>客服先让我把桌子尽量降到最低，然后：</p>
+<blockquote>
+<p><strong>长按下降键约 7 秒，执行系统重置。</strong></p>
+</blockquote>
+<p>这是升降桌常见的初始化方式。很多时候，报码并不一定意味着零件损坏，也可能只是系统检测到位置异常后，需要重新校准。</p>
+<p>可惜，对我这台桌子来说，这一步没有解决问题。</p>
+<h3 id="2-再交叉插线"><a href="#2-再交叉插线" class="headerlink" title="2. 再交叉插线"></a>2. 再交叉插线</h3><p>接下来，客服让我拆开桌腿挡板，把控制盒上的 <strong>M1 和 M2 电机线互换</strong>，再观察报码变化。</p>
+<p><img src="/images/20260302/8BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg" alt="客服建议拆开检查"></p>
+<p><em>图 2：客服建议交叉插线排查问题位置</em></p>
+<p>我照着做完之后，面板上的报码确实变了：从 <strong>E07</strong> 变成了 <strong>E08</strong>。</p>
+<p><img src="/images/20260302/C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg" alt="错误代码变化反馈"></p>
+<p><em>图 3：交叉插线后，报码从 E07 变成 E08</em></p>
+<p>客服根据这个变化，初步判断可能是控制盒问题，需要反馈技术部门，再安排后续处理。问题是，当时已经临近假期，对方给出的答复大意是：</p>
+<blockquote>
+<p>年后再安排。</p>
+</blockquote>
+<p>说实话，听到这里，我看着眼前那张高低不平的桌子，第一反应不是失望，而是有点不甘心。</p>
+<p>都已经拆到这一步了，索性继续往下查。</p>
+<hr>
+<h2 id="三、换个思路：不要只盯着报码"><a href="#三、换个思路：不要只盯着报码" class="headerlink" title="三、换个思路：不要只盯着报码"></a>三、换个思路：不要只盯着报码</h2><p>很多时候，真正有用的线索，不在错误代码本身，而在设备到底表现出了什么异常。</p>
+<p>这次也是一样。</p>
+<h3 id="1-先理解报码，但不迷信报码"><a href="#1-先理解报码，但不迷信报码" class="headerlink" title="1. 先理解报码，但不迷信报码"></a>1. 先理解报码，但不迷信报码</h3><p>我先查了 E07 / E08 的相关说明，想弄清楚它们大概对应什么问题。</p>
+<p>网上能查到的说法并不完全一致，但结合乐歌和同类升降桌常见的故障逻辑，大致可以归纳到两个方向：</p>
+<ul>
+<li>一类和<strong>左右桌脚高度不一致</strong>有关</li>
+<li>一类和<strong>电机连接、通信、同步异常</strong>有关</li>
+</ul>
+<p>这至少说明一件事：</p>
+<blockquote>
+<p><strong>问题未必是硬件彻底坏了，也可能是双侧不同步之后触发了保护机制。</strong></p>
+</blockquote>
+<p>这个判断后来证明挺关键。</p>
+<h3 id="2-先确认电机有没有坏"><a href="#2-先确认电机有没有坏" class="headerlink" title="2. 先确认电机有没有坏"></a>2. 先确认电机有没有坏</h3><p>既然客服已经让我拆开挡板，那不如继续往前一步，先把“是不是电机坏了”这件事弄清楚。</p>
+<p>我的操作过程不复杂：</p>
+<ol>
+<li>拧开桌腿挡板螺丝</li>
+<li>断开两侧电机连接线</li>
+<li>分别测试每个电机是否能正常上下动作</li>
+</ol>
+<p>测试结果出来的时候，我心里其实松了一口气：</p>
+<blockquote>
+<p><strong>两个电机都能正常上下运动。</strong></p>
+</blockquote>
+<p>这意味着，问题大概率不在“电机彻底损坏”这一层。</p>
+<p>至少可以先排除掉最麻烦、也最容易让人头疼的情况。</p>
+<h3 id="3-真正的问题，可能是“两边已经不平了”"><a href="#3-真正的问题，可能是“两边已经不平了”" class="headerlink" title="3. 真正的问题，可能是“两边已经不平了”"></a>3. 真正的问题，可能是“两边已经不平了”</h3><p>接下来再回头看整个故障过程，很多细节就串起来了。</p>
+<p>在出问题之前，桌子的状态其实已经变成了：</p>
+<ul>
+<li>只有一边桌脚在动</li>
+<li>另一边没有正常响应</li>
+<li>两边高度差被一点点拉大</li>
+</ul>
+<p>一旦意识到这一点，思路就清楚了。</p>
+<p>如果升降桌系统会持续检测左右桌脚的同步状态，那么当两边高度差大到一定程度时，系统为了保护结构而锁定，反而很合理。</p>
+<p>也就是说，真正的问题也许不是“它坏了”，而是：</p>
+<blockquote>
+<p><strong>它觉得现在这样继续动下去不安全。</strong></p>
+</blockquote>
+<p>想到这里，我决定不再先盯着报码，而是先处理最直观的问题：</p>
+<p><strong>把两边桌脚重新找平。</strong></p>
+<hr>
+<h2 id="四、解决过程：先扶正，再重置"><a href="#四、解决过程：先扶正，再重置" class="headerlink" title="四、解决过程：先扶正，再重置"></a>四、解决过程：先扶正，再重置</h2><p>接下来的处理方法，反而没什么神秘感。</p>
+<p>既然问题可能出在两边高度已经失衡，那就先让它们在物理上回到同一个基准。</p>
+<p>我的做法是：</p>
+<ol>
+<li>先断电，确认桌面没有负载、线缆没有被夹住；不要在桌子带电或承重时拆接电机线</li>
+<li>参考本机型说明书，在不拆解传动结构的前提下，让仍可响应的一侧把两边高度尽量调到接近的最低位置</li>
+<li>确认左右桌脚高度接近后，再把两个电机重新接回控制盒</li>
+<li>恢复供电后，按本机型说明书的步骤执行初始化；我这台机器是长按下降键约 7 秒</li>
+</ol>
+<p>不同型号的重置按键和报码含义可能不同，因此这里的步骤只能作为排查记录，不应替代官方说明书或售后指导。</p>
+<p>做到这里时，我心里已经有一点底了。</p>
+<p>因为至少从机械状态来看，桌子已经不像之前那样一高一低。换句话说，<strong>“看起来不对”的部分，已经先被纠正了一次。</strong></p>
+<p>然后，我重新执行最开始那套重置操作。</p>
+<p>这一次，结果立刻不一样了：</p>
+<ul>
+<li>面板上的错误代码消失了</li>
+<li>显示重新变回正常的高度数字</li>
+<li>再测试升降时，左右两边恢复了同步运动</li>
+</ul>
+<p><img src="/images/20260302/379220D3-EF81-44D3-AFD3-1A9DA10B1F23.jpg" alt="问题解决后反馈客服"></p>
+<p><em>图 4：问题解决后，回头告知客服</em></p>
+<p>那一刻还挺有成就感。</p>
+<p>不是那种“我会修机器了”的成就感，而是你顺着现象一点点摸过去，最后真的把问题捋顺了。前面那种说不上来的烦躁，也一下子散掉了。</p>
+<hr>
+<h2 id="五、这次排查真正有用的是什么"><a href="#五、这次排查真正有用的是什么" class="headerlink" title="五、这次排查真正有用的是什么"></a>五、这次排查真正有用的是什么</h2><p>现在回头看，这次能顺利解决，不是因为我多懂升降桌，而是因为排查顺序还算对。</p>
+<p>我把整个过程总结成一张表：</p>
+<table>
+<thead>
+<tr>
+<th>排查步骤</th>
+<th>关键操作</th>
+<th>目的</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1. 记录报码</td>
+<td>观察 RST / E07 / E08 的变化</td>
+<td>缩小问题范围</td>
+</tr>
+<tr>
+<td>2. 联系客服</td>
+<td>按官方流程先重置，再交叉插线</td>
+<td>建立基础排查路径</td>
+</tr>
+<tr>
+<td>3. 测试电机</td>
+<td>单独测试两侧电机是否能动作</td>
+<td>排除电机本体故障</td>
+</tr>
+<tr>
+<td>4. 手动找平</td>
+<td>让两边桌脚回到同一高度</td>
+<td>恢复物理基准</td>
+</tr>
+<tr>
+<td>5. 系统重置</td>
+<td>长按下降键重新初始化</td>
+<td>让系统重新校准</td>
+</tr>
+</tbody></table>
+<p>真正起作用的，不是某一个“神奇步骤”，而是没有一上来就认定它一定坏了，而是把问题拆开来看：</p>
+<ul>
+<li>是系统没校准？</li>
+<li>是连接异常？</li>
+<li>是左右不同步？</li>
+<li>还是零件真的损坏？</li>
+</ul>
+<p>当这些问题一个个被排掉之后，答案自然就浮出来了。</p>
+<hr>
+<h2 id="六、这次小故障给我的几个提醒"><a href="#六、这次小故障给我的几个提醒" class="headerlink" title="六、这次小故障给我的几个提醒"></a>六、这次小故障给我的几个提醒</h2><h3 id="1-报码吓人，但不等于彻底损坏"><a href="#1-报码吓人，但不等于彻底损坏" class="headerlink" title="1. 报码吓人，但不等于彻底损坏"></a>1. 报码吓人，但不等于彻底损坏</h3><p>这是我这次最大的感受。</p>
+<p>控制面板报码看起来很吓人，但它很多时候只是系统在告诉你：</p>
+<blockquote>
+<p><strong>现在的状态不正常，我先停下来。</strong></p>
+</blockquote>
+<p>停下来未必是坏了，也可能是在避免继续运行带来更大的结构风险。</p>
+<h3 id="2-现象往往比错误代码更重要"><a href="#2-现象往往比错误代码更重要" class="headerlink" title="2. 现象往往比错误代码更重要"></a>2. 现象往往比错误代码更重要</h3><p>如果只盯着 E07 / E08 这两个码，我未必能那么快想到“高度差”这个方向。</p>
+<p>但“始终只有一边桌脚在动”这个现象，几乎已经把答案摆在了面前。</p>
+<p>所以很多时候，先观察设备“到底怎么不对”，比先背报码更有用。</p>
+<h3 id="3-客服不一定直接解决问题，但能提供起点"><a href="#3-客服不一定直接解决问题，但能提供起点" class="headerlink" title="3. 客服不一定直接解决问题，但能提供起点"></a>3. 客服不一定直接解决问题，但能提供起点</h3><p>这次虽然最后是我自己处理好的，但客服给的建议其实很关键。</p>
+<p>至少他们先帮我把流程拉了出来：</p>
+<ul>
+<li>先重置</li>
+<li>再交叉插线</li>
+<li>再看报码变化</li>
+</ul>
+<p>这些步骤本身，就已经帮我少走了不少弯路。</p>
+<h3 id="4-低风险的问题，可以先自己排一排"><a href="#4-低风险的问题，可以先自己排一排" class="headerlink" title="4. 低风险的问题，可以先自己排一排"></a>4. 低风险的问题，可以先自己排一排</h3><p>当然，这不是鼓励所有人都去拆机器。</p>
+<p>但像这类问题，如果你能确认安全，做一些基础排查通常风险不高：</p>
+<ul>
+<li>做一次系统 reset</li>
+<li>检查插线是否松动</li>
+<li>观察两边是否明显不平</li>
+<li>在安全前提下做简单找平</li>
+</ul>
+<p>很多时候，这比直接等售后更快，也更容易让你弄清楚问题到底出在哪。</p>
+<p>如果涉及电源、承重结构、明显异响、烧焦味，或者你不确定自己在做什么，那就别硬来，直接等官方售后处理。</p>
+<hr>
+<h2 id="七、写在最后"><a href="#七、写在最后" class="headerlink" title="七、写在最后"></a>七、写在最后</h2><p>这次升降桌的小故障，最后没有变成一次“换控制盒”或者“换电机”的麻烦事。</p>
+<p>它更像是一个很生活化的小插曲：一个原本以为要拖很久的问题，在你愿意静下来观察、拆解、排查之后，慢慢露出了没那么复杂的本来面目。</p>
+<p>我一直觉得，生活里很多看上去很“专业”的问题，真正可怕的不是它本身，而是你在一开始就把它想得太大、太难、太不可碰。</p>
+<p>可一旦你愿意动手去摸一摸，很多事情就会从“完全不会”变成“原来也能搞明白一点”。</p>
+<p>这次也是一样。</p>
+<p>如果你刚好也遇到了类似情况，希望这篇记录能给你一点参考。</p>
+<p>它未必适用于所有型号，也谈不上是什么标准维修教程。但至少对于“<strong>面板报码 + 一边桌脚不动 + 重置暂时无效</strong>”这种场景，也许能帮你少一点慌张，少走一点弯路。</p>
+<hr>
+<p><em>本文记录于 2026 年 3 月</em></p>
+]]></content>
+      <categories>
+        <category>随笔</category>
+      </categories>
+      <tags>
+        <tag>随笔</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</title>
+    <url>/posts/2026/07/18/9e7d1a5f/</url>
+    <content><![CDATA[<h1 id="单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布"><a href="#单台-VPS-部署-API（上）：环境准备与-Docker-Hub-镜像发布" class="headerlink" title="单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布"></a>单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布</h1><p>本方案的技术链路为：<strong>Mac + OrbStack 本地开发与构建 → Docker Hub 保存版本化镜像 → Ubuntu VPS 使用 Docker Compose 运行</strong>。VPS 只保留部署配置、环境变量、Nginx 配置和数据卷，不上传 Git 仓库或 src 源码目录。</p>
+<blockquote>
+<p><strong>注意</strong>：多阶段镜像不等同绝对源码保护。最终镜像可没有 TypeScript 源码，但编译后的 JavaScript 仍可被分析。密码、令牌和私钥永远不能写进镜像。</p>
+</blockquote>
+<hr>
+<h2 id="一、环境说明"><a href="#一、环境说明" class="headerlink" title="一、环境说明"></a>一、环境说明</h2><p>本地需要 <strong>macOS、OrbStack、Node.js LTS、npm、Git</strong> 和 <strong>Docker Hub 账号</strong>。PostgreSQL 通过 OrbStack 容器运行。</p>
+<p>VPS 建议使用：</p>
+<ul>
+<li><strong>系统</strong>：Ubuntu 24.04 LTS（或仍受支持的 LTS）</li>
+<li><strong>配置</strong>：2 vCPU、4 GB RAM、40 GB 以上 SSD/NVMe</li>
+<li><strong>网络</strong>：公网 IPv4，开放 TCP 80/443</li>
+<li><strong>安全</strong>：SSH 仅对可信 IP 开放</li>
+</ul>
+<blockquote>
+<p>1 GB 内存可试验，但 API、PostgreSQL 与 Docker 共用资源时余量很少。</p>
+</blockquote>
+<hr>
+<h2 id="二、本地-PostgreSQL"><a href="#二、本地-PostgreSQL" class="headerlink" title="二、本地 PostgreSQL"></a>二、本地 PostgreSQL</h2><p>创建 <code>compose.dev.yml</code>：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">services</span><span class="token punctuation">:</span>
+  <span class="token key atrule">postgres</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> postgres<span class="token punctuation">:</span><span class="token number">16</span>
+    <span class="token key atrule">environment</span><span class="token punctuation">:</span>
+      <span class="token key atrule">POSTGRES_USER</span><span class="token punctuation">:</span> app_user
+      <span class="token key atrule">POSTGRES_PASSWORD</span><span class="token punctuation">:</span> change<span class="token punctuation">-</span>this<span class="token punctuation">-</span>local<span class="token punctuation">-</span>password
+      <span class="token key atrule">POSTGRES_DB</span><span class="token punctuation">:</span> app_db
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"127.0.0.1:5432:5432"</span>
+    <span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> postgres_dev_data<span class="token punctuation">:</span>/var/lib/postgresql/data
+<span class="token key atrule">volumes</span><span class="token punctuation">:</span>
+  postgres_dev_data<span class="token punctuation">:</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>启动并验证：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml up <span class="token parameter variable">-d</span>
+<span class="token function">docker</span> compose <span class="token parameter variable">-f</span> compose.dev.yml <span class="token builtin class-name">exec</span> postgres psql <span class="token parameter variable">-U</span> app_user <span class="token parameter variable">-d</span> app_db<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p>本机运行 API 时的数据库连接字符串：</p>
+<pre class="line-numbers language-env" data-language="env"><code class="language-env">DATABASE_URL=postgresql://app_user:***@localhost:5432/app_db<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>绑定 <code>127.0.0.1</code> 代表数据库只供本机开发使用。</p>
+<hr>
+<h2 id="三、构建生产-Docker-镜像"><a href="#三、构建生产-Docker-镜像" class="headerlink" title="三、构建生产 Docker 镜像"></a>三、构建生产 Docker 镜像</h2><p>假设 <code>npm run build</code> 输出 <code>dist</code>，入口为 <code>dist/server.js</code>：</p>
+<pre class="line-numbers language-docker" data-language="docker"><code class="language-docker"><span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> build</span>
+<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
+<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
+<span class="token instruction"><span class="token keyword">RUN</span> npm ci</span>
+<span class="token instruction"><span class="token keyword">COPY</span> tsconfig*.json ./</span>
+<span class="token instruction"><span class="token keyword">COPY</span> src ./src</span>
+<span class="token instruction"><span class="token keyword">RUN</span> npm run build</span>
+
+<span class="token instruction"><span class="token keyword">FROM</span> node:22-alpine <span class="token keyword">AS</span> production</span>
+<span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span>
+<span class="token instruction"><span class="token keyword">ENV</span> NODE_ENV=production</span>
+<span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span>
+<span class="token instruction"><span class="token keyword">RUN</span> npm ci --omit=dev &amp;&amp; npm cache clean --force</span>
+<span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--from</span><span class="token punctuation">=</span><span class="token string">build</span></span> /app/dist ./dist</span>
+<span class="token instruction"><span class="token keyword">USER</span> node</span>
+<span class="token instruction"><span class="token keyword">EXPOSE</span> 3000</span>
+<span class="token instruction"><span class="token keyword">CMD</span> [<span class="token string">"node"</span>, <span class="token string">"dist/server.js"</span>]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>创建 <code>.dockerignore</code>：</p>
+<pre class="line-numbers language-ignore" data-language="ignore"><code class="language-ignore"><span class="token entry string">node_modules</span>
+<span class="token entry string">dist</span>
+<span class="token entry string">.git</span>
+<span class="token entry string">.env</span>
+<span class="token entry string">.env.<span class="token operator">*</span></span>
+<span class="token entry string">npm-debug.log<span class="token operator">*</span></span>
+<span class="token entry string">compose<span class="token operator">*</span>.yml</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>本地验证构建与运行：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
+<span class="token function">docker</span> run <span class="token parameter variable">--rm</span> <span class="token parameter variable">-p</span> <span class="token number">3000</span>:3000 YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<blockquote>
+<p>Prisma、原生模块等可能需要额外生成步骤，应以项目实际依赖为准。</p>
+</blockquote>
+<hr>
+<h2 id="四、Docker-Hub-如何选择"><a href="#四、Docker-Hub-如何选择" class="headerlink" title="四、Docker Hub 如何选择"></a>四、Docker Hub 如何选择</h2><p>Docker Hub 镜像格式为 <code>docker.io/&lt;用户名&gt;/&lt;镜像名&gt;:&lt;标签&gt;</code>，例如 <code>docker.io/alice/backend-api:1.0.0</code>。它最通用、入门简单，业务 API 通常应使用<strong>私有仓库</strong>。</p>
+<p>各容器仓库选型对比：</p>
+<table>
+<thead>
+<tr>
+<th>仓库</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Docker Hub</strong></td>
+<td>最通用，入门简单，业务建议使用私有仓库</td>
+</tr>
+<tr>
+<td><strong>GHCR</strong></td>
+<td>适合 GitHub Actions 工作流</td>
+</tr>
+<tr>
+<td><strong>GitLab Container Registry</strong></td>
+<td>适合 GitLab CI</td>
+</tr>
+<tr>
+<td><strong>云厂商仓库</strong></td>
+<td>适合长期部署在同一家云</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>私有仓库和拉取额度会变化，以各平台官网当前政策为准。</p>
+</blockquote>
+<hr>
+<h2 id="五、推送镜像"><a href="#五、推送镜像" class="headerlink" title="五、推送镜像"></a>五、推送镜像</h2><p>在 Docker Hub 创建 <code>backend-api</code> 私有仓库，使用 <strong>Personal Access Token</strong> 登录：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> login
+<span class="token function">docker</span> build <span class="token parameter variable">-t</span> YOUR_DOCKERHUB_USER/backend-api:1.0.0 <span class="token builtin class-name">.</span>
+<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:1.0.0<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>可附加 <code>latest</code> 标签：</p>
+<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">docker</span> tag YOUR_DOCKERHUB_USER/backend-api:1.0.0 YOUR_DOCKERHUB_USER/backend-api:latest
+<span class="token function">docker</span> push YOUR_DOCKERHUB_USER/backend-api:latest<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<p><strong>发布前检查清单：</strong></p>
+<ul>
+<li>✅ API 已连接本地 PostgreSQL 通过关键测试</li>
+<li>✅ 存在 <code>GET /health</code> 健康检查端点</li>
+<li>✅ 机密没有进入镜像</li>
+<li>✅ 每次发布都有新标签</li>
+</ul>
+<blockquote>
+<p>生产 Compose 应固定使用 <code>1.0.0</code> 之类的明确版本，便于回滚。</p>
+</blockquote>
+<hr>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文完成了「单台 VPS 部署 API」的上半部分：从本地开发环境搭建、PostgreSQL 配置、多阶段 Docker 镜像构建，到 Docker Hub 镜像推送。下一篇文章将介绍如何在 Ubuntu VPS 上拉取镜像、配置 Nginx 反向代理，并完成 HTTPS 证书的申请与自动续期。</p>
+]]></content>
+      <categories>
+        <category>Technical</category>
+      </categories>
+      <tags>
+        <tag>Docker</tag>
+        <tag>DevOps</tag>
       </tags>
   </entry>
   <entry>
@@ -1529,210 +1733,6 @@ The default implementation only supports types which can be stored inside the Bu
       </categories>
       <tags>
         <tag>Compose</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>升降桌故障排查记</title>
-    <url>/posts/2026/03/02/fbb9923f/</url>
-    <content><![CDATA[<h1 id="升降桌故障排查记：和-E07-E08-的一场小拉扯"><a href="#升降桌故障排查记：和-E07-E08-的一场小拉扯" class="headerlink" title="升降桌故障排查记：和 E07 / E08 的一场小拉扯"></a>升降桌故障排查记：和 E07 / E08 的一场小拉扯</h1><p>有些家用设备的小故障，最磨人。</p>
-<p>它不至于让人立刻崩溃，但会持续打断你的节奏。尤其是你准备工作的时候，桌子突然一边高一边低，控制面板还反复跳出 <strong>RST、E07、E08</strong> 这些报码。</p>
-<p>这次出问题的，是家里的乐歌升降桌。</p>
-<p>原本只是一次普通的升降操作。我像往常一样按下上升键，结果桌子没有正常升起来：一边桌脚还有动作，另一边完全没反应。更麻烦的是，反复重试之后，桌面已经明显不平。</p>
-<p>那一刻的感受很真实。不是“这下完了”的大惊失色，而是一种很具体的无奈：桌子没法正常用，售后不一定马上能处理，而你还得继续工作。</p>
-<p>所以我决定先自己排一轮。</p>
-<p>这篇文章不是维修教程，更不是鼓励大家随便拆设备。它只是一次真实的排查记录：我是怎么从错误代码、客服建议、交叉插线，一步步判断到问题可能出在左右桌脚不同步，并最终通过手动找平和系统重置把桌子恢复正常的。</p>
-<hr>
-<h2 id="一、故障现象：一边能动，一边“罢工”"><a href="#一、故障现象：一边能动，一边“罢工”" class="headerlink" title="一、故障现象：一边能动，一边“罢工”"></a>一、故障现象：一边能动，一边“罢工”</h2><p>那天晚上，我按下升降桌的上升按钮后，很快发现状态不对。</p>
-<p>具体表现大概是这样：</p>
-<ul>
-<li>左边桌脚还有反应，但<strong>只能往下，不能上升</strong></li>
-<li>右边桌脚无论上升还是下降都<strong>完全没反应</strong></li>
-<li>控制面板反复显示 <strong>RST、E07、E08</strong></li>
-<li>多次尝试后，桌面出现明显的左右高度差</li>
-</ul>
-<p><img src="/images/20260302/8F340FEF-8A30-40F0-A4AC-6D303CF863A6.jpg" alt="联系客服反馈问题"></p>
-<p><em>图 1：控制面板显示 RST / E07 / E08 等报码</em></p>
-<p>我又试了几次，结论基本一致：</p>
-<blockquote>
-<p><strong>这不是简单的卡顿，而是桌子已经进入了异常保护状态。</strong></p>
-</blockquote>
-<p>因为每次操作时，始终只有一边桌脚在动，另一边完全静止。整张桌子看起来就像一张“瘸腿桌”，别说继续升降了，光看着就让人难受。</p>
-<hr>
-<h2 id="二、先找客服：按标准流程排一遍"><a href="#二、先找客服：按标准流程排一遍" class="headerlink" title="二、先找客服：按标准流程排一遍"></a>二、先找客服：按标准流程排一遍</h2><p>遇到这种问题，第一反应当然还是联系客服。</p>
-<p>我联系了乐歌京东自营店。对方给出的思路比较标准，也符合这类升降桌常见的排查逻辑：先重置，再交叉插线，看错误代码是否变化。</p>
-<h3 id="1-先做系统重置"><a href="#1-先做系统重置" class="headerlink" title="1. 先做系统重置"></a>1. 先做系统重置</h3><p>客服先让我把桌子尽量降到最低，然后：</p>
-<blockquote>
-<p><strong>长按下降键约 7 秒，执行系统重置。</strong></p>
-</blockquote>
-<p>这是升降桌常见的初始化方式。很多时候，报码并不一定意味着零件损坏，也可能只是系统检测到位置异常后，需要重新校准。</p>
-<p>可惜，对我这台桌子来说，这一步没有解决问题。</p>
-<h3 id="2-再交叉插线"><a href="#2-再交叉插线" class="headerlink" title="2. 再交叉插线"></a>2. 再交叉插线</h3><p>接下来，客服让我拆开桌腿挡板，把控制盒上的 <strong>M1 和 M2 电机线互换</strong>，再观察报码变化。</p>
-<p><img src="/images/20260302/8BA33403-D04C-4DA5-98AC-E9D9CFDFBB9B.jpg" alt="客服建议拆开检查"></p>
-<p><em>图 2：客服建议交叉插线排查问题位置</em></p>
-<p>我照着做完之后，面板上的报码确实变了：从 <strong>E07</strong> 变成了 <strong>E08</strong>。</p>
-<p><img src="/images/20260302/C8D25386-26A8-422C-A7B9-B575CBFF5852.jpg" alt="错误代码变化反馈"></p>
-<p><em>图 3：交叉插线后，报码从 E07 变成 E08</em></p>
-<p>客服根据这个变化，初步判断可能是控制盒问题，需要反馈技术部门，再安排后续处理。问题是，当时已经临近假期，对方给出的答复大意是：</p>
-<blockquote>
-<p>年后再安排。</p>
-</blockquote>
-<p>说实话，听到这里，我看着眼前那张高低不平的桌子，第一反应不是失望，而是有点不甘心。</p>
-<p>都已经拆到这一步了，索性继续往下查。</p>
-<hr>
-<h2 id="三、换个思路：不要只盯着报码"><a href="#三、换个思路：不要只盯着报码" class="headerlink" title="三、换个思路：不要只盯着报码"></a>三、换个思路：不要只盯着报码</h2><p>很多时候，真正有用的线索，不在错误代码本身，而在设备到底表现出了什么异常。</p>
-<p>这次也是一样。</p>
-<h3 id="1-先理解报码，但不迷信报码"><a href="#1-先理解报码，但不迷信报码" class="headerlink" title="1. 先理解报码，但不迷信报码"></a>1. 先理解报码，但不迷信报码</h3><p>我先查了 E07 / E08 的相关说明，想弄清楚它们大概对应什么问题。</p>
-<p>网上能查到的说法并不完全一致，但结合乐歌和同类升降桌常见的故障逻辑，大致可以归纳到两个方向：</p>
-<ul>
-<li>一类和<strong>左右桌脚高度不一致</strong>有关</li>
-<li>一类和<strong>电机连接、通信、同步异常</strong>有关</li>
-</ul>
-<p>这至少说明一件事：</p>
-<blockquote>
-<p><strong>问题未必是硬件彻底坏了，也可能是双侧不同步之后触发了保护机制。</strong></p>
-</blockquote>
-<p>这个判断后来证明挺关键。</p>
-<h3 id="2-先确认电机有没有坏"><a href="#2-先确认电机有没有坏" class="headerlink" title="2. 先确认电机有没有坏"></a>2. 先确认电机有没有坏</h3><p>既然客服已经让我拆开挡板，那不如继续往前一步，先把“是不是电机坏了”这件事弄清楚。</p>
-<p>我的操作过程不复杂：</p>
-<ol>
-<li>拧开桌腿挡板螺丝</li>
-<li>断开两侧电机连接线</li>
-<li>分别测试每个电机是否能正常上下动作</li>
-</ol>
-<p>测试结果出来的时候，我心里其实松了一口气：</p>
-<blockquote>
-<p><strong>两个电机都能正常上下运动。</strong></p>
-</blockquote>
-<p>这意味着，问题大概率不在“电机彻底损坏”这一层。</p>
-<p>至少可以先排除掉最麻烦、也最容易让人头疼的情况。</p>
-<h3 id="3-真正的问题，可能是“两边已经不平了”"><a href="#3-真正的问题，可能是“两边已经不平了”" class="headerlink" title="3. 真正的问题，可能是“两边已经不平了”"></a>3. 真正的问题，可能是“两边已经不平了”</h3><p>接下来再回头看整个故障过程，很多细节就串起来了。</p>
-<p>在出问题之前，桌子的状态其实已经变成了：</p>
-<ul>
-<li>只有一边桌脚在动</li>
-<li>另一边没有正常响应</li>
-<li>两边高度差被一点点拉大</li>
-</ul>
-<p>一旦意识到这一点，思路就清楚了。</p>
-<p>如果升降桌系统会持续检测左右桌脚的同步状态，那么当两边高度差大到一定程度时，系统为了保护结构而锁定，反而很合理。</p>
-<p>也就是说，真正的问题也许不是“它坏了”，而是：</p>
-<blockquote>
-<p><strong>它觉得现在这样继续动下去不安全。</strong></p>
-</blockquote>
-<p>想到这里，我决定不再先盯着报码，而是先处理最直观的问题：</p>
-<p><strong>把两边桌脚重新找平。</strong></p>
-<hr>
-<h2 id="四、解决过程：先扶正，再重置"><a href="#四、解决过程：先扶正，再重置" class="headerlink" title="四、解决过程：先扶正，再重置"></a>四、解决过程：先扶正，再重置</h2><p>接下来的处理方法，反而没什么神秘感。</p>
-<p>既然问题可能出在两边高度已经失衡，那就先让它们在物理上回到同一个基准。</p>
-<p>我的做法是：</p>
-<ol>
-<li>先断电，确认桌面没有负载、线缆没有被夹住；不要在桌子带电或承重时拆接电机线</li>
-<li>参考本机型说明书，在不拆解传动结构的前提下，让仍可响应的一侧把两边高度尽量调到接近的最低位置</li>
-<li>确认左右桌脚高度接近后，再把两个电机重新接回控制盒</li>
-<li>恢复供电后，按本机型说明书的步骤执行初始化；我这台机器是长按下降键约 7 秒</li>
-</ol>
-<p>不同型号的重置按键和报码含义可能不同，因此这里的步骤只能作为排查记录，不应替代官方说明书或售后指导。</p>
-<p>做到这里时，我心里已经有一点底了。</p>
-<p>因为至少从机械状态来看，桌子已经不像之前那样一高一低。换句话说，<strong>“看起来不对”的部分，已经先被纠正了一次。</strong></p>
-<p>然后，我重新执行最开始那套重置操作。</p>
-<p>这一次，结果立刻不一样了：</p>
-<ul>
-<li>面板上的错误代码消失了</li>
-<li>显示重新变回正常的高度数字</li>
-<li>再测试升降时，左右两边恢复了同步运动</li>
-</ul>
-<p><img src="/images/20260302/379220D3-EF81-44D3-AFD3-1A9DA10B1F23.jpg" alt="问题解决后反馈客服"></p>
-<p><em>图 4：问题解决后，回头告知客服</em></p>
-<p>那一刻还挺有成就感。</p>
-<p>不是那种“我会修机器了”的成就感，而是你顺着现象一点点摸过去，最后真的把问题捋顺了。前面那种说不上来的烦躁，也一下子散掉了。</p>
-<hr>
-<h2 id="五、这次排查真正有用的是什么"><a href="#五、这次排查真正有用的是什么" class="headerlink" title="五、这次排查真正有用的是什么"></a>五、这次排查真正有用的是什么</h2><p>现在回头看，这次能顺利解决，不是因为我多懂升降桌，而是因为排查顺序还算对。</p>
-<p>我把整个过程总结成一张表：</p>
-<table>
-<thead>
-<tr>
-<th>排查步骤</th>
-<th>关键操作</th>
-<th>目的</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>1. 记录报码</td>
-<td>观察 RST / E07 / E08 的变化</td>
-<td>缩小问题范围</td>
-</tr>
-<tr>
-<td>2. 联系客服</td>
-<td>按官方流程先重置，再交叉插线</td>
-<td>建立基础排查路径</td>
-</tr>
-<tr>
-<td>3. 测试电机</td>
-<td>单独测试两侧电机是否能动作</td>
-<td>排除电机本体故障</td>
-</tr>
-<tr>
-<td>4. 手动找平</td>
-<td>让两边桌脚回到同一高度</td>
-<td>恢复物理基准</td>
-</tr>
-<tr>
-<td>5. 系统重置</td>
-<td>长按下降键重新初始化</td>
-<td>让系统重新校准</td>
-</tr>
-</tbody></table>
-<p>真正起作用的，不是某一个“神奇步骤”，而是没有一上来就认定它一定坏了，而是把问题拆开来看：</p>
-<ul>
-<li>是系统没校准？</li>
-<li>是连接异常？</li>
-<li>是左右不同步？</li>
-<li>还是零件真的损坏？</li>
-</ul>
-<p>当这些问题一个个被排掉之后，答案自然就浮出来了。</p>
-<hr>
-<h2 id="六、这次小故障给我的几个提醒"><a href="#六、这次小故障给我的几个提醒" class="headerlink" title="六、这次小故障给我的几个提醒"></a>六、这次小故障给我的几个提醒</h2><h3 id="1-报码吓人，但不等于彻底损坏"><a href="#1-报码吓人，但不等于彻底损坏" class="headerlink" title="1. 报码吓人，但不等于彻底损坏"></a>1. 报码吓人，但不等于彻底损坏</h3><p>这是我这次最大的感受。</p>
-<p>控制面板报码看起来很吓人，但它很多时候只是系统在告诉你：</p>
-<blockquote>
-<p><strong>现在的状态不正常，我先停下来。</strong></p>
-</blockquote>
-<p>停下来未必是坏了，也可能是在避免继续运行带来更大的结构风险。</p>
-<h3 id="2-现象往往比错误代码更重要"><a href="#2-现象往往比错误代码更重要" class="headerlink" title="2. 现象往往比错误代码更重要"></a>2. 现象往往比错误代码更重要</h3><p>如果只盯着 E07 / E08 这两个码，我未必能那么快想到“高度差”这个方向。</p>
-<p>但“始终只有一边桌脚在动”这个现象，几乎已经把答案摆在了面前。</p>
-<p>所以很多时候，先观察设备“到底怎么不对”，比先背报码更有用。</p>
-<h3 id="3-客服不一定直接解决问题，但能提供起点"><a href="#3-客服不一定直接解决问题，但能提供起点" class="headerlink" title="3. 客服不一定直接解决问题，但能提供起点"></a>3. 客服不一定直接解决问题，但能提供起点</h3><p>这次虽然最后是我自己处理好的，但客服给的建议其实很关键。</p>
-<p>至少他们先帮我把流程拉了出来：</p>
-<ul>
-<li>先重置</li>
-<li>再交叉插线</li>
-<li>再看报码变化</li>
-</ul>
-<p>这些步骤本身，就已经帮我少走了不少弯路。</p>
-<h3 id="4-低风险的问题，可以先自己排一排"><a href="#4-低风险的问题，可以先自己排一排" class="headerlink" title="4. 低风险的问题，可以先自己排一排"></a>4. 低风险的问题，可以先自己排一排</h3><p>当然，这不是鼓励所有人都去拆机器。</p>
-<p>但像这类问题，如果你能确认安全，做一些基础排查通常风险不高：</p>
-<ul>
-<li>做一次系统 reset</li>
-<li>检查插线是否松动</li>
-<li>观察两边是否明显不平</li>
-<li>在安全前提下做简单找平</li>
-</ul>
-<p>很多时候，这比直接等售后更快，也更容易让你弄清楚问题到底出在哪。</p>
-<p>如果涉及电源、承重结构、明显异响、烧焦味，或者你不确定自己在做什么，那就别硬来，直接等官方售后处理。</p>
-<hr>
-<h2 id="七、写在最后"><a href="#七、写在最后" class="headerlink" title="七、写在最后"></a>七、写在最后</h2><p>这次升降桌的小故障，最后没有变成一次“换控制盒”或者“换电机”的麻烦事。</p>
-<p>它更像是一个很生活化的小插曲：一个原本以为要拖很久的问题，在你愿意静下来观察、拆解、排查之后，慢慢露出了没那么复杂的本来面目。</p>
-<p>我一直觉得，生活里很多看上去很“专业”的问题，真正可怕的不是它本身，而是你在一开始就把它想得太大、太难、太不可碰。</p>
-<p>可一旦你愿意动手去摸一摸，很多事情就会从“完全不会”变成“原来也能搞明白一点”。</p>
-<p>这次也是一样。</p>
-<p>如果你刚好也遇到了类似情况，希望这篇记录能给你一点参考。</p>
-<p>它未必适用于所有型号，也谈不上是什么标准维修教程。但至少对于“<strong>面板报码 + 一边桌脚不动 + 重置暂时无效</strong>”这种场景，也许能帮你少一点慌张，少走一点弯路。</p>
-<hr>
-<p><em>本文记录于 2026 年 3 月</em></p>
-]]></content>
-      <categories>
-        <category>随笔</category>
-      </categories>
-      <tags>
-        <tag>随笔</tag>
       </tags>
   </entry>
 </search>
