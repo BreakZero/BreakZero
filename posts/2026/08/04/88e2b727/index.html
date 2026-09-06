@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/siteicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/siteic%20%20on/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/siteicon/favicon-16x16.png">
+  <link rel="mask-icon" href="/images/siteicon/safari-pinned-tab.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-center-simple.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"dejinlu.cn","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.22.0","exturl":false,"sidebar":{"position":"right","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12,"width":300},"copycode":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="用户目标不会天然变成可执行工作。本文说明应用如何让 LLM 在 Schema 约束下生成候选 Spec 与 Plan，再由 Runtime 校验、澄清和保存，使任务在执行 Loop 开始前进入 ready。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Task 不是 Request：从用户目标到可验收任务">
+<meta property="og:url" content="https://dejinlu.cn/posts/2026/08/04/88e2b727/index.html">
+<meta property="og:site_name" content="D&amp;JのZONE">
+<meta property="og:description" content="用户目标不会天然变成可执行工作。本文说明应用如何让 LLM 在 Schema 约束下生成候选 Spec 与 Plan，再由 Runtime 校验、澄清和保存，使任务在执行 Loop 开始前进入 ready。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-08-04T03:12:03.000Z">
+<meta property="article:modified_time" content="2026-09-06T06:58:35.860Z">
+<meta property="article:author" content="D&amp;J">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent Loop">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://dejinlu.cn/posts/2026/08/04/88e2b727/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://dejinlu.cn/posts/2026/08/04/88e2b727/","path":"posts/2026/08/04/88e2b727/","title":"Task 不是 Request：从用户目标到可验收任务"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Task 不是 Request：从用户目标到可验收任务 | D&JのZONE</title>
+  
+
+  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
+  <script async src="https://hm.baidu.com/hm.js?456d489b36d14e73cf4e36ecf2114b5d"></script>
+
+
+
+
+
+
+<link rel="dns-prefetch" href="https://blog-waline-git-main-breakzeros-projects.vercel.app">
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+
+<style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">D&JのZONE</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">知之者不如好之者，好之者不如乐之者</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+      <div class="search-header">
+        <span class="search-icon">
+          <i class="fa fa-search"></i>
+        </span>
+        <div class="search-input-container">
+          <input autocomplete="off" autocapitalize="off" maxlength="80"
+                placeholder="搜索..." spellcheck="false"
+                type="search" class="search-input">
+        </div>
+        <span class="popup-btn-close" role="button">
+          <i class="fa fa-times-circle"></i>
+        </span>
+      </div>
+      <div class="search-result-container">
+        <div class="search-result-icon">
+          <i class="fa fa-spinner fa-pulse fa-5x"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8E%E7%94%A8%E6%88%B7%E7%9B%AE%E6%A0%87%E5%88%B0-Spec-%E4%B8%8E-Plan%EF%BC%9A%E4%BB%BB%E5%8A%A1%E4%BD%95%E6%97%B6%E5%8F%AF%E4%BB%A5%E8%BF%9B%E5%85%A5-ready"><span class="nav-number">1.</span> <span class="nav-text">从用户目标到 Spec 与 Plan：任务何时可以进入 ready</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#C03-%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88"><span class="nav-number">1.1.</span> <span class="nav-text">C03 要解决什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E6%AC%A1%E8%B0%83%E7%94%A8%EF%BC%9A%E7%94%9F%E6%88%90%E5%80%99%E9%80%89%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E5%BC%80%E5%A7%8B%E8%B0%83%E7%A0%94"><span class="nav-number">1.2.</span> <span class="nav-text">第一次调用：生成候选，而不是开始调研</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Runtime%EF%BC%9A%E5%86%B3%E5%AE%9A%E6%BE%84%E6%B8%85%E8%BF%98%E6%98%AF-ready"><span class="nav-number">1.3.</span> <span class="nav-text">Runtime：决定澄清还是 ready</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AC%AC%E4%BA%8C%E6%AC%A1%E8%B0%83%E7%94%A8%EF%BC%9A%E4%BF%AE%E8%AE%A2%E5%80%99%E9%80%89-Spec-Plan"><span class="nav-number">1.4.</span> <span class="nav-text">第二次调用：修订候选 Spec Plan</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#C03-%E7%9A%84%E7%9C%9F%E5%AE%9E-Trace"><span class="nav-number">1.5.</span> <span class="nav-text">C03 的真实 Trace</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Plan-%E4%B8%8D%E6%98%AF%E6%89%A7%E8%A1%8C-Loop"><span class="nav-number">1.6.</span> <span class="nav-text">Plan 不是执行 Loop</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-number">1.7.</span> <span class="nav-text">小结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A1%88%E4%BE%8B%E5%AE%9E%E8%B7%B5%E6%B8%85%E5%8D%95"><span class="nav-number">1.8.</span> <span class="nav-text">案例实践清单</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">1.9.</span> <span class="nav-text">参考资料</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="D&J"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">D&J</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">13</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+          <a href="/categories/">
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+          <a href="/tags/">
+        <span class="site-state-item-count">13</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/BreakZero" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;BreakZero" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:dejin.po@gmail.com" title="E-Mail → mailto:dejin.po@gmail.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://twitter.com/MrL51907231" title="Twitter → https:&#x2F;&#x2F;twitter.com&#x2F;MrL51907231" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i></a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://dejinlu.cn/posts/2026/08/04/88e2b727/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="D&J">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="D&JのZONE">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Task 不是 Request：从用户目标到可验收任务 | D&JのZONE">
+      <meta itemprop="description" content="用户目标不会天然变成可执行工作。本文说明应用如何让 LLM 在 Schema 约束下生成候选 Spec 与 Plan，再由 Runtime 校验、澄清和保存，使任务在执行 Loop 开始前进入 ready。">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Task 不是 Request：从用户目标到可验收任务
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2026-08-04 11:12:03" itemprop="dateCreated datePublished" datetime="2026-08-04T11:12:03+08:00">2026-08-04</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
+        </span>
+    </span>
+
+  
+  
+  <span class="post-meta-item">
+    
+    <span class="post-meta-item-icon">
+      <i class="far fa-comment"></i>
+    </span>
+    <span class="post-meta-item-text">Waline：</span>
+  
+    <a title="waline" href="/posts/2026/08/04/88e2b727/#waline" itemprop="discussionUrl">
+      <span class="post-comments-count waline-comment-count" data-path="/posts/2026/08/04/88e2b727/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+</div>
+
+            <div class="post-description">用户目标不会天然变成可执行工作。本文说明应用如何让 LLM 在 Schema 约束下生成候选 Spec 与 Plan，再由 Runtime 校验、澄清和保存，使任务在执行 Loop 开始前进入 ready。</div>
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="从用户目标到-Spec-与-Plan：任务何时可以进入-ready"><a href="#从用户目标到-Spec-与-Plan：任务何时可以进入-ready" class="headerlink" title="从用户目标到 Spec 与 Plan：任务何时可以进入 ready"></a>从用户目标到 Spec 与 Plan：任务何时可以进入 ready</h1><p>前两篇讨论了一次 LLM call：应用发送 API Request，模型基于 Context 生成 Response。第三篇往前走一步：用户给出的是一句目标，应用怎样判断它已经可以开始执行？</p>
+<p>继续使用统一案例：</p>
+<blockquote>
+<p>调研三个主流 Agent Runtime，并给出选型建议。</p>
+</blockquote>
+<p>直接把这句话交给模型，模型能写出一篇像样的回答。但系统仍不知道“主流”指谁、资料截至哪天、哪些来源可用、报告交给谁，以及什么条件满足后才算完成。一个 <code>completed</code> 的 Response 解决不了这些问题。</p>
+<p>本文只讲 C03 的准备过程。它不搜索资料、不调用工具，也不生成调研报告。它的产物是一份经过校验的 Spec 与 Plan，状态为 <code>ready</code>。</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">用户目标
+  → LLM 生成候选 Spec 与 Plan
+  → Runtime 校验
+  → 缺信息则澄清
+  → 保存 Spec 与 Plan，进入 ready<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>这里的“用户目标”是用户在产品里提出的请求；“API Request”则是应用发给模型服务的一次调用。名字接近，层级不同。</p>
+<h2 id="C03-要解决什么"><a href="#C03-要解决什么" class="headerlink" title="C03 要解决什么"></a>C03 要解决什么</h2><p>先把四个对象分开：</p>
+<table>
+<thead>
+<tr>
+<th>对象</th>
+<th>回答的问题</th>
+<th>C03 中的例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>用户目标</td>
+<td>用户想得到什么？</td>
+<td>做出 Agent Runtime 选型</td>
+</tr>
+<tr>
+<td>Spec</td>
+<td>系统承诺交付什么，怎样算完成？</td>
+<td>研究对象、来源规则、验收条件</td>
+</tr>
+<tr>
+<td>Plan</td>
+<td>准备按什么顺序完成？</td>
+<td>取证、整理、比较、检查</td>
+</tr>
+<tr>
+<td>API Request</td>
+<td>这一次让模型计算什么？</td>
+<td>提取候选 Spec Plan 或修订它</td>
+</tr>
+</tbody></table>
+<p>Spec 固定交付边界，Plan 描述当前路径。两者都由模型提出候选，但不能由模型单独定稿。</p>
+<p>本文借鉴了 <a target="_blank" rel="noopener" href="https://github.com/github/spec-kit">GitHub Spec Kit</a> 的规格驱动思路：先从模糊描述形成 Spec，再生成 Plan，最后才能派生可执行任务。Spec Kit 的具体命令、模板和 Git 工作流主要服务于软件功能开发；C03 只借用这组分层关系，用它解释 Agent 如何把用户目标收敛为可执行定义。它是一个有用的实现方式，不是唯一方式。</p>
+<h2 id="第一次调用：生成候选，而不是开始调研"><a href="#第一次调用：生成候选，而不是开始调研" class="headerlink" title="第一次调用：生成候选，而不是开始调研"></a>第一次调用：生成候选，而不是开始调研</h2><p>应用向模型提交原始目标、开发者指令和输出 Schema。指令要限制模型的行为：只提取用户已经说清的信息；未知字段保留为空，并列入 <code>missing</code>。模型不能擅自决定研究对象或验收标准。</p>
+<p>在 C03 中，Schema 约束的候选大致长这样：</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
+  <span class="token property">"goal"</span><span class="token operator">:</span> <span class="token string">"调研三个主流 Agent Runtime，并给出选型建议。"</span><span class="token punctuation">,</span>
+  <span class="token property">"targets"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">"dimensions"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">"as_of"</span><span class="token operator">:</span> <span class="token null keyword">null</span><span class="token punctuation">,</span>
+  <span class="token property">"source_requirements"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">"deliverable_format"</span><span class="token operator">:</span> <span class="token null keyword">null</span><span class="token punctuation">,</span>
+  <span class="token property">"audience"</span><span class="token operator">:</span> <span class="token null keyword">null</span><span class="token punctuation">,</span>
+  <span class="token property">"acceptance_criteria"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">"plan_steps"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+  <span class="token property">"missing"</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">"targets"</span><span class="token punctuation">,</span>
+    <span class="token string">"dimensions"</span><span class="token punctuation">,</span>
+    <span class="token string">"as_of"</span><span class="token punctuation">,</span>
+    <span class="token string">"source_requirements"</span><span class="token punctuation">,</span>
+    <span class="token string">"deliverable_format"</span><span class="token punctuation">,</span>
+    <span class="token string">"audience"</span><span class="token punctuation">,</span>
+    <span class="token string">"acceptance_criteria"</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>Schema 只保证结果可以被程序读取。它不会让“主流”自动变成三个确定的产品，也不会让“选型建议”自动具备验收标准。候选还不是任务契约。</p>
+<h2 id="Runtime：决定澄清还是-ready"><a href="#Runtime：决定澄清还是-ready" class="headerlink" title="Runtime：决定澄清还是 ready"></a>Runtime：决定澄清还是 ready</h2><p>模型返回候选后，Runtime 要做三类校验：</p>
+<table>
+<thead>
+<tr>
+<th>校验</th>
+<th>检查内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>validate_spec</code></td>
+<td>目标、范围、来源、交付物和验收条件是否齐全且可检查</td>
+</tr>
+<tr>
+<td><code>validate_plan</code></td>
+<td>每条验收条件是否有 Plan Step 负责</td>
+</tr>
+<tr>
+<td><code>validate_dependencies</code></td>
+<td>Step 的依赖是否存在，且没有循环</td>
+</tr>
+</tbody></table>
+<p>JSON Schema 擅长检查结构，例如 <code>targets</code> 是否是数组、日期是否符合格式。它不理解“报告要专业”无法验收，也无法判断 Plan 是否漏掉了“人工审批”这一维度。这些是 Runtime 的业务规则。</p>
+<p>第一轮缺信息时，Runtime 把错误变成澄清问题，例如：</p>
+<blockquote>
+<p>请确认三个研究对象、比较维度、资料截止日期和来源规则。报告给谁使用？哪些条件满足后可以交付？</p>
+</blockquote>
+<p>低风险的默认值可以记录下来；会改变范围、成本、写入权限或验收标准的内容，应由用户确认。</p>
+<h2 id="第二次调用：修订候选-Spec-Plan"><a href="#第二次调用：修订候选-Spec-Plan" class="headerlink" title="第二次调用：修订候选 Spec Plan"></a>第二次调用：修订候选 Spec Plan</h2><p>用户补充信息后，应用再次调用 LLM。这次 Context 包含原始目标、第一版候选和用户回答。模型据此修订字段和 <code>plan_steps</code>，例如：</p>
+<pre class="line-numbers language-yaml" data-language="yaml"><code class="language-yaml"><span class="token key atrule">goal</span><span class="token punctuation">:</span> 为内部研究系统选择 Agent Runtime
+<span class="token key atrule">targets</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>OpenAI Agents SDK<span class="token punctuation">,</span> LangGraph<span class="token punctuation">,</span> Google ADK<span class="token punctuation">]</span>
+<span class="token key atrule">dimensions</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>状态管理<span class="token punctuation">,</span> 持久化<span class="token punctuation">,</span> 人工审批<span class="token punctuation">,</span> 可观测性<span class="token punctuation">]</span>
+<span class="token key atrule">as_of</span><span class="token punctuation">:</span> <span class="token datetime number">2026-08-21</span>
+<span class="token key atrule">source_requirements</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> 功能事实优先使用官方文档，并保存链接和访问日期
+<span class="token key atrule">deliverable_format</span><span class="token punctuation">:</span> markdown
+<span class="token key atrule">audience</span><span class="token punctuation">:</span> 技术负责人和平台工程师
+<span class="token key atrule">acceptance_criteria</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> 三个对象均覆盖四个比较维度
+  <span class="token punctuation">-</span> 关键事实均可追溯到来源
+  <span class="token punctuation">-</span> 推荐结论写明适用前提、取舍和不确定项
+<span class="token key atrule">plan_steps</span><span class="token punctuation">:</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">id</span><span class="token punctuation">:</span> P1
+    <span class="token key atrule">goal</span><span class="token punctuation">:</span> 收集三个对象的官方资料
+    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span>
+    <span class="token key atrule">expected_output</span><span class="token punctuation">:</span> 三份证据包
+    <span class="token key atrule">covers</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>三个对象均覆盖四个比较维度<span class="token punctuation">]</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">id</span><span class="token punctuation">:</span> P2
+    <span class="token key atrule">goal</span><span class="token punctuation">:</span> 提取四个维度的事实并保存来源
+    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>P1<span class="token punctuation">]</span>
+    <span class="token key atrule">expected_output</span><span class="token punctuation">:</span> 可追溯的比较材料
+    <span class="token key atrule">covers</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>关键事实均可追溯到来源<span class="token punctuation">]</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">id</span><span class="token punctuation">:</span> P3
+    <span class="token key atrule">goal</span><span class="token punctuation">:</span> 生成比较矩阵和推荐草稿
+    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>P2<span class="token punctuation">]</span>
+    <span class="token key atrule">expected_output</span><span class="token punctuation">:</span> 报告草稿
+    <span class="token key atrule">covers</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>推荐结论写明适用前提、取舍和不确定项<span class="token punctuation">]</span>
+  <span class="token punctuation">-</span> <span class="token key atrule">id</span><span class="token punctuation">:</span> P4
+    <span class="token key atrule">goal</span><span class="token punctuation">:</span> 检查覆盖度、引用与推荐前提
+    <span class="token key atrule">depends_on</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>P3<span class="token punctuation">]</span>
+    <span class="token key atrule">expected_output</span><span class="token punctuation">:</span> 验收记录
+    <span class="token key atrule">covers</span><span class="token punctuation">:</span> <span class="token punctuation">[</span>三个对象均覆盖四个比较维度<span class="token punctuation">,</span> 关键事实均可追溯到来源<span class="token punctuation">,</span> 推荐结论写明适用前提、取舍和不确定项<span class="token punctuation">]</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+
+<p>Runtime 再次执行同一组校验。通过后，才保存权威的 <code>ResearchTaskSpec</code> 和 <code>ResearchPlan</code>。这时的 <code>ready</code> 表示任务定义已就绪，不表示 P1 已执行，更不表示调研已经完成。</p>
+<h2 id="C03-的真实-Trace"><a href="#C03-的真实-Trace" class="headerlink" title="C03 的真实 Trace"></a>C03 的真实 Trace</h2><p>C03 的完整 Python 示例代码见：<a target="_blank" rel="noopener" href="https://github.com/BreakZero/AgentLoopDemo">c03-task-contract 示例仓库</a>。</p>
+<p>下面是一次真实运行结果。三条事件已经足够还原状态变化：第一次提取发现缺口；用户补充后修订通过；最后由 Runtime 确认。</p>
+<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span><span class="token property">"case"</span><span class="token operator">:</span> <span class="token string">"C03"</span><span class="token punctuation">,</span> <span class="token property">"event"</span><span class="token operator">:</span> <span class="token string">"contract.extracted"</span><span class="token punctuation">,</span> <span class="token property">"at"</span><span class="token operator">:</span> <span class="token string">"2026-08-21T16:00:09.858880+00:00"</span><span class="token punctuation">,</span> <span class="token property">"revision"</span><span class="token operator">:</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token property">"response_id"</span><span class="token operator">:</span> <span class="token string">"resp_0aae848e9a0061f9016a8876064bbc87d0808c398b499f444f"</span><span class="token punctuation">,</span> <span class="token property">"status"</span><span class="token operator">:</span> <span class="token string">"needs_clarification"</span><span class="token punctuation">,</span> <span class="token property">"errors"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token string">"请确认三个具体研究对象。"</span><span class="token punctuation">,</span> <span class="token string">"请确认比较维度。"</span><span class="token punctuation">,</span> <span class="token string">"请确认资料截止日期。"</span><span class="token punctuation">,</span> <span class="token string">"请确认允许采用哪些证据来源。"</span><span class="token punctuation">,</span> <span class="token string">"请确认交付格式与目标读者。"</span><span class="token punctuation">,</span> <span class="token string">"请给出可检查的完成条件。"</span><span class="token punctuation">,</span> <span class="token string">"请给出满足验收条件的执行步骤。"</span><span class="token punctuation">]</span><span class="token punctuation">}</span>
+<span class="token punctuation">{</span><span class="token property">"case"</span><span class="token operator">:</span> <span class="token string">"C03"</span><span class="token punctuation">,</span> <span class="token property">"event"</span><span class="token operator">:</span> <span class="token string">"contract.revised"</span><span class="token punctuation">,</span> <span class="token property">"at"</span><span class="token operator">:</span> <span class="token string">"2026-08-21T16:00:25.093238+00:00"</span><span class="token punctuation">,</span> <span class="token property">"revision"</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token property">"response_id"</span><span class="token operator">:</span> <span class="token string">"resp_055bcb12af112e20016a88760a7dc887d0a050b66c4c59aae8"</span><span class="token punctuation">,</span> <span class="token property">"status"</span><span class="token operator">:</span> <span class="token string">"ready"</span><span class="token punctuation">,</span> <span class="token property">"errors"</span><span class="token operator">:</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">}</span>
+<span class="token punctuation">{</span><span class="token property">"case"</span><span class="token operator">:</span> <span class="token string">"C03"</span><span class="token punctuation">,</span> <span class="token property">"event"</span><span class="token operator">:</span> <span class="token string">"contract.confirmed"</span><span class="token punctuation">,</span> <span class="token property">"at"</span><span class="token operator">:</span> <span class="token string">"2026-08-21T16:00:25.095987+00:00"</span><span class="token punctuation">,</span> <span class="token property">"revision"</span><span class="token operator">:</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token property">"status"</span><span class="token operator">:</span> <span class="token string">"ready"</span><span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+
+<p>第二条记录出现 <code>ready</code>，因为候选已经通过 Runtime 校验；第三条记录才将 revision 2 保存为权威版本。模型负责提取和修订，Runtime 负责状态更新。</p>
+<h2 id="Plan-不是执行-Loop"><a href="#Plan-不是执行-Loop" class="headerlink" title="Plan 不是执行 Loop"></a>Plan 不是执行 Loop</h2><p>Plan 已经把大目标拆成了步骤，但它仍是一条待执行的路径。后续系统会把 P1～P4 拆成可调度的工作，再通过 Request、Tool Call 和 Observation 推进它们。</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">C03：Spec 与 Plan 已确认，状态 ready
+下一阶段：执行 P1，读取结果，更新状态，再决定下一步<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>第三篇的过程可以浓缩为一句话：LLM 把用户目标整理成候选 Spec Plan，Runtime 用规则和用户确认把候选收敛为可执行定义。</p>
+<pre class="line-numbers language-text" data-language="text"><code class="language-text">用户目标 → 候选 Spec Plan → 校验与澄清 → 权威 Spec Plan（ready）<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+
+<p>下一篇进入执行层：模型返回 Tool Call 时，真正执行工具的又是谁？</p>
+<hr>
+<h2 id="案例实践清单"><a href="#案例实践清单" class="headerlink" title="案例实践清单"></a>案例实践清单</h2><ul>
+<li><input disabled="" type="checkbox"> 保存原始用户目标。</li>
+<li><input disabled="" type="checkbox"> 用 Schema 约束 LLM 生成候选 Spec 与 <code>plan_steps</code>。</li>
+<li><input disabled="" type="checkbox"> 将校验错误转成澄清问题，并记录用户补充。</li>
+<li><input disabled="" type="checkbox"> 校验 Plan 对验收条件的覆盖和 Step 依赖。</li>
+<li><input disabled="" type="checkbox"> 保存候选、权威 Spec Plan、Response ID 与 Trace。</li>
+<li><input disabled="" type="checkbox"> 确认 <code>ready</code> 时，尚未搜索资料或调用工具。</li>
+</ul>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/github/spec-kit/blob/main/spec-driven.md">GitHub Spec Kit：Specification-Driven Development</a>：规格、计划与任务拆分的关系。</li>
+<li><a target="_blank" rel="noopener" href="https://openai.com/business/guides-and-resources/a-practical-guide-to-building-ai-agents/">OpenAI：A practical guide to building agents</a>：以用户目标组织 Workflow 的方法。</li>
+<li><a target="_blank" rel="noopener" href="https://json-schema.org/understanding-json-schema/reference/object#required-properties">JSON Schema：Required Properties</a>：对象属性与必填字段的校验规则。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/AI/" rel="tag"># AI</a>
+              <a href="/tags/Agent-Loop/" rel="tag"># Agent Loop</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/posts/2026/08/04/3658fafc/" rel="prev" title="一次 LLM Call 如何被应用管理：从 Request 契约到可观测 Response">
+                  <i class="fa fa-angle-left"></i> 一次 LLM Call 如何被应用管理：从 Request 契约到可观测 Response
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/posts/2026/08/06/40258d8f/" rel="next" title="Tool Call 不是工具执行：Agent 怎样安全地获得外部观察">
+                  Tool Call 不是工具执行：Agent 怎样安全地获得外部观察 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="waline"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 2021 – 
+    <span itemprop="copyrightYear">2026</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">D&J</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/sidebar.js"></script><script src="/js/next-boot.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.4.0/mermaid.min.js","integrity":"sha256-G8ouPAnw4zzMbnAenHnVz6h9XpKbNdOkrqTh7AadyHs="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.5.0/wavedrom.min.js","integrity":"sha256-INLAoJc6quTNfiMWkGZniYO2cxE8mHpddnLow1m6RFs="}}</script>
+  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.5.0/skins/default.js","integrity":"sha256-fduc/Zszk5ezWws2uInY/ALWVmIrmV6VTgXbsYSReFI="}}</script>
+  <script src="/js/third-party/tags/wavedrom.js"></script>
+
+
+  <script src="/js/third-party/pace.js"></script>
+
+
+  
+
+
+
+
+<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-CN","enable":true,"serverURL":"https://blog-waline-git-main-breakzeros-projects.vercel.app","cssUrl":"https://unpkg.com/@waline/client@v2/dist/waline.css","commentCount":false,"pageview":false,"dark":"auto","imageUploader":false,"copyright":false,"search":false,"meta":["nick","mail"],"requiredMeta":["nick"],"el":"#waline","comment":true,"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","path":"/posts/2026/08/04/88e2b727/"}</script>
+<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css">
+<script>
+document.addEventListener('page:loaded', () => {
+  NexT.utils.loadComments(CONFIG.waline.el).then(() =>
+    NexT.utils.getScript(CONFIG.waline.libUrl, { condition: window.Waline })
+  ).then(() => 
+    Waline.init(Object.assign({}, CONFIG.waline,{ el: document.querySelector(CONFIG.waline.el) }))
+  );
+});
+</script>
+
+<script async>window.onload=function(){var a=document.createElement('script'),b=document.getElementsByTagName('script')[0];a.type='text/javascript',a.async=!0,a.src='/sw-register.js?v='+Date.now(),b.parentNode.insertBefore(a,b)};</script></body></html>
