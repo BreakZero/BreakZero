@@ -14,7 +14,7 @@
 <meta property="og:description" content="「单台 VPS 部署 API」系列上篇：在 macOS 和 OrbStack 中搭建本地环境，构建 Docker 镜像并推送到 Docker Hub。VPS 只保存部署配置和环境变量，不放源码。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-07-18T04:05:03.000Z">
-<meta property="article:modified_time" content="2026-09-24T13:21:14.933Z">
+<meta property="article:modified_time" content="2026-09-25T06:34:07.388Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="Docker">
 <meta property="article:tag" content="DevOps">
@@ -126,7 +126,7 @@
     
     
       <div id="toc">
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E7%8E%AF%E5%A2%83%E8%AF%B4%E6%98%8E"><span class="toc-number">1.</span> <span class="toc-text">一、环境说明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%9C%AC%E5%9C%B0-PostgreSQL"><span class="toc-number">2.</span> <span class="toc-text">二、本地 PostgreSQL</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%9E%84%E5%BB%BA%E7%94%9F%E4%BA%A7-Docker-%E9%95%9C%E5%83%8F"><span class="toc-number">3.</span> <span class="toc-text">三、构建生产 Docker 镜像</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81Docker-Hub-%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9"><span class="toc-number">4.</span> <span class="toc-text">四、Docker Hub 如何选择</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%8E%A8%E9%80%81%E9%95%9C%E5%83%8F"><span class="toc-number">5.</span> <span class="toc-text">五、推送镜像</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E9%83%A8%E7%BD%B2%E6%96%B9%E5%BC%8F%E4%B8%8E%E5%87%86%E5%A4%87%E6%9D%A1%E4%BB%B6"><span class="toc-number">1.</span> <span class="toc-text">一、部署方式与准备条件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%87%86%E5%A4%87%E6%9C%AC%E5%9C%B0%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="toc-number">2.</span> <span class="toc-text">二、准备本地数据库</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%9E%84%E5%BB%BA%E5%B9%B6%E9%AA%8C%E8%AF%81%E7%94%9F%E4%BA%A7%E9%95%9C%E5%83%8F"><span class="toc-number">3.</span> <span class="toc-text">三、构建并验证生产镜像</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E9%80%89%E6%8B%A9%E9%95%9C%E5%83%8F%E4%BB%93%E5%BA%93"><span class="toc-number">4.</span> <span class="toc-text">四、选择镜像仓库</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E5%8F%91%E5%B8%83%E9%95%9C%E5%83%8F"><span class="toc-number">5.</span> <span class="toc-text">五、发布镜像</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a></li></ol>
       </div>
     
   </span>
@@ -176,12 +176,12 @@
   
 
   <div class="content e-content" itemprop="articleBody">
-    <p>这套部署方式很直接：在 <strong>Mac + OrbStack</strong> 上开发和构建镜像，把带版本号的镜像推送到 <strong>Docker Hub</strong>，最后由 Ubuntu VPS 通过 Docker Compose 运行。VPS 上只放部署文件、环境变量、Nginx 配置和数据卷，不需要上传 Git 仓库或 <code>src</code> 目录。</p>
+    <p>这篇先准备本地开发环境，再把带版本号的 API 镜像推送到 Docker Hub。开发和构建都在 Mac 与 OrbStack 上完成，Ubuntu VPS 负责通过 Docker Compose 运行镜像。VPS 只保存部署文件、环境变量、Nginx 配置和数据卷，不需要上传 Git 仓库或 <code>src</code> 目录。</p>
 <blockquote>
 <p><strong>注意</strong>：多阶段构建不能绝对保护源码。最终镜像里可以不包含 TypeScript 文件，但编译后的 JavaScript 仍能被分析。密码、令牌和私钥不要写进镜像。</p>
 </blockquote>
 <hr>
-<h2 id="一、环境说明"><a href="#一、环境说明" class="headerlink" title="一、环境说明"></a>一、环境说明</h2><p>本地需要安装 <strong>OrbStack、Node.js LTS、npm 和 Git</strong>，并准备一个 <strong>Docker Hub 账号</strong>。下文在 macOS 上操作，PostgreSQL 跑在 OrbStack 容器里。</p>
+<h2 id="一、部署方式与准备条件"><a href="#一、部署方式与准备条件" class="headerlink" title="一、部署方式与准备条件"></a>一、部署方式与准备条件</h2><p>本地需要安装 OrbStack、Node.js LTS、npm 和 Git，并准备一个 Docker Hub 账号。下文在 macOS 上操作，PostgreSQL 跑在 OrbStack 容器里。</p>
 <p>VPS 可以从下面的配置起步：</p>
 <ul>
 <li><strong>系统</strong>：Ubuntu 24.04 LTS（或仍受支持的 LTS）</li>
@@ -189,11 +189,9 @@
 <li><strong>网络</strong>：公网 IPv4，开放 TCP 80/443</li>
 <li><strong>安全</strong>：SSH 仅对可信 IP 开放</li>
 </ul>
-<blockquote>
-<p>1 GB 内存也能用来试验，不过 API、PostgreSQL 和 Docker 跑在一起时，余量会很小。</p>
-</blockquote>
-<hr>
-<h2 id="二、本地-PostgreSQL"><a href="#二、本地-PostgreSQL" class="headerlink" title="二、本地 PostgreSQL"></a>二、本地 PostgreSQL</h2><p>创建 <code>compose.dev.yml</code>：</p>
+<p>1 GB 内存也能用于试验，不过 API、PostgreSQL 和 Docker 跑在一起时，余量会很小。</p>
+<h2 id="二、准备本地数据库"><a href="#二、准备本地数据库" class="headerlink" title="二、准备本地数据库"></a>二、准备本地数据库</h2><p>本地 API 需要一个 PostgreSQL 实例。这里用 OrbStack 容器运行数据库，并把端口限制在本机。</p>
+<p>创建 <code>compose.dev.yml</code>：</p>
 <figure class="highlight yaml"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">services:</span></span><br><span class="line">  <span class="attr">postgres:</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">postgres:16</span></span><br><span class="line">    <span class="attr">environment:</span></span><br><span class="line">      <span class="attr">POSTGRES_USER:</span> <span class="string">app_user</span></span><br><span class="line">      <span class="attr">POSTGRES_PASSWORD:</span> <span class="string">change-this-local-password</span></span><br><span class="line">      <span class="attr">POSTGRES_DB:</span> <span class="string">app_db</span></span><br><span class="line">    <span class="attr">ports:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">"127.0.0.1:5432:5432"</span></span><br><span class="line">    <span class="attr">volumes:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">postgres_dev_data:/var/lib/postgresql/data</span></span><br><span class="line"><span class="attr">volumes:</span></span><br><span class="line">  <span class="attr">postgres_dev_data:</span></span><br></pre></td></tr></tbody></table></figure>
 
 <p>启动并验证：</p>
@@ -204,20 +202,17 @@
 
 <p>端口绑定到 <code>127.0.0.1</code> 后，数据库只接受来自本机的连接。</p>
 <hr>
-<h2 id="三、构建生产-Docker-镜像"><a href="#三、构建生产-Docker-镜像" class="headerlink" title="三、构建生产 Docker 镜像"></a>三、构建生产 Docker 镜像</h2><p>假设 <code>npm run build</code> 输出 <code>dist</code>，入口为 <code>dist/server.js</code>：</p>
+<h2 id="三、构建并验证生产镜像"><a href="#三、构建并验证生产镜像" class="headerlink" title="三、构建并验证生产镜像"></a>三、构建并验证生产镜像</h2><p>下面的 Dockerfile 假设 <code>npm run build</code> 会输出 <code>dist</code>，应用入口是 <code>dist/server.js</code>：</p>
 <figure class="highlight dockerfile"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> node:<span class="number">22</span>-alpine AS build</span><br><span class="line"><span class="keyword">WORKDIR</span><span class="language-bash"> /app</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> package*.json ./</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> npm ci</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> tsconfig*.json ./</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> src ./src</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> npm run build</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">FROM</span> node:<span class="number">22</span>-alpine AS production</span><br><span class="line"><span class="keyword">WORKDIR</span><span class="language-bash"> /app</span></span><br><span class="line"><span class="keyword">ENV</span> NODE_ENV=production</span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> package*.json ./</span></span><br><span class="line"><span class="keyword">RUN</span><span class="language-bash"> npm ci --omit=dev &amp;&amp; npm cache clean --force</span></span><br><span class="line"><span class="keyword">COPY</span><span class="language-bash"> --from=build /app/dist ./dist</span></span><br><span class="line"><span class="keyword">USER</span> node</span><br><span class="line"><span class="keyword">EXPOSE</span> <span class="number">3000</span></span><br><span class="line"><span class="keyword">CMD</span><span class="language-bash"> [<span class="string">"node"</span>, <span class="string">"dist/server.js"</span>]</span></span><br></pre></td></tr></tbody></table></figure>
 
-<p>创建 <code>.dockerignore</code>：</p>
+<p>用 <code>.dockerignore</code> 排除依赖目录、环境变量文件等构建上下文内容：</p>
 <figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">node_modules</span><br><span class="line">dist</span><br><span class="line">.git</span><br><span class="line">.env</span><br><span class="line">.env.*</span><br><span class="line">npm-debug.log*</span><br><span class="line">compose*.yml</span><br></pre></td></tr></tbody></table></figure>
 
-<p>本地验证构建与运行：</p>
+<p>先在本地构建镜像并启动容器，确认服务可以运行：</p>
 <figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker build -t YOUR_DOCKERHUB_USER/backend-api:1.0.0 .</span><br><span class="line">docker run --<span class="built_in">rm</span> -p 3000:3000 YOUR_DOCKERHUB_USER/backend-api:1.0.0</span><br></pre></td></tr></tbody></table></figure>
 
-<blockquote>
 <p>如果项目使用 Prisma 或原生模块，构建镜像时可能还要补充生成或编译步骤，具体取决于项目依赖。</p>
-</blockquote>
-<hr>
-<h2 id="四、Docker-Hub-如何选择"><a href="#四、Docker-Hub-如何选择" class="headerlink" title="四、Docker Hub 如何选择"></a>四、Docker Hub 如何选择</h2><p>Docker Hub 的镜像地址格式是 <code>docker.io/&lt;用户名&gt;/&lt;镜像名&gt;:&lt;标签&gt;</code>，例如 <code>docker.io/alice/backend-api:1.0.0</code>。它的使用门槛不高，也很常见。业务 API 一般放在私有仓库中。</p>
+<h2 id="四、选择镜像仓库"><a href="#四、选择镜像仓库" class="headerlink" title="四、选择镜像仓库"></a>四、选择镜像仓库</h2><p>镜像仓库地址由仓库域名、用户名、镜像名和标签组成。Docker Hub 的地址格式是 <code>docker.io/&lt;用户名&gt;/&lt;镜像名&gt;:&lt;标签&gt;</code>，例如 <code>docker.io/alice/backend-api:1.0.0</code>。业务 API 一般放在私有仓库中。</p>
 <p>各容器仓库选型对比：</p>
 <table>
 <thead>
@@ -243,28 +238,17 @@
 <td>服务长期部署在同一家云厂商时可优先考虑</td>
 </tr>
 </tbody></table>
-<blockquote>
 <p>私有仓库和拉取额度会变化，以各平台官网当前政策为准。</p>
-</blockquote>
-<hr>
-<h2 id="五、推送镜像"><a href="#五、推送镜像" class="headerlink" title="五、推送镜像"></a>五、推送镜像</h2><p>先在 Docker Hub 创建名为 <code>backend-api</code> 的私有仓库，再用 <strong>Personal Access Token</strong> 登录：</p>
+<h2 id="五、发布镜像"><a href="#五、发布镜像" class="headerlink" title="五、发布镜像"></a>五、发布镜像</h2><p>选好仓库后，在 Docker Hub 创建名为 <code>backend-api</code> 的私有仓库，再用 Personal Access Token 登录并推送带版本号的镜像：</p>
 <figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">docker login</span><br><span class="line">docker build -t YOUR_DOCKERHUB_USER/backend-api:1.0.0 .</span><br><span class="line">docker push YOUR_DOCKERHUB_USER/backend-api:1.0.0</span><br></pre></td></tr></tbody></table></figure>
 
-<p>如果需要，也可以附加 <code>latest</code> 标签：</p>
+<p>需要时，也可以给同一个镜像附加 <code>latest</code> 标签：</p>
 <figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker tag YOUR_DOCKERHUB_USER/backend-api:1.0.0 YOUR_DOCKERHUB_USER/backend-api:latest</span><br><span class="line">docker push YOUR_DOCKERHUB_USER/backend-api:latest</span><br></pre></td></tr></tbody></table></figure>
 
-<p>发布前检查这几项：</p>
-<ul>
-<li>API 能连接本地 PostgreSQL，关键测试已经通过</li>
-<li>已提供 <code>GET /health</code> 健康检查端点</li>
-<li>镜像中没有密码、令牌等机密</li>
-<li>本次发布使用了新的版本标签</li>
-</ul>
-<blockquote>
+<p>推送前确认 API 已连接本地 PostgreSQL，关键测试已经通过，并提供了 <code>GET /health</code> 健康检查端点。还要确认镜像里没有密码或令牌，并为本次发布使用新的版本标签。</p>
 <p>生产 Compose 应固定使用 <code>1.0.0</code> 之类的明确版本，便于回滚。</p>
-</blockquote>
 <hr>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>到这里，本地环境和 PostgreSQL 已经可以运行，生产镜像也推送到了 Docker Hub。下一篇转到 Ubuntu VPS：拉取镜像、配置 Nginx，再申请并自动续期 HTTPS 证书。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>至此，本地环境和 PostgreSQL 已准备好，生产镜像也已推送到 Docker Hub。下一篇会在 Ubuntu VPS 上拉取这个镜像，配置 Nginx，并申请和自动续期 HTTPS 证书。</p>
 
   </div>
 </article>
@@ -290,7 +274,7 @@
     
     
       <div id="toc-footer" style="display: none">
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E7%8E%AF%E5%A2%83%E8%AF%B4%E6%98%8E"><span class="toc-number">1.</span> <span class="toc-text">一、环境说明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%9C%AC%E5%9C%B0-PostgreSQL"><span class="toc-number">2.</span> <span class="toc-text">二、本地 PostgreSQL</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%9E%84%E5%BB%BA%E7%94%9F%E4%BA%A7-Docker-%E9%95%9C%E5%83%8F"><span class="toc-number">3.</span> <span class="toc-text">三、构建生产 Docker 镜像</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81Docker-Hub-%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9"><span class="toc-number">4.</span> <span class="toc-text">四、Docker Hub 如何选择</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%8E%A8%E9%80%81%E9%95%9C%E5%83%8F"><span class="toc-number">5.</span> <span class="toc-text">五、推送镜像</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E9%83%A8%E7%BD%B2%E6%96%B9%E5%BC%8F%E4%B8%8E%E5%87%86%E5%A4%87%E6%9D%A1%E4%BB%B6"><span class="toc-number">1.</span> <span class="toc-text">一、部署方式与准备条件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%87%86%E5%A4%87%E6%9C%AC%E5%9C%B0%E6%95%B0%E6%8D%AE%E5%BA%93"><span class="toc-number">2.</span> <span class="toc-text">二、准备本地数据库</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%9E%84%E5%BB%BA%E5%B9%B6%E9%AA%8C%E8%AF%81%E7%94%9F%E4%BA%A7%E9%95%9C%E5%83%8F"><span class="toc-number">3.</span> <span class="toc-text">三、构建并验证生产镜像</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E9%80%89%E6%8B%A9%E9%95%9C%E5%83%8F%E4%BB%93%E5%BA%93"><span class="toc-number">4.</span> <span class="toc-text">四、选择镜像仓库</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E5%8F%91%E5%B8%83%E9%95%9C%E5%83%8F"><span class="toc-number">5.</span> <span class="toc-text">五、发布镜像</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a></li></ol>
       </div>
     
 

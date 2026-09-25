@@ -13,12 +13,14 @@
 <meta property="og:site_name" content="D&amp;JのZONE">
 <meta property="og:description" content="Tool Call 是模型提出的结构化请求，而非工具已经执行。本文说明 Runtime 如何以工具契约、校验、授权与 Tool Result，把 C03 已准备好的任务连接到外部世界。">
 <meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dejinlu.cn/images/agent_loop/tool_call.png">
 <meta property="article:published_time" content="2026-08-06T03:12:04.000Z">
-<meta property="article:modified_time" content="2026-09-25T00:37:16.595Z">
+<meta property="article:modified_time" content="2026-09-25T06:43:17.735Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="Agent Loop">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://dejinlu.cn/images/agent_loop/tool_call.png">
     
     
       
@@ -187,20 +189,7 @@
 <figure class="highlight json"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">{</span></span><br><span class="line">  <span class="attr">"type"</span><span class="punctuation">:</span> <span class="string">"tool_call"</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">"id"</span><span class="punctuation">:</span> <span class="string">"call_01"</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">"name"</span><span class="punctuation">:</span> <span class="string">"search_sources"</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">"arguments"</span><span class="punctuation">:</span> <span class="punctuation">{</span></span><br><span class="line">    <span class="attr">"query"</span><span class="punctuation">:</span> <span class="string">"OpenAI Agents SDK state management official documentation"</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">"source_type"</span><span class="punctuation">:</span> <span class="string">"official"</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">"limit"</span><span class="punctuation">:</span> <span class="number">3</span></span><br><span class="line">  <span class="punctuation">}</span></span><br><span class="line"><span class="punctuation">}</span></span><br></pre></td></tr></tbody></table></figure>
 
 <p>到这里，搜索尚未发生。这与前两篇的结论完全一致：它只是一次 Response 中的结构化内容。它表明模型建议下一步做什么，并不证明网络被访问过、资料已经找到，更不证明 T1 已完成。</p>
-<pre><code class="highlight mermaid">sequenceDiagram
-    participant R as Runtime
-    participant M as 模型服务
-    participant T as Tool
-
-    R-&gt;&gt;M: Task Context + Tool definitions
-    M--&gt;&gt;R: Tool Call(name, arguments, call_id)
-    R-&gt;&gt;R: 路由、校验、授权与限额检查
-    R-&gt;&gt;T: 执行真实函数
-    T--&gt;&gt;R: 原始结果或异常
-    R-&gt;&gt;R: 规范化并校验结果
-    R-&gt;&gt;M: Tool Result(call_id, status, data/error)
-    M--&gt;&gt;R: 基于新 Observation 的下一次 Response</code></pre>
-
+<p><img src="/images/agent_loop/tool_call.png" alt="Tool call"></p>
 <p><code>call_id</code> 是这条链路的关联键。一次 Response 可以含多个 Tool Call；Runtime 必须让每份 Tool Result 回到正确的调用，而不能只附上一段无来源的日志文本。</p>
 <h2 id="Tool-Contract：让模型能提议，让-Runtime-能拒绝"><a href="#Tool-Contract：让模型能提议，让-Runtime-能拒绝" class="headerlink" title="Tool Contract：让模型能提议，让 Runtime 能拒绝"></a>Tool Contract：让模型能提议，让 Runtime 能拒绝</h2><p>工具不是把一个函数名暴露给模型就够了。它需要一份同时服务模型和执行层的契约：</p>
 <table>
