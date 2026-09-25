@@ -1,27 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang=zh>
 <head>
-  <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width">
-<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/siteicon/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/siteic%20%20on/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/siteicon/favicon-16x16.png">
-  <link rel="mask-icon" href="/images/siteicon/safari-pinned-tab.svg" color="#222">
-
-<link rel="stylesheet" href="/css/main.css">
-
-
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-center-simple.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
-
-<script class="next-config" data-name="main" type="application/json">{"hostname":"dejinlu.cn","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.22.0","exturl":false,"sidebar":{"position":"right","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12,"width":300},"copycode":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js"></script>
-
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
     <meta name="description" content="一次 3 分钟完成开发、却在验证阶段耗尽 5 小时额度的经历，让我重新梳理 Codex 的 token 消耗：从上下文、推理到验证，怎样减少无效工作。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="从一次并行任务复盘 Codex 的 token 消耗">
@@ -30,399 +14,334 @@
 <meta property="og:description" content="一次 3 分钟完成开发、却在验证阶段耗尽 5 小时额度的经历，让我重新梳理 Codex 的 token 消耗：从上下文、推理到验证，怎样减少无效工作。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2026-09-06T06:01:14.000Z">
-<meta property="article:modified_time" content="2026-09-06T06:59:45.394Z">
+<meta property="article:modified_time" content="2026-09-25T00:35:49.211Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="AI">
 <meta name="twitter:card" content="summary">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/siteicon/favicon-16x16.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/siteicon/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>从一次并行任务复盘 Codex 的 token 消耗</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
 
 
-<link rel="canonical" href="https://dejinlu.cn/posts/2026/09/06/3a3e054e/">
+    <!-- Umami Analytics -->
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://dejinlu.cn/posts/2026/09/06/3a3e054e/","path":"posts/2026/09/06/3a3e054e/","title":"从一次并行任务复盘 Codex 的 token 消耗"}</script>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
 
-<script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>从一次并行任务复盘 Codex 的 token 消耗 | D&JのZONE</title>
-  
-
-  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
-  <script async src="https://hm.baidu.com/hm.js?456d489b36d14e73cf4e36ecf2114b5d"></script>
-
-
-
-
-
-
-<link rel="dns-prefetch" href="https://blog-waline-git-main-breakzeros-projects.vercel.app">
-  <noscript>
-    <link rel="stylesheet" href="/css/noscript.css">
-  </noscript>
-
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+		<script type="text/x-mathjax-config">
+		  MathJax.Hub.Config({
+			tex2jax: {
+			  skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+			  inlineMath: [['$','$']]
+			}
+		  });
+		</script>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async></script>
+	
+<meta name="generator" content="Hexo 7.3.0">
 <style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
-  <div class="headband"></div>
-
-  <main class="main">
-    <div class="column">
-      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
-  <div class="site-nav-toggle">
-    <div class="toggle" aria-label="切换导航栏" role="button">
-        <span class="toggle-line"></span>
-        <span class="toggle-line"></span>
-        <span class="toggle-line"></span>
-    </div>
-  </div>
-
-  <div class="site-meta">
-
-    <a href="/" class="brand" rel="start">
-      <i class="logo-line"></i>
-      <p class="site-title">D&JのZONE</p>
-      <i class="logo-line"></i>
-    </a>
-      <p class="site-subtitle" itemprop="description">知之者不如好之者，好之者不如乐之者</p>
-  </div>
-
-  <div class="site-nav-right">
-    <div class="toggle popup-trigger" aria-label="搜索" role="button">
-        <i class="fa fa-search fa-fw fa-lg"></i>
-    </div>
-  </div>
-</div>
-
-
-
-<nav class="site-nav">
-  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
-      <li class="menu-item menu-item-search">
-        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
-        </a>
-      </li>
-  </ul>
-</nav>
-
-
-
-  <div class="search-pop-overlay">
-    <div class="popup search-popup">
-      <div class="search-header">
-        <span class="search-icon">
-          <i class="fa fa-search"></i>
-        </span>
-        <div class="search-input-container">
-          <input autocomplete="off" autocapitalize="off" maxlength="80"
-                placeholder="搜索..." spellcheck="false"
-                type="search" class="search-input">
-        </div>
-        <span class="popup-btn-close" role="button">
-          <i class="fa fa-times-circle"></i>
-        </span>
-      </div>
-      <div class="search-result-container">
-        <div class="search-result-icon">
-          <i class="fa fa-spinner fa-pulse fa-5x"></i>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</header>
-        
-  
-  <aside class="sidebar">
-
-    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
-      <ul class="sidebar-nav">
-        <li class="sidebar-nav-toc">
-          文章目录
-        </li>
-        <li class="sidebar-nav-overview">
-          站点概览
-        </li>
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="顶部" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     -->
       </ul>
-
-      <div class="sidebar-panel-container">
-        <!--noindex-->
-        <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA-3-%E5%88%86%E9%92%9F%E5%AE%8C%E6%88%90%E5%BC%80%E5%8F%91%E3%80%81%E5%8D%B4%E8%80%97%E5%B0%BD-5-%E5%B0%8F%E6%97%B6%E9%A2%9D%E5%BA%A6%E7%9A%84%E4%BB%BB%E5%8A%A1%E6%84%8F%E5%A4%96"><span class="nav-number">1.</span> <span class="nav-text">一个 3 分钟完成开发、却耗尽 5 小时额度的任务意外</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%88%E8%BF%98%E5%8E%9F%E6%B6%88%E8%80%97%E8%B7%AF%E5%BE%84%EF%BC%9Atoken-%E8%8A%B1%E5%9C%A8%E4%BA%86%E4%BB%A3%E7%A0%81%E4%B9%8B%E5%A4%96"><span class="nav-number">1.1.</span> <span class="nav-text">先还原消耗路径：token 花在了代码之外</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E9%97%AE%E9%A2%98%EF%BC%9A%E6%8A%8A%E4%BF%A1%E6%81%AF%E5%92%8C%E9%A2%84%E7%AE%97%E6%94%BE%E5%88%B0%E8%AF%A5%E5%87%BA%E7%8E%B0%E7%9A%84%E5%9C%B0%E6%96%B9"><span class="nav-number">1.2.</span> <span class="nav-text">解决问题：把信息和预算放到该出现的地方</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%A9%E8%A7%84%E5%88%99%E6%8C%89%E4%BD%9C%E7%94%A8%E5%9F%9F%E5%87%BA%E7%8E%B0"><span class="nav-number">1.2.1.</span> <span class="nav-text">让规则按作用域出现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%A9%E5%B0%8F%E6%8E%A2%E7%B4%A2%E7%A9%BA%E9%97%B4%EF%BC%8C%E5%88%AB%E8%AE%A9-Agent-%E6%AF%8F%E6%AC%A1%E9%87%8D%E6%96%B0%E8%AE%A4%E8%AF%86%E9%A1%B9%E7%9B%AE"><span class="nav-number">1.2.2.</span> <span class="nav-text">缩小探索空间，别让 Agent 每次重新认识项目</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%99%E6%8E%A8%E7%90%86%E5%92%8C%E9%AA%8C%E8%AF%81%E5%8D%95%E7%8B%AC%E8%AE%BE%E9%A2%84%E7%AE%97"><span class="nav-number">1.2.3.</span> <span class="nav-text">给推理和验证单独设预算</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%94%A8-Spec-%E5%92%8C-Plan-%E6%8D%A2%E6%8E%89%E5%90%8E%E6%9C%9F%E8%BF%94%E5%B7%A5"><span class="nav-number">1.2.4.</span> <span class="nav-text">用 Spec 和 Plan 换掉后期返工</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E6%9D%A1%E8%B6%B3%E5%A4%9F%E5%85%88%E8%90%BD%E5%9C%B0%E7%9A%84%E5%8E%9F%E5%88%99"><span class="nav-number">1.3.</span> <span class="nav-text">三条足够先落地的原则</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93%EF%BC%9A%E4%BC%98%E5%8C%96%E7%9A%84%E5%AF%B9%E8%B1%A1%E6%98%AF-Agent-%E7%9A%84%E4%BF%A1%E6%81%AF%E6%B5%81"><span class="nav-number">1.4.</span> <span class="nav-text">总结：优化的对象是 Agent 的信息流</span></a></li></ol></li></ol></div>
-        </div>
-        <!--/noindex-->
-
-        <div class="site-overview-wrap sidebar-panel">
-          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="D&J"
-      src="/images/avatar.png">
-  <p class="site-author-name" itemprop="name">D&J</p>
-  <div class="site-description" itemprop="description"></div>
-</div>
-<div class="site-state-wrap animated">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-        <a href="/archives/">
-          <span class="site-state-item-count">13</span>
-          <span class="site-state-item-name">日志</span>
-        </a>
-      </div>
-      <div class="site-state-item site-state-categories">
-          <a href="/categories/">
-        <span class="site-state-item-count">5</span>
-        <span class="site-state-item-name">分类</span></a>
-      </div>
-      <div class="site-state-item site-state-tags">
-          <a href="/tags/">
-        <span class="site-state-item-count">13</span>
-        <span class="site-state-item-name">标签</span></a>
-      </div>
-  </nav>
-</div>
-  <div class="links-of-author animated">
-      <span class="links-of-author-item">
-        <a href="https://github.com/BreakZero" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;BreakZero" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i></a>
-      </span>
-      <span class="links-of-author-item">
-        <a href="mailto:dejin.po@gmail.com" title="E-Mail → mailto:dejin.po@gmail.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
-      </span>
-      <span class="links-of-author-item">
-        <a href="https://twitter.com/MrL51907231" title="Twitter → https:&#x2F;&#x2F;twitter.com&#x2F;MrL51907231" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i></a>
-      </span>
-  </div>
-
-        </div>
-      </div>
-    </div>
-
-    
-  </aside>
-
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/posts/2026/08/06/40258d8f/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=https://dejinlu.cn/posts/2026/09/06/3a3e054e/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&text=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&title=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&is_video=false&description=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=从一次并行任务复盘 Codex 的 token 消耗&body=Check out this article: https://dejinlu.cn/posts/2026/09/06/3a3e054e/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&title=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&title=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&title=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&title=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&name=从一次并行任务复盘 Codex 的 token 消耗&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&t=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
 
     </div>
-
-    <div class="main-inner post posts-expand">
-
-
-  
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://dejinlu.cn/posts/2026/09/06/3a3e054e/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="D&J">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="D&JのZONE">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="从一次并行任务复盘 Codex 的 token 消耗 | D&JのZONE">
-      <meta itemprop="description" content="一次 3 分钟完成开发、却在验证阶段耗尽 5 小时额度的经历，让我重新梳理 Codex 的 token 消耗：从上下文、推理到验证，怎样减少无效工作。">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          从一次并行任务复盘 Codex 的 token 消耗
-        </h1>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2026-09-06 14:01:14" itemprop="dateCreated datePublished" datetime="2026-09-06T14:01:14+08:00">2026-09-06</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
-        </span>
-    </span>
-
-  
-  
-  <span class="post-meta-item">
     
-    <span class="post-meta-item-icon">
-      <i class="far fa-comment"></i>
-    </span>
-    <span class="post-meta-item-text">Waline：</span>
-  
-    <a title="waline" href="/posts/2026/09/06/3a3e054e/#waline" itemprop="discussionUrl">
-      <span class="post-comments-count waline-comment-count" data-path="/posts/2026/09/06/3a3e054e/" itemprop="commentCount"></span>
-    </a>
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BC%80%E5%8F%91%E5%8F%AA%E8%8A%B1-3-%E5%88%86%E5%A4%9A%E9%92%9F%EF%BC%8C%E9%AA%8C%E8%AF%81%E5%8D%B4%E8%80%97%E5%B0%BD-5-%E5%B0%8F%E6%97%B6%E9%A2%9D%E5%BA%A6"><span class="toc-number">1.</span> <span class="toc-text">开发只花 3 分多钟，验证却耗尽 5 小时额度</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%88%E8%BF%98%E5%8E%9F%E6%B6%88%E8%80%97%E8%B7%AF%E5%BE%84%EF%BC%9Atoken-%E8%8A%B1%E5%9C%A8%E4%BA%86%E4%BB%A3%E7%A0%81%E4%B9%8B%E5%A4%96"><span class="toc-number">1.1.</span> <span class="toc-text">先还原消耗路径：token 花在了代码之外</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%E9%97%AE%E9%A2%98%EF%BC%9A%E6%8A%8A%E4%B8%8A%E4%B8%8B%E6%96%87%E5%92%8C%E9%A2%84%E7%AE%97%E7%94%A8%E5%9C%A8%E9%9C%80%E8%A6%81%E7%9A%84%E7%8E%AF%E8%8A%82"><span class="toc-number">1.2.</span> <span class="toc-text">解决问题：把上下文和预算用在需要的环节</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%A9%E8%A7%84%E5%88%99%E6%8C%89%E4%BD%9C%E7%94%A8%E5%9F%9F%E5%87%BA%E7%8E%B0"><span class="toc-number">1.2.1.</span> <span class="toc-text">让规则按作用域出现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%99-Agent-%E5%88%92%E5%AE%9A%E6%8E%A2%E7%B4%A2%E8%8C%83%E5%9B%B4"><span class="toc-number">1.2.2.</span> <span class="toc-text">给 Agent 划定探索范围</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%99%E6%8E%A8%E7%90%86%E5%92%8C%E9%AA%8C%E8%AF%81%E8%AE%BE%E5%AE%9A%E9%A2%84%E7%AE%97"><span class="toc-number">1.2.3.</span> <span class="toc-text">给推理和验证设定预算</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%A8-Spec-%E5%92%8C-Plan-%E5%87%8F%E5%B0%91%E5%90%8E%E6%9C%9F%E8%BF%94%E5%B7%A5"><span class="toc-number">1.2.4.</span> <span class="toc-text">用 Spec 和 Plan 减少后期返工</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E4%BB%A5%E5%85%88%E8%90%BD%E5%9C%B0%E7%9A%84%E4%B8%89%E6%9D%A1%E5%8E%9F%E5%88%99"><span class="toc-number">1.3.</span> <span class="toc-text">可以先落地的三条原则</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E%E5%9B%9B%E4%B8%AA%E7%8E%AF%E8%8A%82%E4%BC%98%E5%8C%96-token-%E6%B6%88%E8%80%97"><span class="toc-number">1.4.</span> <span class="toc-text">从四个环节优化 token 消耗</span></a></li></ol></li></ol>
+      </div>
+    
   </span>
-  
-  
 </div>
 
-            <div class="post-description">一次 3 分钟完成开发、却在验证阶段耗尽 5 小时额度的经历，让我重新梳理 Codex 的 token 消耗：从上下文、推理到验证，怎样减少无效工作。</div>
-        </div>
-      </header>
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        从一次并行任务复盘 Codex 的 token 消耗
+    </h1>
 
-    
-    
-    
-    <div class="post-body" itemprop="articleBody"><h1 id="一个-3-分钟完成开发、却耗尽-5-小时额度的任务意外"><a href="#一个-3-分钟完成开发、却耗尽-5-小时额度的任务意外" class="headerlink" title="一个 3 分钟完成开发、却耗尽 5 小时额度的任务意外"></a>一个 3 分钟完成开发、却耗尽 5 小时额度的任务意外</h1><p>这件事最初是从一次并行任务开始的。我要给一个 iOS 客户端接入新功能，改动牵涉 iOS、API 两端，还需要读取 Obsidian 里的 TaskSpec 文档。为了试试多个子 Agent 并行工作的效果，我把任务拆开推进。开发阶段确实很快，3 分多钟就完成了代码编写，进入验证阶段。</p>
-<p>真正意外发生在后面。验证过程中，任务多次申请使用 Docker、Xcode 等工具；我逐一批准，但验证还没有跑完，5 小时限额已经耗尽，还额外用了 2 刀的 credit。代码产出只有几个文件，消耗却像一次大型任务。</p>
-<p>这让我开始重新审视「并行」的代价。于是有了这样的思考：输出代码并没有想象中那么多，token 到底花在哪里？</p>
-<p>另外 Codex 更新后，感觉 token 消耗变快，而且很明显了。对 Plus 订阅用户而言，5 小时额度有时只能支撑半小时左右的实际工作，随后只能等待下一个窗口。</p>
-<p>所以必须要弄清楚怎么省，要想了解如何省token，先弄明白token花在什么地方了？</p>
-<h2 id="先还原消耗路径：token-花在了代码之外"><a href="#先还原消耗路径：token-花在了代码之外" class="headerlink" title="先还原消耗路径：token 花在了代码之外"></a>先还原消耗路径：token 花在了代码之外</h2><p>通过ChatGPT了解到，这次任务的过程很典型。它包含理解任务、定位项目、分发子任务、实现、验证和排查验证结果这一整条链路。每一步都合理，叠在一起却很贵。</p>
-<p>任务开始时，Agent 要读取指令、项目规则、Skill 和 TaskSpec，建立对 iOS、API 与文档的共同理解。多个子 Agent 并行后，每个 Agent 又各自加载一遍相关上下文、浏览目录、搜索文件和推理实现路径。并行缩短了开发时间，也把这些固定成本压缩到了同一段时间里。</p>
-<p>真正容易失控的是验证。构建指定 Scheme、拉起 Docker、运行测试、读取日志、根据失败重试，每一个动作都会继续产生上下文和工具输出。如果验证目标没有提前收窄，Agent 很容易从「确认这几个文件能工作」滑到「把环境里所有不确定性都查一遍」。代码已经完成，消耗却仍在增长。</p>
-<p>把账拆开看，问题就清楚了。多 Agent 和验证本身都有价值，只是任务的不同阶段需要不同的上下文和预算。该并行的地方发生了重复，该收敛的地方又没有及时止损。</p>
-<h2 id="解决问题：把信息和预算放到该出现的地方"><a href="#解决问题：把信息和预算放到该出现的地方" class="headerlink" title="解决问题：把信息和预算放到该出现的地方"></a>解决问题：把信息和预算放到该出现的地方</h2><h3 id="让规则按作用域出现"><a href="#让规则按作用域出现" class="headerlink" title="让规则按作用域出现"></a>让规则按作用域出现</h3><p>AGENTS.md 不适合做成一个包罗万象的大文件。按我现在的项目结构，分层会更合适：Workspace 层负责工作流和项目路由，Project 层说明项目级约束，Repo 层再放架构、验证和具体的 Skill 路由。</p>
-<p>我的项目目前这样分层：</p>
-<pre class="line-numbers language-none"><code class="language-none">Workspace/
-├── AGENTS.md
-└── Development/
-    ├── AGENTS.md
-    ├── ios/
-    │   └── AGENTS.md
-    ├── backend/
-    │   └── AGENTS.md
-    └── web/
-        └── AGENTS.md<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
 
-<p>关键不在文件数量，而在边界清楚。每条规则只在它真正生效的范围内出现，不要在多个层级重复描述同一件事。AGENTS.md 负责边界、路由和强制约束；Skill 负责具体做法。相同类型的规则只保留一个事实来源，既能减少上下文，也能避免规则相互打架。</p>
-<p>Skill 也不必全部自动加载。高频、与当前开发类型强相关的能力，可以由 AGENTS.md 路由；低频能力则在 Prompt 明确需要时再加载。以 iOS 功能开发为例，<code>swift-architecture</code>、<code>swift-concurrency</code>、<code>swiftui-navigation</code> 可以作为高频 Skill，其他能力通过按需路由（Skill routing）进入上下文。知识仍然可用，只是不必每次任务都背着走。</p>
-<h3 id="缩小探索空间，别让-Agent-每次重新认识项目"><a href="#缩小探索空间，别让-Agent-每次重新认识项目" class="headerlink" title="缩小探索空间，别让 Agent 每次重新认识项目"></a>缩小探索空间，别让 Agent 每次重新认识项目</h3><p>Agent 的探索成本和搜索空间直接相关。面对一个 Workspace，它不该每次都重新认识整个开发目录；面对一个文档库，也不该默认扫描整个 Vault。</p>
-<p>Prompt 里最好明确 Target Project、Target Feature、Target Files、Allowed Changes，以及 Do Not Touch。文档任务也一样，从指定项目目录收敛到具体文档，再收敛到需要处理的 Section。以这次任务为例，应该直接指出所需的 TaskSpec、iOS 模块和 API 模块，避免让每个 Agent 都从整个 Workspace 或 Vault 里找入口。</p>
-<p>给出这些边界，不是在束缚 Agent，而是在替它省掉无意义的查找和猜测。</p>
-<h3 id="给推理和验证单独设预算"><a href="#给推理和验证单独设预算" class="headerlink" title="给推理和验证单独设预算"></a>给推理和验证单独设预算</h3><p>高推理预算应该留给真正需要权衡的地方。架构设计可以用 High，复杂调试可以用 Medium 或 High；普通 UI 修改和常规实现通常用 Low 或 Medium 就够了。验证阶段更适合保持低预算，因为它的任务是根据明确标准确认结果，而不是重新做一轮架构思考。</p>
-<p>验证范围也应和改动范围对应。一个更实用的默认组合是：构建指定 Scheme，再运行当前任务新增或直接相关的 Unit Test。UI 的视觉确认交给人，UI Test 不作为默认自动步骤。这里不是放弃质量，而是把「机器能稳定、低成本验证的内容」交给机器，避免为了形式完整而引入大段日志、环境噪声和无效重试。</p>
-<p>还需要给验证设定停止条件。例如，某个 Docker 或 Xcode 问题若与本次改动没有直接关系，就记录为环境阻塞，不继续无限重试；如果需要扩大验证范围，应先说明原因和预期收益。批准工具权限并不等于批准无边界地排查，二者需要分开管理。</p>
-<h3 id="用-Spec-和-Plan-换掉后期返工"><a href="#用-Spec-和-Plan-换掉后期返工" class="headerlink" title="用 Spec 和 Plan 换掉后期返工"></a>用 Spec 和 Plan 换掉后期返工</h3><p>最划算的优化，往往发生在 Codex 大规模读取代码之前。Spec 要写清做什么、不做什么、修改边界和验收标准；Plan 再落到修改哪些模块、按什么顺序改、有哪些风险、怎样验证。可定义一些模板，保证输出格式。</p>
-<p>这套流程的重点不是增加文档，而是提前消除歧义。需求和验收标准越清楚，Agent 越不需要一边探索、一边实现、一边猜用户到底要什么。前面多花一点时间收敛，后面就少读一遍代码、少改一轮方案，也少跑一轮验证。</p>
-<h2 id="三条足够先落地的原则"><a href="#三条足够先落地的原则" class="headerlink" title="三条足够先落地的原则"></a>三条足够先落地的原则</h2><ol>
-<li><p><strong>收敛 AGENTS.md 和 Skill 上下文。</strong> 不要把所有工程规则和能力默认塞进每次任务。AGENTS.md 只保留当前层级的边界、路由和强制约束，Skill 在真正需要时再加载。这样既能减少固定 token 成本，也能降低规则重复和冲突。</p>
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">D&J</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2026-09-06T06:01:14.000Z" class="dt-published" itemprop="datePublished">2026-09-06</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fa-solid fa-archive"></i>
+        <a class="category-link" href="/categories/AI/">AI</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fa-solid fa-tag"></i>
+        <a class="p-category" href="/tags/AI/" rel="tag">AI</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <h1 id="开发只花-3-分多钟，验证却耗尽-5-小时额度"><a href="#开发只花-3-分多钟，验证却耗尽-5-小时额度" class="headerlink" title="开发只花 3 分多钟，验证却耗尽 5 小时额度"></a>开发只花 3 分多钟，验证却耗尽 5 小时额度</h1><p>这次经历始于一次并行开发。我给一个 iOS 客户端接入新功能，改动涉及 iOS 和 API 两端，还要参考 Obsidian 里的 TaskSpec。为了看看多个子 Agent 并行能不能提速，我把任务拆开交给它们。3 分多钟后，代码已经写完，任务进入验证阶段。</p>
+<p>问题出在验证。任务多次申请 Docker、Xcode 等工具权限，我逐一批准。验证还没结束，5 小时限额已经耗尽，我又额外花了 2 刀的 credit。最后只产出了几个文件，额度消耗却像做了一次大型任务。</p>
+<p>这让我开始重新想并行带来的成本。代码没多少，token 到底花在哪儿？</p>
+<p>最近 Codex 更新后，我也明显感觉 token 消耗变快。Plus 用户的 5 小时额度有时只够半小时左右的实际工作，之后就只能等下一个窗口。</p>
+<p>想省 token，得先弄清楚它们花在了哪里。</p>
+<h2 id="先还原消耗路径：token-花在了代码之外"><a href="#先还原消耗路径：token-花在了代码之外" class="headerlink" title="先还原消耗路径：token 花在了代码之外"></a>先还原消耗路径：token 花在了代码之外</h2><p>我后来用 ChatGPT 回看这次任务。整个过程包括理解需求、定位项目、分发子任务、实现、验证，以及根据结果排查问题。每一步都有用，累加起来，成本也跟着上升。</p>
+<p>任务开始时，Agent 先读指令、项目规则、Skill 和 TaskSpec，弄清 iOS、API 和文档之间的关系。子 Agent 并行后，每个 Agent 还会分别加载相关上下文、浏览目录、搜索文件，再推理实现路径。并行缩短了开发时间，也让多个 Agent 重复加载相似信息。</p>
+<p>成本最容易在验证阶段继续增加。构建指定 Scheme、启动 Docker、运行测试、读日志、失败后重试，每一步都会带来新的上下文和工具输出。验证目标没有提前收窄时，Agent 可能从确认改动能否工作，扩展到排查环境里的所有不确定性。代码写完了，token 还在继续消耗。</p>
+<p>多 Agent 和验证都有价值。任务不同阶段需要不同的上下文和预算。子任务重叠时，并行会造成重复；到了该收敛的时候，也要及时停下来。</p>
+<h2 id="解决问题：把上下文和预算用在需要的环节"><a href="#解决问题：把上下文和预算用在需要的环节" class="headerlink" title="解决问题：把上下文和预算用在需要的环节"></a>解决问题：把上下文和预算用在需要的环节</h2><h3 id="让规则按作用域出现"><a href="#让规则按作用域出现" class="headerlink" title="让规则按作用域出现"></a>让规则按作用域出现</h3><p>AGENTS.md 不必写成一个包罗万象的大文件。按我现在的项目结构，可以分成几层：Workspace 层说明工作流和项目路由，Project 层记录项目级约束，Repo 层写架构、验证要求和具体的 Skill 路由。</p>
+<p>目前我的项目分层如下：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Workspace/</span><br><span class="line">├── AGENTS.md</span><br><span class="line">└── Development/</span><br><span class="line">    ├── AGENTS.md</span><br><span class="line">    ├── ios/</span><br><span class="line">    │   └── AGENTS.md</span><br><span class="line">    ├── backend/</span><br><span class="line">    │   └── AGENTS.md</span><br><span class="line">    └── web/</span><br><span class="line">        └── AGENTS.md</span><br></pre></td></tr></tbody></table></figure>
+
+<p>重点是把边界划清楚。规则只在需要的范围内生效，同一条内容不必在多个层级重复。AGENTS.md 说明边界、路由和强制约束；Skill 写具体做法。同类规则保留一个来源，可以少占上下文，也不容易互相冲突。</p>
+<p>Skill 不必每次都自动加载。高频且与当前开发类型直接相关的能力，可以由 AGENTS.md 路由；低频能力则在 Prompt 明确提出需要时再加载。做 iOS 功能时，<code>swift-architecture</code>、<code>swift-concurrency</code>、<code>swiftui-navigation</code> 可以作为高频 Skill，其他能力按需引入。需要时照样能用，没必要每次都放进上下文。</p>
+<h3 id="给-Agent-划定探索范围"><a href="#给-Agent-划定探索范围" class="headerlink" title="给 Agent 划定探索范围"></a>给 Agent 划定探索范围</h3><p>Agent 的探索成本和搜索范围有关。面对一个 Workspace，它不必每次重新摸清整个开发目录；处理文档时，也不必默认扫描整个 Vault。</p>
+<p>Prompt 里最好写明 Target Project、Target Feature、Target Files、Allowed Changes 和 Do Not Touch。文档任务也一样，先限定项目目录，再指定文档和要处理的 Section。这次任务如果提前指出相关的 TaskSpec、iOS 模块和 API 模块，每个 Agent 就不必从整个 Workspace 或 Vault 开始找入口。</p>
+<p>把边界写清楚，能少掉无谓的查找和猜测。</p>
+<h3 id="给推理和验证设定预算"><a href="#给推理和验证设定预算" class="headerlink" title="给推理和验证设定预算"></a>给推理和验证设定预算</h3><p>高推理预算留给需要权衡的环节。架构设计可以用 High，复杂调试用 Medium 或 High；普通 UI 修改和常规实现用 Low 或 Medium 通常足够。验证阶段适合用较低预算，因为目标是按明确标准确认结果，不必重新做一轮架构思考。</p>
+<p>验证范围也要跟改动对应。一个可用的默认组合是构建指定 Scheme，再运行本次新增或直接相关的 Unit Test。UI 的视觉效果交给人确认，UI Test 不必默认运行。机器适合做稳定、成本低的检查；为了形式完整而收集大量日志、引入环境噪声并反复重试，只会让验证更贵。</p>
+<p>验证还需要明确的停止条件。如果 Docker 或 Xcode 的问题与本次改动无关，就记录为环境阻塞，不要反复重试。要扩大验证范围时，先说明原因和预期收益。批准工具权限不代表可以无限排查，工具权限和排查范围需要分别管理。</p>
+<h3 id="用-Spec-和-Plan-减少后期返工"><a href="#用-Spec-和-Plan-减少后期返工" class="headerlink" title="用 Spec 和 Plan 减少后期返工"></a>用 Spec 和 Plan 减少后期返工</h3><p>很多返工可以在 Codex 大量读取代码之前避免。Spec 写清目标、非目标、修改边界和验收标准；Plan 列出需要修改的模块、顺序、风险和验证方法。也可以为它们准备模板，固定输出格式。</p>
+<p>这套流程能提前把需求说清楚。需求和验收标准越明确，Agent 越少需要一边探索、一边实现、一边猜用户的意图。前面多花一点时间收敛，后面就能少读代码、少改方案，也少跑一轮验证。</p>
+<h2 id="可以先落地的三条原则"><a href="#可以先落地的三条原则" class="headerlink" title="可以先落地的三条原则"></a>可以先落地的三条原则</h2><ol>
+<li><p>让 AGENTS.md 和 Skill 只带入当前任务需要的内容。工程规则和能力不必全部默认加载：AGENTS.md 留下当前层级的边界、路由和强制约束，Skill 用到时再加载。这样能减少固定 token 成本，也能降低规则重复和冲突的概率。</p>
 </li>
-<li><p><strong>不要所有任务都用 Medium 或 High Reasoning。</strong> 架构取舍、复杂 Debug 值得使用更高的推理预算；常规 UI 修改、简单实现和明确的验证任务通常不需要。推理强度应随问题复杂度变化，把昂贵的思考留给确实有不确定性的环节。</p>
+<li><p>按问题复杂度选择 Reasoning。架构取舍和复杂 Debug 可以提高推理预算；常规 UI 修改、简单实现和有明确标准的验证通常用较低预算就够。把高成本推理留给真正存在不确定性的环节。</p>
 </li>
-<li><p><strong>Verification 必须按变更范围验证。</strong> 改了哪个模块，就构建对应的 Scheme、运行直接相关的测试。不要因为改了几个文件，就默认拉起全量测试、多个 Scheme 和无关的环境排查。验证的目标是为当前改动提供足够证据，不必穷尽整个工程的所有可能问题。</p>
+<li><p>根据变更范围验证。修改哪个模块，就构建对应的 Scheme 并运行直接相关的测试。小范围改动通常不需要默认跑全量测试、多个 Scheme 或排查无关环境。验证要为当前改动提供足够证据，不需要证明整个工程没有其他问题。</p>
 </li>
 </ol>
-<p>子 Agent 也应该遵循同一套原则。只有子任务可以独立交付、几乎不用共享上下文时，并行才值得；如果每个 Agent 都要读同一份 TaskSpec、扫描同一套仓库、等待同一轮验证，速度虽然更快，token 成本往往也会成倍增加。</p>
-<h2 id="总结：优化的对象是-Agent-的信息流"><a href="#总结：优化的对象是-Agent-的信息流" class="headerlink" title="总结：优化的对象是 Agent 的信息流"></a>总结：优化的对象是 Agent 的信息流</h2><p>经过这些收敛，可以把 Codex 的 token 优化归纳为四个方向：Context Engineering、Agent Routing、Reasoning Budget 和 Verification Budget。</p>
-<p>它们分别处理四个问题：什么信息需要进入上下文，什么能力应在何时加载，哪些决策值得高强度推理，哪些检查值得为结果付出成本。落到日常任务里，目标很朴素：减少无效 Context、重复探索、高成本推理、无意义验证和返工，提高一次任务完成率。</p>
-<p>好的 token 优化，不是让 Agent 知道得更少，也不是为了省 token 放弃并行和验证。关键是让它在合适的时间拿到完成当前任务所需的信息，并在已经获得足够证据后停止。token 降下来只是结果，更稳定的 Agent 行为和更清楚的工作流才是这套方法真正留下来的东西。</p>
+<p>子 Agent 也适用这些原则。任务能独立交付、几乎不需要共享上下文时，并行更有意义。如果几个 Agent 都要读同一份 TaskSpec、扫描同一仓库，还等着同一轮验证，开发会更快，token 消耗也可能成倍增加。</p>
+<h2 id="从四个环节优化-token-消耗"><a href="#从四个环节优化-token-消耗" class="headerlink" title="从四个环节优化 token 消耗"></a>从四个环节优化 token 消耗</h2><p>复盘下来，我会从四个环节控制 Codex 的 token 消耗：Context Engineering、Agent Routing、Reasoning Budget 和 Verification Budget。它们分别对应四个问题：哪些信息进入上下文，能力何时加载，哪些决策需要高强度推理，以及哪些检查值得投入成本。</p>
+<p>日常使用时，可以先减少无效 Context、重复探索、高成本推理、不必要验证和返工，提高一次完成任务的机会。让 Agent 在恰当的时候拿到完成任务所需的信息，有了足够证据就停下来。这样既能减少 token 消耗，也能让 Agent 的行为更稳定、工作流更清楚。</p>
 <p>以上只是我基于一次实际任务和日常使用的个人思考。若有理解不准确或遗漏之处，欢迎指正。</p>
 
-    </div>
+  </div>
+</article>
 
-    
-    
-    
 
-    <footer class="post-footer">
-          <div class="post-tags">
-              <a href="/tags/AI/" rel="tag"># AI</a>
-          </div>
 
         
+          <div id="footer-post-container">
+  <div id="footer-post">
 
-          <div class="post-nav">
-            <div class="post-nav-item">
-                <a href="/posts/2026/08/06/40258d8f/" rel="prev" title="Tool Call 不是工具执行：Agent 怎样安全地获得外部观察">
-                  <i class="fa fa-angle-left"></i> Tool Call 不是工具执行：Agent 怎样安全地获得外部观察
-                </a>
-            </div>
-            <div class="post-nav-item">
-            </div>
-          </div>
-    </footer>
-  </article>
-</div>
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">首页</a></li>
+        
+          <li><a href="/about/">关于</a></li>
+        
+          <li><a href="/archives/">归档</a></li>
+        
+      </ul>
+    </div>
 
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BC%80%E5%8F%91%E5%8F%AA%E8%8A%B1-3-%E5%88%86%E5%A4%9A%E9%92%9F%EF%BC%8C%E9%AA%8C%E8%AF%81%E5%8D%B4%E8%80%97%E5%B0%BD-5-%E5%B0%8F%E6%97%B6%E9%A2%9D%E5%BA%A6"><span class="toc-number">1.</span> <span class="toc-text">开发只花 3 分多钟，验证却耗尽 5 小时额度</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%88%E8%BF%98%E5%8E%9F%E6%B6%88%E8%80%97%E8%B7%AF%E5%BE%84%EF%BC%9Atoken-%E8%8A%B1%E5%9C%A8%E4%BA%86%E4%BB%A3%E7%A0%81%E4%B9%8B%E5%A4%96"><span class="toc-number">1.1.</span> <span class="toc-text">先还原消耗路径：token 花在了代码之外</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%E9%97%AE%E9%A2%98%EF%BC%9A%E6%8A%8A%E4%B8%8A%E4%B8%8B%E6%96%87%E5%92%8C%E9%A2%84%E7%AE%97%E7%94%A8%E5%9C%A8%E9%9C%80%E8%A6%81%E7%9A%84%E7%8E%AF%E8%8A%82"><span class="toc-number">1.2.</span> <span class="toc-text">解决问题：把上下文和预算用在需要的环节</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%A9%E8%A7%84%E5%88%99%E6%8C%89%E4%BD%9C%E7%94%A8%E5%9F%9F%E5%87%BA%E7%8E%B0"><span class="toc-number">1.2.1.</span> <span class="toc-text">让规则按作用域出现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%99-Agent-%E5%88%92%E5%AE%9A%E6%8E%A2%E7%B4%A2%E8%8C%83%E5%9B%B4"><span class="toc-number">1.2.2.</span> <span class="toc-text">给 Agent 划定探索范围</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%99%E6%8E%A8%E7%90%86%E5%92%8C%E9%AA%8C%E8%AF%81%E8%AE%BE%E5%AE%9A%E9%A2%84%E7%AE%97"><span class="toc-number">1.2.3.</span> <span class="toc-text">给推理和验证设定预算</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%A8-Spec-%E5%92%8C-Plan-%E5%87%8F%E5%B0%91%E5%90%8E%E6%9C%9F%E8%BF%94%E5%B7%A5"><span class="toc-number">1.2.4.</span> <span class="toc-text">用 Spec 和 Plan 减少后期返工</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E4%BB%A5%E5%85%88%E8%90%BD%E5%9C%B0%E7%9A%84%E4%B8%89%E6%9D%A1%E5%8E%9F%E5%88%99"><span class="toc-number">1.3.</span> <span class="toc-text">可以先落地的三条原则</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E%E5%9B%9B%E4%B8%AA%E7%8E%AF%E8%8A%82%E4%BC%98%E5%8C%96-token-%E6%B6%88%E8%80%97"><span class="toc-number">1.4.</span> <span class="toc-text">从四个环节优化 token 消耗</span></a></li></ol></li></ol>
+      </div>
+    
 
-
-
-
-
-    <div class="comments" id="waline"></div>
-</div>
-  </main>
-
-  <footer class="footer">
-    <div class="footer-inner">
-
-  <div class="copyright">
-    &copy; 2021 – 
-    <span itemprop="copyrightYear">2026</span>
-    <span class="with-love">
-      <i class="fa fa-heart"></i>
-    </span>
-    <span class="author" itemprop="copyrightHolder">D&J</span>
-  </div>
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=https://dejinlu.cn/posts/2026/09/06/3a3e054e/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&text=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&title=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&is_video=false&description=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=从一次并行任务复盘 Codex 的 token 消耗&body=Check out this article: https://dejinlu.cn/posts/2026/09/06/3a3e054e/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&title=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&title=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&title=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&title=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&name=从一次并行任务复盘 Codex 的 token 消耗&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=https://dejinlu.cn/posts/2026/09/06/3a3e054e/&t=从一次并行任务复盘 Codex 的 token 消耗"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
 
     </div>
-  </footer>
 
-  
-  <div class="toggle sidebar-toggle" role="button">
-    <span class="toggle-line"></span>
-    <span class="toggle-line"></span>
-    <span class="toggle-line"></span>
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
   </div>
-  <div class="sidebar-dimmer"></div>
-  <div class="back-to-top" role="button" aria-label="返回顶部">
-    <i class="fa fa-arrow-up fa-lg"></i>
-    <span>0%</span>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2018-2026
+    D&amp;J
   </div>
-  <div class="reading-progress-bar"></div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
 
-<noscript>
-  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
-</noscript>
+    </div>
+    <!-- styles -->
 
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
 
   
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
-<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/sidebar.js"></script><script src="/js/next-boot.js"></script>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
-<script src="/js/third-party/search/local-search.js"></script>
-
-
-  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.4.0/mermaid.min.js","integrity":"sha256-G8ouPAnw4zzMbnAenHnVz6h9XpKbNdOkrqTh7AadyHs="}}</script>
-  <script src="/js/third-party/tags/mermaid.js"></script>
-
-  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.5.0/wavedrom.min.js","integrity":"sha256-INLAoJc6quTNfiMWkGZniYO2cxE8mHpddnLow1m6RFs="}}</script>
-  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.5.0/skins/default.js","integrity":"sha256-fduc/Zszk5ezWws2uInY/ALWVmIrmV6VTgXbsYSReFI="}}</script>
-  <script src="/js/third-party/tags/wavedrom.js"></script>
-
-
-  <script src="/js/third-party/pace.js"></script>
-
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
   
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板！\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功！");
+      e.clearSelection();
+    })
+  })
+  </script>
 
 
+<script src="/js/main.js"></script>
 
+<!-- search -->
 
-<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-CN","enable":true,"serverURL":"https://blog-waline-git-main-breakzeros-projects.vercel.app","cssUrl":"https://unpkg.com/@waline/client@v2/dist/waline.css","commentCount":false,"pageview":false,"dark":"auto","imageUploader":false,"copyright":false,"search":false,"meta":["nick","mail"],"requiredMeta":["nick"],"el":"#waline","comment":true,"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","path":"/posts/2026/09/06/3a3e054e/"}</script>
-<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css">
-<script>
-document.addEventListener('page:loaded', () => {
-  NexT.utils.loadComments(CONFIG.waline.el).then(() =>
-    NexT.utils.getScript(CONFIG.waline.libUrl, { condition: window.Waline })
-  ).then(() => 
-    Waline.init(Object.assign({}, CONFIG.waline,{ el: document.querySelector(CONFIG.waline.el) }))
-  );
-});
-</script>
+<!-- Baidu Analytics -->
 
-<script async>window.onload=function(){var a=document.createElement('script'),b=document.getElementsByTagName('script')[0];a.type='text/javascript',a.async=!0,a.src='/sw-register.js?v='+Date.now(),b.parentNode.insertBefore(a,b)};</script></body></html>
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>

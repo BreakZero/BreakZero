@@ -1,27 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang=zh>
 <head>
-  <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width">
-<meta name="theme-color" content="#222" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#222" media="(prefers-color-scheme: dark)"><meta name="generator" content="Hexo 7.3.0">
-
-  <link rel="apple-touch-icon" sizes="180x180" href="/images/siteicon/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/images/siteic%20%20on/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/images/siteicon/favicon-16x16.png">
-  <link rel="mask-icon" href="/images/siteicon/safari-pinned-tab.svg" color="#222">
-
-<link rel="stylesheet" href="/css/main.css">
-
-
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/themes/blue/pace-theme-center-simple.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pace/1.2.4/pace.min.js" integrity="sha256-gqd7YTjg/BtfqWSwsJOvndl0Bxc8gFImLEkXQT8+qj0=" crossorigin="anonymous"></script>
-
-<script class="next-config" data-name="main" type="application/json">{"hostname":"dejinlu.cn","root":"/","images":"/images","scheme":"Mist","darkmode":true,"version":"8.22.0","exturl":false,"sidebar":{"position":"right","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12,"width":300},"copycode":{"enable":true,"style":"mac"},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"top_n_per_article":1,"unescape":false,"preload":false,"trigger":"auto"}}</script><script src="/js/config.js"></script>
-
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
     <meta name="description" content="如果你看过不少 MCP 介绍，却始终没有真正动手跑通过一个完整例子，这篇文章会很适合你。本文用 TypeScript 搭建一个最小 MCP Server，并以 CoinGecko 为例，实现一个可实际调用的 fetch_market_data 工具。文章会从概念理解、项目搭建、接口接入，到 Inspector 调试和 Codex 验证，一步步带你跑通整个实操流程，帮你把 MCP 从“知道概念”变成">
 <meta property="og:type" content="article">
 <meta property="og:title" content="从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector &#x2F; Codex 中验证">
@@ -32,254 +16,170 @@
 <meta property="og:image" content="https://dejinlu.cn/images/20260409/inspector-validation-success.png">
 <meta property="og:image" content="https://dejinlu.cn/images/20260409/codex-execution-success.png">
 <meta property="article:published_time" content="2026-04-09T05:22:38.000Z">
-<meta property="article:modified_time" content="2026-09-05T00:29:48.644Z">
+<meta property="article:modified_time" content="2026-09-25T00:37:27.382Z">
 <meta property="article:author" content="D&amp;J">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="MCP">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://dejinlu.cn/images/20260409/inspector-validation-success.png">
+    
+    
+      
+        
+          <link rel="shortcut icon" href="/images/favicon.ico">
+        
+      
+      
+        
+          <link rel="icon" type="image/png" href="/images/siteicon/favicon-16x16.png" sizes="192x192">
+        
+      
+      
+        
+          <link rel="apple-touch-icon" sizes="180x180" href="/images/siteicon/apple-touch-icon.png">
+        
+      
+    
+    <!-- title -->
+    <title>从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证</title>
+    <!-- async scripts -->
+    <!-- Google Analytics -->
 
 
-<link rel="canonical" href="https://dejinlu.cn/posts/2026/04/09/4dc832d4/">
+    <!-- Umami Analytics -->
 
 
-<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://dejinlu.cn/posts/2026/04/09/4dc832d4/","path":"posts/2026/04/09/4dc832d4/","title":"从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"}</script>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/css/style.css">
 
-<script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证 | D&JのZONE</title>
-  
-
-  <script src="/js/third-party/analytics/baidu-analytics.js"></script>
-  <script async src="https://hm.baidu.com/hm.js?456d489b36d14e73cf4e36ecf2114b5d"></script>
-
-
-
-
-
-
-<link rel="dns-prefetch" href="https://blog-waline-git-main-breakzeros-projects.vercel.app">
-  <noscript>
-    <link rel="stylesheet" href="/css/noscript.css">
-  </noscript>
-
+    <!-- persian styles -->
+    
+    <!-- rss -->
+    
+    
+	<!-- mathjax -->
+	
+		<script type="text/x-mathjax-config">
+		  MathJax.Hub.Config({
+			tex2jax: {
+			  skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+			  inlineMath: [['$','$']]
+			}
+		  });
+		</script>
+		<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-MML-AM_CHTML' async></script>
+	
+<meta name="generator" content="Hexo 7.3.0">
 <style>.github-emoji { position: relative; display: inline-block; width: 1.2em; min-height: 1.2em; overflow: hidden; vertical-align: top; color: transparent; }  .github-emoji > span { position: relative; z-index: 10; }  .github-emoji img, .github-emoji .fancybox { margin: 0 !important; padding: 0 !important; border: none !important; outline: none !important; text-decoration: none !important; user-select: none !important; cursor: auto !important; }  .github-emoji img { height: 1.2em !important; width: 1.2em !important; position: absolute !important; left: 50% !important; top: 50% !important; transform: translate(-50%, -50%) !important; user-select: none !important; cursor: auto !important; } .github-emoji-fallback { color: inherit; } .github-emoji-fallback img { opacity: 0 !important; }</style>
 </head>
 
-<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
-  <div class="headband"></div>
-
-  <main class="main">
-    <div class="column">
-      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
-  <div class="site-nav-toggle">
-    <div class="toggle" aria-label="切换导航栏" role="button">
-        <span class="toggle-line"></span>
-        <span class="toggle-line"></span>
-        <span class="toggle-line"></span>
-    </div>
-  </div>
-
-  <div class="site-meta">
-
-    <a href="/" class="brand" rel="start">
-      <i class="logo-line"></i>
-      <p class="site-title">D&JのZONE</p>
-      <i class="logo-line"></i>
-    </a>
-      <p class="site-subtitle" itemprop="description">知之者不如好之者，好之者不如乐之者</p>
-  </div>
-
-  <div class="site-nav-right">
-    <div class="toggle popup-trigger" aria-label="搜索" role="button">
-        <i class="fa fa-search fa-fw fa-lg"></i>
-    </div>
-  </div>
-</div>
-
-
-
-<nav class="site-nav">
-  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>关于</a></li>
-      <li class="menu-item menu-item-search">
-        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
-        </a>
-      </li>
-  </ul>
-</nav>
-
-
-
-  <div class="search-pop-overlay">
-    <div class="popup search-popup">
-      <div class="search-header">
-        <span class="search-icon">
-          <i class="fa fa-search"></i>
-        </span>
-        <div class="search-input-container">
-          <input autocomplete="off" autocapitalize="off" maxlength="80"
-                placeholder="搜索..." spellcheck="false"
-                type="search" class="search-input">
-        </div>
-        <span class="popup-btn-close" role="button">
-          <i class="fa fa-times-circle"></i>
-        </span>
-      </div>
-      <div class="search-result-container">
-        <div class="search-result-icon">
-          <i class="fa fa-spinner fa-pulse fa-5x"></i>
-        </div>
-      </div>
-    </div>
-  </div>
-
-</header>
-        
-  
-  <aside class="sidebar">
-
-    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
-      <ul class="sidebar-nav">
-        <li class="sidebar-nav-toc">
-          文章目录
-        </li>
-        <li class="sidebar-nav-overview">
-          站点概览
-        </li>
+<body class="max-width mx-auto px3 ltr">
+    
+      <div id="header-post">
+  <a id="menu-icon" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#" aria-label="目录"><i class="fa-solid fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" aria-label="顶部" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa-solid fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     -->
       </ul>
-
-      <div class="sidebar-panel-container">
-        <!--noindex-->
-        <div class="post-toc-wrap sidebar-panel">
-            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%8E-0-%E5%BC%80%E5%A7%8B%E5%AE%9E%E6%93%8D-MCP%EF%BC%9A%E7%94%A8-TypeScript-%E6%8E%A5%E5%85%A5-CoinGecko%EF%BC%8C%E5%B9%B6%E5%9C%A8-Inspector-Codex-%E4%B8%AD%E9%AA%8C%E8%AF%81"><span class="nav-number">1.</span> <span class="nav-text">从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector &#x2F; Codex 中验证</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E8%BF%99%E7%AF%87%E6%96%87%E7%AB%A0%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="nav-number">1.1.</span> <span class="nav-text">一、这篇文章要解决什么问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E5%85%88%E5%BB%BA%E7%AB%8B%E4%B8%80%E4%B8%AA%E6%9C%80%E5%B0%8F%E8%AE%A4%E7%9F%A5%EF%BC%9AMCP-%E5%9C%A8%E8%BF%99%E4%B8%AA%E4%BE%8B%E5%AD%90%E9%87%8C%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-number">1.2.</span> <span class="nav-text">二、先建立一个最小认知：MCP 在这个例子里是什么</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E7%AF%87%E6%96%87%E7%AB%A0%E5%85%88%E4%BB%8E-STDIO-%E5%BC%80%E5%A7%8B%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF-HTTP"><span class="nav-number">1.2.1.</span> <span class="nav-text">为什么这篇文章先从 STDIO 开始，而不是 HTTP</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%BC%80%E5%A7%8B%E5%8A%A8%E6%89%8B%EF%BC%9A%E4%BB%8E-0-%E6%90%AD%E4%B8%80%E4%B8%AA%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%E7%9A%84-MCP-Server"><span class="nav-number">1.3.</span> <span class="nav-text">三、开始动手：从 0 搭一个最小可运行的 MCP Server</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="nav-number">1.3.1.</span> <span class="nav-text">1. 准备工作</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96-CoinGecko-API-Key"><span class="nav-number">1.3.1.1.</span> <span class="nav-text">获取 CoinGecko API Key</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E5%88%9B%E5%BB%BA%E9%A1%B9%E7%9B%AE"><span class="nav-number">1.3.2.</span> <span class="nav-text">2. 创建项目</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E8%AE%BE%E8%AE%A1%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84"><span class="nav-number">1.3.3.</span> <span class="nav-text">3. 设计项目结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E9%85%8D%E7%BD%AE%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="nav-number">1.3.4.</span> <span class="nav-text">4. 配置环境变量</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E5%85%88%E5%86%99%E4%B8%9A%E5%8A%A1%E9%80%BB%E8%BE%91%EF%BC%9A%E8%8E%B7%E5%8F%96%E5%B8%82%E5%9C%BA%E6%95%B0%E6%8D%AE"><span class="nav-number">1.3.5.</span> <span class="nav-text">5. 先写业务逻辑：获取市场数据</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%99%E6%AE%B5%E4%B8%9A%E5%8A%A1%E4%BB%A3%E7%A0%81%E5%88%B0%E5%BA%95%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-number">1.3.5.1.</span> <span class="nav-text">这段业务代码到底做了什么</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E9%87%8C%E5%85%88%E6%89%8B%E5%86%99-symbol-%E6%98%A0%E5%B0%84%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E8%87%AA%E5%8A%A8%E6%94%AF%E6%8C%81%E6%89%80%E6%9C%89%E5%B8%81%E7%A7%8D"><span class="nav-number">1.3.5.2.</span> <span class="nav-text">为什么这里先手写 symbol 映射，而不是自动支持所有币种</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-%E5%86%8D%E5%86%99-MCP-Server%EF%BC%9A%E6%8A%8A%E4%B8%9A%E5%8A%A1%E8%83%BD%E5%8A%9B%E6%9A%B4%E9%9C%B2%E6%88%90%E5%B7%A5%E5%85%B7"><span class="nav-number">1.3.6.</span> <span class="nav-text">6. 再写 MCP Server：把业务能力暴露成工具</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%99%E6%AE%B5-MCP-Server-%E4%BB%A3%E7%A0%81%E5%BA%94%E8%AF%A5%E6%80%8E%E4%B9%88%E7%9C%8B"><span class="nav-number">1.3.6.1.</span> <span class="nav-text">这段 MCP Server 代码应该怎么看</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-%E5%90%AF%E5%8A%A8%E6%9C%8D%E5%8A%A1%E5%B9%B6%E7%90%86%E8%A7%A3%E8%BF%90%E8%A1%8C%E7%BB%86%E8%8A%82"><span class="nav-number">1.3.7.</span> <span class="nav-text">7. 启动服务并理解运行细节</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%97%A5%E5%BF%97%E8%A6%81%E5%86%99%E5%88%B0-stderr%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF-stdout"><span class="nav-number">1.3.7.1.</span> <span class="nav-text">为什么日志要写到 stderr，而不是 stdout</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E9%AA%8C%E8%AF%81%E8%BF%99%E4%B8%AA-MCP-%E5%B7%A5%E5%85%B7%E6%98%AF%E5%90%A6%E7%9C%9F%E7%9A%84%E5%8F%AF%E7%94%A8"><span class="nav-number">1.4.</span> <span class="nav-text">四、验证这个 MCP 工具是否真的可用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E7%94%A8-MCP-Inspector-%E9%AA%8C%E8%AF%81"><span class="nav-number">1.4.1.</span> <span class="nav-text">1. 用 MCP Inspector 验证</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8-Inspector"><span class="nav-number">1.4.1.1.</span> <span class="nav-text">启动 Inspector</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9C%A8-Inspector-%E9%87%8C%E9%87%8D%E7%82%B9%E9%AA%8C%E8%AF%81%E4%BB%80%E4%B9%88"><span class="nav-number">1.4.1.2.</span> <span class="nav-text">在 Inspector 里重点验证什么</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E6%AD%A3%E5%B8%B8%E8%BE%93%E5%85%A5"><span class="nav-number">1.4.1.3.</span> <span class="nav-text">测试正常输入</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E5%BC%82%E5%B8%B8%E8%BE%93%E5%85%A5"><span class="nav-number">1.4.1.4.</span> <span class="nav-text">测试异常输入</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%A9%BA%E5%AD%97%E7%AC%A6%E4%B8%B2"><span class="nav-number">1.4.1.4.1.</span> <span class="nav-text">空字符串</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%8D%E6%94%AF%E6%8C%81%E7%9A%84-symbol"><span class="nav-number">1.4.1.4.2.</span> <span class="nav-text">不支持的 symbol</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E7%BC%BA%E5%B0%91%E5%AD%97%E6%AE%B5"><span class="nav-number">1.4.1.4.3.</span> <span class="nav-text">缺少字段</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E8%AF%81%E6%98%8E%E5%9B%BE"><span class="nav-number">1.4.1.5.</span> <span class="nav-text">执行结果证明图</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E6%8E%A5%E5%85%A5-Codex-CLI-%E9%AA%8C%E8%AF%81"><span class="nav-number">1.4.2.</span> <span class="nav-text">2. 接入 Codex CLI 验证</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%87%86%E5%A4%87-Codex-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="nav-number">1.4.2.1.</span> <span class="nav-text">准备 Codex 配置文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%AF%E5%8A%A8-Codex"><span class="nav-number">1.4.2.2.</span> <span class="nav-text">启动 Codex</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B5%8B%E8%AF%95%E6%97%B6%EF%BC%8C%E5%B0%BD%E9%87%8F%E6%98%BE%E5%BC%8F%E8%A6%81%E6%B1%82%E8%B0%83%E7%94%A8%E5%B7%A5%E5%85%B7"><span class="nav-number">1.4.2.3.</span> <span class="nav-text">第一次测试时，尽量显式要求调用工具</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E5%88%A4%E6%96%AD-Codex-%E4%B8%8D%E6%98%AF%E5%9C%A8%E2%80%9C%E7%8C%9C%E7%AD%94%E6%A1%88%E2%80%9D"><span class="nav-number">1.4.2.4.</span> <span class="nav-text">如何判断 Codex 不是在“猜答案”</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E8%AF%81%E6%98%8E%E5%9B%BE-1"><span class="nav-number">1.4.2.5.</span> <span class="nav-text">执行结果证明图</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E6%80%BB%E7%BB%93%EF%BC%9A%E8%B7%91%E9%80%9A%E8%BF%99%E6%9D%A1%E9%93%BE%E8%B7%AF%E5%90%8E%EF%BC%8C%E4%BD%A0%E7%9C%9F%E6%AD%A3%E6%8E%8C%E6%8F%A1%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-number">1.5.</span> <span class="nav-text">五、总结：跑通这条链路后，你真正掌握了什么</span></a></li></ol></li></ol></div>
-        </div>
-        <!--/noindex-->
-
-        <div class="site-overview-wrap sidebar-panel">
-          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
-    <img class="site-author-image" itemprop="image" alt="D&J"
-      src="/images/avatar.png">
-  <p class="site-author-name" itemprop="name">D&J</p>
-  <div class="site-description" itemprop="description"></div>
-</div>
-<div class="site-state-wrap animated">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-        <a href="/archives/">
-          <span class="site-state-item-count">13</span>
-          <span class="site-state-item-name">日志</span>
-        </a>
-      </div>
-      <div class="site-state-item site-state-categories">
-          <a href="/categories/">
-        <span class="site-state-item-count">5</span>
-        <span class="site-state-item-name">分类</span></a>
-      </div>
-      <div class="site-state-item site-state-tags">
-          <a href="/tags/">
-        <span class="site-state-item-count">13</span>
-        <span class="site-state-item-name">标签</span></a>
-      </div>
-  </nav>
-</div>
-  <div class="links-of-author animated">
-      <span class="links-of-author-item">
-        <a href="https://github.com/BreakZero" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;BreakZero" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i></a>
-      </span>
-      <span class="links-of-author-item">
-        <a href="mailto:dejin.po@gmail.com" title="E-Mail → mailto:dejin.po@gmail.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
-      </span>
-      <span class="links-of-author-item">
-        <a href="https://twitter.com/MrL51907231" title="Twitter → https:&#x2F;&#x2F;twitter.com&#x2F;MrL51907231" rel="noopener me" target="_blank"><i class="fab fa-twitter fa-fw"></i></a>
-      </span>
-  </div>
-
-        </div>
-      </div>
-    </div>
-
-    
-  </aside>
-
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" aria-label="上一篇" href="/posts/2026/07/18/9e7d1a5f/"><i class="fa-solid fa-chevron-left" aria-hidden="true" onmouseover="$('#i-prev').toggle();" onmouseout="$('#i-prev').toggle();"></i></a></li>
+        
+        
+        <li><a class="icon" aria-label="下一篇" href="/posts/2026/03/02/fbb9923f/"><i class="fa-solid fa-chevron-right" aria-hidden="true" onmouseover="$('#i-next').toggle();" onmouseout="$('#i-next').toggle();"></i></a></li>
+        
+        <li><a class="icon" aria-label="返回顶部" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up" aria-hidden="true" onmouseover="$('#i-top').toggle();" onmouseout="$('#i-top').toggle();"></i></a></li>
+        <li><a class="icon" aria-label="分享文章" href="#"><i class="fa-solid fa-share-alt" aria-hidden="true" onmouseover="$('#i-share').toggle();" onmouseout="$('#i-share').toggle();" onclick="$('#share').toggle();return false;"></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">上一篇</span>
+      <span id="i-next" class="info" style="display:none;">下一篇</span>
+      <span id="i-top" class="info" style="display:none;">返回顶部</span>
+      <span id="i-share" class="info" style="display:none;">分享文章</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=https://dejinlu.cn/posts/2026/04/09/4dc832d4/"><i class="fab fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&text=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&title=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&is_video=false&description=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证&body=Check out this article: https://dejinlu.cn/posts/2026/04/09/4dc832d4/"><i class="fa-solid fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&title=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&title=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&title=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&title=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&name=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证&description="><i class="fab fa-tumblr " aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&t=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-hacker-news " aria-hidden="true"></i></a></li>
+</ul>
 
     </div>
-
-    <div class="main-inner post posts-expand">
-
-
-  
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://dejinlu.cn/posts/2026/04/09/4dc832d4/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.png">
-      <meta itemprop="name" content="D&J">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="D&JのZONE">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证 | D&JのZONE">
-      <meta itemprop="description" content="如果你看过不少 MCP 介绍，却始终没有真正动手跑通过一个完整例子，这篇文章会很适合你。本文用 TypeScript 搭建一个最小 MCP Server，并以 CoinGecko 为例，实现一个可实际调用的 fetch_market_data 工具。文章会从概念理解、项目搭建、接口接入，到 Inspector 调试和 Codex 验证，一步步带你跑通整个实操流程，帮你把 MCP 从“知道概念”变成“真正会用”。">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证
-        </h1>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2026-04-09 13:22:38" itemprop="dateCreated datePublished" datetime="2026-04-09T13:22:38+08:00">2026-04-09</time>
-    </span>
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-folder"></i>
-      </span>
-      <span class="post-meta-item-text">分类于</span>
-        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/AI/" itemprop="url" rel="index"><span itemprop="name">AI</span></a>
-        </span>
-    </span>
-
-  
-  
-  <span class="post-meta-item">
     
-    <span class="post-meta-item-icon">
-      <i class="far fa-comment"></i>
-    </span>
-    <span class="post-meta-item-text">Waline：</span>
-  
-    <a title="waline" href="/posts/2026/04/09/4dc832d4/#waline" itemprop="discussionUrl">
-      <span class="post-comments-count waline-comment-count" data-path="/posts/2026/04/09/4dc832d4/" itemprop="commentCount"></span>
-    </a>
+    
+      <div id="toc">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E8%BF%99%E7%AF%87%E6%96%87%E7%AB%A0%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="toc-number">1.</span> <span class="toc-text">一、这篇文章要解决什么问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%85%88%E5%BB%BA%E7%AB%8B%E4%B8%80%E4%B8%AA%E6%9C%80%E5%B0%8F%E8%AE%A4%E7%9F%A5%EF%BC%9AMCP-%E5%9C%A8%E8%BF%99%E4%B8%AA%E4%BE%8B%E5%AD%90%E9%87%8C%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-number">2.</span> <span class="toc-text">二、先建立一个最小认知：MCP 在这个例子里是什么</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E7%AF%87%E6%96%87%E7%AB%A0%E5%85%88%E4%BB%8E-STDIO-%E5%BC%80%E5%A7%8B%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF-HTTP"><span class="toc-number">2.1.</span> <span class="toc-text">为什么这篇文章先从 STDIO 开始，而不是 HTTP</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E5%BC%80%E5%A7%8B%E5%8A%A8%E6%89%8B%EF%BC%9A%E4%BB%8E-0-%E6%90%AD%E4%B8%80%E4%B8%AA%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%E7%9A%84-MCP-Server"><span class="toc-number">3.</span> <span class="toc-text">三、开始动手：从 0 搭一个最小可运行的 MCP Server</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="toc-number">3.1.</span> <span class="toc-text">1. 准备工作</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96-CoinGecko-API-Key"><span class="toc-number">3.1.1.</span> <span class="toc-text">获取 CoinGecko API Key</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%88%9B%E5%BB%BA%E9%A1%B9%E7%9B%AE"><span class="toc-number">3.2.</span> <span class="toc-text">2. 创建项目</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E8%AE%BE%E8%AE%A1%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84"><span class="toc-number">3.3.</span> <span class="toc-text">3. 设计项目结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E9%85%8D%E7%BD%AE%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="toc-number">3.4.</span> <span class="toc-text">4. 配置环境变量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E5%85%88%E5%86%99%E4%B8%9A%E5%8A%A1%E9%80%BB%E8%BE%91%EF%BC%9A%E8%8E%B7%E5%8F%96%E5%B8%82%E5%9C%BA%E6%95%B0%E6%8D%AE"><span class="toc-number">3.5.</span> <span class="toc-text">5. 先写业务逻辑：获取市场数据</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%99%E6%AE%B5%E4%B8%9A%E5%8A%A1%E4%BB%A3%E7%A0%81%E5%88%B0%E5%BA%95%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="toc-number">3.5.1.</span> <span class="toc-text">这段业务代码到底做了什么</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E9%87%8C%E5%85%88%E6%89%8B%E5%86%99-symbol-%E6%98%A0%E5%B0%84%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E8%87%AA%E5%8A%A8%E6%94%AF%E6%8C%81%E6%89%80%E6%9C%89%E5%B8%81%E7%A7%8D"><span class="toc-number">3.5.2.</span> <span class="toc-text">为什么这里先手写 symbol 映射，而不是自动支持所有币种</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E5%86%8D%E5%86%99-MCP-Server%EF%BC%9A%E6%8A%8A%E4%B8%9A%E5%8A%A1%E8%83%BD%E5%8A%9B%E6%9A%B4%E9%9C%B2%E6%88%90%E5%B7%A5%E5%85%B7"><span class="toc-number">3.6.</span> <span class="toc-text">6. 再写 MCP Server：把业务能力暴露成工具</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%99%E6%AE%B5-MCP-Server-%E4%BB%A3%E7%A0%81%E5%BA%94%E8%AF%A5%E6%80%8E%E4%B9%88%E7%9C%8B"><span class="toc-number">3.6.1.</span> <span class="toc-text">这段 MCP Server 代码应该怎么看</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-%E5%90%AF%E5%8A%A8%E6%9C%8D%E5%8A%A1%E5%B9%B6%E7%90%86%E8%A7%A3%E8%BF%90%E8%A1%8C%E7%BB%86%E8%8A%82"><span class="toc-number">3.7.</span> <span class="toc-text">7. 启动服务并理解运行细节</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%97%A5%E5%BF%97%E8%A6%81%E5%86%99%E5%88%B0-stderr%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF-stdout"><span class="toc-number">3.7.1.</span> <span class="toc-text">为什么日志要写到 stderr，而不是 stdout</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E9%AA%8C%E8%AF%81%E8%BF%99%E4%B8%AA-MCP-%E5%B7%A5%E5%85%B7%E6%98%AF%E5%90%A6%E7%9C%9F%E7%9A%84%E5%8F%AF%E7%94%A8"><span class="toc-number">4.</span> <span class="toc-text">四、验证这个 MCP 工具是否真的可用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E7%94%A8-MCP-Inspector-%E9%AA%8C%E8%AF%81"><span class="toc-number">4.1.</span> <span class="toc-text">1. 用 MCP Inspector 验证</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8-Inspector"><span class="toc-number">4.1.1.</span> <span class="toc-text">启动 Inspector</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%A8-Inspector-%E9%87%8C%E9%87%8D%E7%82%B9%E9%AA%8C%E8%AF%81%E4%BB%80%E4%B9%88"><span class="toc-number">4.1.2.</span> <span class="toc-text">在 Inspector 里重点验证什么</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E6%AD%A3%E5%B8%B8%E8%BE%93%E5%85%A5"><span class="toc-number">4.1.3.</span> <span class="toc-text">测试正常输入</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E5%BC%82%E5%B8%B8%E8%BE%93%E5%85%A5"><span class="toc-number">4.1.4.</span> <span class="toc-text">测试异常输入</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%A9%BA%E5%AD%97%E7%AC%A6%E4%B8%B2"><span class="toc-number">4.1.4.1.</span> <span class="toc-text">空字符串</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%B8%8D%E6%94%AF%E6%8C%81%E7%9A%84-symbol"><span class="toc-number">4.1.4.2.</span> <span class="toc-text">不支持的 symbol</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%BC%BA%E5%B0%91%E5%AD%97%E6%AE%B5"><span class="toc-number">4.1.4.3.</span> <span class="toc-text">缺少字段</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E8%AF%81%E6%98%8E%E5%9B%BE"><span class="toc-number">4.1.5.</span> <span class="toc-text">执行结果证明图</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%8E%A5%E5%85%A5-Codex-CLI-%E9%AA%8C%E8%AF%81"><span class="toc-number">4.2.</span> <span class="toc-text">2. 接入 Codex CLI 验证</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%87%86%E5%A4%87-Codex-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-number">4.2.1.</span> <span class="toc-text">准备 Codex 配置文件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8-Codex"><span class="toc-number">4.2.2.</span> <span class="toc-text">启动 Codex</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B5%8B%E8%AF%95%E6%97%B6%EF%BC%8C%E5%B0%BD%E9%87%8F%E6%98%BE%E5%BC%8F%E8%A6%81%E6%B1%82%E8%B0%83%E7%94%A8%E5%B7%A5%E5%85%B7"><span class="toc-number">4.2.3.</span> <span class="toc-text">第一次测试时，尽量显式要求调用工具</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%88%A4%E6%96%AD-Codex-%E4%B8%8D%E6%98%AF%E5%9C%A8%E2%80%9C%E7%8C%9C%E7%AD%94%E6%A1%88%E2%80%9D"><span class="toc-number">4.2.4.</span> <span class="toc-text">如何判断 Codex 不是在“猜答案”</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E8%AF%81%E6%98%8E%E5%9B%BE-1"><span class="toc-number">4.2.5.</span> <span class="toc-text">执行结果证明图</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%80%BB%E7%BB%93%EF%BC%9A%E8%B7%91%E9%80%9A%E8%BF%99%E6%9D%A1%E9%93%BE%E8%B7%AF%E5%90%8E%EF%BC%8C%E4%BD%A0%E7%9C%9F%E6%AD%A3%E6%8E%8C%E6%8F%A1%E4%BA%86%E4%BB%80%E4%B9%88"><span class="toc-number">5.</span> <span class="toc-text">五、总结：跑通这条链路后，你真正掌握了什么</span></a></li></ol>
+      </div>
+    
   </span>
-  
-  
 </div>
 
-            <div class="post-description">如果你看过不少 MCP 介绍，却始终没有真正动手跑通过一个完整例子，这篇文章会很适合你。本文用 TypeScript 搭建一个最小 MCP Server，并以 CoinGecko 为例，实现一个可实际调用的 fetch_market_data 工具。文章会从概念理解、项目搭建、接口接入，到 Inspector 调试和 Codex 验证，一步步带你跑通整个实操流程，帮你把 MCP 从“知道概念”变成“真正会用”。</div>
-        </div>
-      </header>
+    
+    <div class="content index py4 ">
+        
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle p-name" itemprop="name headline">
+        从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证
+    </h1>
 
-    
-    
-    
-    <div class="post-body" itemprop="articleBody"><h1 id="从-0-开始实操-MCP：用-TypeScript-接入-CoinGecko，并在-Inspector-Codex-中验证"><a href="#从-0-开始实操-MCP：用-TypeScript-接入-CoinGecko，并在-Inspector-Codex-中验证" class="headerlink" title="从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"></a>从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证</h1><p>如果你已经看过不少 MCP 介绍，却始终没有真正跑通过一个完整例子，那么这篇文章会更适合你。</p>
+
+
+    <div class="meta">
+      <span class="author p-author h-card" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span class="p-name" itemprop="name">D&J</span>
+      </span>
+      
+    <div class="postdate">
+      
+        <time datetime="2026-04-09T05:22:38.000Z" class="dt-published" itemprop="datePublished">2026-04-09</time>
+        
+      
+    </div>
+
+
+      
+    <div class="article-category">
+        <i class="fa-solid fa-archive"></i>
+        <a class="category-link" href="/categories/AI/">AI</a>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fa-solid fa-tag"></i>
+        <a class="p-category" href="/tags/AI/" rel="tag">AI</a>, <a class="p-category" href="/tags/MCP/" rel="tag">MCP</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content e-content" itemprop="articleBody">
+    <p>如果你已经看过不少 MCP 介绍，却始终没有真正跑通过一个完整例子，那么这篇文章会更适合你。</p>
 <p>这篇文章不讲太多抽象概念，也不一开始堆很多工具，而是只做一件事：</p>
 <p><strong>从零写一个最小的 TypeScript MCP Server，接入 CoinGecko 的真实市场数据接口，并在 Inspector 和 Codex 中完成验证。</strong></p>
 <p>整个过程只围绕一个工具展开：<code>fetch_market_data</code>。</p>
@@ -311,11 +211,7 @@
 <h2 id="二、先建立一个最小认知：MCP-在这个例子里是什么"><a href="#二、先建立一个最小认知：MCP-在这个例子里是什么" class="headerlink" title="二、先建立一个最小认知：MCP 在这个例子里是什么"></a>二、先建立一个最小认知：MCP 在这个例子里是什么</h2><p>在开始搭项目之前，先把最关键的问题讲清楚：</p>
 <p><strong>MCP 在这里不是业务逻辑本身，而是一层标准化的工具协议。</strong></p>
 <p>你可以先看这条链路：</p>
-<pre class="line-numbers language-text" data-language="text"><code class="language-text">Codex / ChatGPT / Inspector
-    -&gt; MCP Client
-    -&gt; 你的 MCP Server
-    -&gt; 你的 TypeScript 逻辑
-    -&gt; CoinGecko API<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight text"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Codex / ChatGPT / Inspector</span><br><span class="line">    -&gt; MCP Client</span><br><span class="line">    -&gt; 你的 MCP Server</span><br><span class="line">    -&gt; 你的 TypeScript 逻辑</span><br><span class="line">    -&gt; CoinGecko API</span><br></pre></td></tr></tbody></table></figure>
 
 <p>这里面每一层的职责都不一样：</p>
 <ul>
@@ -362,26 +258,17 @@
 </ul>
 <p>本文先使用 Demo Key 即可。因为我们的目标是跑通 MCP 链路，不是做高并发或生产级接入。</p>
 <h3 id="2-创建项目"><a href="#2-创建项目" class="headerlink" title="2. 创建项目"></a>2. 创建项目</h3><p>先初始化一个最小项目：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">mkdir</span> mcp-coingecko-demo
-<span class="token builtin class-name">cd</span> mcp-coingecko-demo
-<span class="token function">npm</span> init <span class="token parameter variable">-y</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">mkdir</span> mcp-coingecko-demo</span><br><span class="line"><span class="built_in">cd</span> mcp-coingecko-demo</span><br><span class="line">npm init -y</span><br></pre></td></tr></tbody></table></figure>
 
 <p>安装依赖：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> <span class="token function">install</span> @modelcontextprotocol/sdk zod dotenv
-<span class="token function">npm</span> <span class="token function">install</span> <span class="token parameter variable">-D</span> typescript tsx @types/node<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">npm install @modelcontextprotocol/sdk zod dotenv</span><br><span class="line">npm install -D typescript tsx @types/node</span><br></pre></td></tr></tbody></table></figure>
 
 <p>初始化 TypeScript 配置：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">npx tsc <span class="token parameter variable">--init</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npx tsc --init</span><br></pre></td></tr></tbody></table></figure>
 
 <p>到这里，你就有了一个可以写 MCP Server 的基础项目。</p>
 <h3 id="3-设计项目结构"><a href="#3-设计项目结构" class="headerlink" title="3. 设计项目结构"></a>3. 设计项目结构</h3><p>为了让示例保持简单，同时又不过度把所有逻辑塞进一个文件，这里建议先用下面这套结构：</p>
-<pre class="line-numbers language-text" data-language="text"><code class="language-text">mcp-coingecko-demo/
-  package.json
-  .env
-  src/
-    server.ts
-    domain/
-      market.ts<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight text"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">mcp-coingecko-demo/</span><br><span class="line">  package.json</span><br><span class="line">  .env</span><br><span class="line">  src/</span><br><span class="line">    server.ts</span><br><span class="line">    domain/</span><br><span class="line">      market.ts</span><br></pre></td></tr></tbody></table></figure>
 
 <p>各文件职责如下：</p>
 <ul>
@@ -401,8 +288,7 @@
 </ol>
 <p>对新手来说，这种拆分不是“为了架构而架构”，而是为了以后少踩坑。</p>
 <h3 id="4-配置环境变量"><a href="#4-配置环境变量" class="headerlink" title="4. 配置环境变量"></a>4. 配置环境变量</h3><p>在项目根目录创建 <code>.env</code> 文件：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token assign-left variable">COINGECKO_API_KEY</span><span class="token operator">=</span>your_demo_key_here
-<span class="token assign-left variable">COINGECKO_API_PLAN</span><span class="token operator">=</span>demo<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">COINGECKO_API_KEY=your_demo_key_here</span><br><span class="line">COINGECKO_API_PLAN=demo</span><br></pre></td></tr></tbody></table></figure>
 
 <p>这两个环境变量分别表示：</p>
 <ul>
@@ -411,114 +297,7 @@
 </ul>
 <p>这样做的意义是把配置和代码分开。以后如果你切换到 Pro Key，或者在不同环境使用不同配置，就不用改业务代码。</p>
 <h3 id="5-先写业务逻辑：获取市场数据"><a href="#5-先写业务逻辑：获取市场数据" class="headerlink" title="5. 先写业务逻辑：获取市场数据"></a>5. 先写业务逻辑：获取市场数据</h3><p>先新建 <code>src/domain/market.ts</code>：</p>
-<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">import</span> <span class="token string">"dotenv/config"</span><span class="token punctuation">;</span>
-
-<span class="token keyword">export</span> <span class="token keyword">type</span> <span class="token class-name">MarketData</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
-  id<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
-  <span class="token builtin">symbol</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
-  price<span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
-  currency<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
-  source<span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">;</span>
-  change24h<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span> <span class="token operator">|</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
-  lastUpdatedAt<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span> <span class="token operator">|</span> <span class="token keyword">null</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span class="token punctuation">;</span>
-
-<span class="token keyword">const</span> <span class="token constant">SYMBOL_TO_COINGECKO_ID</span><span class="token operator">:</span> Record<span class="token operator">&lt;</span><span class="token builtin">string</span><span class="token punctuation">,</span> <span class="token builtin">string</span><span class="token operator">&gt;</span> <span class="token operator">=</span> <span class="token punctuation">{</span>
-  <span class="token constant">BTC</span><span class="token operator">:</span> <span class="token string">"bitcoin"</span><span class="token punctuation">,</span>
-  <span class="token constant">ETH</span><span class="token operator">:</span> <span class="token string">"ethereum"</span><span class="token punctuation">,</span>
-  <span class="token constant">SOL</span><span class="token operator">:</span> <span class="token string">"solana"</span><span class="token punctuation">,</span>
-<span class="token punctuation">}</span><span class="token punctuation">;</span>
-
-<span class="token keyword">function</span> <span class="token function">getCoinGeckoConfig</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-  <span class="token keyword">const</span> plan <span class="token operator">=</span> <span class="token punctuation">(</span>process<span class="token punctuation">.</span>env<span class="token punctuation">.</span><span class="token constant">COINGECKO_API_PLAN</span> <span class="token operator">||</span> <span class="token string">"demo"</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toLowerCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token keyword">const</span> apiKey <span class="token operator">=</span> process<span class="token punctuation">.</span>env<span class="token punctuation">.</span><span class="token constant">COINGECKO_API_KEY</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>apiKey<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">"Missing COINGECKO_API_KEY"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token punctuation">}</span>
-
-  <span class="token keyword">if</span> <span class="token punctuation">(</span>plan <span class="token operator">===</span> <span class="token string">"pro"</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token keyword">return</span> <span class="token punctuation">{</span>
-      baseUrl<span class="token operator">:</span> <span class="token string">"https://pro-api.coingecko.com/api/v3"</span><span class="token punctuation">,</span>
-      headers<span class="token operator">:</span> <span class="token punctuation">{</span>
-        <span class="token string-property property">"x-cg-pro-api-key"</span><span class="token operator">:</span> apiKey<span class="token punctuation">,</span>
-      <span class="token punctuation">}</span><span class="token punctuation">,</span>
-      source<span class="token operator">:</span> <span class="token string">"coingecko-pro"</span><span class="token punctuation">,</span>
-    <span class="token punctuation">}</span><span class="token punctuation">;</span>
-  <span class="token punctuation">}</span>
-
-  <span class="token keyword">return</span> <span class="token punctuation">{</span>
-    baseUrl<span class="token operator">:</span> <span class="token string">"https://api.coingecko.com/api/v3"</span><span class="token punctuation">,</span>
-    headers<span class="token operator">:</span> <span class="token punctuation">{</span>
-      <span class="token string-property property">"x-cg-demo-api-key"</span><span class="token operator">:</span> apiKey<span class="token punctuation">,</span>
-    <span class="token punctuation">}</span><span class="token punctuation">,</span>
-    source<span class="token operator">:</span> <span class="token string">"coingecko-demo"</span><span class="token punctuation">,</span>
-  <span class="token punctuation">}</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span>
-
-<span class="token keyword">function</span> <span class="token function">resolveCoinId</span><span class="token punctuation">(</span><span class="token builtin">symbol</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">string</span> <span class="token punctuation">{</span>
-  <span class="token keyword">const</span> normalizedSymbol <span class="token operator">=</span> <span class="token builtin">symbol</span><span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toUpperCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>normalizedSymbol<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token string">"symbol is required"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token punctuation">}</span>
-
-  <span class="token keyword">const</span> coinId <span class="token operator">=</span> <span class="token constant">SYMBOL_TO_COINGECKO_ID</span><span class="token punctuation">[</span>normalizedSymbol<span class="token punctuation">]</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>coinId<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Unsupported symbol: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>normalizedSymbol<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token punctuation">}</span>
-
-  <span class="token keyword">return</span> coinId<span class="token punctuation">;</span>
-<span class="token punctuation">}</span>
-
-<span class="token keyword">export</span> <span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">fetchMarketData</span><span class="token punctuation">(</span><span class="token builtin">symbol</span><span class="token operator">:</span> <span class="token builtin">string</span><span class="token punctuation">)</span><span class="token operator">:</span> <span class="token builtin">Promise</span><span class="token operator">&lt;</span>MarketData<span class="token operator">&gt;</span> <span class="token punctuation">{</span>
-  <span class="token keyword">const</span> normalizedSymbol <span class="token operator">=</span> <span class="token builtin">symbol</span><span class="token punctuation">.</span><span class="token function">trim</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">toUpperCase</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token keyword">const</span> coinId <span class="token operator">=</span> <span class="token function">resolveCoinId</span><span class="token punctuation">(</span>normalizedSymbol<span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token keyword">const</span> <span class="token punctuation">{</span> baseUrl<span class="token punctuation">,</span> headers<span class="token punctuation">,</span> source <span class="token punctuation">}</span> <span class="token operator">=</span> <span class="token function">getCoinGeckoConfig</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">const</span> url <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name"><span class="token constant">URL</span></span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>baseUrl<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string">/simple/price</span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"ids"</span><span class="token punctuation">,</span> coinId<span class="token punctuation">)</span><span class="token punctuation">;</span>
-  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"vs_currencies"</span><span class="token punctuation">,</span> <span class="token string">"usd"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"include_24hr_change"</span><span class="token punctuation">,</span> <span class="token string">"true"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  url<span class="token punctuation">.</span>searchParams<span class="token punctuation">.</span><span class="token function">set</span><span class="token punctuation">(</span><span class="token string">"include_last_updated_at"</span><span class="token punctuation">,</span> <span class="token string">"true"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">const</span> response <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">fetch</span><span class="token punctuation">(</span>url<span class="token punctuation">.</span><span class="token function">toString</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token punctuation">{</span>
-    method<span class="token operator">:</span> <span class="token string">"GET"</span><span class="token punctuation">,</span>
-    headers<span class="token punctuation">,</span>
-  <span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>response<span class="token punctuation">.</span>ok<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token keyword">const</span> text <span class="token operator">=</span> <span class="token keyword">await</span> response<span class="token punctuation">.</span><span class="token function">text</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">CoinGecko API error: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>response<span class="token punctuation">.</span>status<span class="token interpolation-punctuation punctuation">}</span></span><span class="token string"> </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>text<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token punctuation">}</span>
-
-  <span class="token keyword">const</span> json <span class="token operator">=</span> <span class="token punctuation">(</span><span class="token keyword">await</span> response<span class="token punctuation">.</span><span class="token function">json</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token keyword">as</span> Record<span class="token operator">&lt;</span>
-    <span class="token builtin">string</span><span class="token punctuation">,</span>
-    <span class="token punctuation">{</span>
-      usd<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
-      usd_24h_change<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
-      last_updated_at<span class="token operator">?</span><span class="token operator">:</span> <span class="token builtin">number</span><span class="token punctuation">;</span>
-    <span class="token punctuation">}</span>
-  <span class="token operator">&gt;</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">const</span> data <span class="token operator">=</span> json<span class="token punctuation">[</span>coinId<span class="token punctuation">]</span><span class="token punctuation">;</span>
-
-  <span class="token keyword">if</span> <span class="token punctuation">(</span><span class="token operator">!</span>data <span class="token operator">||</span> <span class="token keyword">typeof</span> data<span class="token punctuation">.</span>usd <span class="token operator">!==</span> <span class="token string">"number"</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-    <span class="token keyword">throw</span> <span class="token keyword">new</span> <span class="token class-name">Error</span><span class="token punctuation">(</span><span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">No price data returned for </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>coinId<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token punctuation">}</span>
-
-  <span class="token keyword">return</span> <span class="token punctuation">{</span>
-    id<span class="token operator">:</span> coinId<span class="token punctuation">,</span>
-    <span class="token builtin">symbol</span><span class="token operator">:</span> normalizedSymbol<span class="token punctuation">,</span>
-    price<span class="token operator">:</span> data<span class="token punctuation">.</span>usd<span class="token punctuation">,</span>
-    currency<span class="token operator">:</span> <span class="token string">"USD"</span><span class="token punctuation">,</span>
-    source<span class="token punctuation">,</span>
-    change24h<span class="token operator">:</span> <span class="token keyword">typeof</span> data<span class="token punctuation">.</span>usd_24h_change <span class="token operator">===</span> <span class="token string">"number"</span> <span class="token operator">?</span> data<span class="token punctuation">.</span>usd_24h_change <span class="token operator">:</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
-    lastUpdatedAt<span class="token operator">:</span>
-      <span class="token keyword">typeof</span> data<span class="token punctuation">.</span>last_updated_at <span class="token operator">===</span> <span class="token string">"number"</span> <span class="token operator">?</span> data<span class="token punctuation">.</span>last_updated_at <span class="token operator">:</span> <span class="token keyword">null</span><span class="token punctuation">,</span>
-  <span class="token punctuation">}</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight ts"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="string">"dotenv/config"</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">type</span> <span class="title class_">MarketData</span> = {</span><br><span class="line">  <span class="attr">id</span>: <span class="built_in">string</span>;</span><br><span class="line">  <span class="attr">symbol</span>: <span class="built_in">string</span>;</span><br><span class="line">  <span class="attr">price</span>: <span class="built_in">number</span>;</span><br><span class="line">  <span class="attr">currency</span>: <span class="built_in">string</span>;</span><br><span class="line">  <span class="attr">source</span>: <span class="built_in">string</span>;</span><br><span class="line">  change24h?: <span class="built_in">number</span> | <span class="literal">null</span>;</span><br><span class="line">  lastUpdatedAt?: <span class="built_in">number</span> | <span class="literal">null</span>;</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> <span class="attr">SYMBOL_TO_COINGECKO_ID</span>: <span class="title class_">Record</span>&lt;<span class="built_in">string</span>, <span class="built_in">string</span>&gt; = {</span><br><span class="line">  <span class="attr">BTC</span>: <span class="string">"bitcoin"</span>,</span><br><span class="line">  <span class="attr">ETH</span>: <span class="string">"ethereum"</span>,</span><br><span class="line">  <span class="attr">SOL</span>: <span class="string">"solana"</span>,</span><br><span class="line">};</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">getCoinGeckoConfig</span>(<span class="params"></span>) {</span><br><span class="line">  <span class="keyword">const</span> plan = (process.<span class="property">env</span>.<span class="property">COINGECKO_API_PLAN</span> || <span class="string">"demo"</span>).<span class="title function_">toLowerCase</span>();</span><br><span class="line">  <span class="keyword">const</span> apiKey = process.<span class="property">env</span>.<span class="property">COINGECKO_API_KEY</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!apiKey) {</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>(<span class="string">"Missing COINGECKO_API_KEY"</span>);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (plan === <span class="string">"pro"</span>) {</span><br><span class="line">    <span class="keyword">return</span> {</span><br><span class="line">      <span class="attr">baseUrl</span>: <span class="string">"https://pro-api.coingecko.com/api/v3"</span>,</span><br><span class="line">      <span class="attr">headers</span>: {</span><br><span class="line">        <span class="string">"x-cg-pro-api-key"</span>: apiKey,</span><br><span class="line">      },</span><br><span class="line">      <span class="attr">source</span>: <span class="string">"coingecko-pro"</span>,</span><br><span class="line">    };</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> {</span><br><span class="line">    <span class="attr">baseUrl</span>: <span class="string">"https://api.coingecko.com/api/v3"</span>,</span><br><span class="line">    <span class="attr">headers</span>: {</span><br><span class="line">      <span class="string">"x-cg-demo-api-key"</span>: apiKey,</span><br><span class="line">    },</span><br><span class="line">    <span class="attr">source</span>: <span class="string">"coingecko-demo"</span>,</span><br><span class="line">  };</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">function</span> <span class="title function_">resolveCoinId</span>(<span class="params"><span class="built_in">symbol</span>: <span class="built_in">string</span></span>): <span class="built_in">string</span> {</span><br><span class="line">  <span class="keyword">const</span> normalizedSymbol = <span class="built_in">symbol</span>.<span class="title function_">trim</span>().<span class="title function_">toUpperCase</span>();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!normalizedSymbol) {</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>(<span class="string">"symbol is required"</span>);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> coinId = <span class="variable constant_">SYMBOL_TO_COINGECKO_ID</span>[normalizedSymbol];</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!coinId) {</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>(<span class="string">`Unsupported symbol: <span class="subst">${normalizedSymbol}</span>`</span>);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> coinId;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">export</span> <span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">fetchMarketData</span>(<span class="params"><span class="built_in">symbol</span>: <span class="built_in">string</span></span>): <span class="title class_">Promise</span>&lt;<span class="title class_">MarketData</span>&gt; {</span><br><span class="line">  <span class="keyword">const</span> normalizedSymbol = <span class="built_in">symbol</span>.<span class="title function_">trim</span>().<span class="title function_">toUpperCase</span>();</span><br><span class="line">  <span class="keyword">const</span> coinId = <span class="title function_">resolveCoinId</span>(normalizedSymbol);</span><br><span class="line">  <span class="keyword">const</span> { baseUrl, headers, source } = <span class="title function_">getCoinGeckoConfig</span>();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> url = <span class="keyword">new</span> <span class="title function_">URL</span>(<span class="string">`<span class="subst">${baseUrl}</span>/simple/price`</span>);</span><br><span class="line">  url.<span class="property">searchParams</span>.<span class="title function_">set</span>(<span class="string">"ids"</span>, coinId);</span><br><span class="line">  url.<span class="property">searchParams</span>.<span class="title function_">set</span>(<span class="string">"vs_currencies"</span>, <span class="string">"usd"</span>);</span><br><span class="line">  url.<span class="property">searchParams</span>.<span class="title function_">set</span>(<span class="string">"include_24hr_change"</span>, <span class="string">"true"</span>);</span><br><span class="line">  url.<span class="property">searchParams</span>.<span class="title function_">set</span>(<span class="string">"include_last_updated_at"</span>, <span class="string">"true"</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> response = <span class="keyword">await</span> <span class="title function_">fetch</span>(url.<span class="title function_">toString</span>(), {</span><br><span class="line">    <span class="attr">method</span>: <span class="string">"GET"</span>,</span><br><span class="line">    headers,</span><br><span class="line">  });</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!response.<span class="property">ok</span>) {</span><br><span class="line">    <span class="keyword">const</span> text = <span class="keyword">await</span> response.<span class="title function_">text</span>();</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>(<span class="string">`CoinGecko API error: <span class="subst">${response.status}</span> <span class="subst">${text}</span>`</span>);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> json = (<span class="keyword">await</span> response.<span class="title function_">json</span>()) <span class="keyword">as</span> <span class="title class_">Record</span>&lt;</span><br><span class="line">    <span class="built_in">string</span>,</span><br><span class="line">    {</span><br><span class="line">      usd?: <span class="built_in">number</span>;</span><br><span class="line">      usd_24h_change?: <span class="built_in">number</span>;</span><br><span class="line">      last_updated_at?: <span class="built_in">number</span>;</span><br><span class="line">    }</span><br><span class="line">  &gt;;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> data = json[coinId];</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (!data || <span class="keyword">typeof</span> data.<span class="property">usd</span> !== <span class="string">"number"</span>) {</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Error</span>(<span class="string">`No price data returned for <span class="subst">${coinId}</span>`</span>);</span><br><span class="line">  }</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> {</span><br><span class="line">    <span class="attr">id</span>: coinId,</span><br><span class="line">    <span class="attr">symbol</span>: normalizedSymbol,</span><br><span class="line">    <span class="attr">price</span>: data.<span class="property">usd</span>,</span><br><span class="line">    <span class="attr">currency</span>: <span class="string">"USD"</span>,</span><br><span class="line">    source,</span><br><span class="line">    <span class="attr">change24h</span>: <span class="keyword">typeof</span> data.<span class="property">usd_24h_change</span> === <span class="string">"number"</span> ? data.<span class="property">usd_24h_change</span> : <span class="literal">null</span>,</span><br><span class="line">    <span class="attr">lastUpdatedAt</span>:</span><br><span class="line">      <span class="keyword">typeof</span> data.<span class="property">last_updated_at</span> === <span class="string">"number"</span> ? data.<span class="property">last_updated_at</span> : <span class="literal">null</span>,</span><br><span class="line">  };</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
 
 <h4 id="这段业务代码到底做了什么"><a href="#这段业务代码到底做了什么" class="headerlink" title="这段业务代码到底做了什么"></a>这段业务代码到底做了什么</h4><p>这段代码看起来不长，但已经覆盖了一个真实工具最关键的几个环节。</p>
 <p>它主要做了 5 件事：</p>
@@ -549,64 +328,7 @@
 <p>技术学习里，一个很重要的原则就是：</p>
 <p><strong>先完成最小可运行版本，再逐步扩展能力。</strong></p>
 <h3 id="6-再写-MCP-Server：把业务能力暴露成工具"><a href="#6-再写-MCP-Server：把业务能力暴露成工具" class="headerlink" title="6. 再写 MCP Server：把业务能力暴露成工具"></a>6. 再写 MCP Server：把业务能力暴露成工具</h3><p>当业务逻辑已经能独立工作后，再来写 <code>src/server.ts</code>：</p>
-<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token keyword">import</span> <span class="token punctuation">{</span> McpServer <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@modelcontextprotocol/sdk/server/mcp.js"</span><span class="token punctuation">;</span>
-<span class="token keyword">import</span> <span class="token punctuation">{</span> StdioServerTransport <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"@modelcontextprotocol/sdk/server/stdio.js"</span><span class="token punctuation">;</span>
-<span class="token keyword">import</span> <span class="token punctuation">{</span> z <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"zod"</span><span class="token punctuation">;</span>
-<span class="token keyword">import</span> <span class="token punctuation">{</span> fetchMarketData <span class="token punctuation">}</span> <span class="token keyword">from</span> <span class="token string">"./domain/market.js"</span><span class="token punctuation">;</span>
-
-<span class="token keyword">const</span> server <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">McpServer</span><span class="token punctuation">(</span><span class="token punctuation">{</span>
-  name<span class="token operator">:</span> <span class="token string">"market-data-server"</span><span class="token punctuation">,</span>
-  version<span class="token operator">:</span> <span class="token string">"1.1.0"</span><span class="token punctuation">,</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-server<span class="token punctuation">.</span><span class="token function">tool</span><span class="token punctuation">(</span>
-  <span class="token string">"fetch_market_data"</span><span class="token punctuation">,</span>
-  <span class="token string">"Fetch crypto market data from CoinGecko for symbols like BTC, ETH, or SOL"</span><span class="token punctuation">,</span>
-  <span class="token punctuation">{</span>
-    <span class="token builtin">symbol</span><span class="token operator">:</span> z
-      <span class="token punctuation">.</span><span class="token function">string</span><span class="token punctuation">(</span><span class="token punctuation">)</span>
-      <span class="token punctuation">.</span><span class="token function">min</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token string">"symbol cannot be empty"</span><span class="token punctuation">)</span>
-      <span class="token punctuation">.</span><span class="token function">describe</span><span class="token punctuation">(</span><span class="token string">"Crypto asset symbol, for example BTC, ETH, or SOL"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-  <span class="token punctuation">}</span><span class="token punctuation">,</span>
-  <span class="token keyword">async</span> <span class="token punctuation">(</span><span class="token punctuation">{</span> <span class="token builtin">symbol</span> <span class="token punctuation">}</span><span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
-    <span class="token keyword">try</span> <span class="token punctuation">{</span>
-      <span class="token keyword">const</span> result <span class="token operator">=</span> <span class="token keyword">await</span> <span class="token function">fetchMarketData</span><span class="token punctuation">(</span><span class="token builtin">symbol</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-      <span class="token keyword">return</span> <span class="token punctuation">{</span>
-        content<span class="token operator">:</span> <span class="token punctuation">[</span>
-          <span class="token punctuation">{</span>
-            type<span class="token operator">:</span> <span class="token string">"text"</span><span class="token punctuation">,</span>
-            text<span class="token operator">:</span> <span class="token constant">JSON</span><span class="token punctuation">.</span><span class="token function">stringify</span><span class="token punctuation">(</span>result<span class="token punctuation">,</span> <span class="token keyword">null</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
-          <span class="token punctuation">}</span><span class="token punctuation">,</span>
-        <span class="token punctuation">]</span><span class="token punctuation">,</span>
-      <span class="token punctuation">}</span><span class="token punctuation">;</span>
-    <span class="token punctuation">}</span> <span class="token keyword">catch</span> <span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token punctuation">{</span>
-      <span class="token keyword">const</span> message <span class="token operator">=</span>
-        error <span class="token keyword">instanceof</span> <span class="token class-name">Error</span> <span class="token operator">?</span> error<span class="token punctuation">.</span>message <span class="token operator">:</span> <span class="token string">"Unknown error occurred"</span><span class="token punctuation">;</span>
-
-      <span class="token keyword">return</span> <span class="token punctuation">{</span>
-        content<span class="token operator">:</span> <span class="token punctuation">[</span>
-          <span class="token punctuation">{</span>
-            type<span class="token operator">:</span> <span class="token string">"text"</span><span class="token punctuation">,</span>
-            text<span class="token operator">:</span> <span class="token template-string"><span class="token template-punctuation string">`</span><span class="token string">Failed to fetch market data: </span><span class="token interpolation"><span class="token interpolation-punctuation punctuation">${</span>message<span class="token interpolation-punctuation punctuation">}</span></span><span class="token template-punctuation string">`</span></span><span class="token punctuation">,</span>
-          <span class="token punctuation">}</span><span class="token punctuation">,</span>
-        <span class="token punctuation">]</span><span class="token punctuation">,</span>
-        isError<span class="token operator">:</span> <span class="token boolean">true</span><span class="token punctuation">,</span>
-      <span class="token punctuation">}</span><span class="token punctuation">;</span>
-    <span class="token punctuation">}</span>
-  <span class="token punctuation">}</span>
-<span class="token punctuation">)</span><span class="token punctuation">;</span>
-
-<span class="token keyword">async</span> <span class="token keyword">function</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
-  <span class="token keyword">const</span> transport <span class="token operator">=</span> <span class="token keyword">new</span> <span class="token class-name">StdioServerTransport</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token keyword">await</span> server<span class="token punctuation">.</span><span class="token function">connect</span><span class="token punctuation">(</span>transport<span class="token punctuation">)</span><span class="token punctuation">;</span>
-  <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token string">"MCP server is running..."</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span>
-
-<span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span><span class="token function">catch</span><span class="token punctuation">(</span><span class="token punctuation">(</span>error<span class="token punctuation">)</span> <span class="token operator">=&gt;</span> <span class="token punctuation">{</span>
-  <span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token string">"Server error:"</span><span class="token punctuation">,</span> error<span class="token punctuation">)</span><span class="token punctuation">;</span>
-  process<span class="token punctuation">.</span><span class="token function">exit</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
-<span class="token punctuation">}</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight ts"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> { <span class="title class_">McpServer</span> } <span class="keyword">from</span> <span class="string">"@modelcontextprotocol/sdk/server/mcp.js"</span>;</span><br><span class="line"><span class="keyword">import</span> { <span class="title class_">StdioServerTransport</span> } <span class="keyword">from</span> <span class="string">"@modelcontextprotocol/sdk/server/stdio.js"</span>;</span><br><span class="line"><span class="keyword">import</span> { z } <span class="keyword">from</span> <span class="string">"zod"</span>;</span><br><span class="line"><span class="keyword">import</span> { fetchMarketData } <span class="keyword">from</span> <span class="string">"./domain/market.js"</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">const</span> server = <span class="keyword">new</span> <span class="title class_">McpServer</span>({</span><br><span class="line">  <span class="attr">name</span>: <span class="string">"market-data-server"</span>,</span><br><span class="line">  <span class="attr">version</span>: <span class="string">"1.1.0"</span>,</span><br><span class="line">});</span><br><span class="line"></span><br><span class="line">server.<span class="title function_">tool</span>(</span><br><span class="line">  <span class="string">"fetch_market_data"</span>,</span><br><span class="line">  <span class="string">"Fetch crypto market data from CoinGecko for symbols like BTC, ETH, or SOL"</span>,</span><br><span class="line">  {</span><br><span class="line">    <span class="attr">symbol</span>: z</span><br><span class="line">      .<span class="title function_">string</span>()</span><br><span class="line">      .<span class="title function_">min</span>(<span class="number">1</span>, <span class="string">"symbol cannot be empty"</span>)</span><br><span class="line">      .<span class="title function_">describe</span>(<span class="string">"Crypto asset symbol, for example BTC, ETH, or SOL"</span>),</span><br><span class="line">  },</span><br><span class="line">  <span class="keyword">async</span> ({ <span class="built_in">symbol</span> }) =&gt; {</span><br><span class="line">    <span class="keyword">try</span> {</span><br><span class="line">      <span class="keyword">const</span> result = <span class="keyword">await</span> <span class="title function_">fetchMarketData</span>(<span class="built_in">symbol</span>);</span><br><span class="line"></span><br><span class="line">      <span class="keyword">return</span> {</span><br><span class="line">        <span class="attr">content</span>: [</span><br><span class="line">          {</span><br><span class="line">            <span class="attr">type</span>: <span class="string">"text"</span>,</span><br><span class="line">            <span class="attr">text</span>: <span class="title class_">JSON</span>.<span class="title function_">stringify</span>(result, <span class="literal">null</span>, <span class="number">2</span>),</span><br><span class="line">          },</span><br><span class="line">        ],</span><br><span class="line">      };</span><br><span class="line">    } <span class="keyword">catch</span> (error) {</span><br><span class="line">      <span class="keyword">const</span> message =</span><br><span class="line">        error <span class="keyword">instanceof</span> <span class="title class_">Error</span> ? error.<span class="property">message</span> : <span class="string">"Unknown error occurred"</span>;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">return</span> {</span><br><span class="line">        <span class="attr">content</span>: [</span><br><span class="line">          {</span><br><span class="line">            <span class="attr">type</span>: <span class="string">"text"</span>,</span><br><span class="line">            <span class="attr">text</span>: <span class="string">`Failed to fetch market data: <span class="subst">${message}</span>`</span>,</span><br><span class="line">          },</span><br><span class="line">        ],</span><br><span class="line">        <span class="attr">isError</span>: <span class="literal">true</span>,</span><br><span class="line">      };</span><br><span class="line">    }</span><br><span class="line">  }</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">main</span>(<span class="params"></span>) {</span><br><span class="line">  <span class="keyword">const</span> transport = <span class="keyword">new</span> <span class="title class_">StdioServerTransport</span>();</span><br><span class="line">  <span class="keyword">await</span> server.<span class="title function_">connect</span>(transport);</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">error</span>(<span class="string">"MCP server is running..."</span>);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="title function_">main</span>().<span class="title function_">catch</span>(<span class="function">(<span class="params">error</span>) =&gt;</span> {</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">error</span>(<span class="string">"Server error:"</span>, error);</span><br><span class="line">  process.<span class="title function_">exit</span>(<span class="number">1</span>);</span><br><span class="line">});</span><br></pre></td></tr></tbody></table></figure>
 
 <h4 id="这段-MCP-Server-代码应该怎么看"><a href="#这段-MCP-Server-代码应该怎么看" class="headerlink" title="这段 MCP Server 代码应该怎么看"></a>这段 MCP Server 代码应该怎么看</h4><p>到这里，文章最关键的一层连接出现了：</p>
 <p><strong>业务逻辑已经有了，现在我们要把它变成一个标准工具。</strong></p>
@@ -623,16 +345,10 @@ server<span class="token punctuation">.</span><span class="token function">tool<
 </ol>
 <p>这就是为什么前面要先拆文件。如果你把所有代码都写在一个地方，新手很容易分不清“协议代码”和“业务代码”分别在干什么。</p>
 <h3 id="7-启动服务并理解运行细节"><a href="#7-启动服务并理解运行细节" class="headerlink" title="7. 启动服务并理解运行细节"></a>7. 启动服务并理解运行细节</h3><p>接下来给 <code>package.json</code> 增加脚本：</p>
-<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
-  <span class="token property">"type"</span><span class="token operator">:</span> <span class="token string">"commonjs"</span><span class="token punctuation">,</span>
-  <span class="token property">"scripts"</span><span class="token operator">:</span> <span class="token punctuation">{</span>
-    <span class="token property">"dev"</span><span class="token operator">:</span> <span class="token string">"tsx watch src/server.ts"</span><span class="token punctuation">,</span>
-    <span class="token property">"build"</span><span class="token operator">:</span> <span class="token string">"tsc src/server.ts --outDir dist --module commonjs --target es2020 --esModuleInterop"</span><span class="token punctuation">,</span>
-  <span class="token punctuation">}</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight json"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">{</span></span><br><span class="line">  <span class="attr">"type"</span><span class="punctuation">:</span> <span class="string">"commonjs"</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">"scripts"</span><span class="punctuation">:</span> <span class="punctuation">{</span></span><br><span class="line">    <span class="attr">"dev"</span><span class="punctuation">:</span> <span class="string">"tsx watch src/server.ts"</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">"build"</span><span class="punctuation">:</span> <span class="string">"tsc src/server.ts --outDir dist --module commonjs --target es2020 --esModuleInterop"</span><span class="punctuation">,</span></span><br><span class="line">  <span class="punctuation">}</span></span><br><span class="line"><span class="punctuation">}</span></span><br></pre></td></tr></tbody></table></figure>
 
 <p>然后启动：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> run dev<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm run dev</span><br></pre></td></tr></tbody></table></figure>
 
 <p>如果没有报错，而且进程保持运行、等待输入，那么通常说明你的 MCP Server 已经启动成功了。</p>
 <p>这里要注意一点：</p>
@@ -641,19 +357,18 @@ server<span class="token punctuation">.</span><span class="token function">tool<
 <h4 id="为什么日志要写到-stderr，而不是-stdout"><a href="#为什么日志要写到-stderr，而不是-stdout" class="headerlink" title="为什么日志要写到 stderr，而不是 stdout"></a>为什么日志要写到 stderr，而不是 stdout</h4><p>如果你使用的是 <strong>STDIO</strong> 传输，那么：</p>
 <p><strong>stdout 是 MCP 协议消息通道，不能随便输出普通日志。</strong></p>
 <p>也就是说，下面这种做法是有风险的：</p>
-<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">log</span><span class="token punctuation">(</span><span class="token string">"server started"</span><span class="token punctuation">)</span><span class="token punctuation">;</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<figure class="highlight ts"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">"server started"</span>);</span><br></pre></td></tr></tbody></table></figure>
 
 <p>因为这类普通日志会混进协议输出，可能直接破坏通信。</p>
 <p>所以在 STDIO 模式下，普通日志应该写到：</p>
-<pre class="line-numbers language-typescript" data-language="typescript"><code class="language-typescript"><span class="token builtin">console</span><span class="token punctuation">.</span><span class="token function">error</span><span class="token punctuation">(</span><span class="token operator">...</span><span class="token punctuation">)</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<figure class="highlight ts"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">console</span>.<span class="title function_">error</span>(...)</span><br></pre></td></tr></tbody></table></figure>
 
 <p>也就是 stderr。</p>
 <p>这类细节很适合在入门文章里强调一下。因为很多人第一次跑不通，不是 MCP 本身有问题，而是被日志输出干扰了。</p>
 <hr>
 <h2 id="四、验证这个-MCP-工具是否真的可用"><a href="#四、验证这个-MCP-工具是否真的可用" class="headerlink" title="四、验证这个 MCP 工具是否真的可用"></a>四、验证这个 MCP 工具是否真的可用</h2><h3 id="1-用-MCP-Inspector-验证"><a href="#1-用-MCP-Inspector-验证" class="headerlink" title="1. 用 MCP Inspector 验证"></a>1. 用 MCP Inspector 验证</h3><p>在真正接入 Codex 前，最好的做法是先用 MCP Inspector 验证。因为 Inspector 更适合做“工具级调试”。</p>
 <h4 id="启动-Inspector"><a href="#启动-Inspector" class="headerlink" title="启动 Inspector"></a>启动 Inspector</h4><p>如果你已经编译成 JS，可以这样启动：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash"><span class="token function">npm</span> run build
-npx @modelcontextprotocol/inspector <span class="token function">node</span> dist/server.js<span aria-hidden="true" class="line-numbers-rows"><span></span><span></span></span></code></pre>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">npm run build</span><br><span class="line">npx @modelcontextprotocol/inspector node dist/server.js</span><br></pre></td></tr></tbody></table></figure>
 
 <p>如果你更习惯直接用 <code>tsx</code> 跑，也可以按自己的本地执行方式配置。</p>
 <h4 id="在-Inspector-里重点验证什么"><a href="#在-Inspector-里重点验证什么" class="headerlink" title="在 Inspector 里重点验证什么"></a>在 Inspector 里重点验证什么</h4><p>你不需要一上来测试很多场景，先抓住 3 个核心问题：</p>
@@ -664,32 +379,18 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
 </ul>
 <p>也就是说，Inspector 阶段的重点不是“功能多强”，而是“工具链路是否成立”。</p>
 <h4 id="测试正常输入"><a href="#测试正常输入" class="headerlink" title="测试正常输入"></a>测试正常输入</h4><p>输入：</p>
-<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
-  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"BTC"</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight json"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">{</span></span><br><span class="line">  <span class="attr">"symbol"</span><span class="punctuation">:</span> <span class="string">"BTC"</span></span><br><span class="line"><span class="punctuation">}</span></span><br></pre></td></tr></tbody></table></figure>
 
 <p>预期返回类似：</p>
-<pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
-  <span class="token property">"id"</span><span class="token operator">:</span> <span class="token string">"bitcoin"</span><span class="token punctuation">,</span>
-  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"BTC"</span><span class="token punctuation">,</span>
-  <span class="token property">"price"</span><span class="token operator">:</span> <span class="token number">123456</span><span class="token punctuation">,</span>
-  <span class="token property">"currency"</span><span class="token operator">:</span> <span class="token string">"USD"</span><span class="token punctuation">,</span>
-  <span class="token property">"source"</span><span class="token operator">:</span> <span class="token string">"coingecko-demo"</span><span class="token punctuation">,</span>
-  <span class="token property">"change24h"</span><span class="token operator">:</span> <span class="token number">1.23</span><span class="token punctuation">,</span>
-  <span class="token property">"lastUpdatedAt"</span><span class="token operator">:</span> <span class="token number">1712345678</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight json"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">{</span></span><br><span class="line">  <span class="attr">"id"</span><span class="punctuation">:</span> <span class="string">"bitcoin"</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">"symbol"</span><span class="punctuation">:</span> <span class="string">"BTC"</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">"price"</span><span class="punctuation">:</span> <span class="number">123456</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">"currency"</span><span class="punctuation">:</span> <span class="string">"USD"</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">"source"</span><span class="punctuation">:</span> <span class="string">"coingecko-demo"</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">"change24h"</span><span class="punctuation">:</span> <span class="number">1.23</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">"lastUpdatedAt"</span><span class="punctuation">:</span> <span class="number">1712345678</span></span><br><span class="line"><span class="punctuation">}</span></span><br></pre></td></tr></tbody></table></figure>
 
 <p>其中价格会变化，这正说明你拿到的是实时数据，而不是写死的 mock 数据。</p>
 <h4 id="测试异常输入"><a href="#测试异常输入" class="headerlink" title="测试异常输入"></a>测试异常输入</h4><p>除了成功场景，建议至少测下面几种失败输入。</p>
-<h5 id="空字符串"><a href="#空字符串" class="headerlink" title="空字符串"></a>空字符串</h5><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
-  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">""</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h5 id="空字符串"><a href="#空字符串" class="headerlink" title="空字符串"></a>空字符串</h5><figure class="highlight json"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">{</span></span><br><span class="line">  <span class="attr">"symbol"</span><span class="punctuation">:</span> <span class="string">""</span></span><br><span class="line"><span class="punctuation">}</span></span><br></pre></td></tr></tbody></table></figure>
 
-<h5 id="不支持的-symbol"><a href="#不支持的-symbol" class="headerlink" title="不支持的 symbol"></a>不支持的 symbol</h5><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span>
-  <span class="token property">"symbol"</span><span class="token operator">:</span> <span class="token string">"DOGE"</span>
-<span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span></span></code></pre>
+<h5 id="不支持的-symbol"><a href="#不支持的-symbol" class="headerlink" title="不支持的 symbol"></a>不支持的 symbol</h5><figure class="highlight json"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">{</span></span><br><span class="line">  <span class="attr">"symbol"</span><span class="punctuation">:</span> <span class="string">"DOGE"</span></span><br><span class="line"><span class="punctuation">}</span></span><br></pre></td></tr></tbody></table></figure>
 
-<h5 id="缺少字段"><a href="#缺少字段" class="headerlink" title="缺少字段"></a>缺少字段</h5><pre class="line-numbers language-json" data-language="json"><code class="language-json"><span class="token punctuation">{</span><span class="token punctuation">}</span><span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h5 id="缺少字段"><a href="#缺少字段" class="headerlink" title="缺少字段"></a>缺少字段</h5><figure class="highlight json"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">{</span><span class="punctuation">}</span></span><br></pre></td></tr></tbody></table></figure>
 
 <p>这一步的目的不是追求“所有输入都成功”，而是确认下面三件事：</p>
 <ul>
@@ -708,24 +409,16 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
 <p><img src="/images/20260409/inspector-validation-success.png" alt="Inspector 连接验证成功结果"></p>
 <h3 id="2-接入-Codex-CLI-验证"><a href="#2-接入-Codex-CLI-验证" class="headerlink" title="2. 接入 Codex CLI 验证"></a>2. 接入 Codex CLI 验证</h3><p>当 Inspector 验证通过后，再接入 Codex 才更稳。因为这时候你已经知道问题不在工具本身，而只可能在宿主配置或调用方式上。</p>
 <h4 id="准备-Codex-配置文件"><a href="#准备-Codex-配置文件" class="headerlink" title="准备 Codex 配置文件"></a>准备 Codex 配置文件</h4><p>创建或编辑：</p>
-<pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">~/.codex/config.toml<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">~/.codex/config.toml</span><br></pre></td></tr></tbody></table></figure>
 
 <p>加入 MCP Server 配置：</p>
-<pre class="line-numbers language-toml" data-language="toml"><code class="language-toml"><span class="token key property">model</span> <span class="token punctuation">=</span> <span class="token string">"gpt-5.4"</span>
-
-<span class="token punctuation">[</span><span class="token table class-name">mcp_servers.market_data</span><span class="token punctuation">]</span>
-<span class="token key property">command</span> <span class="token punctuation">=</span> <span class="token string">"npx"</span>
-<span class="token key property">args</span> <span class="token punctuation">=</span> <span class="token punctuation">[</span><span class="token string">"tsx"</span><span class="token punctuation">,</span> <span class="token string">"/绝对路径/mcp-coingecko-demo/src/server.ts"</span><span class="token punctuation">]</span>
-
-<span class="token punctuation">[</span><span class="token table class-name">mcp_servers.market_data.env</span><span class="token punctuation">]</span>
-<span class="token key property">COINGECKO_API_KEY</span> <span class="token punctuation">=</span> <span class="token string">"your_demo_key_here"</span>
-<span class="token key property">COINGECKO_API_PLAN</span> <span class="token punctuation">=</span> <span class="token string">"demo"</span><span aria-hidden="true" class="line-numbers-rows"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span></code></pre>
+<figure class="highlight toml"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">model</span> = <span class="string">"gpt-5.4"</span></span><br><span class="line"></span><br><span class="line"><span class="section">[mcp_servers.market_data]</span></span><br><span class="line"><span class="attr">command</span> = <span class="string">"npx"</span></span><br><span class="line"><span class="attr">args</span> = [<span class="string">"tsx"</span>, <span class="string">"/绝对路径/mcp-coingecko-demo/src/server.ts"</span>]</span><br><span class="line"></span><br><span class="line"><span class="section">[mcp_servers.market_data.env]</span></span><br><span class="line"><span class="attr">COINGECKO_API_KEY</span> = <span class="string">"your_demo_key_here"</span></span><br><span class="line"><span class="attr">COINGECKO_API_PLAN</span> = <span class="string">"demo"</span></span><br></pre></td></tr></tbody></table></figure>
 
 <p>注意把路径替换成你自己的绝对路径。</p>
-<h4 id="启动-Codex"><a href="#启动-Codex" class="headerlink" title="启动 Codex"></a>启动 Codex</h4><pre class="line-numbers language-bash" data-language="bash"><code class="language-bash">codex<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<h4 id="启动-Codex"><a href="#启动-Codex" class="headerlink" title="启动 Codex"></a>启动 Codex</h4><figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">codex</span><br></pre></td></tr></tbody></table></figure>
 
 <h4 id="第一次测试时，尽量显式要求调用工具"><a href="#第一次测试时，尽量显式要求调用工具" class="headerlink" title="第一次测试时，尽量显式要求调用工具"></a>第一次测试时，尽量显式要求调用工具</h4><p>建议用比较明确的提示词，例如：</p>
-<pre class="line-numbers language-text" data-language="text"><code class="language-text">Use the MCP tool fetch_market_data with symbol BTC. Return the raw result first, then explain it.<span aria-hidden="true" class="line-numbers-rows"><span></span></span></code></pre>
+<figure class="highlight text"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Use the MCP tool fetch_market_data with symbol BTC. Return the raw result first, then explain it.</span><br></pre></td></tr></tbody></table></figure>
 
 <p>为什么要写得这么明确？因为在验证阶段，你的目标不是“写一个自然对话提示词”，而是先确认宿主是否真的触发了工具调用。</p>
 <h4 id="如何判断-Codex-不是在“猜答案”"><a href="#如何判断-Codex-不是在“猜答案”" class="headerlink" title="如何判断 Codex 不是在“猜答案”"></a>如何判断 Codex 不是在“猜答案”</h4><p>你可以重点看返回结果里是否出现你自己定义过的字段，比如：</p>
@@ -774,112 +467,139 @@ npx @modelcontextprotocol/inspector <span class="token function">node</span> dis
 </ul>
 <p>只要这条链路你亲手跑通过一次，后面再去扩展更多工具、更多数据源，甚至更完整的 agent 体系，理解都会快很多。</p>
 
-    </div>
+  </div>
+</article>
 
-    
-    
-    
 
-    <footer class="post-footer">
-          <div class="post-tags">
-              <a href="/tags/AI/" rel="tag"># AI</a>
-              <a href="/tags/MCP/" rel="tag"># MCP</a>
-          </div>
 
         
+          <div id="footer-post-container">
+  <div id="footer-post">
 
-          <div class="post-nav">
-            <div class="post-nav-item">
-                <a href="/posts/2026/03/02/fbb9923f/" rel="prev" title="升降桌故障排查记">
-                  <i class="fa fa-angle-left"></i> 升降桌故障排查记
-                </a>
-            </div>
-            <div class="post-nav-item">
-                <a href="/posts/2026/07/18/9e7d1a5f/" rel="next" title="单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布">
-                  单台 VPS 部署 API（上）：环境准备与 Docker Hub 镜像发布 <i class="fa fa-angle-right"></i>
-                </a>
-            </div>
-          </div>
-    </footer>
-  </article>
-</div>
+    <div id="nav-footer" style="display: none">
+      <ul>
+        
+          <li><a href="/">首页</a></li>
+        
+          <li><a href="/about/">关于</a></li>
+        
+          <li><a href="/archives/">归档</a></li>
+        
+      </ul>
+    </div>
 
+    
+    
+      <div id="toc-footer" style="display: none">
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E8%BF%99%E7%AF%87%E6%96%87%E7%AB%A0%E8%A6%81%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98"><span class="toc-number">1.</span> <span class="toc-text">一、这篇文章要解决什么问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%85%88%E5%BB%BA%E7%AB%8B%E4%B8%80%E4%B8%AA%E6%9C%80%E5%B0%8F%E8%AE%A4%E7%9F%A5%EF%BC%9AMCP-%E5%9C%A8%E8%BF%99%E4%B8%AA%E4%BE%8B%E5%AD%90%E9%87%8C%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-number">2.</span> <span class="toc-text">二、先建立一个最小认知：MCP 在这个例子里是什么</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E7%AF%87%E6%96%87%E7%AB%A0%E5%85%88%E4%BB%8E-STDIO-%E5%BC%80%E5%A7%8B%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF-HTTP"><span class="toc-number">2.1.</span> <span class="toc-text">为什么这篇文章先从 STDIO 开始，而不是 HTTP</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E5%BC%80%E5%A7%8B%E5%8A%A8%E6%89%8B%EF%BC%9A%E4%BB%8E-0-%E6%90%AD%E4%B8%80%E4%B8%AA%E6%9C%80%E5%B0%8F%E5%8F%AF%E8%BF%90%E8%A1%8C%E7%9A%84-MCP-Server"><span class="toc-number">3.</span> <span class="toc-text">三、开始动手：从 0 搭一个最小可运行的 MCP Server</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%87%86%E5%A4%87%E5%B7%A5%E4%BD%9C"><span class="toc-number">3.1.</span> <span class="toc-text">1. 准备工作</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%8E%B7%E5%8F%96-CoinGecko-API-Key"><span class="toc-number">3.1.1.</span> <span class="toc-text">获取 CoinGecko API Key</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%88%9B%E5%BB%BA%E9%A1%B9%E7%9B%AE"><span class="toc-number">3.2.</span> <span class="toc-text">2. 创建项目</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E8%AE%BE%E8%AE%A1%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84"><span class="toc-number">3.3.</span> <span class="toc-text">3. 设计项目结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E9%85%8D%E7%BD%AE%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="toc-number">3.4.</span> <span class="toc-text">4. 配置环境变量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E5%85%88%E5%86%99%E4%B8%9A%E5%8A%A1%E9%80%BB%E8%BE%91%EF%BC%9A%E8%8E%B7%E5%8F%96%E5%B8%82%E5%9C%BA%E6%95%B0%E6%8D%AE"><span class="toc-number">3.5.</span> <span class="toc-text">5. 先写业务逻辑：获取市场数据</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%99%E6%AE%B5%E4%B8%9A%E5%8A%A1%E4%BB%A3%E7%A0%81%E5%88%B0%E5%BA%95%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="toc-number">3.5.1.</span> <span class="toc-text">这段业务代码到底做了什么</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%99%E9%87%8C%E5%85%88%E6%89%8B%E5%86%99-symbol-%E6%98%A0%E5%B0%84%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E8%87%AA%E5%8A%A8%E6%94%AF%E6%8C%81%E6%89%80%E6%9C%89%E5%B8%81%E7%A7%8D"><span class="toc-number">3.5.2.</span> <span class="toc-text">为什么这里先手写 symbol 映射，而不是自动支持所有币种</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E5%86%8D%E5%86%99-MCP-Server%EF%BC%9A%E6%8A%8A%E4%B8%9A%E5%8A%A1%E8%83%BD%E5%8A%9B%E6%9A%B4%E9%9C%B2%E6%88%90%E5%B7%A5%E5%85%B7"><span class="toc-number">3.6.</span> <span class="toc-text">6. 再写 MCP Server：把业务能力暴露成工具</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%99%E6%AE%B5-MCP-Server-%E4%BB%A3%E7%A0%81%E5%BA%94%E8%AF%A5%E6%80%8E%E4%B9%88%E7%9C%8B"><span class="toc-number">3.6.1.</span> <span class="toc-text">这段 MCP Server 代码应该怎么看</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-%E5%90%AF%E5%8A%A8%E6%9C%8D%E5%8A%A1%E5%B9%B6%E7%90%86%E8%A7%A3%E8%BF%90%E8%A1%8C%E7%BB%86%E8%8A%82"><span class="toc-number">3.7.</span> <span class="toc-text">7. 启动服务并理解运行细节</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%97%A5%E5%BF%97%E8%A6%81%E5%86%99%E5%88%B0-stderr%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF-stdout"><span class="toc-number">3.7.1.</span> <span class="toc-text">为什么日志要写到 stderr，而不是 stdout</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E9%AA%8C%E8%AF%81%E8%BF%99%E4%B8%AA-MCP-%E5%B7%A5%E5%85%B7%E6%98%AF%E5%90%A6%E7%9C%9F%E7%9A%84%E5%8F%AF%E7%94%A8"><span class="toc-number">4.</span> <span class="toc-text">四、验证这个 MCP 工具是否真的可用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E7%94%A8-MCP-Inspector-%E9%AA%8C%E8%AF%81"><span class="toc-number">4.1.</span> <span class="toc-text">1. 用 MCP Inspector 验证</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8-Inspector"><span class="toc-number">4.1.1.</span> <span class="toc-text">启动 Inspector</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%A8-Inspector-%E9%87%8C%E9%87%8D%E7%82%B9%E9%AA%8C%E8%AF%81%E4%BB%80%E4%B9%88"><span class="toc-number">4.1.2.</span> <span class="toc-text">在 Inspector 里重点验证什么</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E6%AD%A3%E5%B8%B8%E8%BE%93%E5%85%A5"><span class="toc-number">4.1.3.</span> <span class="toc-text">测试正常输入</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E5%BC%82%E5%B8%B8%E8%BE%93%E5%85%A5"><span class="toc-number">4.1.4.</span> <span class="toc-text">测试异常输入</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%A9%BA%E5%AD%97%E7%AC%A6%E4%B8%B2"><span class="toc-number">4.1.4.1.</span> <span class="toc-text">空字符串</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E4%B8%8D%E6%94%AF%E6%8C%81%E7%9A%84-symbol"><span class="toc-number">4.1.4.2.</span> <span class="toc-text">不支持的 symbol</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%BC%BA%E5%B0%91%E5%AD%97%E6%AE%B5"><span class="toc-number">4.1.4.3.</span> <span class="toc-text">缺少字段</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E8%AF%81%E6%98%8E%E5%9B%BE"><span class="toc-number">4.1.5.</span> <span class="toc-text">执行结果证明图</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%8E%A5%E5%85%A5-Codex-CLI-%E9%AA%8C%E8%AF%81"><span class="toc-number">4.2.</span> <span class="toc-text">2. 接入 Codex CLI 验证</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%87%86%E5%A4%87-Codex-%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-number">4.2.1.</span> <span class="toc-text">准备 Codex 配置文件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%AF%E5%8A%A8-Codex"><span class="toc-number">4.2.2.</span> <span class="toc-text">启动 Codex</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E6%AC%A1%E6%B5%8B%E8%AF%95%E6%97%B6%EF%BC%8C%E5%B0%BD%E9%87%8F%E6%98%BE%E5%BC%8F%E8%A6%81%E6%B1%82%E8%B0%83%E7%94%A8%E5%B7%A5%E5%85%B7"><span class="toc-number">4.2.3.</span> <span class="toc-text">第一次测试时，尽量显式要求调用工具</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%88%A4%E6%96%AD-Codex-%E4%B8%8D%E6%98%AF%E5%9C%A8%E2%80%9C%E7%8C%9C%E7%AD%94%E6%A1%88%E2%80%9D"><span class="toc-number">4.2.4.</span> <span class="toc-text">如何判断 Codex 不是在“猜答案”</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%89%A7%E8%A1%8C%E7%BB%93%E6%9E%9C%E8%AF%81%E6%98%8E%E5%9B%BE-1"><span class="toc-number">4.2.5.</span> <span class="toc-text">执行结果证明图</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%80%BB%E7%BB%93%EF%BC%9A%E8%B7%91%E9%80%9A%E8%BF%99%E6%9D%A1%E9%93%BE%E8%B7%AF%E5%90%8E%EF%BC%8C%E4%BD%A0%E7%9C%9F%E6%AD%A3%E6%8E%8C%E6%8F%A1%E4%BA%86%E4%BB%80%E4%B9%88"><span class="toc-number">5.</span> <span class="toc-text">五、总结：跑通这条链路后，你真正掌握了什么</span></a></li></ol>
+      </div>
+    
 
-
-
-
-
-    <div class="comments" id="waline"></div>
-</div>
-  </main>
-
-  <footer class="footer">
-    <div class="footer-inner">
-
-  <div class="copyright">
-    &copy; 2021 – 
-    <span itemprop="copyrightYear">2026</span>
-    <span class="with-love">
-      <i class="fa fa-heart"></i>
-    </span>
-    <span class="author" itemprop="copyrightHolder">D&J</span>
-  </div>
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.facebook.com/sharer.php?u=https://dejinlu.cn/posts/2026/04/09/4dc832d4/"><i class="fab fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://twitter.com/share?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&text=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.linkedin.com/shareArticle?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&title=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://pinterest.com/pin/create/bookmarklet/?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&is_video=false&description=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证&body=Check out this article: https://dejinlu.cn/posts/2026/04/09/4dc832d4/"><i class="fa-solid fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://getpocket.com/save?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&title=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://reddit.com/submit?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&title=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.stumbleupon.com/submit?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&title=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://digg.com/submit?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&title=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="http://www.tumblr.com/share/link?url=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&name=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证&description="><i class="fab fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" target="_blank" rel="noopener" href="https://news.ycombinator.com/submitlink?u=https://dejinlu.cn/posts/2026/04/09/4dc832d4/&t=从 0 开始实操 MCP：用 TypeScript 接入 CoinGecko，并在 Inspector / Codex 中验证"><i class="fab fa-hacker-news fa-lg" aria-hidden="true"></i></a></li>
+</ul>
 
     </div>
-  </footer>
 
-  
-  <div class="toggle sidebar-toggle" role="button">
-    <span class="toggle-line"></span>
-    <span class="toggle-line"></span>
-    <span class="toggle-line"></span>
+    <div id="actions-footer">
+        <a id="menu" class="icon" href="#" onclick="$('#nav-footer').toggle();return false;"><i class="fa-solid fa-bars fa-lg" aria-hidden="true"></i> 菜单</a>
+        
+          <a id="toc" class="icon" href="#" onclick="$('#toc-footer').toggle();return false;"><i class="fa-solid fa-list fa-lg" aria-hidden="true"></i> 目录</a>
+        
+        <a id="share" class="icon" href="#" onclick="$('#share-footer').toggle();return false;"><i class="fa-solid fa-share-alt fa-lg" aria-hidden="true"></i> 分享</a>
+        <a id="top" style="display:none" class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa-solid fa-chevron-up fa-lg" aria-hidden="true"></i> 返回顶部</a>
+    </div>
+
   </div>
-  <div class="sidebar-dimmer"></div>
-  <div class="back-to-top" role="button" aria-label="返回顶部">
-    <i class="fa fa-arrow-up fa-lg"></i>
-    <span>0%</span>
+</div>
+
+        
+        <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy;
+    
+    
+    2018-2026
+    D&amp;J
   </div>
-  <div class="reading-progress-bar"></div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+        <!--
+       --><li><a href="/">首页</a></li><!--
+     --><!--
+       --><li><a href="/about/">关于</a></li><!--
+     --><!--
+       --><li><a href="/archives/">归档</a></li><!--
+     -->
+      </ul>
+    </nav>
+  </div>
+</footer>
 
-<noscript>
-  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
-</noscript>
+    </div>
+    <!-- styles -->
 
+
+
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" onload="this.onload=null;this.rel='stylesheet'"/>
+
+
+    <!-- jquery -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" crossorigin="anonymous"></script>
+
+
+
+
+<!-- clipboard -->
 
   
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
-<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/sidebar.js"></script><script src="/js/next-boot.js"></script>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
-<script src="/js/third-party/search/local-search.js"></script>
-
-
-  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"default","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/11.4.0/mermaid.min.js","integrity":"sha256-G8ouPAnw4zzMbnAenHnVz6h9XpKbNdOkrqTh7AadyHs="}}</script>
-  <script src="/js/third-party/tags/mermaid.js"></script>
-
-  <script class="next-config" data-name="wavedrom" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.5.0/wavedrom.min.js","integrity":"sha256-INLAoJc6quTNfiMWkGZniYO2cxE8mHpddnLow1m6RFs="}}</script>
-  <script class="next-config" data-name="wavedrom_skin" type="application/json">{"enable":true,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/wavedrom/3.5.0/skins/default.js","integrity":"sha256-fduc/Zszk5ezWws2uInY/ALWVmIrmV6VTgXbsYSReFI="}}</script>
-  <script src="/js/third-party/tags/wavedrom.js"></script>
-
-
-  <script src="/js/third-party/pace.js"></script>
-
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.7/clipboard.min.js" crossorigin="anonymous"></script>
   
+  <script type="text/javascript">
+  $(function() {
+    // copy-btn HTML
+    var btn = "<span class=\"btn-copy tooltipped tooltipped-sw\" aria-label=\"复制到粘贴板！\">";
+    btn += '<i class="fa-regular fa-clone"></i>';
+    btn += '</span>';
+    // mount it!
+    $(".highlight table").before(btn);
+    var clip = new ClipboardJS('.btn-copy', {
+      text: function(trigger) {
+        return Array.from(trigger.nextElementSibling.querySelectorAll('.code')).reduce((str,it)=>str+it.innerText+'\n','')
+      }
+    });
+    clip.on('success', function(e) {
+      e.trigger.setAttribute('aria-label', "复制成功！");
+      e.clearSelection();
+    })
+  })
+  </script>
 
 
+<script src="/js/main.js"></script>
 
+<!-- search -->
 
-<script class="next-config" data-name="waline" type="application/json">{"lang":"zh-CN","enable":true,"serverURL":"https://blog-waline-git-main-breakzeros-projects.vercel.app","cssUrl":"https://unpkg.com/@waline/client@v2/dist/waline.css","commentCount":false,"pageview":false,"dark":"auto","imageUploader":false,"copyright":false,"search":false,"meta":["nick","mail"],"requiredMeta":["nick"],"el":"#waline","comment":true,"libUrl":"//unpkg.com/@waline/client@v2/dist/waline.js","path":"/posts/2026/04/09/4dc832d4/"}</script>
-<link rel="stylesheet" href="https://unpkg.com/@waline/client@v2/dist/waline.css">
-<script>
-document.addEventListener('page:loaded', () => {
-  NexT.utils.loadComments(CONFIG.waline.el).then(() =>
-    NexT.utils.getScript(CONFIG.waline.libUrl, { condition: window.Waline })
-  ).then(() => 
-    Waline.init(Object.assign({}, CONFIG.waline,{ el: document.querySelector(CONFIG.waline.el) }))
-  );
-});
-</script>
+<!-- Baidu Analytics -->
 
-<script async>window.onload=function(){var a=document.createElement('script'),b=document.getElementsByTagName('script')[0];a.type='text/javascript',a.async=!0,a.src='/sw-register.js?v='+Date.now(),b.parentNode.insertBefore(a,b)};</script></body></html>
+<!-- Cloudflare Analytics -->
+
+<!-- Disqus Comments -->
+
+<!-- utterances Comments -->
+
+</body>
+</html>
